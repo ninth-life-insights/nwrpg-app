@@ -1,15 +1,9 @@
-
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/auth/Login';
-// import Dashboard from './pages/Dashboard';
-// import PrivateRoute from './components/PrivateRoute';
 import './App.css';
-
 import MissionList from './components/missions/MissionList';
-
 
 function AppContent() {
   const { currentUser, logout } = useAuth();
@@ -19,11 +13,9 @@ function AppContent() {
   }
   
   return (
-    <div>
+    <div className="App">
       <button onClick={logout}>Logout</button>
-        <div className="App">
-          <MissionList/>
-        </div>
+      <MissionList/>
     </div>
   );
 }
@@ -31,9 +23,7 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <div className="App">
-        <MissionList/>
-      </div>
+      <AppContent />  {/* This was missing! */}
     </AuthProvider>
   );
 }
