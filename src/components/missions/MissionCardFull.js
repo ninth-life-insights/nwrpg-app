@@ -117,7 +117,7 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
             
             {mission.skill && (
               <span className="skill-badge">
-                {mission.skill}
+                Skill: {mission.skill}
               </span>
             )}
           </div>

@@ -64,6 +64,7 @@
 /* Daily Mission Header - Above Title */
 .daily-mission-header {
   margin-bottom: 16px;
+  text-align: left;
 }
 
 .daily-mission-badge-orange {
