@@ -14,18 +14,18 @@
   padding: 20px;
 }
 
-.add-mission-modal {
+.add-mission-card {
   background: #fefce8;
-  border-radius: 16px;
+  border-radius: 12px;
   width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: modalSlideIn 0.3s ease-out;
+  max-width: 400px;
+  padding: 20px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.2s ease-out;
+  position: relative;
 }
 
-@keyframes modalSlideIn {
+@keyframes slideUp {
   from {
     opacity: 0;
     transform: translateY(20px) scale(0.95);
@@ -36,262 +36,334 @@
   }
 }
 
-.add-mission-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 20px 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
+/* Title Section */
+.add-mission-title-section {
+  margin-bottom: 12px;
 }
 
-.add-mission-title {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
-}
-
-.close-button {
-  background: none;
+.add-mission-title-input {
+  width: 100%;
   border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  color: #6b7280;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: #111827;
-}
-
-.add-mission-form {
-  padding: 20px;
-}
-
-.form-section {
-  margin-bottom: 24px;
-}
-
-.form-section:last-of-type {
-  margin-bottom: 0;
-}
-
-.section-title {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: transparent;
   font-size: 18px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #fbbf24;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group:last-child {
-  margin-bottom: 0;
-}
-
-.form-label {
-  display: block;
+  padding: 8px 0;
+  border-bottom: 2px solid #e5e7eb;
+  transition: border-color 0.2s;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 6px;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 16px;
-  background-color: white;
-  transition: border-color 0.2s ease;
   box-sizing: border-box;
 }
 
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
+.add-mission-title-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-bottom-color: #3b82f6;
 }
 
-.form-input.error,
-.form-select.error {
-  border-color: #ef4444;
+.add-mission-title-input.error {
+  border-bottom-color: #ef4444;
 }
 
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
+.add-mission-title-input::placeholder {
+  color: #9ca3af;
 }
 
-.error-message {
-  display: block;
+.error-text {
   color: #ef4444;
   font-size: 12px;
   font-weight: 500;
   margin-top: 4px;
+  display: block;
 }
 
-.expiry-date-input {
+/* Description */
+.add-mission-description {
+  margin-bottom: 16px;
+}
+
+.add-mission-description-input {
+  width: 100%;
+  border: none;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #4b5563;
+  resize: vertical;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background-color 0.2s;
+  box-sizing: border-box;
+}
+
+.add-mission-description-input:focus {
+  outline: none;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.add-mission-description-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Difficulty Badge Selector */
+.add-mission-badges {
+  margin-bottom: 16px;
+}
+
+.difficulty-selector {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.difficulty-badge-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+}
+
+.difficulty-badge-button.selected {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.difficulty-badge-button.unselected {
+  opacity: 0.4;
+}
+
+.difficulty-badge-button:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Ghost Badges for Optional Fields */
+.ghost-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ghost-badge {
+  background: none;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ghost-badge:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Optional Field Inline */
+.optional-field-inline {
+  margin-bottom: 16px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    margin-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 100px;
+    margin-bottom: 16px;
+  }
+}
+
+.optional-field-inline label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-with-remove {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.expiry-date-input .form-input {
+.optional-input {
   flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
-.remove-expiry-button {
+.optional-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.optional-input::placeholder {
+  color: #9ca3af;
+}
+
+.remove-field-btn {
   background: #ef4444;
-  border: none;
-  border-radius: 6px;
-  padding: 8px;
   color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.2s;
   flex-shrink: 0;
 }
 
-.remove-expiry-button:hover {
+.remove-field-btn:hover {
   background: #dc2626;
-  transform: scale(1.05);
 }
 
-.add-expiry-button {
-  background: none;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  padding: 12px;
-  color: #6b7280;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  width: 100%;
+/* Skill Field Section */
+.skill-field-section {
+  margin-bottom: 16px;
+  animation: slideDown 0.2s ease-out;
 }
 
-.add-expiry-button:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
-}
-
-.form-help {
+.skill-field-section label {
   display: block;
   font-size: 12px;
+  font-weight: 500;
   color: #6b7280;
-  margin-top: 4px;
-  font-style: italic;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.form-actions {
+.selected-skill-inline {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-  margin-top: 24px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.cancel-button {
+.skills-grid-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.skill-option-inline {
   background: none;
-  border: 2px solid #d1d5db;
-  color: #6b7280;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 2px;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
-.cancel-button:hover {
+.skill-option-inline:hover {
+  background: rgba(59, 130, 246, 0.1);
+  transform: scale(1.02);
+}
+
+/* Action Buttons */
+.add-mission-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #6b7280;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
   border-color: #9ca3af;
   color: #4b5563;
-  background-color: rgba(0, 0, 0, 0.02);
 }
 
-.submit-button {
-  background-color: #3b82f6;
+.add-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: #3b82f6;
   color: white;
   border: none;
   border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 140px;
+  transition: all 0.2s;
 }
 
-.submit-button:hover {
-  background-color: #2563eb;
+.add-btn:hover {
+  background: #2563eb;
   transform: translateY(-1px);
 }
 
-.submit-button:active {
+.add-btn:active {
   transform: translateY(0);
 }
 
-.submit-button:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Mobile optimizations */
-@media (max-width: 640px) {
+/* Mobile Optimizations */
+@media (max-width: 480px) {
   .add-mission-overlay {
-    padding: 10px;
+    padding: 15px;
   }
   
-  .add-mission-modal {
-    max-height: 95vh;
+  .add-mission-card {
+    max-width: none;
+    padding: 16px;
   }
   
-  .add-mission-title {
-    font-size: 20px;
-  }
-  
-  .section-title {
+  .add-mission-title-input {
     font-size: 16px;
   }
   
-  .form-actions {
-    flex-direction: column;
+  .difficulty-selector {
+    gap: 8px;
   }
   
-  .cancel-button,
-  .submit-button {
-    width: 100%;
-    justify-content: center;
+  .ghost-badges {
+    gap: 6px;
   }
   
-  .expiry-date-input {
-    flex-direction: column;
-    align-items: stretch;
+  .ghost-badge {
+    font-size: 11px;
+    padding: 5px 10px;
   }
   
-  .remove-expiry-button {
-    align-self: flex-end;
-    width: auto;
+  .skills-grid-inline {
+    gap: 4px;
   }
 }

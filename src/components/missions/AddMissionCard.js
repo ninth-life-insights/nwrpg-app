@@ -1,5 +1,8 @@
 // src/components/missions/AddMissionCard.js
 import React, { useState } from 'react';
+import DifficultyBadge from './DifficultyBadge';
+import SkillBadge from './SkillBadge';
+import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './AddMissionCard.css';
 
 const AddMissionCard = ({ onAddMission, onCancel }) => {
@@ -21,6 +24,10 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [showDueDateField, setShowDueDateField] = useState(false);
+  const [showSkillField, setShowSkillField] = useState(false);
+  const [showExpiryField, setShowExpiryField] = useState(false);
+  const [skillSearch, setSkillSearch] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +45,21 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     }
   };
 
+  const handleDifficultySelect = (difficulty) => {
+    setFormData(prev => ({
+      ...prev,
+      difficulty: difficulty
+    }));
+  };
+
+  const handleSkillSelect = (skill) => {
+    setFormData(prev => ({
+      ...prev,
+      skill: skill
+    }));
+    setSkillSearch('');
+  };
+
   const handleRemoveExpiryDate = () => {
     setFormData(prev => ({
       ...prev,
@@ -46,23 +68,11 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     }));
   };
 
-  const handleAddExpiryDate = () => {
-    setFormData(prev => ({
-      ...prev,
-      expiryDate: getDefaultExpiryDate(),
-      hasExpiryDate: true
-    }));
-  };
-
   const validateForm = () => {
     const newErrors = {};
     
     if (!formData.title.trim()) {
       newErrors.title = 'Mission name is required';
-    }
-    
-    if (!formData.difficulty) {
-      newErrors.difficulty = 'Difficulty is required';
     }
     
     setErrors(newErrors);
@@ -91,162 +101,230 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     onAddMission(newMission);
   };
 
+  const difficultyOptions = ['easy', 'medium', 'hard'];
+
+  // Filter skills based on search
+  const filteredSkills = AVAILABLE_SKILLS.filter(skill =>
+    skill.toLowerCase().includes(skillSearch.toLowerCase())
+  );
+
   return (
     <div className="add-mission-overlay" onClick={onCancel}>
-      <div className="add-mission-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="add-mission-card" onClick={(e) => e.stopPropagation()}>
         
-        {/* Header */}
-        <div className="add-mission-header">
-          <h2 className="add-mission-title">Add New Mission</h2>
-          <button className="close-button" onClick={onCancel}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="add-mission-form">
+        <form onSubmit={handleSubmit}>
           
-          {/* Required Fields Section */}
-          <div className="form-section">
-            <h3 className="section-title">Required Information</h3>
-            
-            <div className="form-group">
-              <label htmlFor="title" className="form-label">
-                Mission Name *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                className={`form-input ${errors.title ? 'error' : ''}`}
-                placeholder="Enter mission name..."
-              />
-              {errors.title && <span className="error-message">{errors.title}</span>}
-            </div>
+          {/* Title Input */}
+          <div className="add-mission-title-section">
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              className={`add-mission-title-input ${errors.title ? 'error' : ''}`}
+              placeholder="Mission Name *"
+            />
+            {errors.title && <span className="error-text">{errors.title}</span>}
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="difficulty" className="form-label">
-                Difficulty *
-              </label>
-              <select
-                id="difficulty"
-                name="difficulty"
-                value={formData.difficulty}
-                onChange={handleInputChange}
-                className={`form-select ${errors.difficulty ? 'error' : ''}`}
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-                <option value="expert">Expert</option>
-              </select>
-              {errors.difficulty && <span className="error-message">{errors.difficulty}</span>}
-            </div>
+          {/* Description */}
+          <div className="add-mission-description">
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              className="add-mission-description-input"
+              placeholder="Description (optional)"
+              rows="2"
+            />
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="description" className="form-label">
-                Mission Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className="form-textarea"
-                placeholder="Describe the mission..."
-                rows="3"
-              />
+          {/* Difficulty Badge Selector */}
+          <div className="add-mission-badges">
+            <div className="difficulty-selector">
+              {difficultyOptions.map((difficulty) => (
+                <button
+                  key={difficulty}
+                  type="button"
+                  onClick={() => handleDifficultySelect(difficulty)}
+                  className={`difficulty-badge-button ${formData.difficulty === difficulty ? 'selected' : 'unselected'}`}
+                >
+                  <DifficultyBadge difficulty={difficulty} />
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Optional Fields Section */}
-          <div className="form-section">
-            <h3 className="section-title">Optional Information</h3>
+          {/* Optional Field Ghost Badges */}
+          <div className="ghost-badges">
+            {!showDueDateField && !formData.dueDate && (
+              <button
+                type="button"
+                onClick={() => setShowDueDateField(true)}
+                className="ghost-badge"
+              >
+                + Due date
+              </button>
+            )}
             
-            <div className="form-group">
-              <label htmlFor="dueDate" className="form-label">
-                Due Date
-              </label>
-              <input
-                type="date"
-                id="dueDate"
-                name="dueDate"
-                value={formData.dueDate}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-            </div>
+            {!showSkillField && !formData.skill && (
+              <button
+                type="button"
+                onClick={() => setShowSkillField(true)}
+                className="ghost-badge"
+              >
+                + Skill
+              </button>
+            )}
+            
+            {!showExpiryField && formData.hasExpiryDate && (
+              <button
+                type="button"
+                onClick={() => setShowExpiryField(true)}
+                className="ghost-badge"
+              >
+                Edit expiration date
+              </button>
+            )}
+            
+            {!formData.hasExpiryDate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, expiryDate: getDefaultExpiryDate(), hasExpiryDate: true }));
+                  setShowExpiryField(true);
+                }}
+                className="ghost-badge"
+              >
+                + Expiration date
+              </button>
+            )}
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="skill" className="form-label">
-                Skill
-              </label>
-              <input
-                type="text"
-                id="skill"
-                name="skill"
-                value={formData.skill}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="e.g., Cleaning & Organizing"
-              />
+          {/* Due Date Field */}
+          {(showDueDateField || formData.dueDate) && (
+            <div className="optional-field-inline">
+              <label>Due Date</label>
+              <div className="field-with-remove">
+                <input
+                  type="date"
+                  name="dueDate"
+                  value={formData.dueDate}
+                  onChange={handleInputChange}
+                  className="optional-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, dueDate: '' }));
+                    setShowDueDateField(false);
+                  }}
+                  className="remove-field-btn"
+                >
+                  ×
+                </button>
+              </div>
             </div>
+          )}
 
-            <div className="form-group">
-              <label className="form-label">
-                Expiration Date
-              </label>
+          {/* Skill Field */}
+          {(showSkillField || formData.skill) && (
+            <div className="skill-field-section">
+              <label>Skill</label>
+              {formData.skill ? (
+                <div className="selected-skill-inline">
+                  <SkillBadge skill={formData.skill} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, skill: '' }));
+                      setShowSkillField(false);
+                      setSkillSearch('');
+                    }}
+                    className="remove-field-btn"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="field-with-remove">
+                    <input
+                      type="text"
+                      value={skillSearch}
+                      onChange={(e) => setSkillSearch(e.target.value)}
+                      className="optional-input"
+                      placeholder="Search skills..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSkillField(false);
+                        setSkillSearch('');
+                      }}
+                      className="remove-field-btn"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <div className="skills-grid-inline">
+                    {filteredSkills.map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => handleSkillSelect(skill)}
+                        className="skill-option-inline"
+                      >
+                        <SkillBadge skill={skill} />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Expiry Date Field */}
+          {(showExpiryField || (!formData.hasExpiryDate && showExpiryField)) && (
+            <div className="optional-field-inline">
+              <label>Expires</label>
               {formData.hasExpiryDate ? (
-                <div className="expiry-date-input">
+                <div className="field-with-remove">
                   <input
                     type="date"
                     name="expiryDate"
                     value={formData.expiryDate}
                     onChange={handleInputChange}
-                    className="form-input"
+                    className="optional-input"
                   />
                   <button
                     type="button"
-                    onClick={handleRemoveExpiryDate}
-                    className="remove-expiry-button"
-                    title="Remove expiration date"
+                    onClick={() => {
+                      handleRemoveExpiryDate();
+                      setShowExpiryField(false);
+                    }}
+                    className="remove-field-btn"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
+                    ×
                   </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleAddExpiryDate}
-                  className="add-expiry-button"
-                >
-                  + Add expiration date
-                </button>
-              )}
-              <span className="form-help">Defaults to 30 days from creation</span>
+              ) : null}
             </div>
-          </div>
+          )}
 
-          {/* Actions */}
-          <div className="form-actions">
+          {/* Action Buttons */}
+          <div className="add-mission-actions">
             <button
               type="button"
               onClick={onCancel}
-              className="cancel-button"
+              className="cancel-btn"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="submit-button"
+              className="add-btn"
             >
               Add Mission
             </button>
