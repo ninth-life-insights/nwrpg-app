@@ -1,0 +1,281 @@
+/* src/components/missions/MissionCardFull.css */
+
+.mission-detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.mission-detail-modal {
+  background: #fefce8;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mission-detail-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px 0 20px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #111827;
+}
+
+.mission-detail-content {
+  padding: 0 20px 20px 20px;
+}
+
+/* Daily Mission Header - Above Title */
+.daily-mission-header {
+  margin-bottom: 16px;
+}
+
+.daily-mission-badge-orange {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fed7aa;
+  color: #ea580c;
+  border: 1px solid #fdba74;
+}
+
+.daily-mission-badge-orange svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mission-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mission-detail-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.mission-detail-title.completed {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+/* Description - directly below title, no header */
+.mission-description {
+  margin: 0;
+}
+
+.mission-description p {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* All badges on one line */
+.mission-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+/* Status badge inline */
+.status-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+/* Purple skill badge */
+.skill-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #e9d5ff;
+  color: #7c3aed;
+}
+
+.mission-details {
+  margin-bottom: 24px;
+}
+
+.detail-item {
+  margin-bottom: 16px;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item h4 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-item p {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  color: #111827;
+  margin: 0;
+}
+
+.mission-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.action-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.action-button:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.action-button:active {
+  transform: translateY(0);
+}
+
+.action-button.mark-incomplete {
+  background-color: #6b7280;
+}
+
+.action-button.mark-incomplete:hover {
+  background-color: #4b5563;
+}
+
+/* Due date badge styles */
+.due-date-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.due-date-badge.upcoming {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.due-date-badge.due-today {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.due-date-badge.overdue {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .mission-detail-overlay {
+    padding: 10px;
+  }
+  
+  .mission-detail-modal {
+    max-height: 95vh;
+  }
+  
+  .mission-detail-title {
+    font-size: 20px;
+  }
+  
+  .mission-description p {
+    font-size: 14px;
+  }
+  
+  .action-button {
+    font-size: 14px;
+    padding: 10px 20px;
+    min-width: 150px;
+  }
+  
+  .mission-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .daily-mission-badge-orange {
+    font-size: 11px;
+  }
+}

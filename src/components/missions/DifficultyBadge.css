@@ -1,0 +1,39 @@
+.difficulty-badge {
+    display: inline-flex; /* Changed from conflicting display properties */
+    border-radius: 5px;
+    padding: 4px 8px; /* Changed from percentage to px for consistency */
+    align-items: center;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.easy {
+    background-color: rgb(186, 243, 181);
+    fill: rgb(17, 133, 6);
+    color: rgb(17, 133, 6);
+}
+
+.medium {
+    background-color: rgb(241, 230, 200);
+    fill: rgb(133, 120, 6);
+    color: rgb(114, 103, 2);
+}
+
+.hard {
+    background-color: rgb(245, 201, 193);
+    fill: rgb(133, 6, 6);
+    color: rgb(133, 6, 6);
+}
+
+.difficulty-rating {
+    font-size: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    margin-left: 2px;
+}
+
+.star {
+    width: 8px; 
+    height: 8px;
+    padding: 0;
+    margin: 2px 0.1px;
+}
