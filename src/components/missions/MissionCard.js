@@ -58,11 +58,6 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
           </h3>
           <div className="badges">
             <DifficultyBadge difficulty={mission.difficulty} />
-            {mission.xpReward && (
-              <span className="xp-badge">
-                +{mission.xpReward} XP
-              </span>
-            )}
             {dueDateDisplay && (
               <span className={`due-date-badge ${dueDateStatus}`}>
                 {dueDateDisplay}
