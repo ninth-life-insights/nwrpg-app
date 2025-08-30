@@ -1,25 +1,33 @@
-// Login.js
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Auth.css';
 
-export default function Login() {
+export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { signup } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (password.length < 6) {
+      return setError('Password must be at least 6 characters');
+    }
+
+    if (password !== confirmPassword) {
+      return setError('Passwords do not match');
+    }
+
     try {
       setError('');
       setLoading(true);
-      await login(email, password);
+      await signup(email, password);
     } catch (error) {
-      setError('Invalid email or password. Please try again.');
-      console.error('Login error:', error);
+      setError('Failed to create account. Please try again.');
+      console.error('Signup error:', error);
     }
     
     setLoading(false);
@@ -29,8 +37,8 @@ export default function Login() {
     <div className="auth-container">
       <div className="auth-card">
         <header className="auth-header">
-          <h1 className="auth-title">Welcome Back, Adventurer</h1>
-          <p className="auth-subtitle">Continue your journey where you left off</p>
+          <h1 className="auth-title">Create Your Account</h1>
+          <p className="auth-subtitle">Get started on your parenting adventure</p>
         </header>
         
         {error && (
@@ -62,7 +70,20 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="form-input"
-              placeholder="Enter your password"
+              placeholder="At least 6 characters"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="form-input"
+              placeholder="Confirm your password"
             />
           </div>
           
@@ -71,20 +92,20 @@ export default function Login() {
             disabled={loading}
             className="auth-button primary"
           >
-            {loading ? 'Logging in...' : 'Log In'}
+            {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
         
         <div className="auth-footer">
-          <span className="footer-text">Don't have an account? </span>
+          <span className="footer-text">Already have an account? </span>
           <button 
             onClick={() => {
-              // TODO: Navigate to signup page
-              console.log('Navigate to signup');
+              // TODO: Navigate to login page
+              console.log('Navigate to login');
             }}
             className="auth-button secondary"
           >
-            Sign up
+            Log in
           </button>
         </div>
       </div>
