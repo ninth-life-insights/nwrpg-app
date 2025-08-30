@@ -9,16 +9,16 @@ const LandingPage = () => {
 
   const slides = [
     {
-      title: "Level Up Your Day",
-      content: "Transform daily tasks into epic quests and watch your productivity soar as you complete challenges and unlock achievements."
+      title: "Manage Your Priorities",
+      content: "Plan your day like a pro tactician. Track the status of your base (home), adventuring party (family), missions (to-dos), and quests (projects)."
     },
     {
-      title: "Build Your Character",
-      content: "Develop skills, earn experience points, and customize your mom avatar as you tackle everything from household management to personal goals."
+      title: "Track Your Progress",
+      content: "Feel a sense of accomplishment with daily, weekly, and monthly reviews that combine stats with storytelling."
     },
     {
-      title: "Join the Guild",
-      content: "Connect with other adventuring moms, share victories, and support each other through the ultimate RPG: motherhood."
+      title: "Make Life More Magical",
+      content: "Add a dose of creativity or silliness to your day with avatars, achievements, and encounters! Where a tough day with a teething baby becomes 'curing the curse of the incisor!'"
     }
   ];
 
