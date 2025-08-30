@@ -6,7 +6,8 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth } from './firebase';
+import { createUserProfile } from './services/userService';
 
 const AuthContext = createContext();
 
@@ -19,8 +20,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // Sign up function
-  function signup(email, password) {
-    return createUserWithEmailAndPassword(auth, email, password);
+  async function signup(email, password) {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    // Create user profile in Firestore
+    await createUserProfile(result.user.uid, email);
+    return result;
   }
 
   // Login function
