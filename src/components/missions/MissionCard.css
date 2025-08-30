@@ -1,39 +1,39 @@
 /* src/components/missions/MissionCard.css */
 
 .mission-card {
-  background-color: #fefce8;
-  border: 1px solid #fde68a;
-  border-radius: 12px;
-  padding: 16px;
-  margin: 12px auto;
-  max-width: 400px;
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin: var(--space-md) auto;
+  max-width: var(--max-width-card);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  gap: var(--space-md);
+  transition: all var(--transition);
+  box-shadow: var(--shadow-card);
 }
 
 .mission-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-hover);
   transform: translateY(-1px);
 }
 
 .mission-card.completed {
   background-color: #e5e7eb;
   opacity: 0.7;
-  border-color: #d1d5db;
+  border-color: var(--color-border);
 }
 
 .content-area {
   flex: 1;
-  min-width: 0; /* Allows text to truncate properly */
+  min-width: 0;
   cursor: pointer;
-  padding: 4px;
-  margin: -4px;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+  padding: var(--space-xs);
+  margin: calc(var(--space-xs) * -1);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition);
 }
 
 .content-area:hover {
@@ -47,38 +47,36 @@
 .mission-header {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
   align-items: flex-start;
 }
 
 .mission-title {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 16px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-dark);
   margin: 0;
   line-height: 1.3;
-  text-align: left;
-  width: 100%;
 }
 
 .mission-title.completed {
   text-decoration: line-through;
-  color: #9ca3af;
+  color: var(--color-text-placeholder);
 }
 
 .badges {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   flex-wrap: wrap;
 }
 
 .due-date-badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
@@ -92,19 +90,19 @@
 
 .due-date-badge.due-today {
   background-color: #fef3c7;
-  color: #d97706;
+  color: var(--color-warning);
 }
 
 .due-date-badge.overdue {
   background-color: #fee2e2;
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .mission-description {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
   font-weight: 400;
-  color: #6b7280;
   line-height: 1.4;
   text-align: left;
 }
@@ -114,18 +112,18 @@
 }
 
 .mission-card.completed .mission-description {
-  color: #9ca3af;
+  color: var(--color-text-placeholder);
 }
 
 .mission-toggle {
   background: none;
   border: none;
-  padding: 12px; /* Larger touch target */
-  border-radius: 12px;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition);
   flex-shrink: 0;
-  margin: -4px; /* Negative margin to expand touch area */
+  margin: calc(var(--space-xs) * -1);
 }
 
 .mission-toggle:hover {
@@ -141,20 +139,20 @@
 .check-icon {
   width: 24px;
   height: 24px;
-  fill: #d1d5db;
-  transition: fill 0.2s ease;
+  fill: var(--color-border);
+  transition: fill var(--transition);
 }
 
 .check-icon.completed {
-  fill: #097548;
+  fill: var(--color-success);
 }
 
 /* Mobile optimizations */
 @media (max-width: 480px) {
   .mission-card {
-    margin: 8px;
-    padding: 12px;
-    border-radius: 8px;
+    margin: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
   }
   
   .mission-title {
@@ -167,6 +165,6 @@
   
   .due-date-badge {
     font-size: 10px;
-    padding: 3px 6px;
+    padding: 3px var(--space-xs);
   }
 }

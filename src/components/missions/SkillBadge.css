@@ -1,26 +1,24 @@
-
 /* src/components/missions/SkillBadge.css */
 
 .skill-badge {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    display: inline-flex; /* Use inline-flex instead of inline-block + flex */
-    border-radius: 6px;
-    padding: 4px 8px; /* Use px instead of % for more predictable spacing */
-    align-items: center;
-    background-color: #ebdbfe;
-    color: #ac1dd8;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    white-space: nowrap; /* Prevent text wrapping */
-    /* max-width: 120px; /* Limit width */
-    overflow: hidden; /* Hide overflow */
-    text-overflow: ellipsis; /* Add ... for long text */
+  font-family: var(--font-family);
+  display: inline-flex;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  align-items: center;
+  background-color: var(--color-skill);
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .skill-text {
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -4,27 +4,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 0 20px;
+  margin-bottom: var(--space-xl);
+  padding: 0 var(--space-xl);
 }
 
 .add-mission-button {
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-xl);
+  font-size: var(--font-size-lg);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .add-mission-button:hover {
-  background-color: #2563eb;
+  background-color: var(--color-primary-hover);
   transform: translateY(-1px);
 }
 
@@ -36,7 +36,7 @@
 @media (max-width: 640px) {
   .mission-list-header {
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-lg);
     align-items: stretch;
   }
   
