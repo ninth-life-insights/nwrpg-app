@@ -6,8 +6,8 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from './firebase';
-import { createUserProfile } from './services/userService';
+import { auth } from '../firebase';
+import { createUserProfile } from '../services/userService';
 
 const AuthContext = createContext();
 
