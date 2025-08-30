@@ -1,6 +1,11 @@
+/* src/components/missions/DifficultyBadge.css */
+
 .difficulty-badge {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     display: inline-flex; /* Changed from conflicting display properties */
     border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     padding: 4px 8px; /* Changed from percentage to px for consistency */
     align-items: center;
     font-size: 11px;
@@ -8,21 +13,21 @@
 }
 
 .easy {
-    background-color: rgb(186, 243, 181);
-    fill: rgb(17, 133, 6);
-    color: rgb(17, 133, 6);
+    background-color: #dbfede;
+  color: #009708;
+    fill: #009708;
 }
 
 .medium {
-    background-color: rgb(241, 230, 200);
-    fill: rgb(133, 120, 6);
-    color: rgb(114, 103, 2);
+    background-color: #fff7c8;
+  color: #a08300;
+  fill: #a08300;
 }
 
 .hard {
-    background-color: rgb(245, 201, 193);
-    fill: rgb(133, 6, 6);
-    color: rgb(133, 6, 6);
+    background-color: rgb(255, 235, 231);
+    fill: rgb(175, 0, 0);
+    color: rgb(175, 0, 0);
 }
 
 .difficulty-rating {
@@ -32,8 +37,8 @@
 }
 
 .star {
-    width: 8px; 
-    height: 8px;
+    width: 10px; 
+    height: 10px;
     padding: 0;
     margin: 2px 0.1px;
 }
