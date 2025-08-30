@@ -1,8 +1,5 @@
 /* src/components/missions/DifficultyBadge.css */
 
-@import '../../styles/variables.css';
-
-
 .difficulty-badge {
   display: inline-flex;
   border-radius: var(--radius-sm);
