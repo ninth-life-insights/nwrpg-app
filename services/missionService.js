@@ -134,6 +134,21 @@ export const deleteMission = async (userId, missionId) => {
   }
 };
 
+// Uncomplete a mission (revert from completed to active)
+export const uncompleteMission = async (userId, missionId) => {
+  try {
+    const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    await updateDoc(missionRef, {
+      status: 'active',
+      completedAt: null,
+      uncompletedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error uncompleting mission:', error);
+    throw error;
+  }
+};
+
 // Mark mission as expired (could be run by a scheduled function)
 export const expireMission = async (userId, missionId) => {
   try {

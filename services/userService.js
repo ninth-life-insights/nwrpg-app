@@ -12,6 +12,7 @@ export const createUserProfile = async (userId, email) => {
       level: 1,
       currentXP: 0,
       totalXP: 0,
+      streak: 0,
       lastActiveDate: serverTimestamp(),
       createdAt: serverTimestamp()
     });
@@ -62,6 +63,34 @@ export const addXP = async (userId, xpAmount) => {
     }
   } catch (error) {
     console.error('Error adding XP:', error);
+    throw error;
+  }
+};
+
+// Subtract XP (call when mission gets uncompleted)
+export const subtractXP = async (userId, xpAmount) => {
+  try {
+    const userRef = doc(db, 'users', userId, 'profile', 'data');
+    const profile = await getUserProfile(userId);
+    
+    if (profile) {
+      const newCurrentXP = Math.max(0, profile.currentXP - xpAmount);
+      const newTotalXP = Math.max(0, profile.totalXP - xpAmount);
+      
+      // Recalculate level based on new total XP
+      const newLevel = Math.floor(newTotalXP / 100) + 1;
+      
+      await updateDoc(userRef, {
+        currentXP: newCurrentXP,
+        totalXP: newTotalXP,
+        level: newLevel,
+        lastActiveDate: serverTimestamp()
+      });
+      
+      return { newLevel, newTotalXP, leveledDown: newLevel < profile.level };
+    }
+  } catch (error) {
+    console.error('Error subtracting XP:', error);
     throw error;
   }
 };
