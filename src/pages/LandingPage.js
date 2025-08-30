@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 
+import { useNavigate } from 'react-router-dom';
+
 import './LandingPage.css';
 
 const LandingPage = () => {
+    const navigate = useNavigate();
+
+    const logInButtonClick = () => {
+        navigate('/log-in');
+    };
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -18,7 +26,7 @@ const LandingPage = () => {
     },
     {
       title: "Make Life More Magical",
-      content: "Add a dose of creativity or silliness to your day with avatars, achievements, and encounters! Where a tough day with a teething baby becomes 'curing the curse of the incisor!'"
+      content: "Where a tough day with a teething baby becomes 'curing the curse of the hidden molar!' Add a dose of creativity or silliness to your day with avatars, achievements, and encounters."
     }
   ];
 
@@ -128,10 +136,7 @@ const LandingPage = () => {
             Already have an account?{' '}
           </span>
           <button className="secondary-button"
-          onClick={() => {
-            // TODO: Navigate to login
-            console.log('Navigate to login');
-          }}
+          onClick={logInButtonClick}
           >
             Log in
           </button>
