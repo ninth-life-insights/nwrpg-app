@@ -36,8 +36,8 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
 
   // Calculate XP based on difficulty
   const getXPReward = (difficulty) => {
-    const xpMap = { easy: 10, medium: 25, hard: 50 };
-    return xpMap[difficulty] || 10;
+    const xpMap = { easy: 5, medium: 10, hard: 20 };
+    return xpMap[difficulty] || 5;
   };
 
   const handleInputChange = (e) => {
@@ -183,7 +183,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                   disabled={isSubmitting}
                 >
                   <DifficultyBadge difficulty={difficulty} />
-                  <span className="xp-indicator">+{getXPReward(difficulty)} XP</span>
+                  
                 </button>
               ))}
             </div>

@@ -124,11 +124,6 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
           <div className="mission-badges">
             <DifficultyBadge difficulty={mission.difficulty} />
             
-            {mission.xpReward && (
-              <span className="xp-reward-badge">
-                Reward: +{mission.xpReward} XP
-              </span>
-            )}
             
             <span className="status-badge-inline">
               Status: {isCompleted ? 'Completed' : 'Active'}
