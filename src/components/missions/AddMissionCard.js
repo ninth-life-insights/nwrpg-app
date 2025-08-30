@@ -1,11 +1,15 @@
 // src/components/missions/AddMissionCard.js
 import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { createMission } from '../../services/missionService';
 import DifficultyBadge from './DifficultyBadge';
 import SkillBadge from './SkillBadge';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './AddMissionCard.css';
 
 const AddMissionCard = ({ onAddMission, onCancel }) => {
+  const { currentUser } = useAuth();
+  
   // Get default expiry date (30 days from now)
   const getDefaultExpiryDate = () => {
     const date = new Date();
@@ -28,6 +32,13 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
   const [showSkillField, setShowSkillField] = useState(false);
   const [showExpiryField, setShowExpiryField] = useState(false);
   const [skillSearch, setSkillSearch] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Calculate XP based on difficulty
+  const getXPReward = (difficulty) => {
+    const xpMap = { easy: 10, medium: 25, hard: 50 };
+    return xpMap[difficulty] || 10;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -79,26 +90,45 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!validateForm() || !currentUser) {
       return;
     }
 
-    const newMission = {
-      id: Date.now(), // Simple ID generation
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      difficulty: formData.difficulty,
-      dueDate: formData.dueDate || null,
-      skill: formData.skill.trim() || null,
-      expiryDate: formData.hasExpiryDate ? formData.expiryDate : null,
-      completed: false,
-      isDailyMission: false
-    };
+    setIsSubmitting(true);
 
-    onAddMission(newMission);
+    try {
+      const missionData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        difficulty: formData.difficulty,
+        xpReward: getXPReward(formData.difficulty),
+        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+        skill: formData.skill.trim() || null,
+        expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
+        category: 'personal', // You can expand this later
+        isDailyMission: false
+      };
+
+      const missionId = await createMission(currentUser.uid, missionData);
+      
+      // Call the parent component's callback with the new mission ID
+      onAddMission({
+        id: missionId,
+        ...missionData,
+        status: 'active',
+        completed: false,
+        createdAt: new Date()
+      });
+
+    } catch (error) {
+      console.error('Error creating mission:', error);
+      setErrors({ submit: 'Failed to create mission. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const difficultyOptions = ['easy', 'medium', 'hard'];
@@ -123,6 +153,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
               onChange={handleInputChange}
               className={`add-mission-title-input ${errors.title ? 'error' : ''}`}
               placeholder="Mission Name *"
+              disabled={isSubmitting}
             />
             {errors.title && <span className="error-text">{errors.title}</span>}
           </div>
@@ -136,6 +167,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
               className="add-mission-description-input"
               placeholder="Description (optional)"
               rows="2"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -148,8 +180,10 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                   type="button"
                   onClick={() => handleDifficultySelect(difficulty)}
                   className={`difficulty-badge-button ${formData.difficulty === difficulty ? 'selected' : 'unselected'}`}
+                  disabled={isSubmitting}
                 >
                   <DifficultyBadge difficulty={difficulty} />
+                  <span className="xp-indicator">+{getXPReward(difficulty)} XP</span>
                 </button>
               ))}
             </div>
@@ -162,6 +196,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                 type="button"
                 onClick={() => setShowDueDateField(true)}
                 className="ghost-badge"
+                disabled={isSubmitting}
               >
                 + Due date
               </button>
@@ -172,6 +207,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                 type="button"
                 onClick={() => setShowSkillField(true)}
                 className="ghost-badge"
+                disabled={isSubmitting}
               >
                 + Skill
               </button>
@@ -182,6 +218,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                 type="button"
                 onClick={() => setShowExpiryField(true)}
                 className="ghost-badge"
+                disabled={isSubmitting}
               >
                 Edit expiration date
               </button>
@@ -195,6 +232,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                   setShowExpiryField(true);
                 }}
                 className="ghost-badge"
+                disabled={isSubmitting}
               >
                 + Expiration date
               </button>
@@ -212,6 +250,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                   value={formData.dueDate}
                   onChange={handleInputChange}
                   className="optional-input"
+                  disabled={isSubmitting}
                 />
                 <button
                   type="button"
@@ -220,6 +259,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                     setShowDueDateField(false);
                   }}
                   className="remove-field-btn"
+                  disabled={isSubmitting}
                 >
                   ×
                 </button>
@@ -242,6 +282,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                       setSkillSearch('');
                     }}
                     className="remove-field-btn"
+                    disabled={isSubmitting}
                   >
                     ×
                   </button>
@@ -255,6 +296,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                       onChange={(e) => setSkillSearch(e.target.value)}
                       className="optional-input"
                       placeholder="Search skills..."
+                      disabled={isSubmitting}
                     />
                     <button
                       type="button"
@@ -263,6 +305,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                         setSkillSearch('');
                       }}
                       className="remove-field-btn"
+                      disabled={isSubmitting}
                     >
                       ×
                     </button>
@@ -275,6 +318,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                         type="button"
                         onClick={() => handleSkillSelect(skill)}
                         className="skill-option-inline"
+                        disabled={isSubmitting}
                       >
                         <SkillBadge skill={skill} />
                       </button>
@@ -297,6 +341,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                     value={formData.expiryDate}
                     onChange={handleInputChange}
                     className="optional-input"
+                    disabled={isSubmitting}
                   />
                   <button
                     type="button"
@@ -305,11 +350,19 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                       setShowExpiryField(false);
                     }}
                     className="remove-field-btn"
+                    disabled={isSubmitting}
                   >
                     ×
                   </button>
                 </div>
               ) : null}
+            </div>
+          )}
+
+          {/* Error Display */}
+          {errors.submit && (
+            <div className="error-text" style={{ textAlign: 'center', marginBottom: '15px' }}>
+              {errors.submit}
             </div>
           )}
 
@@ -319,14 +372,16 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
               type="button"
               onClick={onCancel}
               className="cancel-btn"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="add-btn"
+              disabled={isSubmitting}
             >
-              Add Mission
+              {isSubmitting ? 'Adding...' : 'Add Mission'}
             </button>
           </div>
         </form>

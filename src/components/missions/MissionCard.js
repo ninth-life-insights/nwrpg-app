@@ -9,7 +9,8 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
     if (!dueDate) return null;
     
     const today = new Date();
-    const due = new Date(dueDate);
+    // Handle both Firestore timestamp and regular Date objects
+    const due = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
     
     // Reset time to compare dates only
     today.setHours(0, 0, 0, 0);
@@ -27,7 +28,8 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
   const formatDueDate = (dueDate) => {
     if (!dueDate) return null;
     
-    const date = new Date(dueDate);
+    // Handle both Firestore timestamp and regular Date objects
+    const date = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
     const status = getDueDateStatus(dueDate);
     
     if (status === 'due-today') return 'Due Today';
@@ -41,18 +43,26 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
 
   const dueDateStatus = getDueDateStatus(mission.dueDate);
   const dueDateDisplay = formatDueDate(mission.dueDate);
+  
+  // Determine if mission is completed based on status or completed field
+  const isCompleted = mission.status === 'completed' || mission.completed;
 
   return (
-    <div className={`mission-card ${mission.completed ? 'completed' : ''}`}>
+    <div className={`mission-card ${isCompleted ? 'completed' : ''}`}>
       
       {/* Content area */}
       <div className="content-area" onClick={() => onViewDetails(mission)}>
         <div className="mission-header">
-          <h3 className={`mission-title ${mission.completed ? 'completed' : ''}`}>
+          <h3 className={`mission-title ${isCompleted ? 'completed' : ''}`}>
             {mission.title}
           </h3>
           <div className="badges">
             <DifficultyBadge difficulty={mission.difficulty} />
+            {mission.xpReward && (
+              <span className="xp-badge">
+                +{mission.xpReward} XP
+              </span>
+            )}
             {dueDateDisplay && (
               <span className={`due-date-badge ${dueDateStatus}`}>
                 {dueDateDisplay}
@@ -62,18 +72,20 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
         </div>
 
         <div className="mission-description">
-          <p>{mission.description}</p>
+          <p>{mission.description || 'No description'}</p>
         </div>
       </div>
 
       <button
         onClick={(e) => {
-          e.stopPropagation(); onToggleComplete(mission.id)}}
+          e.stopPropagation(); 
+          onToggleComplete(mission.id, isCompleted, mission.xpReward);
+        }}
         className="mission-toggle"
-        aria-label={mission.completed ? 'Mark as incomplete' : 'Mark as complete'}
+        aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
       >
         <svg 
-          className={`check-icon ${mission.completed ? 'completed' : ''}`}
+          className={`check-icon ${isCompleted ? 'completed' : ''}`}
           xmlns="http://www.w3.org/2000/svg" 
           height="24px" 
           viewBox="0 -960 960 960" 

@@ -8,7 +8,8 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
     if (!dueDate) return null;
     
     const today = new Date();
-    const due = new Date(dueDate);
+    // Handle both Firestore timestamp and regular Date objects
+    const due = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
     
     today.setHours(0, 0, 0, 0);
     due.setHours(0, 0, 0, 0);
@@ -24,7 +25,8 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
   const formatDueDate = (dueDate) => {
     if (!dueDate) return null;
     
-    const date = new Date(dueDate);
+    // Handle both Firestore timestamp and regular Date objects
+    const date = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
     const status = getDueDateStatus(dueDate);
     
     if (status === 'due-today') return 'Due Today';
@@ -40,7 +42,20 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
   const formatExpiryDate = (expiryDate) => {
     if (!expiryDate) return null;
     
-    const date = new Date(expiryDate);
+    // Handle both Firestore timestamp and regular Date objects
+    const date = expiryDate.toDate ? expiryDate.toDate() : new Date(expiryDate);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatCreatedDate = (createdAt) => {
+    if (!createdAt) return null;
+    
+    // Handle both Firestore timestamp and regular Date objects
+    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -51,6 +66,10 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
   const dueDateStatus = getDueDateStatus(mission.dueDate);
   const dueDateDisplay = formatDueDate(mission.dueDate);
   const expiryDisplay = formatExpiryDate(mission.expiryDate);
+  const createdDisplay = formatCreatedDate(mission.createdAt);
+  
+  // Determine if mission is completed based on status or completed field
+  const isCompleted = mission.status === 'completed' || mission.completed;
 
   return (
     <div className="mission-detail-overlay" onClick={onClose}>
@@ -91,13 +110,13 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
           
           {/* Title */}
           <div className="mission-title-section">
-            <h2 className={`mission-detail-title ${mission.completed ? 'completed' : ''}`}>
+            <h2 className={`mission-detail-title ${isCompleted ? 'completed' : ''}`}>
               {mission.title}
             </h2>
             
             {/* Description - directly below title */}
             <div className="mission-description">
-              <p>{mission.description}</p>
+              <p>{mission.description || 'No description provided'}</p>
             </div>
           </div>
 
@@ -105,8 +124,14 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
           <div className="mission-badges">
             <DifficultyBadge difficulty={mission.difficulty} />
             
+            {mission.xpReward && (
+              <span className="xp-reward-badge">
+                Reward: +{mission.xpReward} XP
+              </span>
+            )}
+            
             <span className="status-badge-inline">
-              Status: {mission.completed ? 'Completed' : 'Pending'}
+              Status: {isCompleted ? 'Completed' : 'Active'}
             </span>
             
             {dueDateDisplay && (
@@ -120,25 +145,45 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
                 Skill: {mission.skill}
               </span>
             )}
+
+            {mission.category && (
+              <span className="category-badge">
+                {mission.category}
+              </span>
+            )}
           </div>
 
-          {/* Mission Details - Only Expiry Date */}
-          {expiryDisplay && (
-            <div className="mission-details">
+          {/* Mission Details */}
+          <div className="mission-details">
+            {createdDisplay && (
+              <div className="detail-item">
+                <h4>Created</h4>
+                <p>{createdDisplay}</p>
+              </div>
+            )}
+            
+            {expiryDisplay && (
               <div className="detail-item">
                 <h4>Expires</h4>
                 <p>{expiryDisplay}</p>
               </div>
-            </div>
-          )}
+            )}
+
+            {isCompleted && mission.completedAt && (
+              <div className="detail-item">
+                <h4>Completed</h4>
+                <p>{formatCreatedDate(mission.completedAt)}</p>
+              </div>
+            )}
+          </div>
 
           {/* Action Button */}
           <div className="mission-actions">
             <button
-              onClick={() => onToggleComplete(mission.id)}
-              className={`action-button ${mission.completed ? 'mark-incomplete' : 'mark-complete'}`}
+              onClick={() => onToggleComplete(mission.id, isCompleted, mission.xpReward)}
+              className={`action-button ${isCompleted ? 'mark-incomplete' : 'mark-complete'}`}
             >
-              {mission.completed ? 'Mark as Incomplete' : 'Mark as Complete'}
+              {isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
             </button>
           </div>
         </div>
