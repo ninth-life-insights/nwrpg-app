@@ -11,7 +11,7 @@
 
         .character-header {
           text-align: center;
-          margin-bottom: var(--space-xl);
+          margin-bottom: var(--space-lg);
         }
 
         .character-title {
@@ -65,8 +65,7 @@
         }
 
         .auto-generate-section {
-            margin-top: var(--space-xl);
-            margin: var(--space-md);
+            margin: 30px var(--space-md) var(--space-md);
         }
 
         .auto-generate-btn {
@@ -86,9 +85,9 @@
         }
 
         .character-input {
-            width: 80%;
-  
+            width: 70%;
           padding: var(--space-md);
+          margin: var(--space-sm) var(--space-sm) var(--space-md);
           font-size: var(--font-size-base);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
@@ -182,6 +181,7 @@
           display: flex;
           justify-content: center;
           gap: var(--space-sm);
+          margin-bottom: var(--space-lg)
         }
 
         .class-dot {
@@ -295,7 +295,7 @@
           font-weight: 600;
           cursor: pointer;
           transition: var(--transition);
-          margin-top: var(--space-md);
+          margin-top: var(--space-sm);
         }
 
         .create-character-btn:hover {

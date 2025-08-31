@@ -46,30 +46,30 @@ const CharacterCreationPage = () => {
   const minSwipeDistance = 50;
 
   // Updated touch handlers for multi-card carousel
-const onTouchStart = (e) => {
-  setTouchEnd(null);
-  setTouchStart(e.targetTouches[0].clientX);
-};
+    const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    };
 
-const onTouchMove = (e) => {
-  setTouchEnd(e.targetTouches[0].clientX);
-};
+    const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+    };
 
-const onTouchEnd = () => {
-  if (!touchStart || !touchEnd) return;
-  
-  const distance = touchStart - touchEnd;
-  const isLeftSwipe = distance > minSwipeDistance;
-  const isRightSwipe = distance < -minSwipeDistance;
+    const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
 
-  if (isLeftSwipe && currentIndex < classes.length - 3) {
-    // Swipe left - move to next set of cards
-    setCurrentIndex(prev => Math.min(prev + 1, classes.length - 3));
-  } else if (isRightSwipe && currentIndex > 0) {
-    // Swipe right - move to previous set of cards
-    setCurrentIndex(prev => Math.max(prev - 1, 0));
-  }
-};
+    if (isLeftSwipe && currentIndex < classes.length - 3) {
+        // Swipe left - move to next set of cards
+        setCurrentIndex(prev => Math.min(prev + 1, classes.length - 3));
+    } else if (isRightSwipe && currentIndex > 0) {
+        // Swipe right - move to previous set of cards
+        setCurrentIndex(prev => Math.max(prev - 1, 0));
+    }
+    };
 
   const autoGenerate = () => {
     // Generate random title
@@ -195,9 +195,13 @@ const onTouchEnd = () => {
             </div>
 
             {/* Class dots indicator */}
+
+
+
             <div className="class-dots">
                 {classes.map((_, index) => (
                 <button
+                // TODO: Update for relevance to multiple visible scroll carousel
                     key={index}
                     type="button"
                     onClick={() => {
@@ -212,6 +216,7 @@ const onTouchEnd = () => {
             </div>
             </div>
 
+            {/* Color Select */}
           <label className="section-label">Appearance:</label>
           <div className="color-grid">
             {colors.map((color) => (
