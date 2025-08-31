@@ -344,6 +344,29 @@
   color: white;
 }
 
+/* Selection Mode Styles */
+.mission-list-selection-mode .mission-wrapper.selectable:hover {
+  transform: scale(1.02);
+}
+
+.mission-list-selection-mode .mission-wrapper.selected {
+  animation: selectedPulse 0.3s ease;
+}
+
+@keyframes selectedPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1.02); }
+}
+
+.mission-list-selection-mode .mission-card {
+  pointer-events: none; /* Prevent double-click handling */
+}
+
+.mission-list-selection-mode .mission-wrapper.selectable {
+  pointer-events: auto;
+}
+
 /* Mobile Responsive */
 @media (max-width: 640px) {
   .daily-missions-container {

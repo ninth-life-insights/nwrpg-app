@@ -61,7 +61,7 @@ const EditDailyMissionsPage = () => {
       <div className="daily-missions-header">
         <h1 className="page-title">Set Daily Missions</h1>
         <p className="page-subtitle">
-          Choose 3 missions to prioritize for today. Complete all 3 for bonus XP!
+          What are your three most important priorities for the day?
         </p>
       </div>
 
@@ -161,9 +161,11 @@ const EditDailyMissionsPage = () => {
               </button>
             </div>
             <MissionList 
-              selectionMode={true}
-              onMissionSelect={(mission) => handleMissionSelect(mission)}
-            />
+                selectionMode={true}
+                onMissionSelect={(mission) => handleMissionSelect(mission)}
+                selectedMissions={dailyMissions.filter(m => m !== null)}
+                maxSelections={3}
+                />
           </div>
         </div>
       )}
