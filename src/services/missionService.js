@@ -11,7 +11,7 @@ import {
   orderBy, 
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from './firebase/config';
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {

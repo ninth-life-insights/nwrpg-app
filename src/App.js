@@ -8,7 +8,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LogInPage';
 import SignupPage from './pages/SignupPage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
-import EditDailyMissionsPage from './pages.EditDailyMissionsPage';
+import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 
 {/* import MissionList from './components/missions/MissionList'; */}
 
