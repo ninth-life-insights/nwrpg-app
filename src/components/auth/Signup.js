@@ -16,6 +16,10 @@ export default function Signup() {
       const logInButtonClick = () => {
           navigate('/log-in');
       };
+      
+      const signUpButtonClick = () => {
+        navigate('/character-creation')
+      }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -98,6 +102,7 @@ export default function Signup() {
             type="submit" 
             disabled={loading}
             className="auth-button primary"
+            onClick={signUpButtonClick}
           >
             {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
