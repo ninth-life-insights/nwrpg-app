@@ -116,17 +116,29 @@
           margin-bottom: var(--space-md);
         }
 
-        .class-slides {
-          display: flex;
-          transition: var(--transition);
-          touch-action: pan-y;
-        }
+        
+.class-slides {
+  display: flex;
+  transition: var(--transition);
+  touch-action: pan-y;
+  /* Show 3 cards at once with slight overflow for ~2.8 cards visible */
+  width: calc(100% * (var(--total-classes) / 3));
+}
 
-        .class-slide {
-          min-width: 100%;
-          display: flex;
-          justify-content: center;
-        }
+.class-slide {
+  /* Each slide takes 1/3 of container width to show 3 at once */
+  min-width: calc(100% / 3);
+  display: flex;
+  justify-content: center;
+  padding: var(--space-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  box-sizing: border-box;
+}
+
+.class-slide:hover {
+  transform: scale(1.05);
+}
 
         .class-avatar-placeholder {
           width: 120px;
@@ -145,6 +157,26 @@
           font-weight: 600;
           color: var(--color-text-medium);
         }
+
+        /* Gradient overlays for fade effect */
+.gradient-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.gradient-left {
+  left: 0;
+  background: linear-gradient(to right, var(--color-bg-white), transparent);
+}
+
+.gradient-right {
+  right: 0;
+  background: linear-gradient(to left, var(--color-bg-white), transparent);
+}
 
         .class-dots {
           display: flex;

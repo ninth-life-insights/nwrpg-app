@@ -40,31 +40,36 @@ const CharacterCreationPage = () => {
     setSelectedClass(index);
   };
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   // Handle touch events for class carousel
   const minSwipeDistance = 50;
 
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
+  // Updated touch handlers for multi-card carousel
+const onTouchStart = (e) => {
+  setTouchEnd(null);
+  setTouchStart(e.targetTouches[0].clientX);
+};
 
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
+const onTouchMove = (e) => {
+  setTouchEnd(e.targetTouches[0].clientX);
+};
 
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+const onTouchEnd = () => {
+  if (!touchStart || !touchEnd) return;
+  
+  const distance = touchStart - touchEnd;
+  const isLeftSwipe = distance > minSwipeDistance;
+  const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe) {
-      nextClass();
-    } else if (isRightSwipe) {
-      prevClass();
-    }
-  };
+  if (isLeftSwipe && currentIndex < classes.length - 3) {
+    // Swipe left - move to next set of cards
+    setCurrentIndex(prev => Math.min(prev + 1, classes.length - 3));
+  } else if (isRightSwipe && currentIndex > 0) {
+    // Swipe right - move to previous set of cards
+    setCurrentIndex(prev => Math.max(prev - 1, 0));
+  }
+};
 
   const autoGenerate = () => {
     // Generate random title
@@ -162,38 +167,50 @@ const CharacterCreationPage = () => {
           />
 
           <label className="section-label">Class:</label>
-          <div 
+            <div 
             className="class-carousel"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
-          >
+            >
             <div className="class-container">
-              <div className="class-slides" style={{
-                transform: `translateX(-${selectedClass * 100}%)`
-              }}>
+                <div className="class-slides" style={{
+                transform: `translateX(-${currentIndex * (100 / 3)}%)`
+                }}>
                 {classes.map((className, index) => (
-                  <div key={index} className="class-slide">
+                    <div 
+                    key={index} 
+                    className={`class-slide ${index === selectedClass ? 'selected' : ''}`}
+                    onClick={() => setSelectedClass(index)}
+                    >
                     <div className="class-avatar-placeholder">
-                      <span className="class-name">{className}</span>
+                        <span className="class-name">{className}</span>
                     </div>
-                  </div>
+                    </div>
                 ))}
-              </div>
+                </div>
+                {/* Gradient overlays for fade effect */}
+                <div className="gradient-overlay gradient-left"></div>
+                <div className="gradient-overlay gradient-right"></div>
             </div>
 
             {/* Class dots indicator */}
             <div className="class-dots">
-              {classes.map((_, index) => (
+                {classes.map((_, index) => (
                 <button
-                  key={index}
-                  type="button"
-                  onClick={() => goToClass(index)}
-                  className={`class-dot ${index === selectedClass ? 'active' : 'inactive'}`}
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                    setSelectedClass(index);
+                    // Auto-scroll to show selected item if it's not visible
+                    const newIndex = Math.max(0, Math.min(index - 1, classes.length - 3));
+                    setCurrentIndex(newIndex);
+                    }}
+                    className={`class-dot ${index === selectedClass ? 'active' : 'inactive'}`}
                 />
-              ))}
+                ))}
             </div>
-          </div>
+            </div>
 
           <label className="section-label">Appearance:</label>
           <div className="color-grid">
