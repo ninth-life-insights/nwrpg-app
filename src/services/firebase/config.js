@@ -4,12 +4,13 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.REACT_APP_FIREBASE_APP_ID
+  apiKey: "AIzaSyDHPunycrzFRCRVw5xM-yZ7Ul6MnzgfgP8",
+  authDomain: "nwrpg-app.firebaseapp.com",
+  projectId: "nwrpg-app",
+  storageBucket: "nwrpg-app.firebasestorage.app",
+  messagingSenderId: "230659620839",
+  appId: "1:230659620839:web:4037f1f42528f6c67a8742",
+  measurementId: "G-C97P4Z86NG"
 };
 
 // Initialize Firebase

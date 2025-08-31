@@ -1,6 +1,6 @@
 // services/userService.js
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from './firebase/config';
 
 // Create initial user profile (call this when user signs up)
 export const createUserProfile = async (userId, email) => {
