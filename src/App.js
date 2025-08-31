@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LogInPage';
 import SignupPage from './pages/SignupPage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
+import EditDailyMissionsPage from './pages.EditDailyMissionsPage';
 
 {/* import MissionList from './components/missions/MissionList'; */}
 
@@ -27,6 +28,7 @@ function AppContent() {
         <Route path="/log-in" element={<LoginPage />} />
         <Route path="/sign-up" element={<SignupPage />} />
         <Route path="/character-creation" element={<CharacterCreationPage />} />
+        <Route path="/edit-daily-missions" element={<EditDailyMissionsPage />} />
         {/*<LandingPage/>*/}
        {/*<MissionList/>*/}
   
