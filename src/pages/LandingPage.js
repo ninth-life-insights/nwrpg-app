@@ -11,6 +11,10 @@ const LandingPage = () => {
         navigate('/log-in');
     };
 
+    const signUpButtonClick = () => {
+        navigate('/sign-up');
+    }
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -123,10 +127,7 @@ const LandingPage = () => {
 
       <div className="actions-container">
         <button className="primary-button"
-        onClick={() => {
-          // TODO: Navigate to signup flow
-          console.log('Navigate to signup');
-        }}
+        onClick={signUpButtonClick}
         >
           Begin the Journey
         </button>
