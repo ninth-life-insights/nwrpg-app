@@ -126,7 +126,7 @@ const CharacterCreationPage = () => {
     <div className="character-creation-container">
       <header className="character-header">
         <h1 className="character-title">Create Your Character</h1>
-        <p className="character-subtitle">Design the hero of your daily adventure</p>
+        <p className="character-subtitle">Every adventuring party needs a leader, and you're just the mom for the job!</p>
         
         {/* Auto-Generate Button */}
         <div className="auto-generate-section">
@@ -136,9 +136,8 @@ const CharacterCreationPage = () => {
             className="auto-generate-btn"
             title="Auto-generate character"
           >
-            🎲
+            🎲 Auto-Generate
           </button>
-          <span className="auto-generate-label">Auto-generate</span>
         </div>
       </header>
 
@@ -151,7 +150,7 @@ const CharacterCreationPage = () => {
       <div className="character-form">
         {/* Name Field */}
         <div className="form-section">
-          <label htmlFor="name" className="section-label">Your Name</label>
+          <label htmlFor="name" className="section-label">Name:</label>
           <input
             id="name"
             type="text"
@@ -161,21 +160,7 @@ const CharacterCreationPage = () => {
             className="character-input"
             placeholder="Enter your name"
           />
-        </div>
-
-        {/* Title Field with Auto-Generate */}
-        <div className="form-section">
-          <div className="section-header">
-            <label htmlFor="title" className="section-label">Your Title</label>
-            <button 
-              type="button"
-              onClick={autoGenerate}
-              className="auto-generate-btn"
-              title="Auto-generate character"
-            >
-              🎲
-            </button>
-          </div>
+    <label htmlFor="name" className="section-label">Title:</label>
           <input
             id="title"
             type="text"
@@ -238,24 +223,6 @@ const CharacterCreationPage = () => {
                 title={color.name}
               />
             ))}
-          </div>
-        </div>
-
-        {/* Character Preview */}
-        <div className="character-preview">
-          <h3 className="preview-title">Character Preview</h3>
-          <div className="preview-card" style={{
-            borderColor: colors.find(c => c.name === selectedColor)?.value
-          }}>
-            <div className="preview-avatar" style={{
-              backgroundColor: colors.find(c => c.name === selectedColor)?.value + '20'
-            }}>
-              <span className="preview-class">{classes[selectedClass]}</span>
-            </div>
-            <div className="preview-info">
-              <p className="preview-name">{name || 'Your Name'}</p>
-              <p className="preview-title-text">{title || 'Your Title'}</p>
-            </div>
           </div>
         </div>
 

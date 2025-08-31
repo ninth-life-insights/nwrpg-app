@@ -53,7 +53,13 @@
           font-weight: 600;
           color: var(--color-text-dark);
           margin-bottom: var(--space-sm);
-          display: block;
+          display: inline;
+        }
+
+        .auto-generate-section {
+            margin: auto;
+            align-items: center;
+            flex-direction: column;
         }
 
         .auto-generate-btn {
@@ -85,6 +91,7 @@
           color: var(--color-text-dark);
           transition: var(--transition);
           box-sizing: border-box;
+          display: inline;
         }
 
         .character-input:focus {
