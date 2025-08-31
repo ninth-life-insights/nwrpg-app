@@ -61,7 +61,7 @@ const EditDailyMissionsPage = () => {
       <div className="daily-missions-header">
         <h1 className="page-title">Set Daily Missions</h1>
         <p className="page-subtitle">
-          What are your three most important priorities for the day?
+          Choose 3 missions to prioritize for today. Complete all 3 for bonus XP!
         </p>
       </div>
 
@@ -76,9 +76,11 @@ const EditDailyMissionsPage = () => {
                   <h3 className="mission-title">{mission.title}</h3>
                   <p className="mission-description">{mission.description}</p>
                   <div className="mission-badges">
-                    <span className="xp-badge">+{mission.xpReward || 50} XP</span>
                     {mission.skill && (
                       <span className="skill-badge">{mission.skill}</span>
+                    )}
+                    {mission.dueDate && (
+                      <span className="due-date-badge">Due: {new Date(mission.dueDate.seconds * 1000).toLocaleDateString()}</span>
                     )}
                   </div>
                 </div>
@@ -87,7 +89,7 @@ const EditDailyMissionsPage = () => {
                   onClick={() => handleRemoveMission(index)}
                   title="Remove mission"
                 >
-                  ×
+                  −
                 </button>
               </div>
             ) : (
@@ -102,7 +104,7 @@ const EditDailyMissionsPage = () => {
         ))}
       </div>
 
-      {/* Action Buttons */}
+       {/* Action Buttons */}
       <div className="action-buttons">
         <button 
           className="action-btn secondary"
