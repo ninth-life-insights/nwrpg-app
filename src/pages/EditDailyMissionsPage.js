@@ -61,7 +61,7 @@ const EditDailyMissionsPage = () => {
       <div className="daily-missions-header">
         <h1 className="page-title">Set Daily Missions</h1>
         <p className="page-subtitle">
-          Choose 3 missions to prioritize for today. Complete all 3 for bonus XP!
+          What are your three most important priorities for the day?
         </p>
       </div>
 
@@ -95,7 +95,6 @@ const EditDailyMissionsPage = () => {
               <div className="mission-slot-empty">
                 <div className="slot-placeholder">
                   <div className="slot-number">{index + 1}</div>
-                  <p className="slot-text">Mission Slot {index + 1}</p>
                 </div>
               </div>
             )}
