@@ -6,6 +6,7 @@ import './App.css';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LogInPage';
+import SignupPage from './pages/SignupPage';
 
 {/* import MissionList from './components/missions/MissionList'; */}
 
@@ -23,6 +24,7 @@ function AppContent() {
       {/*<button onClick={logout}>Logout</button>*/}
       <Route path="/" element={<LandingPage />} />
         <Route path="/log-in" element={<LoginPage />} />
+        <Route path="/sign-up" element={<SignupPage />} />
         {/*<LandingPage/>*/}
        {/*<MissionList/>*/}
   

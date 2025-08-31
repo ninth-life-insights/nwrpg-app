@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 
 export default function Signup() {
@@ -9,6 +10,12 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
+
+  const navigate = useNavigate();
+  
+      const logInButtonClick = () => {
+          navigate('/log-in');
+      };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -37,8 +44,8 @@ export default function Signup() {
     <div className="auth-container">
       <div className="auth-card">
         <header className="auth-header">
-          <h1 className="auth-title">Create Your Account</h1>
-          <p className="auth-subtitle">Get started on your parenting adventure</p>
+          <h1 className="auth-title">Create New Account</h1>
+          <p className="auth-subtitle">Get started on your motherhood adventure</p>
         </header>
         
         {error && (
@@ -99,10 +106,7 @@ export default function Signup() {
         <div className="auth-footer">
           <span className="footer-text">Already have an account? </span>
           <button 
-            onClick={() => {
-              // TODO: Navigate to login page
-              console.log('Navigate to login');
-            }}
+            onClick={logInButtonClick}
             className="auth-button secondary"
           >
             Log in
