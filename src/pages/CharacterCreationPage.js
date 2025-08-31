@@ -127,18 +127,6 @@ const CharacterCreationPage = () => {
       <header className="character-header">
         <h1 className="character-title">Create Your Character</h1>
         <p className="character-subtitle">Every adventuring party needs a leader, and you're just the mom for the job!</p>
-        
-        {/* Auto-Generate Button */}
-        <div className="auto-generate-section">
-          <button 
-            type="button"
-            onClick={autoGenerate}
-            className="auto-generate-btn"
-            title="Auto-generate character"
-          >
-            🎲 Auto-Generate
-          </button>
-        </div>
       </header>
 
       {error && (
@@ -150,6 +138,7 @@ const CharacterCreationPage = () => {
       <div className="character-form">
         {/* Name Field */}
         <div className="form-section">
+            <div className="form-grouping">
           <label htmlFor="name" className="section-label">Name:</label>
           <input
             id="name"
@@ -160,6 +149,7 @@ const CharacterCreationPage = () => {
             className="character-input"
             placeholder="Enter your name"
           />
+          </div>
     <label htmlFor="name" className="section-label">Title:</label>
           <input
             id="title"
@@ -170,11 +160,8 @@ const CharacterCreationPage = () => {
             className="character-input"
             placeholder="Enter your RPG title"
           />
-        </div>
 
-        {/* Class Selection */}
-        <div className="form-section">
-          <label className="section-label">Choose Your Class</label>
+          <label className="section-label">Class:</label>
           <div 
             className="class-carousel"
             onTouchStart={onTouchStart}
@@ -207,11 +194,8 @@ const CharacterCreationPage = () => {
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Color Selection */}
-        <div className="form-section">
-          <label className="section-label">Choose Your Color</label>
+          <label className="section-label">Appearance:</label>
           <div className="color-grid">
             {colors.map((color) => (
               <button
@@ -220,10 +204,22 @@ const CharacterCreationPage = () => {
                 onClick={() => setSelectedColor(color.name)}
                 className={`color-option ${selectedColor === color.name ? 'selected' : ''}`}
                 style={{ backgroundColor: color.value }}
-                title={color.name}
+
               />
             ))}
           </div>
+          
+          {/* Auto-Generate Button */}
+        <div className="auto-generate-section">
+          <button 
+            type="button"
+            onClick={autoGenerate}
+            className="auto-generate-btn"
+            title="Auto-generate character"
+          >
+            🎲 Auto-Generate
+          </button>
+        </div>
         </div>
 
         {/* Submit Button */}
