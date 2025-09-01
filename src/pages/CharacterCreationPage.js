@@ -86,8 +86,10 @@ const CharacterCreationPage = () => {
     setSelectedColor(randomColor.name);
   };
 
+  const navigate = useNavigate();
+
   const navigateToHome = () => {
-    useNavigate('/home');
+    navigate('/home');
   };
 
   const handleSubmit = async () => {
@@ -121,7 +123,7 @@ const CharacterCreationPage = () => {
         updatedAt: new Date()
       }, { merge: true });
 
-      navigateToHome;
+      navigateToHome();
 
       console.log('Character created successfully:', characterData);
       // TODO: Navigate to next onboarding step
