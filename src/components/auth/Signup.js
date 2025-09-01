@@ -16,10 +16,6 @@ export default function Signup() {
       const logInButtonClick = () => {
           navigate('/log-in');
       };
-      
-      const signUpButtonClick = () => {
-        navigate('/character-creation')
-      }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -36,6 +32,7 @@ export default function Signup() {
       setError('');
       setLoading(true);
       await signup(email, password);
+      navigate('/character-creation');
     } catch (error) {
       setError('Failed to create account. Please try again.');
       console.error('Signup error:', error);
@@ -98,7 +95,6 @@ export default function Signup() {
             type="submit" 
             disabled={loading}
             className="auth-button primary"
-            onClick={signUpButtonClick}
           >
             {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
