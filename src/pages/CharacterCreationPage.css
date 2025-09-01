@@ -1,5 +1,66 @@
 
 
+/* temp */
+.class-avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  background: var(--color-border);
+  border: 2px dashed var(--color-text-light);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.class-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--radius-md) - 2px);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.class-name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.9);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.class-name.with-avatar {
+  position: absolute;
+  bottom: var(--space-sm);
+  font-size: var(--font-size-base);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Selected state styling for better visual hierarchy */
+.class-slide.selected .class-avatar-placeholder {
+  border-color: var(--color-primary);
+  border-style: solid;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.class-slide.selected .class-name {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+
+
+
 .character-creation-container {
           min-height: 100vh;
           background: var(--color-bg-main);

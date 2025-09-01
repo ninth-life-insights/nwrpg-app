@@ -7,17 +7,20 @@ import './CharacterCreationPage.css';
 
 import { PARTY_LEADER_TITLES } from '../data/partyLeaderTitles';
 
+
 const CharacterCreationPage = () => {
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
   const [selectedClass, setSelectedClass] = useState(0);
   const [selectedColor, setSelectedColor] = useState('blue');
   const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   const { currentUser } = useAuth();
+
+  // test
 
   const classes = ['Knight', 'Sorceress', 'Storm Tamer', "l'Artiste"];
   const colors = [
@@ -27,6 +30,16 @@ const CharacterCreationPage = () => {
     { name: 'pink', value: '#ec4899' },
     { name: 'red', value: '#ef4444' }
   ];
+
+  // Helper function to get the appropriate avatar image for Sorceress class
+  const getSorceressAvatar = (colorName) => {
+    return `/assets/Avatars/Party-Leader/Sorceress/sorceress-${colorName}.png`;
+  };
+
+  // Helper function to check if current selection is Sorceress
+  const isSorceressSelected = () => {
+    return selectedClass === 1; // Sorceress is at index 1 in the classes array
+  };
 
   const nextClass = () => {
     setSelectedClass((prev) => (prev + 1) % classes.length);
@@ -155,7 +168,7 @@ const CharacterCreationPage = () => {
             placeholder="Enter your name"
           />
           </div>
-    <label htmlFor="name" className="section-label">Title:</label>
+    <label htmlFor="title" className="section-label">Title:</label>
           <input
             id="title"
             type="text"
@@ -184,7 +197,22 @@ const CharacterCreationPage = () => {
                     onClick={() => setSelectedClass(index)}
                     >
                     <div className="class-avatar-placeholder">
-                        <span className="class-name">{className}</span>
+                        {/* Show Sorceress avatar if this is Sorceress class AND it's selected */}
+                        {className === 'Sorceress' && index === selectedClass ? (
+                          <img 
+                            src={getSorceressAvatar(selectedColor)}
+                            alt={`${className} ${selectedColor}`}
+                            className="class-avatar-image"
+                            onError={(e) => {
+                              // Fallback to placeholder if image fails to load
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'block';
+                            }}
+                          />
+                        ) : null}
+                        <span className={`class-name ${className === 'Sorceress' && index === selectedClass ? 'with-avatar' : ''}`}>
+                          {className}
+                        </span>
                     </div>
                     </div>
                 ))}
@@ -195,9 +223,6 @@ const CharacterCreationPage = () => {
             </div>
 
             {/* Class dots indicator */}
-
-
-
             <div className="class-dots">
                 {classes.map((_, index) => (
                 <button
@@ -226,7 +251,6 @@ const CharacterCreationPage = () => {
                 onClick={() => setSelectedColor(color.name)}
                 className={`color-option ${selectedColor === color.name ? 'selected' : ''}`}
                 style={{ backgroundColor: color.value }}
-
               />
             ))}
           </div>
