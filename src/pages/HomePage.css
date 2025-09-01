@@ -21,17 +21,17 @@
 
 /* Header */
 .homepage-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr 60px;
   gap: var(--space-sm);
+  align-items: center;
 }
 
 .header-button {
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-xs);
   cursor: pointer;
   transition: var(--transition);
   font-size: var(--font-size-sm);
@@ -40,9 +40,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  flex: 1;
   justify-content: center;
-  min-height: 48px;
+  min-height: 44px;
 }
 
 .header-button:hover {
@@ -53,12 +52,15 @@
 
 .header-button svg {
   color: var(--color-text-medium);
+  width: 18px;
+  height: 18px;
 }
 
 .settings-button {
-  flex: none;
-  width: 48px;
+  width: 44px;
+  height: 44px;
   justify-content: center;
+  padding: var(--space-xs);
 }
 
 .settings-button svg {
