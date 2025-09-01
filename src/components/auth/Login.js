@@ -34,13 +34,9 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-container">
+    <div >
       <div className="auth-card">
-        <header className="auth-header">
-          <h1 className="auth-title">Welcome Back, Adventurer</h1>
-          <p className="auth-subtitle">Continue your journey where you left off</p>
-        </header>
-        
+
         {error && (
           <div className="error-message">
             {error}
