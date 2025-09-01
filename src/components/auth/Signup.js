@@ -45,12 +45,8 @@ export default function Signup() {
   }
 
   return (
-    <div className="auth-container">
       <div className="auth-card">
-        <header className="auth-header">
-          <h1 className="auth-title">Create New Account</h1>
-          <p className="auth-subtitle">Get started on your motherhood adventure</p>
-        </header>
+ 
         
         {error && (
           <div className="error-message">
@@ -118,6 +114,5 @@ export default function Signup() {
           </button>
         </div>
       </div>
-    </div>
   );
 }
