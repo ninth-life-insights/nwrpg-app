@@ -73,14 +73,14 @@
   background: var(--color-bg-white);
   border: 2px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
-  padding: var(--space-lg);
+  padding: var(--space-md);
   box-shadow: var(--shadow-card);
 }
 
 .profile-content {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
 }
 
 .avatar-container {
@@ -88,8 +88,8 @@
 }
 
 .character-avatar {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -97,9 +97,17 @@
   background: var(--color-primary);
   color: white;
   font-weight: 600;
-  font-size: var(--font-size-sm);
+  font-size: 11px;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.1;
+}
+
+.character-avatar-image {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  display: block;
 }
 
 .avatar-class {
@@ -107,6 +115,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding: var(--space-xs);
 }
 
 .profile-info {
@@ -115,26 +124,27 @@
 }
 
 .character-name {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-text-dark);
   margin: 0 0 var(--space-xs) 0;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .character-title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   color: var(--color-text-medium);
-  margin: 0 0 var(--space-md) 0;
+  margin: 0 0 var(--space-sm) 0;
   font-style: italic;
+  line-height: 1.3;
 }
 
 .level-info {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
 }
 
 .current-level {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-dark);
 }
@@ -147,21 +157,21 @@
 
 .xp-bar {
   width: 100%;
-  height: 12px;
+  height: 8px;
   background: var(--color-border);
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .xp-progress {
   height: 100%;
   background: linear-gradient(90deg, #10b981, #34d399);
-  border-radius: 6px;
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
 .xp-counter {
-  font-size: var(--font-size-sm);
+  font-size: 11px;
   color: var(--color-text-medium);
   font-weight: 500;
 }
@@ -171,7 +181,7 @@
   background: var(--color-bg-white);
   border: 2px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
-  padding: var(--space-lg);
+  padding: var(--space-md);
   box-shadow: var(--shadow-card);
 }
 
@@ -179,11 +189,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .section-title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-text-dark);
   margin: 0;
@@ -193,10 +203,15 @@
   background: none;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: var(--space-sm);
+  padding: var(--space-xs);
   cursor: pointer;
   transition: var(--transition);
   color: var(--color-text-medium);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .edit-button:hover {
@@ -207,17 +222,17 @@
 .missions-overview {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
 }
 
 .mission-item {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  gap: var(--space-sm);
+  padding: var(--space-sm);
   background: #f9fafb;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   transition: var(--transition);
 }
 
@@ -227,8 +242,8 @@
 }
 
 .mission-checkbox {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   display: flex;
@@ -244,17 +259,23 @@
   color: white;
 }
 
+.mission-checkbox svg {
+  width: 10px;
+  height: 10px;
+}
+
 .checkbox-empty {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
 }
 
 .mission-title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   color: var(--color-text-dark);
   font-weight: 500;
   flex: 1;
+  line-height: 1.3;
 }
 
 .mission-item.completed .mission-title {
@@ -262,10 +283,29 @@
   color: var(--color-text-light);
 }
 
+.no-missions {
+  text-align: center;
+  padding: var(--space-lg);
+  background: #f9fafb;
+  border-radius: var(--radius-md);
+  color: var(--color-text-medium);
+}
+
+.no-missions p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.no-missions p:first-child {
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
 /* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .action-button {
@@ -274,21 +314,26 @@
   color: white;
   border: none;
   border-radius: var(--radius-md);
-  padding: var(--space-lg);
-  font-size: var(--font-size-base);
+  padding: var(--space-sm) var(--space-xs);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  min-height: 48px;
+  gap: var(--space-xs);
+  min-height: 40px;
 }
 
 .action-button:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-hover);
+}
+
+.action-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .action-button.primary {
@@ -310,40 +355,7 @@
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .homepage-container {
-    padding: var(--space-md);
-  }
-  
-  .homepage-header {
-    flex-direction: column;
+    padding: var(--space-sm);
     gap: var(--space-md);
-  }
-  
-  .header-button {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .settings-button {
-    width: 100%;
-  }
-  
-  .profile-content {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--space-md);
-  }
-  
-  .profile-info {
-    width: 100%;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    gap: var(--space-sm);
-    align-items: flex-start;
   }
 }

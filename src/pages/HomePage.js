@@ -1,41 +1,90 @@
 // src/pages/HomePage.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import './HomePage.css';
 
 const HomePage = () => {
   const { currentUser } = useAuth();
   const [character, setCharacter] = useState(null);
+  const [dailyMissions, setDailyMissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Color mapping from character creation
+  const colorMap = {
+    blue: '#3b82f6',
+    green: '#10b981', 
+    purple: '#8b5cf6',
+    pink: '#ec4899',
+    red: '#ef4444'
+  };
+
+  // Helper function to get avatar image path
+  const getAvatarImage = (characterClass, color) => {
+    if (!characterClass || !color) return null;
+    
+    // Convert class name to filename format
+    const classMap = {
+      'Knight': 'knight',
+      'Sorceress': 'sorceress', 
+      'Storm Tamer': 'storm-tamer',
+      "l'Artiste": 'artiste'
+    };
+    
+    const className = classMap[characterClass] || 'knight';
+    return `/assets/Avatars/Party-Leader/Sorceress/char-preview/${className}-${color}.png`;
+  };
+
+  // Check if image exists (for fallback handling)
+  const [imageError, setImageError] = useState({});
+  
+  const handleImageError = (characterClass, color) => {
+    const key = `${characterClass}-${color}`;
+    setImageError(prev => ({ ...prev, [key]: true }));
+  };
+
   useEffect(() => {
-    const fetchCharacterData = async () => {
+    const fetchUserData = async () => {
       if (!currentUser) return;
       
       try {
+        // Fetch character data
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setCharacter(userData.character);
         }
+
+        // Fetch daily missions
+        const missionsRef = collection(db, 'users', currentUser.uid, 'missions');
+        const dailyMissionsQuery = query(
+          missionsRef,
+          where('isDailyMission', '==', true),
+          orderBy('createdAt', 'desc')
+        );
+        
+        const missionsSnapshot = await getDocs(dailyMissionsQuery);
+        const missions = missionsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          completed: doc.data().status === 'completed'
+        }));
+        
+        // Limit to 3 most recent daily missions
+        setDailyMissions(missions.slice(0, 3));
+        
       } catch (error) {
-        console.error('Error fetching character data:', error);
+        console.error('Error fetching user data:', error);
+        // If no daily missions exist, show empty state or create default ones
+        setDailyMissions([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCharacterData();
+    fetchUserData();
   }, [currentUser]);
-
-  // Mock data for daily missions (replace with real data later)
-  const dailyMissions = [
-    { id: 1, title: "Complete morning laundry cycle", completed: false },
-    { id: 2, title: "10-minute morning meditation", completed: true },
-    { id: 3, title: "Take vitamins and supplements", completed: false }
-  ];
 
   // Calculate current XP and level progress
   const getXPForLevel = (level) => level * 100; // Simple formula
@@ -89,14 +138,34 @@ const HomePage = () => {
       <section className="profile-section">
         <div className="profile-content">
           <div className="avatar-container">
-            <div 
-              className="character-avatar" 
-              style={{ 
-                backgroundColor: character?.color ? `var(--color-${character.color})` : '#3b82f6' 
-              }}
-            >
-              <span className="avatar-class">{character?.class || 'Adventurer'}</span>
-            </div>
+            {(() => {
+              const avatarImage = getAvatarImage(character?.class, character?.color);
+              const imageKey = `${character?.class}-${character?.color}`;
+              const hasImageError = imageError[imageKey];
+              
+              if (avatarImage && !hasImageError) {
+                return (
+                  <img 
+                    src={avatarImage}
+                    alt={`${character?.class} avatar`}
+                    className="character-avatar-image"
+                    onError={() => handleImageError(character?.class, character?.color)}
+                  />
+                );
+              } else {
+                // Fallback to colored background with class name
+                return (
+                  <div 
+                    className="character-avatar" 
+                    style={{ 
+                      backgroundColor: character?.color ? colorMap[character.color] : colorMap.blue
+                    }}
+                  >
+                    <span className="avatar-class">{character?.class || 'Adventurer'}</span>
+                  </div>
+                );
+              }
+            })()}
           </div>
           
           <div className="profile-info">
@@ -123,7 +192,7 @@ const HomePage = () => {
       {/* Daily Missions Section */}
       <section className="daily-missions-section">
         <div className="section-header">
-          <h3 className="section-title">Daily Mission</h3>
+          <h3 className="section-title">Daily Missions</h3>
           <button className="edit-button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -133,20 +202,27 @@ const HomePage = () => {
         </div>
         
         <div className="missions-overview">
-          {dailyMissions.map((mission) => (
-            <div key={mission.id} className={`mission-item ${mission.completed ? 'completed' : ''}`}>
-              <div className="mission-checkbox">
-                {mission.completed ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="9,11 12,14 22,4"/>
-                  </svg>
-                ) : (
-                  <div className="checkbox-empty"></div>
-                )}
+          {dailyMissions.length > 0 ? (
+            dailyMissions.map((mission) => (
+              <div key={mission.id} className={`mission-item ${mission.completed ? 'completed' : ''}`}>
+                <div className="mission-checkbox">
+                  {mission.completed ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="9,11 12,14 22,4"/>
+                    </svg>
+                  ) : (
+                    <div className="checkbox-empty"></div>
+                  )}
+                </div>
+                <span className="mission-title">{mission.title}</span>
               </div>
-              <span className="mission-title">{mission.title}</span>
+            ))
+          ) : (
+            <div className="no-missions">
+              <p>No daily missions set up yet.</p>
+              <p>Use the edit button to create your daily routine!</p>
             </div>
-          ))}
+          )}
         </div>
 
         <div className="action-buttons">
