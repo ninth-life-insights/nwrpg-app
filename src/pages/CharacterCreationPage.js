@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../services/firebase/config';
+import { useNavigate } from 'react-router-dom';
 
 import './CharacterCreationPage.css';
 
 import { PARTY_LEADER_TITLES } from '../data/partyLeaderTitles';
-
 
 const CharacterCreationPage = () => {
   const [name, setName] = useState('');
@@ -14,13 +14,11 @@ const CharacterCreationPage = () => {
   const [selectedClass, setSelectedClass] = useState(0);
   const [selectedColor, setSelectedColor] = useState('blue');
   const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null); 
+  const [touchEnd, setTouchEnd] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   const { currentUser } = useAuth();
-
-  // test
 
   const classes = ['Knight', 'Sorceress', 'Storm Tamer', "l'Artiste"];
   const colors = [
@@ -30,16 +28,6 @@ const CharacterCreationPage = () => {
     { name: 'pink', value: '#ec4899' },
     { name: 'red', value: '#ef4444' }
   ];
-
-  // Helper function to get the appropriate avatar image for Sorceress class
-  const getSorceressAvatar = (colorName) => {
-    return `/assets/Avatars/Party-Leader/Sorceress/char-preview/sorceress-${colorName}.png`;
-  };
-
-  // Helper function to check if current selection is Sorceress
-  const isSorceressSelected = () => {
-    return selectedClass === 1; // Sorceress is at index 1 in the classes array
-  };
 
   const nextClass = () => {
     setSelectedClass((prev) => (prev + 1) % classes.length);
@@ -53,8 +41,7 @@ const CharacterCreationPage = () => {
     setSelectedClass(index);
   };
 
-  // Start with Knight (index 0) centered - shift left by 1 position
-  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Handle touch events for class carousel
   const minSwipeDistance = 50;
@@ -76,15 +63,14 @@ const CharacterCreationPage = () => {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe && currentIndex < classes.length - 2) {
+    if (isLeftSwipe && currentIndex < classes.length - 3) {
         // Swipe left - move to next set of cards
-        setCurrentIndex(prev => Math.min(prev + 1, classes.length - 2));
-    } else if (isRightSwipe && currentIndex > -1) {
+        setCurrentIndex(prev => Math.min(prev + 1, classes.length - 3));
+    } else if (isRightSwipe && currentIndex > 0) {
         // Swipe right - move to previous set of cards
-        setCurrentIndex(prev => Math.max(prev - 1, -1));
+        setCurrentIndex(prev => Math.max(prev - 1, 0));
     }
     };
-
 
   const autoGenerate = () => {
     // Generate random title
@@ -98,6 +84,10 @@ const CharacterCreationPage = () => {
     // Generate random color
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     setSelectedColor(randomColor.name);
+  };
+
+  const navigateToHome = () => {
+    useNavigate('/home');
   };
 
   const handleSubmit = async () => {
@@ -130,6 +120,8 @@ const CharacterCreationPage = () => {
         onboardingCompleted: false,
         updatedAt: new Date()
       }, { merge: true });
+
+      navigateToHome;
 
       console.log('Character created successfully:', characterData);
       // TODO: Navigate to next onboarding step
@@ -170,7 +162,7 @@ const CharacterCreationPage = () => {
             placeholder="Enter your name"
           />
           </div>
-    <label htmlFor="title" className="section-label">Title:</label>
+    <label htmlFor="name" className="section-label">Title:</label>
           <input
             id="title"
             type="text"
@@ -198,32 +190,8 @@ const CharacterCreationPage = () => {
                     className={`class-slide ${index === selectedClass ? 'selected' : ''}`}
                     onClick={() => setSelectedClass(index)}
                     >
-                    <div className="class-card">
-                      <div className="class-avatar-placeholder">
-                        {/* Show Sorceress avatar if this is Sorceress class */}
-                        {className === 'Sorceress' ? (
-                          <img 
-                            src={getSorceressAvatar(selectedColor)}
-                            alt={`${className} ${selectedColor}`}
-                            className="class-avatar-image"
-                            onError={(e) => {
-                              // Fallback to placeholder text if image fails to load
-                              e.target.style.display = 'none';
-                              e.target.parentNode.querySelector('.class-avatar-placeholder-text').style.display = 'block';
-                            }}
-                          />
-                        ) : null}
-                        {/* Fallback text for non-Sorceress classes or failed image loads */}
-                        <span 
-                          className="class-avatar-placeholder-text" 
-                          style={{ display: className === 'Sorceress' ? 'none' : 'block' }}
-                        >
-                          {className === 'Sorceress' ? 'Image not found' : className}
-                        </span>
-                      </div>
-                      <span className="class-name">
-                        {className}
-                      </span>
+                    <div className="class-avatar-placeholder">
+                        <span className="class-name">{className}</span>
                     </div>
                     </div>
                 ))}
@@ -233,7 +201,10 @@ const CharacterCreationPage = () => {
                 <div className="gradient-overlay gradient-right"></div>
             </div>
 
-             {/* Class dots indicator */}
+            {/* Class dots indicator */}
+
+
+
             <div className="class-dots">
                 {classes.map((_, index) => (
                 <button
@@ -242,8 +213,8 @@ const CharacterCreationPage = () => {
                     type="button"
                     onClick={() => {
                     setSelectedClass(index);
-                    // Auto-scroll to center the selected item
-                    const newIndex = Math.max(-1, Math.min(index - 1, classes.length - 2));
+                    // Auto-scroll to show selected item if it's not visible
+                    const newIndex = Math.max(0, Math.min(index - 1, classes.length - 3));
                     setCurrentIndex(newIndex);
                     }}
                     className={`class-dot ${index === selectedClass ? 'active' : 'inactive'}`}
@@ -262,6 +233,7 @@ const CharacterCreationPage = () => {
                 onClick={() => setSelectedColor(color.name)}
                 className={`color-option ${selectedColor === color.name ? 'selected' : ''}`}
                 style={{ backgroundColor: color.value }}
+
               />
             ))}
           </div>
