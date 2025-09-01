@@ -33,7 +33,7 @@ const CharacterCreationPage = () => {
 
   // Helper function to get the appropriate avatar image for Sorceress class
   const getSorceressAvatar = (colorName) => {
-    return `/assets/Avatars/Party-Leader/Sorceress/sorceress-${colorName}.png`;
+    return `/assets/Avatars/Party-Leader/Sorceress/char-preview/sorceress-${colorName}.png`;
   };
 
   // Helper function to check if current selection is Sorceress
@@ -196,23 +196,32 @@ const CharacterCreationPage = () => {
                     className={`class-slide ${index === selectedClass ? 'selected' : ''}`}
                     onClick={() => setSelectedClass(index)}
                     >
-                    <div className="class-avatar-placeholder">
-                        {/* Show Sorceress avatar if this is Sorceress class AND it's selected */}
-                        {className === 'Sorceress' && index === selectedClass ? (
+                    <div className="class-card">
+                      <div className="class-avatar-placeholder">
+                        {/* Show Sorceress avatar if this is Sorceress class */}
+                        {className === 'Sorceress' ? (
                           <img 
                             src={getSorceressAvatar(selectedColor)}
                             alt={`${className} ${selectedColor}`}
                             className="class-avatar-image"
                             onError={(e) => {
-                              // Fallback to placeholder if image fails to load
+                              // Fallback to placeholder text if image fails to load
                               e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'block';
+                              e.target.parentNode.querySelector('.class-avatar-placeholder-text').style.display = 'block';
                             }}
                           />
                         ) : null}
-                        <span className={`class-name ${className === 'Sorceress' && index === selectedClass ? 'with-avatar' : ''}`}>
-                          {className}
+                        {/* Fallback text for non-Sorceress classes or failed image loads */}
+                        <span 
+                          className="class-avatar-placeholder-text" 
+                          style={{ display: className === 'Sorceress' ? 'none' : 'block' }}
+                        >
+                          {className === 'Sorceress' ? 'Image not found' : className}
                         </span>
+                      </div>
+                      <span className="class-name">
+                        {className}
+                      </span>
                     </div>
                     </div>
                 ))}
@@ -221,7 +230,7 @@ const CharacterCreationPage = () => {
                 <div className="gradient-overlay gradient-left"></div>
                 <div className="gradient-overlay gradient-right"></div>
             </div>
-
+            
             {/* Class dots indicator */}
             <div className="class-dots">
                 {classes.map((_, index) => (
