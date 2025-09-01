@@ -53,7 +53,8 @@ const CharacterCreationPage = () => {
     setSelectedClass(index);
   };
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Start with Knight (index 0) centered - shift left by 1 position
+  const [currentIndex, setCurrentIndex] = useState(-1);
 
   // Handle touch events for class carousel
   const minSwipeDistance = 50;
@@ -75,14 +76,15 @@ const CharacterCreationPage = () => {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe && currentIndex < classes.length - 3) {
+    if (isLeftSwipe && currentIndex < classes.length - 2) {
         // Swipe left - move to next set of cards
-        setCurrentIndex(prev => Math.min(prev + 1, classes.length - 3));
-    } else if (isRightSwipe && currentIndex > 0) {
+        setCurrentIndex(prev => Math.min(prev + 1, classes.length - 2));
+    } else if (isRightSwipe && currentIndex > -1) {
         // Swipe right - move to previous set of cards
-        setCurrentIndex(prev => Math.max(prev - 1, 0));
+        setCurrentIndex(prev => Math.max(prev - 1, -1));
     }
     };
+
 
   const autoGenerate = () => {
     // Generate random title
@@ -230,8 +232,8 @@ const CharacterCreationPage = () => {
                 <div className="gradient-overlay gradient-left"></div>
                 <div className="gradient-overlay gradient-right"></div>
             </div>
-            
-            {/* Class dots indicator */}
+
+             {/* Class dots indicator */}
             <div className="class-dots">
                 {classes.map((_, index) => (
                 <button
@@ -240,8 +242,8 @@ const CharacterCreationPage = () => {
                     type="button"
                     onClick={() => {
                     setSelectedClass(index);
-                    // Auto-scroll to show selected item if it's not visible
-                    const newIndex = Math.max(0, Math.min(index - 1, classes.length - 3));
+                    // Auto-scroll to center the selected item
+                    const newIndex = Math.max(-1, Math.min(index - 1, classes.length - 2));
                     setCurrentIndex(newIndex);
                     }}
                     className={`class-dot ${index === selectedClass ? 'active' : 'inactive'}`}
