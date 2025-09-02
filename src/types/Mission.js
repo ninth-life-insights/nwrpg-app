@@ -1,58 +1,46 @@
 // src/types/Mission.js
 
-/**
- * Mission completion types
- */
+/* Mission completion types */
 export const COMPLETION_TYPES = {
   SIMPLE: 'simple',     // Basic toggle completion
   TIMER: 'timer',       // Time-based missions (e.g., "meditate for 10 minutes")
   COUNT: 'count'        // Count-based missions (e.g., "drink 8 glasses of water")
 };
 
-/**
- * Mission status values
- */
+export const DUE_TYPES = {
+    UNIQUE: 'unique',
+    EVERGREEN: 'evergreen',
+    RECURRING: 'recurring',
+}
+
 export const MISSION_STATUS = {
   ACTIVE: 'active',
   COMPLETED: 'completed',
   EXPIRED: 'expired',
-  PAUSED: 'paused'      // For future use
 };
 
-/**
- * Mission difficulty levels
- */
+/* XP and SP */
 export const DIFFICULTY_LEVELS = {
   EASY: 'easy',
   MEDIUM: 'medium', 
   HARD: 'hard'
 };
 
-/**
- * Mission categories
- */
-export const MISSION_CATEGORIES = {
-  PERSONAL: 'personal',
-  HEALTH: 'health',
-  HOME: 'home',
-  WORK: 'work',
-  LEARNING: 'learning',
-  SOCIAL: 'social'
-};
-
-/**
- * XP reward mapping by difficulty
- */
 export const XP_REWARDS = {
   [DIFFICULTY_LEVELS.EASY]: 5,
   [DIFFICULTY_LEVELS.MEDIUM]: 10,
   [DIFFICULTY_LEVELS.HARD]: 20
 };
 
-/**
- * Complete mission data structure
- * This represents what should be stored in Firestore
- */
+export const SP_REWARDS = {
+    [DIFFICULTY_LEVELS.EASY]: 3,
+    [DIFFICULTY_LEVELS.MEDIUM]: 6,
+    [DIFFICULTY_LEVELS.HARD]: 12
+}
+
+
+
+/* Firestore mission data schema */
 export const MISSION_SCHEMA = {
   // Core identification
   id: null,                           // string - Firestore document ID
@@ -65,6 +53,8 @@ export const MISSION_SCHEMA = {
   // Difficulty and rewards
   difficulty: DIFFICULTY_LEVELS.EASY, // string - mission difficulty
   xpReward: null,                     // number - calculated based on difficulty/completion type
+  skill: null,                        // string | null - associated skill
+  spReward: null,
   
   // Timestamps (Firestore Timestamp objects)
   createdAt: null,                    // Timestamp - when mission was created
@@ -72,11 +62,10 @@ export const MISSION_SCHEMA = {
   dueDate: null,                      // Timestamp | null - optional due date
   expiryDate: null,                   // Timestamp | null - optional expiry
   completedAt: null,                  // Timestamp | null - when completed
-  
-  // Categorization
-  category: MISSION_CATEGORIES.PERSONAL, // string - mission category
-  skill: null,                        // string | null - associated skill
-  
+
+  // Repetition data
+  dueType: DUE_TYPES.UNIQUE,              // string - completion/due date type
+
   // Completion mechanics
   completionType: COMPLETION_TYPES.SIMPLE, // string - how mission is completed
   
@@ -90,15 +79,22 @@ export const MISSION_SCHEMA = {
   
   // RPG elements
   isDailyMission: false,              // boolean - is this a daily mission
+  quest: null,                        // object - if part of a quest
+  questID: null,                      // number - order in quest
+  forPartyMember: null,               // object - party member
+  byPartyMember: null,
+  baseLocation: null,
   
   // Future expansion fields
   tags: [],                           // array - for filtering/organization
   priority: 'normal',                 // string - 'low', 'normal', 'high'
-  estimatedMinutes: null,             // number | null - estimated time to complete
+  pinned: false,
   
   // Metadata
   version: 1                          // number - for future schema migrations
 };
+
+
 
 /**
  * Create a new mission object with default values
@@ -113,7 +109,9 @@ export const createMissionTemplate = (overrides = {}) => {
     xpReward: overrides.xpReward || calculateXPReward(
       overrides.difficulty || DIFFICULTY_LEVELS.EASY,
       overrides.completionType || COMPLETION_TYPES.SIMPLE
-    )
+    ),
+
+    spReward: overrides.spReward || calculateSPReward(difficulty, skill)
   };
 };
 
@@ -123,18 +121,18 @@ export const createMissionTemplate = (overrides = {}) => {
  * @param {string} completionType - How mission is completed
  * @returns {number} - XP reward amount
  */
-export const calculateXPReward = (difficulty, completionType) => {
-  let baseXP = XP_REWARDS[difficulty] || XP_REWARDS[DIFFICULTY_LEVELS.EASY];
+export const calculateXPReward = (difficulty) => {
+  let XP = XP_REWARDS[difficulty] || XP_REWARDS[DIFFICULTY_LEVELS.EASY];
   
-  // Bonus XP for more complex completion types
-  const completionMultiplier = {
-    [COMPLETION_TYPES.SIMPLE]: 1.0,
-    [COMPLETION_TYPES.TIMER]: 1.2,   // 20% bonus for timed missions
-    [COMPLETION_TYPES.COUNT]: 1.1    // 10% bonus for counted missions
-  };
-  
-  return Math.round(baseXP * (completionMultiplier[completionType] || 1.0));
+  return XP;
 };
+
+export const calculateSPReward = (difficulty, skill) => {
+    if (skill) {
+        return SP_REWARDS[difficulty] || SP_REWARDS[DIFFICULTY_LEVELS.EASY];
+    }
+    return null;
+}
 
 /**
  * Validate mission data structure
@@ -202,6 +200,87 @@ export const isMissionOverdue = (mission) => {
   const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
   
   return now > dueDate;
+};
+
+// check if mission is due today
+
+export const isMissionDueToday = (mission) => {
+  if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+    return false;
+  }
+  
+  const today = new Date();
+  // Handle both Firestore timestamp and regular Date objects
+  const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+  
+  // Reset time to compare dates only
+  today.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+  
+  return today.getTime() === dueDate.getTime();
+};
+
+/**
+ * Check if mission is due tomorrow
+ * @param {Object} mission - Mission object
+ * @returns {boolean} - True if mission is due tomorrow
+ */
+export const isMissionDueTomorrow = (mission) => {
+  if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+    return false;
+  }
+  
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  // Handle both Firestore timestamp and regular Date objects
+  const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+  
+  // Reset time to compare dates only
+  tomorrow.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+  
+  return tomorrow.getTime() === dueDate.getTime();
+};
+
+
+/**
+ * Get days until mission is due (useful for sorting)
+ * @param {Object} mission - Mission object
+ * @returns {number|null} - Number of days until due (negative if overdue), null if no due date
+ */
+export const getDaysUntilDue = (mission) => {
+  if (!mission.dueDate) {
+    return null;
+  }
+  
+  const today = new Date();
+  // Handle both Firestore timestamp and regular Date objects
+  const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+  
+  // Reset time to compare dates only
+  today.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+  
+  const diffTime = dueDate.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+
+// Check if mission has a skill
+export const hasSkill = (mission) => {
+  return mission.skill && 
+         typeof mission.skill === 'string' && 
+         mission.skill.trim().length > 0;
+};
+
+// Check if mission is part of a quest
+export const isQuestMission = (mission) => {
+  return mission.quest !== null || mission.questID !== null;
+};
+
+// Check if mission involves party members
+export const isPartyMission = (mission) => {
+  return mission.forPartyMember !== null || mission.byPartyMember !== null;
 };
 
 /**
