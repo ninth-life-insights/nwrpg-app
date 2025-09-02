@@ -1,6 +1,6 @@
 // src/types/Mission.js
 
-/* Mission completion types */
+// Mission completion and due dates
 export const COMPLETION_TYPES = {
   SIMPLE: 'simple',     // Basic toggle completion
   TIMER: 'timer',       // Time-based missions (e.g., "meditate for 10 minutes")
@@ -19,7 +19,7 @@ export const MISSION_STATUS = {
   EXPIRED: 'expired',
 };
 
-/* XP and SP */
+// XP and SP
 export const DIFFICULTY_LEVELS = {
   EASY: 'easy',
   MEDIUM: 'medium', 
@@ -40,7 +40,7 @@ export const SP_REWARDS = {
 
 
 
-/* Firestore mission data schema */
+// Firestore mission data schema
 export const MISSION_SCHEMA = {
   // Core identification
   id: null,                           // string - Firestore document ID
@@ -96,11 +96,8 @@ export const MISSION_SCHEMA = {
 
 
 
-/**
- * Create a new mission object with default values
- * @param {Object} overrides - Properties to override defaults
- * @returns {Object} - New mission object
- */
+// Create a new mission object with default values
+
 export const createMissionTemplate = (overrides = {}) => {
   return {
     ...MISSION_SCHEMA,
@@ -115,12 +112,9 @@ export const createMissionTemplate = (overrides = {}) => {
   };
 };
 
-/**
- * Calculate XP reward based on difficulty and completion type
- * @param {string} difficulty - Mission difficulty
- * @param {string} completionType - How mission is completed
- * @returns {number} - XP reward amount
- */
+
+// XP and SP reward helper functions
+
 export const calculateXPReward = (difficulty) => {
   let XP = XP_REWARDS[difficulty] || XP_REWARDS[DIFFICULTY_LEVELS.EASY];
   
@@ -134,11 +128,8 @@ export const calculateSPReward = (difficulty, skill) => {
     return null;
 }
 
-/**
- * Validate mission data structure
- * @param {Object} mission - Mission object to validate
- * @returns {Object} - { isValid: boolean, errors: string[] }
- */
+
+// validate mission data structure
 export const validateMission = (mission) => {
   const errors = [];
   
@@ -186,11 +177,9 @@ export const validateMission = (mission) => {
   };
 };
 
-/**
- * Check if mission is overdue
- * @param {Object} mission - Mission object
- * @returns {boolean} - True if mission is overdue
- */
+
+// check if mission is overdue
+
 export const isMissionOverdue = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     return false;
@@ -201,6 +190,7 @@ export const isMissionOverdue = (mission) => {
   
   return now > dueDate;
 };
+
 
 // check if mission is due today
 
@@ -220,11 +210,9 @@ export const isMissionDueToday = (mission) => {
   return today.getTime() === dueDate.getTime();
 };
 
-/**
- * Check if mission is due tomorrow
- * @param {Object} mission - Mission object
- * @returns {boolean} - True if mission is due tomorrow
- */
+
+// check if mission is due tomorrow
+
 export const isMissionDueTomorrow = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     return false;
@@ -243,11 +231,8 @@ export const isMissionDueTomorrow = (mission) => {
 };
 
 
-/**
- * Get days until mission is due (useful for sorting)
- * @param {Object} mission - Mission object
- * @returns {number|null} - Number of days until due (negative if overdue), null if no due date
- */
+// get days until mission is due
+
 export const getDaysUntilDue = (mission) => {
   if (!mission.dueDate) {
     return null;
@@ -273,21 +258,20 @@ export const hasSkill = (mission) => {
          mission.skill.trim().length > 0;
 };
 
+
 // Check if mission is part of a quest
 export const isQuestMission = (mission) => {
   return mission.quest !== null || mission.questID !== null;
 };
+
 
 // Check if mission involves party members
 export const isPartyMission = (mission) => {
   return mission.forPartyMember !== null || mission.byPartyMember !== null;
 };
 
-/**
- * Check if mission is expired
- * @param {Object} mission - Mission object  
- * @returns {boolean} - True if mission is expired
- */
+// check if mission is expired
+
 export const isMissionExpired = (mission) => {
   if (!mission.expiryDate) {
     return false;
@@ -299,11 +283,8 @@ export const isMissionExpired = (mission) => {
   return now > expiryDate;
 };
 
-/**
- * Check if mission can be completed based on its completion type
- * @param {Object} mission - Mission object
- * @returns {boolean} - True if mission can be marked complete
- */
+// check if mission can be completed based on completion type
+
 export const canCompleteMission = (mission) => {
   if (mission.status === MISSION_STATUS.COMPLETED || mission.status === MISSION_STATUS.EXPIRED) {
     return false;
