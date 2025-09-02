@@ -236,8 +236,11 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
 
           {/* Completion Type Selector */}
           <div className="completion-type-section">
-            <label>Completion Type:</label>
-            <div className="completion-type-selector">
+            <label>Completion Type</label>
+            <div 
+              className="completion-type-selector" 
+              data-selected={formData.completionType}
+            >
               {Object.entries(COMPLETION_TYPES).map(([key, value]) => (
                 <label key={value} className="completion-type-option">
                   <input
