@@ -154,6 +154,10 @@ export const validateMission = (mission) => {
   if (!Object.values(COMPLETION_TYPES).includes(mission.completionType)) {
     errors.push('Invalid completion type');
   }
+
+  if (!Object.values(DUE_TYPES).includes(mission.dueType)) {
+  errors.push('Invalid due type');
+}
   
   // Completion type specific validation
   if (mission.completionType === COMPLETION_TYPES.TIMER) {
