@@ -5,6 +5,14 @@ import { createMission } from '../../services/missionService';
 import DifficultyBadge from './DifficultyBadge';
 import SkillBadge from './SkillBadge';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
+import {
+  createMissionTemplate,
+  validateMission,
+  DIFFICULTY_LEVELS,
+  COMPLETION_TYPES,
+  DUE_TYPES,
+  MISSION_STATUS
+} from '../../types/Mission';
 import './AddMissionCard.css';
 
 const AddMissionCard = ({ onAddMission, onCancel }) => {
@@ -20,31 +28,36 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    difficulty: 'easy',
+    difficulty: DIFFICULTY_LEVELS.EASY,
+    completionType: COMPLETION_TYPES.SIMPLE,
+    dueType: DUE_TYPES.UNIQUE,
     dueDate: '',
     skill: '',
     expiryDate: getDefaultExpiryDate(),
-    hasExpiryDate: true
+    hasExpiryDate: true,
+    // Timer fields
+    timerDurationMinutes: '',
+    // Count fields  
+    targetCount: '',
+    // Other fields
+    priority: 'normal',
+    pinned: false,
+    isDailyMission: false
   });
 
   const [errors, setErrors] = useState({});
   const [showDueDateField, setShowDueDateField] = useState(false);
   const [showSkillField, setShowSkillField] = useState(false);
   const [showExpiryField, setShowExpiryField] = useState(false);
+  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calculate XP based on difficulty
-  const getXPReward = (difficulty) => {
-    const xpMap = { easy: 5, medium: 10, hard: 20 };
-    return xpMap[difficulty] || 5;
-  };
-
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     
     // Clear error when user starts typing
@@ -60,6 +73,16 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     setFormData(prev => ({
       ...prev,
       difficulty: difficulty
+    }));
+  };
+
+  const handleCompletionTypeSelect = (completionType) => {
+    setFormData(prev => ({
+      ...prev,
+      completionType: completionType,
+      // Reset completion-specific fields when changing types
+      timerDurationMinutes: completionType === COMPLETION_TYPES.TIMER ? prev.timerDurationMinutes : '',
+      targetCount: completionType === COMPLETION_TYPES.COUNT ? prev.targetCount : '',
     }));
   };
 
@@ -80,14 +103,35 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    // Create a mission object using our schema
+    const missionData = createMissionTemplate({
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      difficulty: formData.difficulty,
+      completionType: formData.completionType,
+      dueType: formData.dueType,
+      skill: formData.skill.trim() || null,
+      timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null,
+      targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
+      priority: formData.priority,
+      pinned: formData.pinned,
+      isDailyMission: formData.isDailyMission
+    });
+
+    const validation = validateMission(missionData);
     
-    if (!formData.title.trim()) {
-      newErrors.title = 'Mission name is required';
+    if (!validation.isValid) {
+      const newErrors = {};
+      validation.errors.forEach(error => {
+        if (error.includes('title')) newErrors.title = error;
+        else if (error.includes('timer')) newErrors.timerDurationMinutes = error;
+        else if (error.includes('count')) newErrors.targetCount = error;
+        else newErrors.general = error;
+      });
+      setErrors(newErrors);
     }
     
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return validation.isValid;
   };
 
   const handleSubmit = async (e) => {
@@ -100,26 +144,30 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     setIsSubmitting(true);
 
     try {
-      const missionData = {
+      // Create mission using the template function
+      const missionData = createMissionTemplate({
         title: formData.title.trim(),
         description: formData.description.trim(),
         difficulty: formData.difficulty,
-        xpReward: getXPReward(formData.difficulty),
+        completionType: formData.completionType,
+        dueType: formData.dueType,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         skill: formData.skill.trim() || null,
         expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
-        category: 'personal', // You can expand this later
-        isDailyMission: false
-      };
+        timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null,
+        targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
+        priority: formData.priority,
+        pinned: formData.pinned,
+        isDailyMission: formData.isDailyMission
+      });
 
       const missionId = await createMission(currentUser.uid, missionData);
       
-      // Call the parent component's callback with the new mission ID
+      // Call the parent component's callback with the new mission
       onAddMission({
         id: missionId,
         ...missionData,
-        status: 'active',
-        completed: false,
+        status: MISSION_STATUS.ACTIVE,
         createdAt: new Date()
       });
 
@@ -130,8 +178,6 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
       setIsSubmitting(false);
     }
   };
-
-  const difficultyOptions = ['easy', 'medium', 'hard'];
 
   // Filter skills based on search
   const filteredSkills = AVAILABLE_SKILLS.filter(skill =>
@@ -174,7 +220,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
           {/* Difficulty Badge Selector */}
           <div className="add-mission-badges">
             <div className="difficulty-selector">
-              {difficultyOptions.map((difficulty) => (
+              {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
                 <button
                   key={difficulty}
                   type="button"
@@ -183,11 +229,72 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                   disabled={isSubmitting}
                 >
                   <DifficultyBadge difficulty={difficulty} />
-                  
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Completion Type Selector */}
+          <div className="completion-type-section">
+            <label>Completion Type:</label>
+            <div className="completion-type-selector">
+              {Object.entries(COMPLETION_TYPES).map(([key, value]) => (
+                <label key={value} className="completion-type-option">
+                  <input
+                    type="radio"
+                    name="completionType"
+                    value={value}
+                    checked={formData.completionType === value}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                  />
+                  <span className="completion-type-label">
+                    {key.charAt(0) + key.slice(1).toLowerCase()}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Timer Duration (if timer completion type) */}
+          {formData.completionType === COMPLETION_TYPES.TIMER && (
+            <div className="optional-field-inline">
+              <label>Timer Duration (minutes) *</label>
+              <input
+                type="number"
+                name="timerDurationMinutes"
+                value={formData.timerDurationMinutes}
+                onChange={handleInputChange}
+                className={`optional-input ${errors.timerDurationMinutes ? 'error' : ''}`}
+                placeholder="e.g., 10"
+                min="1"
+                disabled={isSubmitting}
+              />
+              {errors.timerDurationMinutes && (
+                <span className="error-text">{errors.timerDurationMinutes}</span>
+              )}
+            </div>
+          )}
+
+          {/* Target Count (if count completion type) */}
+          {formData.completionType === COMPLETION_TYPES.COUNT && (
+            <div className="optional-field-inline">
+              <label>Target Count *</label>
+              <input
+                type="number"
+                name="targetCount"
+                value={formData.targetCount}
+                onChange={handleInputChange}
+                className={`optional-input ${errors.targetCount ? 'error' : ''}`}
+                placeholder="e.g., 8"
+                min="1"
+                disabled={isSubmitting}
+              />
+              {errors.targetCount && (
+                <span className="error-text">{errors.targetCount}</span>
+              )}
+            </div>
+          )}
 
           {/* Optional Field Ghost Badges */}
           <div className="ghost-badges">
@@ -235,6 +342,17 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                 disabled={isSubmitting}
               >
                 + Expiration date
+              </button>
+            )}
+
+            {!showAdvancedFields && (
+              <button
+                type="button"
+                onClick={() => setShowAdvancedFields(true)}
+                className="ghost-badge"
+                disabled={isSubmitting}
+              >
+                + Advanced options
               </button>
             )}
           </div>
@@ -359,7 +477,59 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
             </div>
           )}
 
-          {/* Error Display */}
+          {/* Advanced Fields */}
+          {showAdvancedFields && (
+            <div className="advanced-fields-section">
+              <div className="advanced-field">
+                <label>Priority:</label>
+                <select
+                  name="priority"
+                  value={formData.priority}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                >
+                  <option value="low">Low</option>
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+
+              <div className="advanced-field">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="pinned"
+                    checked={formData.pinned}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                  />
+                  Pin mission
+                </label>
+              </div>
+
+              <div className="advanced-field">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="isDailyMission"
+                    checked={formData.isDailyMission}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                  />
+                  Daily mission
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* General Error Display */}
+          {errors.general && (
+            <div className="error-text" style={{ textAlign: 'center', marginBottom: '15px' }}>
+              {errors.general}
+            </div>
+          )}
+
+          {/* Submit Error Display */}
           {errors.submit && (
             <div className="error-text" style={{ textAlign: 'center', marginBottom: '15px' }}>
               {errors.submit}

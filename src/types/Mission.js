@@ -108,7 +108,7 @@ export const createMissionTemplate = (overrides = {}) => {
       overrides.completionType || COMPLETION_TYPES.SIMPLE
     ),
 
-    spReward: overrides.spReward || calculateSPReward(difficulty, skill)
+    // spReward: overrides.spReward || calculateSPReward(difficulty, skill)
   };
 };
 

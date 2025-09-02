@@ -11,7 +11,7 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 
-{/* import MissionList from './components/missions/MissionList'; */}
+import MissionList from './components/missions/MissionList';
 
 function AppContent() {
   const { currentUser, logout } = useAuth();
@@ -31,6 +31,7 @@ function AppContent() {
         <Route path="/character-creation" element={<CharacterCreationPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/edit-daily-missions" element={<EditDailyMissionsPage />} />
+        <Route path="/mission-list" element={<MissionList />} />
         {/*<LandingPage/>*/}
        {/*<MissionList/>*/}
   
