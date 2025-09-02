@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createMission } from '../../services/missionService';
 import DifficultyBadge from './DifficultyBadge';
 import SkillBadge from './SkillBadge';
+import CompletionTypeSelector from './sub-components/CompletionTypeSelector';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import {
   createMissionTemplate,
@@ -81,8 +82,8 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
       ...prev,
       completionType: completionType,
       // Reset completion-specific fields when changing types
-      timerDurationMinutes: completionType === COMPLETION_TYPES.TIMER ? prev.timerDurationMinutes : '',
-      targetCount: completionType === COMPLETION_TYPES.COUNT ? prev.targetCount : '',
+      timerDurationMinutes: completionType === COMPLETION_TYPES.TIMER ? prev.timerDurationMinutes : null,
+      targetCount: completionType === COMPLETION_TYPES.COUNT ? prev.targetCount : null,
     }));
   };
 
@@ -235,69 +236,16 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
           </div>
 
           {/* Completion Type Selector */}
-          <div className="completion-type-section">
-            <label>Completion Type</label>
-            <div 
-              className="completion-type-selector" 
-              data-selected={formData.completionType}
-            >
-              {Object.entries(COMPLETION_TYPES).map(([key, value]) => (
-                <label key={value} className="completion-type-option">
-                  <input
-                    type="radio"
-                    name="completionType"
-                    value={value}
-                    checked={formData.completionType === value}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
-                  <span className="completion-type-label">
-                    {key.charAt(0) + key.slice(1).toLowerCase()}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Timer Duration (if timer completion type) */}
-          {formData.completionType === COMPLETION_TYPES.TIMER && (
-            <div className="optional-field-inline">
-              <label>Timer Duration (minutes) *</label>
-              <input
-                type="number"
-                name="timerDurationMinutes"
-                value={formData.timerDurationMinutes}
-                onChange={handleInputChange}
-                className={`optional-input ${errors.timerDurationMinutes ? 'error' : ''}`}
-                placeholder="e.g., 10"
-                min="1"
-                disabled={isSubmitting}
-              />
-              {errors.timerDurationMinutes && (
-                <span className="error-text">{errors.timerDurationMinutes}</span>
-              )}
-            </div>
-          )}
-
-          {/* Target Count (if count completion type) */}
-          {formData.completionType === COMPLETION_TYPES.COUNT && (
-            <div className="optional-field-inline">
-              <label>Target Count *</label>
-              <input
-                type="number"
-                name="targetCount"
-                value={formData.targetCount}
-                onChange={handleInputChange}
-                className={`optional-input ${errors.targetCount ? 'error' : ''}`}
-                placeholder="e.g., 8"
-                min="1"
-                disabled={isSubmitting}
-              />
-              {errors.targetCount && (
-                <span className="error-text">{errors.targetCount}</span>
-              )}
-            </div>
-          )}
+          <CompletionTypeSelector
+            completionType={formData.completionType}
+            onCompletionTypeChange={handleCompletionTypeSelect}
+            timerDurationMinutes={formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null}
+            onTimerDurationChange={(minutes) => setFormData(prev => ({ ...prev, timerDurationMinutes: minutes }))}
+            targetCount={formData.targetCount ? parseInt(formData.targetCount) : null}
+            onTargetCountChange={(count) => setFormData(prev => ({ ...prev, targetCount: count }))}
+            disabled={isSubmitting}
+            errors={errors}
+          />
 
           {/* Optional Field Ghost Badges */}
           <div className="ghost-badges">
