@@ -17,7 +17,7 @@ const CompletionTypeSelector = ({
   const [timerHours, setTimerHours] = useState(0);
   const [timerMinutes, setTimerMinutes] = useState(0);
 
-  // Initialize timer values from props
+  // Initialize timer values from props, convert extra mins to hours
   useEffect(() => {
     if (timerDurationMinutes) {
       const hours = Math.floor(timerDurationMinutes / 60);
@@ -58,7 +58,7 @@ const CompletionTypeSelector = ({
     <div className="completion-type-section">
       <label className="section-label">Completion Type</label>
       
-      {/* Segmented Control */}
+      {/* Segmented Control to select completion type */}
       <div 
         className="completion-type-selector" 
         data-selected={completionType}
