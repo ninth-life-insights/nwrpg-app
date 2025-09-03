@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission } from '../../services/missionService';
-import DifficultyBadge from './DifficultyBadge';
-import SkillBadge from './SkillBadge';
+import DifficultyBadge from './sub-components/DifficultyBadge';
+import SkillBadge from './sub-components/SkillBadge';
 import CompletionTypeSelector from './sub-components/CompletionTypeSelector';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import {

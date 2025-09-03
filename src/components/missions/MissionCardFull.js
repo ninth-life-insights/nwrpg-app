@@ -1,6 +1,6 @@
 // src/components/missions/MissionCardFull.js
 import React from 'react';
-import DifficultyBadge from './DifficultyBadge';
+import DifficultyBadge from './sub-components/DifficultyBadge';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
