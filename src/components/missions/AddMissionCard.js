@@ -50,7 +50,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
   const [showDueDateField, setShowDueDateField] = useState(false);
   const [showSkillField, setShowSkillField] = useState(false);
   const [showExpiryField, setShowExpiryField] = useState(false);
-  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
+
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -296,16 +296,6 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
               </button>
             )}
 
-            {!showAdvancedFields && (
-              <button
-                type="button"
-                onClick={() => setShowAdvancedFields(true)}
-                className="ghost-badge"
-                disabled={isSubmitting}
-              >
-                + Advanced options
-              </button>
-            )}
           </div>
 
           {/* Due Date Field */}
@@ -425,51 +415,6 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
                   </button>
                 </div>
               ) : null}
-            </div>
-          )}
-
-          {/* Advanced Fields */}
-          {showAdvancedFields && (
-            <div className="advanced-fields-section">
-              <div className="advanced-field">
-                <label>Priority:</label>
-                <select
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleInputChange}
-                  disabled={isSubmitting}
-                >
-                  <option value="low">Low</option>
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-
-              <div className="advanced-field">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="pinned"
-                    checked={formData.pinned}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
-                  Pin mission
-                </label>
-              </div>
-
-              <div className="advanced-field">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="isDailyMission"
-                    checked={formData.isDailyMission}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
-                  Daily mission
-                </label>
-              </div>
             </div>
           )}
 
