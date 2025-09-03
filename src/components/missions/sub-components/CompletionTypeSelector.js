@@ -17,7 +17,7 @@ const CompletionTypeSelector = ({
   const [timerHours, setTimerHours] = useState(0);
   const [timerMinutes, setTimerMinutes] = useState(0);
 
-  // Initialize timer values from props, convert extra mins to hours
+  // Initialize timer values from props
   useEffect(() => {
     if (timerDurationMinutes) {
       const hours = Math.floor(timerDurationMinutes / 60);
@@ -58,7 +58,7 @@ const CompletionTypeSelector = ({
     <div className="completion-type-section">
       <label className="section-label">Completion Type</label>
       
-      {/* Segmented Control to select completion type */}
+      {/* Segmented Control */}
       <div 
         className="completion-type-selector" 
         data-selected={completionType}
@@ -90,6 +90,7 @@ const CompletionTypeSelector = ({
                 type="number"
                 value={timerHours}
                 onChange={(e) => handleTimerInputChange('hours', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="timer-input"
                 min="0"
                 max="23"
@@ -102,6 +103,7 @@ const CompletionTypeSelector = ({
                 type="number"
                 value={timerMinutes}
                 onChange={(e) => handleTimerInputChange('minutes', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="timer-input"
                 min="0"
                 max="59"
@@ -133,6 +135,7 @@ const CompletionTypeSelector = ({
               type="number"
               value={targetCount || 1}
               onChange={(e) => handleCountInputChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
               className="count-input"
               min="1"
               disabled={disabled}
