@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 import Login from './components/auth/Login';
 import './App.css';
 
@@ -13,6 +14,29 @@ import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 
 {/* import MissionList from './components/missions/MissionList'; */}
 
+function ProtectedRoute({ children }) {
+  const { currentUser } = useAuth();
+  
+  if (!currentUser) {
+    return <Navigate to="/landing-page" />;
+  }
+  
+  return children;
+}
+
+// Component for public routes that should redirect if already logged in
+function PublicRoute({ children }) {
+  const { currentUser } = useAuth();
+  
+  if (currentUser) {
+    // Redirect authenticated users to the main app
+    return <Navigate to="/home" />;
+  }
+  
+  return children;
+}
+
+
 function AppContent() {
   const { currentUser, logout } = useAuth();
   
@@ -24,12 +48,12 @@ function AppContent() {
     <div className="App">
       <Routes>
         {/*<button onClick={logout}>Logout</button>*/}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/log-in" element={<LoginPage />} />
-        <Route path="/sign-up" element={<SignupPage />} />
-        <Route path="/character-creation" element={<CharacterCreationPage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/edit-daily-missions" element={<EditDailyMissionsPage />} />
+        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+        <Route path="/log-in" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/sign-up" element={<PublicRoute><SignupPage /></PublicRoute>} />
+        <Route path="/character-creation" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
+        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>
