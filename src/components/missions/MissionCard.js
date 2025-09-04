@@ -1,94 +1,189 @@
 // src/components/missions/MissionCard.js
 import React from 'react';
 import DifficultyBadge from './sub-components/DifficultyBadge';
+import {
+  MISSION_STATUS,
+  COMPLETION_TYPES,
+  hasSkill,
+  isMissionDueToday,
+  isMissionDueTomorrow,
+  isMissionOverdue,
+  getDaysUntilDue,
+  canCompleteMission
+} from '../../types/Mission';
 import './MissionCard.css';
 
 const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
-  // Helper function to determine due date status
-  const getDueDateStatus = (dueDate) => {
-    if (!dueDate) return null;
-    
-    const today = new Date();
-    // Handle both Firestore timestamp and regular Date objects
-    const due = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
-    
-    // Reset time to compare dates only
-    today.setHours(0, 0, 0, 0);
-    due.setHours(0, 0, 0, 0);
-    
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return 'overdue';
-    if (diffDays === 0) return 'due-today';
-    return 'upcoming';
-  };
-
-  // Helper function to format due date display
-  const formatDueDate = (dueDate) => {
-    if (!dueDate) return null;
-    
-    // Handle both Firestore timestamp and regular Date objects
-    const date = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
-    const status = getDueDateStatus(dueDate);
-    
-    if (status === 'due-today') return 'Due Today';
-    if (status === 'overdue') return 'Overdue';
-    
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const dueDateStatus = getDueDateStatus(mission.dueDate);
-  const dueDateDisplay = formatDueDate(mission.dueDate);
   
-  // Determine if mission is completed based on status or completed field
-  const isCompleted = mission.status === 'completed' || mission.completed;
+  // Use schema utility functions for consistency
+  const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
+  const missionHasSkill = hasSkill(mission);
+  const canComplete = canCompleteMission(mission);
+  
+  // Enhanced due date status using schema functions
+  const getDueDateInfo = () => {
+    if (!mission.dueDate) return null;
+    
+    if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
+    if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
+    if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
+    
+    // For other upcoming dates, show the actual date
+    const date = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+    const daysUntil = getDaysUntilDue(mission);
+    
+    if (daysUntil <= 7) {
+      return {
+        status: 'upcoming-week',
+        display: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      };
+    }
+    
+    return {
+      status: 'upcoming',
+      display: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+  };
+
+  // Get completion type display info
+  const getCompletionTypeInfo = () => {
+    switch (mission.completionType) {
+      case COMPLETION_TYPES.TIMER:
+        const hours = Math.floor(mission.timerDurationMinutes / 60);
+        const minutes = mission.timerDurationMinutes % 60;
+        let timeStr = '';
+        if (hours > 0) timeStr += `${hours}h `;
+        if (minutes > 0) timeStr += `${minutes}m`;
+        return { type: 'timer', display: timeStr.trim() };
+        
+      case COMPLETION_TYPES.COUNT:
+        return { 
+          type: 'count', 
+          display: `${mission.currentCount || 0}/${mission.targetCount}` 
+        };
+        
+      default:
+        return null;
+    }
+  };
+
+  const dueDateInfo = getDueDateInfo();
+  const completionInfo = getCompletionTypeInfo();
+
+  // Handle completion toggle with schema validation
+  const handleToggleComplete = (e) => {
+    e.stopPropagation();
+    
+    if (isCompleted) {
+      // Always allow uncompleting
+      onToggleComplete(mission.id, true, mission.xpReward, mission.spReward);
+    } else {
+      // Check if mission can be completed based on completion type
+      if (canComplete) {
+        onToggleComplete(mission.id, false, mission.xpReward, mission.spReward);
+      } else {
+        // Could show a toast here about why it can't be completed
+        console.log('Mission cannot be completed yet');
+      }
+    }
+  };
 
   return (
-    <div className={`mission-card ${isCompleted ? 'completed' : ''}`}>
+    <div className={`mission-card ${isCompleted ? 'completed' : ''} ${mission.pinned ? 'pinned' : ''}`}>
       
       {/* Content area */}
       <div className="content-area" onClick={() => onViewDetails(mission)}>
+        
+        {/* Header with title and badges */}
         <div className="mission-header">
-          <h3 className={`mission-title ${isCompleted ? 'completed' : ''}`}>
-            {mission.title}
-          </h3>
+          <div className="title-row">
+            <h3 className={`mission-title ${isCompleted ? 'completed' : ''}`}>
+              {mission.title}
+            </h3>
+            {mission.pinned && (
+              <span className="pin-indicator" title="Pinned mission">📌</span>
+            )}
+          </div>
+          
           <div className="badges">
             <DifficultyBadge difficulty={mission.difficulty} />
-            {dueDateDisplay && (
-              <span className={`due-date-badge ${dueDateStatus}`}>
-                {dueDateDisplay}
+            
+            {/* Due date badge */}
+            {dueDateInfo && (
+              <span className={`due-date-badge ${dueDateInfo.status}`}>
+                {dueDateInfo.display}
               </span>
+            )}
+            
+            {/* Daily mission badge */}
+            {mission.isDailyMission && (
+              <span className="daily-mission-badge">Daily</span>
+            )}
+            
+            {/* High priority badge */}
+            {mission.priority === 'high' && (
+              <span className="priority-badge high">High Priority</span>
+            )}
+            
+            {/* Skill badge */}
+            {missionHasSkill && (
+              <span className="skill-badge-mini">{mission.skill}</span>
             )}
           </div>
         </div>
 
+        {/* Description */}
         <div className="mission-description">
           <p>{mission.description || 'No description'}</p>
         </div>
+
+        {/* Completion progress (for timer/count missions) */}
+        {completionInfo && (
+          <div className="completion-progress">
+            <div className="progress-info">
+              <span className="progress-label">
+                {completionInfo.type === 'timer' ? 'Duration:' : 'Progress:'}
+              </span>
+              <span className="progress-value">{completionInfo.display}</span>
+            </div>
+            
+            {/* Progress bar for count missions */}
+            {completionInfo.type === 'count' && mission.targetCount > 0 && (
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ 
+                    width: `${Math.min(100, ((mission.currentCount || 0) / mission.targetCount) * 100)}%` 
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); 
-          onToggleComplete(mission.id, isCompleted, mission.xpReward);
-        }}
-        className="mission-toggle"
-        aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
-      >
-        <svg 
-          className={`check-icon ${isCompleted ? 'completed' : ''}`}
-          xmlns="http://www.w3.org/2000/svg" 
-          height="24px" 
-          viewBox="0 -960 960 960" 
-          width="24px"
+      {/* Action button - completion toggle */}
+      <div className="mission-actions">
+        <button
+          onClick={handleToggleComplete}
+          className={`mission-toggle ${isCompleted ? 'completed' : ''} ${!canComplete && !isCompleted ? 'disabled' : ''}`}
+          aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+          disabled={!canComplete && !isCompleted}
         >
-          <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
-        </svg>
-      </button>
+          {/* Checkmark icon */}
+          <svg 
+            className={`check-icon ${isCompleted ? 'completed' : ''}`}
+            xmlns="http://www.w3.org/2000/svg" 
+            height="20px" 
+            viewBox="0 -960 960 960" 
+            width="20px"
+          >
+            <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
+          </svg>
+        </button>
+        
+
+      </div>
     </div>
   );
 };
