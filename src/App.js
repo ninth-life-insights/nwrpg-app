@@ -17,25 +17,22 @@ function AppContent() {
   const { currentUser, logout } = useAuth();
   
   if (!currentUser) {
-    return <Login />;
+    return <SignupPage />;
   }
   
   return (
     <div className="App">
-      <Router>
       <Routes>
-      {/*<button onClick={logout}>Logout</button>*/}
-      <Route path="/" element={<LandingPage />} />
+        {/*<button onClick={logout}>Logout</button>*/}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/log-in" element={<LoginPage />} />
         <Route path="/sign-up" element={<SignupPage />} />
         <Route path="/character-creation" element={<CharacterCreationPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/edit-daily-missions" element={<EditDailyMissionsPage />} />
         {/*<LandingPage/>*/}
-       {/*<MissionList/>*/}
-  
-       </Routes>
-       </Router>
+        {/*<MissionList/>*/}
+      </Routes>
     </div>
   );
 }
@@ -43,7 +40,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent /> 
+      <Router>
+        <AppContent /> 
+      </Router>
     </AuthProvider>
   );
 }
