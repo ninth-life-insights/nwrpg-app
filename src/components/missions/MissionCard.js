@@ -133,9 +133,11 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
         </div>
 
         {/* Description */}
-        <div className="mission-description">
-          <p>{mission.description || 'No description'}</p>
-        </div>
+        {mission.description && (
+          <div className="mission-description">
+            <p>{mission.description}</p>
+          </div>
+        )}
 
         {/* Completion progress (for timer/count missions) */}
         {completionInfo && (
