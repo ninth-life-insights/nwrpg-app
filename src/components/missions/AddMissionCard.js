@@ -135,50 +135,63 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     return validation.isValid;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm() || !currentUser) {
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    const missionData = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      difficulty: formData.difficulty,
+      // xpReward: getXPReward(formData.difficulty),
+      dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+      skill: formData.skill.trim() || null,
+      expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
+      category: 'personal', // You can expand this later
+      isDailyMission: false
+    };
+
+    const missionId = await createMission(currentUser.uid, missionData);
     
-    if (!validateForm() || !currentUser) {
-      return;
+    // Validate that we got a valid mission ID back
+    if (!missionId) {
+      throw new Error('Failed to create mission: No ID returned');
     }
+    
+    // Call the parent component's callback with the new mission ID
+    onAddMission({
+      id: missionId,
+      ...missionData,
+      status: 'active',
+      completed: false,
+      createdAt: new Date()
+    });
 
-    setIsSubmitting(true);
+    // Reset form
+    setFormData({
+      title: '',
+      description: '',
+      difficulty: 'easy',
+      dueDate: '',
+      skill: '',
+      expiryDate: getDefaultExpiryDate(),
+      hasExpiryDate: true
+    });
 
-    try {
-      // Create mission using the template function
-      const missionData = createMissionTemplate({
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        difficulty: formData.difficulty,
-        completionType: formData.completionType,
-        dueType: formData.dueType,
-        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
-        skill: formData.skill.trim() || null,
-        expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
-        timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null,
-        targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
-        priority: formData.priority,
-        pinned: formData.pinned,
-        isDailyMission: formData.isDailyMission
-      });
-
-      const missionId = await createMission(currentUser.uid, missionData);
-      
-      // Call the parent component's callback with the new mission
-      onAddMission({
-        id: missionId,
-        ...missionData,
-        status: MISSION_STATUS.ACTIVE,
-        createdAt: new Date()
-      });
-
-    } catch (error) {
-      console.error('Error creating mission:', error);
-      setErrors({ submit: 'Failed to create mission. Please try again.' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  } catch (error) {
+    console.error('Error creating mission:', error);
+    setErrors({ submit: 'Failed to create mission. Please try again.' });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Filter skills based on search
   const filteredSkills = AVAILABLE_SKILLS.filter(skill =>
