@@ -33,7 +33,7 @@ const CompletionTypeSelector = ({
     if (totalMinutes !== timerDurationMinutes) {
       onTimerDurationChange(totalMinutes || null);
     }
-  }, [timerHours, timerMinutes, timerDurationMinutes, onTimerDurationChange]);
+  }, [timerHours, timerMinutes]); // Remove timerDurationMinutes and onTimerDurationChange from deps
 
   const handleTimerInputChange = (type, value) => {
     const numValue = parseInt(value) || 0;
@@ -90,7 +90,6 @@ const CompletionTypeSelector = ({
                 type="number"
                 value={timerHours}
                 onChange={(e) => handleTimerInputChange('hours', e.target.value)}
-                onFocus={(e) => e.target.select()}
                 className="timer-input"
                 min="0"
                 max="23"
@@ -135,7 +134,6 @@ const CompletionTypeSelector = ({
               type="number"
               value={targetCount || 1}
               onChange={(e) => handleCountInputChange(e.target.value)}
-              onFocus={(e) => e.target.select()}
               className="count-input"
               min="1"
               disabled={disabled}
