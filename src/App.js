@@ -12,7 +12,7 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 
-{/* import MissionList from './components/missions/MissionList'; */}
+import MissionList from './components/missions/MissionList';
 
 function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
@@ -54,6 +54,7 @@ function AppContent() {
         <Route path="/character-creation" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
+        <Route path="/mission-list" element={<MissionList />} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>

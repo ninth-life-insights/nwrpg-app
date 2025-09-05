@@ -11,13 +11,9 @@ import {
   uncompleteMission 
 } from '../../services/missionService';
 import { addXP, subtractXP, getUserProfile } from '../../services/userService';
+import { MISSION_STATUS } from '../../types/Mission';
 
-const MissionList = ({ 
-  selectionMode = false, 
-  onMissionSelect = null,
-  selectedMissions = [],
-  maxSelections = null 
-}) => {
+const MissionList = () => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +21,7 @@ const MissionList = ({
   const [selectedMission, setSelectedMission] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('active'); // 'active', 'completed'
 
   // Load missions and user profile when component mounts or user changes
   useEffect(() => {
@@ -47,7 +43,16 @@ const MissionList = ({
         missionData = await getCompletedMissions(currentUser.uid);
       }
       
-      setMissions(missionData);
+      // Filter out any missions with missing IDs and log them
+      const validMissions = missionData.filter(mission => {
+        if (!mission.id) {
+          console.error('Mission found without ID:', mission);
+          return false;
+        }
+        return true;
+      });
+      
+      setMissions(validMissions);
     } catch (err) {
       console.error('Error loading missions:', err);
       setError('Failed to load missions');
@@ -65,285 +70,194 @@ const MissionList = ({
     }
   };
 
-  // Function to toggle completion status with XP handling
-  const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
-    if (selectionMode) return; // Don't allow completion toggle in selection mode
-    
+  // Function to toggle completion status with XP and SP handling
+  const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward, spReward) => {
     try {
+      console.log('Toggling completion for mission:', missionId, { isCurrentlyCompleted, xpReward, spReward });
+      
+      // Validate mission ID
+      if (!missionId) {
+        console.error('No mission ID provided');
+        setError('Invalid mission ID');
+        return;
+      }
+
       if (isCurrentlyCompleted) {
         // Uncomplete the mission
         await uncompleteMission(currentUser.uid, missionId);
-        if (xpReward) {
+        
+        // Subtract rewards
+        if (xpReward && xpReward > 0) {
           await subtractXP(currentUser.uid, xpReward);
         }
+        // if (spReward && spReward > 0) {
+        //   await subtractSP(currentUser.uid, spReward);
+        // }
       } else {
         // Complete the mission
         await completeMission(currentUser.uid, missionId);
-        if (xpReward) {
+        
+        // Add rewards
+        if (xpReward && xpReward > 0) {
           const result = await addXP(currentUser.uid, xpReward);
           
           // Show level up notification if applicable
           if (result && result.leveledUp) {
             console.log(`Level up! Now level ${result.newLevel}`);
+            // TODO: Add toast notification here later
           }
         }
+        // if (spReward && spReward > 0) {
+        //   await addSP(currentUser.uid, spReward);
+        // }
       }
 
       // Refresh missions and user profile
-      loadMissions();
-      loadUserProfile();
+      await loadMissions();
+      await loadUserProfile();
       
       // Close detail view if it was open
       setSelectedMission(null);
       
     } catch (err) {
       console.error('Error toggling mission:', err);
-      setError('Failed to update mission');
+      setError('Failed to update mission. Please try again.');
     }
   };
 
-  const handleAddMission = (newMission) => {
-    // Add the new mission to the current list if we're on active tab
-    if (activeTab === 'active') {
-      setMissions(prev => [newMission, ...prev]);
-    }
-    
+  const handleAddMission = () => {
+    // Close the add mission modal
     setShowAddMission(false);
+    
+    // Reload missions from Firebase (single source of truth)
+    loadMissions();
     loadUserProfile(); // Refresh in case any XP changed
   };
 
-  // Handle mission selection for daily missions
-  const handleMissionSelect = (mission) => {
-    if (!selectionMode || !onMissionSelect) return;
-    
-    // Check if mission is already selected
-    const isSelected = selectedMissions.some(selected => selected.id === mission.id);
-    
-    if (isSelected) {
-      // Mission is already selected, don't allow deselection here
-      return;
-    }
-    
-    // Check if we've reached max selections
-    if (maxSelections && selectedMissions.length >= maxSelections) {
-      alert(`You can only select up to ${maxSelections} missions.`);
-      return;
-    }
-    
-    // Select the mission
-    onMissionSelect(mission);
-  };
-
-  // Handle viewing mission details
   const handleViewDetails = (mission) => {
-    if (selectionMode) {
-      handleMissionSelect(mission);
-    } else {
-      setSelectedMission(mission);
+    if (!mission || !mission.id) {
+      console.error('Invalid mission for details view:', mission);
+      return;
     }
+    setSelectedMission(mission);
   };
 
   if (!currentUser) {
-    return <div>Please log in to view your missions.</div>;
+    return (
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '40px',
+        color: '#666'
+      }}>
+        Please log in to view your missions.
+      </div>
+    );
   }
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '20px' }}>Loading missions...</div>;
+    return (
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '40px',
+        color: '#666'
+      }}>
+        Loading missions...
+      </div>
+    );
   }
 
   return (
-    <div className={selectionMode ? 'mission-list-selection-mode' : ''}>
-      {/* Only show user profile and tabs if not in selection mode */}
-      {!selectionMode && userProfile && (
-        <div style={{ 
-          textAlign: 'center', 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: '#f0f0f0',
-          borderRadius: '8px'
-        }}>
+    <div className="mission-list-container">
+      {/* User Profile Section */}
+      {userProfile && (
+        <div className="user-profile-section">
           <h2>Level {userProfile.level}</h2>
-          <p>XP: {userProfile.totalXP} | Current XP: {userProfile.currentXP}</p>
+          <div className="user-stats">
+            <span className="stat-item">
+              <strong>Total XP:</strong> {userProfile.totalXP || 0}
+            </span>
+            <span className="stat-item">
+              <strong>Current XP:</strong> {userProfile.currentXP || 0}
+            </span>
+            {userProfile.totalSP && (
+              <span className="stat-item">
+                <strong>SP:</strong> {userProfile.totalSP}
+              </span>
+            )}
+          </div>
           <p>Welcome back, {userProfile.displayName}!</p>
         </div>
       )}
 
-      {/* Tab Navigation - hidden in selection mode */}
-      {!selectionMode && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          marginBottom: '20px',
-          gap: '10px'
-        }}>
-          <button
-            onClick={() => setActiveTab('active')}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: activeTab === 'active' ? '#007bff' : '#e9ecef',
-              color: activeTab === 'active' ? 'white' : '#333',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Active Missions ({missions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('completed')}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: activeTab === 'completed' ? '#007bff' : '#e9ecef',
-              color: activeTab === 'completed' ? 'white' : '#333',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Completed
-          </button>
-        </div>
-      )}
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`tab-button ${activeTab === 'active' ? 'active' : ''}`}
+        >
+          Active Missions ({missions.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('completed')}
+          className={`tab-button ${activeTab === 'completed' ? 'active' : ''}`}
+        >
+          Completed Missions
+        </button>
+      </div>
 
-      {/* Header with Add Button - hidden in selection mode */}
-      {!selectionMode && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '20px'
-        }}>
-          <h1>
-            {activeTab === 'active' ? 'Active Missions' : 'Completed Missions'}
-          </h1>
-          
-          {activeTab === 'active' && (
-            <button
-              onClick={() => setShowAddMission(true)}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '16px'
-              }}
-            >
-              + Add Mission
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Selection mode header */}
-      {selectionMode && (
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '20px',
-          padding: '15px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '8px',
-          border: '2px solid #2196f3'
-        }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#1976d2' }}>
-            Select a Mission for Daily Assignment
-          </h3>
-          <p style={{ margin: 0, color: '#1976d2', fontSize: '14px' }}>
-            {maxSelections && selectedMissions.length > 0 
-              ? `${selectedMissions.length}/${maxSelections} selected`
-              : 'Click on a mission to add it to your daily missions'
-            }
-          </p>
-        </div>
-      )}
+      {/* Header with Add Button */}
+      <div className="mission-list-header">
+        <h1>
+          {activeTab === 'active' ? 'Active Missions' : 'Completed Missions'}
+        </h1>
+        
+        {activeTab === 'active' && (
+          <button
+            onClick={() => setShowAddMission(true)}
+            className="add-mission-button"
+          >
+            <span>+</span>
+            Add Mission
+          </button>
+        )}
+      </div>
 
       {/* Error Display */}
       {error && (
-        <div style={{ 
-          color: 'red', 
-          textAlign: 'center', 
-          padding: '10px',
-          backgroundColor: '#ffe6e6',
-          borderRadius: '5px',
-          marginBottom: '20px'
-        }}>
+        <div className="error-message">
           {error}
+          <button 
+            onClick={() => setError(null)}
+            className="error-dismiss"
+          >
+            ×
+          </button>
         </div>
       )}
 
       {/* Missions List */}
-      <div style={{ textAlign: 'center' }}>
+      <div className="missions-container">
         {missions.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px',
-            color: '#666'
-          }}>
-            {selectionMode 
-              ? "No missions available. Add some missions to your collection first!"
-              : activeTab === 'active' 
-                ? "No active missions. Add your first mission to get started!" 
-                : "No completed missions yet. Complete some active missions to see them here!"
+          <div className="empty-state">
+            {activeTab === 'active' 
+              ? "No active missions. Add your first mission to get started!" 
+              : "No completed missions yet. Complete some active missions to see them here!"
             }
           </div>
         ) : (
-          missions.map(mission => {
-            const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
-            
-            return (
-              <div
-                key={mission.id}
-                className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''}`}
-                style={{
-                  position: 'relative',
-                  ...(selectionMode && {
-                    cursor: 'pointer',
-                    padding: '4px',
-                    margin: '8px auto',
-                    maxWidth: '400px',
-                    borderRadius: '12px',
-                    border: isSelected ? '3px solid #2196f3' : '3px solid transparent',
-                    backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
-                    transition: 'all 0.2s ease'
-                  })
-                }}
-                onClick={selectionMode ? () => handleMissionSelect(mission) : undefined}
-              >
-                {isSelected && selectionMode && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    backgroundColor: '#2196f3',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    zIndex: 10
-                  }}>
-                    ✓
-                  </div>
-                )}
-                <MissionCard
-                  mission={mission}
-                  onToggleComplete={handleToggleComplete}
-                  onViewDetails={handleViewDetails}
-                  selectionMode={selectionMode}
-                />
-              </div>
-            );
-          })
+          missions.map((mission, index) => (
+            <MissionCard
+              key={mission.id || `mission-${index}`} // Fallback key for safety
+              mission={mission}
+              onToggleComplete={handleToggleComplete}
+              onViewDetails={handleViewDetails}
+            />
+          ))
         )}
       </div>
 
-      {/* Mission Detail Modal - hidden in selection mode */}
-      {!selectionMode && selectedMission && (
+      {/* Mission Detail Modal */}
+      {selectedMission && (
         <MissionDetailView 
           mission={selectedMission} 
           onClose={() => setSelectedMission(null)} 
@@ -351,8 +265,8 @@ const MissionList = ({
         />
       )}
 
-      {/* Add Mission Modal - hidden in selection mode */}
-      {!selectionMode && showAddMission && (
+      {/* Add Mission Modal */}
+      {showAddMission && (
         <AddMissionCard
           onAddMission={handleAddMission}
           onCancel={() => setShowAddMission(false)}

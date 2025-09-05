@@ -1,5 +1,202 @@
 /* src/components/missions/AddMissionCard.css */
 
+/* Completion Type Selector - Add to AddMissionCard.css */
+
+.completion-type-section {
+  margin-bottom: 16px;
+}
+
+.completion-type-section label {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  margin-bottom: 8px;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.completion-type-selector {
+  position: relative;
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.completion-type-selector:hover {
+  background: #e2e8f0;
+}
+
+.completion-type-option {
+  flex: 1;
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.completion-type-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.completion-type-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-medium);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  position: relative;
+  text-align: center;
+  user-select: none;
+}
+
+/* Sliding highlight background */
+.completion-type-selector::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(33.333% - 4px);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  z-index: 1;
+}
+
+/* Slide positions based on selection */
+.completion-type-selector[data-selected="simple"]::before {
+  transform: translateX(0);
+}
+
+.completion-type-selector[data-selected="timer"]::before {
+  transform: translateX(100%);
+}
+
+.completion-type-selector[data-selected="count"]::before {
+  transform: translateX(200%);
+}
+
+/* Selected state styling */
+.completion-type-option input[type="radio"]:checked + .completion-type-label {
+  color: var(--color-text-dark);
+  font-weight: 600;
+}
+
+/* Hover effects */
+.completion-type-option:hover .completion-type-label {
+  color: var(--color-text-dark);
+}
+
+.completion-type-option input[type="radio"]:checked + .completion-type-label:hover {
+  color: var(--color-text-dark);
+}
+
+/* Focus states for accessibility */
+.completion-type-option input[type="radio"]:focus + .completion-type-label {
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Disabled state */
+.completion-type-selector:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.completion-type-option:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .completion-type-label {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .completion-type-selector::before {
+    width: calc(33.333% - 2px);
+    top: 2px;
+    bottom: 2px;
+  }
+  
+  .completion-type-selector {
+    padding: 2px;
+  }
+}
+
+/* Animation enhancement for better feel */
+.completion-type-selector::before {
+  transition: 
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
+}
+
+.completion-type-selector:active::before {
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Optional: Add icons or indicators for each type */
+.completion-type-label::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+/* Simple completion indicator */
+.completion-type-option:nth-child(1) .completion-type-label::before {
+  background: #10b981;
+  opacity: 0.3;
+}
+
+.completion-type-option:nth-child(1) input:checked + .completion-type-label::before {
+  opacity: 1;
+}
+
+/* Timer completion indicator */
+.completion-type-option:nth-child(2) .completion-type-label::before {
+  background: #f59e0b;
+  opacity: 0.3;
+}
+
+.completion-type-option:nth-child(2) input:checked + .completion-type-label::before {
+  opacity: 1;
+}
+
+/* Count completion indicator */
+.completion-type-option:nth-child(3) .completion-type-label::before {
+  background: #8b5cf6;
+  opacity: 0.3;
+}
+
+.completion-type-option:nth-child(3) input:checked + .completion-type-label::before {
+  opacity: 1;
+}
+
+
+
 .add-mission-overlay {
   position: fixed;
   top: 0;
