@@ -102,15 +102,12 @@ const MissionList = ({
     }
   };
 
-  const handleAddMission = (newMission) => {
-    // Add the new mission to the current list if we're on active tab
-    if (activeTab === 'active') {
-      setMissions(prev => [newMission, ...prev]);
-    }
-    
-    setShowAddMission(false);
-    loadUserProfile(); // Refresh in case any XP changed
-  };
+  const handleAddMission = () => {
+  setShowAddMission(false);
+  // Just reload missions from Firebase instead of manually adding
+  loadMissions();
+  loadUserProfile(); // Refresh in case any XP changed
+};
 
   // Handle mission selection for daily missions
   const handleMissionSelect = (mission) => {

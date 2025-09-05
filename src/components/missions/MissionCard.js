@@ -168,9 +168,8 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
       <div className="mission-actions">
         <button
           onClick={handleToggleComplete}
-          className={`mission-toggle ${isCompleted ? 'completed' : ''} ${!canComplete && !isCompleted ? 'disabled' : ''}`}
+          className={`mission-toggle ${isCompleted ? 'completed' : ''}`}
           aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
-          disabled={!canComplete && !isCompleted}
         >
           {/* Checkmark icon */}
           <svg 
