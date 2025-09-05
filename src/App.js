@@ -46,8 +46,9 @@ function AppContent() {
   
   return (
     <div className="App">
+      <button onClick={logout}>Logout</button>
       <Routes>
-        {/*<button onClick={logout}>Logout</button>*/}
+        
         <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/log-in" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/sign-up" element={<PublicRoute><SignupPage /></PublicRoute>} />
