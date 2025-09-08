@@ -17,8 +17,29 @@
   border-bottom: 2px solid #e9ecef;
 }
 
+.top-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    
+}
+
+.home-button {
+  padding: 10px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.2s ease;
+  /* display: flex;
+  align-items: center;
+  justify-content: center; */
+}
+
 .mission-bank-header h1 {
-  margin: 0;
+  /* margin: 0; */
   font-size: 2rem;
   font-weight: 700;
   color: #2c3e50;
