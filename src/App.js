@@ -11,6 +11,7 @@ import SignupPage from './pages/SignupPage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
 import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
+import MissionBankPage from './pages/MissionBankPage';
 
 import MissionList from './components/missions/MissionList';
 
@@ -56,6 +57,7 @@ function AppContent() {
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         <Route path="/mission-list" element={<MissionList />} />
+        <Route path="/mission-bank" element={<MissionBankPage />} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>

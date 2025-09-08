@@ -10,25 +10,27 @@ import {
   completeMission, 
   uncompleteMission 
 } from '../../services/missionService';
-import { addXP, subtractXP, getUserProfile } from '../../services/userService';
+import { addXP, subtractXP } from '../../services/userService';
 
-const MissionList = () => {
+const MissionList = ({ 
+  missionType = 'active', 
+  onMissionUpdate,
+  showAddMission,
+  onShowAddMission,
+  onHideAddMission 
+}) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
-  const [showAddMission, setShowAddMission] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
-  const [activeTab, setActiveTab] = useState('active'); // 'active', 'completed'
 
-  // Load missions and user profile when component mounts or user changes
+  // Load missions when component mounts, user changes, or mission type changes
   useEffect(() => {
     if (currentUser) {
       loadMissions();
-      loadUserProfile();
     }
-  }, [currentUser, activeTab]);
+  }, [currentUser, missionType]);
 
   const loadMissions = async () => {
     try {
@@ -36,22 +38,16 @@ const MissionList = () => {
       setError(null);
       
       let missionData;
-      if (activeTab === 'active') {
+      if (missionType === 'active') {
         missionData = await getActiveMissions(currentUser.uid);
-      } else {
+      } else if (missionType === 'completed') {
         missionData = await getCompletedMissions(currentUser.uid);
+      } else {
+        // Handle other mission types if needed
+        missionData = [];
       }
       
-      // Filter out any missions without IDs to prevent rendering errors
-      const validMissions = missionData.filter(mission => {
-        if (!mission.id) {
-          console.warn('Mission found without ID:', mission);
-          return false;
-        }
-        return true;
-      });
-      
-      setMissions(validMissions);
+      setMissions(missionData);
     } catch (err) {
       console.error('Error loading missions:', err);
       setError('Failed to load missions');
@@ -60,23 +56,8 @@ const MissionList = () => {
     }
   };
 
-  const loadUserProfile = async () => {
-    try {
-      const profile = await getUserProfile(currentUser.uid);
-      setUserProfile(profile);
-    } catch (err) {
-      console.error('Error loading user profile:', err);
-    }
-  };
-
   // Function to toggle completion status with XP handling
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
-    if (!missionId) {
-      console.error('Cannot toggle completion: Mission ID is missing');
-      setError('Cannot update mission: Missing ID');
-      return;
-    }
-
     try {
       if (isCurrentlyCompleted) {
         // Uncomplete the mission
@@ -97,186 +78,104 @@ const MissionList = () => {
           }
         }
       }
-
-      // Refresh missions and user profile
-      loadMissions();
-      loadUserProfile();
       
-      // Close detail view if it was open
-      setSelectedMission(null);
+      // Reload missions to reflect changes
+      await loadMissions();
       
+      // Notify parent component of the update
+      if (onMissionUpdate) {
+        onMissionUpdate();
+      }
     } catch (err) {
-      console.error('Error toggling mission:', err);
+      console.error('Error toggling mission completion:', err);
       setError('Failed to update mission');
     }
   };
 
+  // Handle adding a new mission
   const handleAddMission = async (newMission) => {
-    // Validate that the mission has an ID before adding to list
-    if (!newMission || !newMission.id) {
-      console.error('Attempted to add mission without ID:', newMission);
-      setError('Failed to add mission: Missing ID');
-      return;
+    // Reload missions to include the new one
+    await loadMissions();
+    
+    // Hide the add mission modal
+    if (onHideAddMission) {
+      onHideAddMission();
     }
-
-    try {
-      // Instead of immediately adding to state, reload missions to ensure consistency
-      if (activeTab === 'active') {
-        await loadMissions();
-      }
-      
-      setShowAddMission(false);
-      loadUserProfile(); // Refresh in case any XP changed
-      
-      // Clear any previous errors
-      setError(null);
-    } catch (err) {
-      console.error('Error handling new mission:', err);
-      setError('Failed to add mission');
+    
+    // Notify parent component
+    if (onMissionUpdate) {
+      onMissionUpdate();
     }
   };
 
-  if (!currentUser) {
-    return <div>Please log in to view your missions.</div>;
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '40px',
+        color: '#666'
+      }}>
+        Loading missions...
+      </div>
+    );
   }
 
-  if (loading) {
-    return <div style={{ textAlign: 'center', padding: '20px' }}>Loading missions...</div>;
+  // Error state
+  if (error) {
+    return (
+      <div style={{ 
+        color: 'red', 
+        textAlign: 'center', 
+        padding: '10px',
+        backgroundColor: '#ffe6e6',
+        borderRadius: '5px',
+        marginBottom: '20px'
+      }}>
+        {error}
+      </div>
+    );
+  }
+
+  // Empty state
+  if (missions.length === 0) {
+    const emptyMessage = missionType === 'active' 
+      ? "No active missions. Add your first mission to get started!" 
+      : "No completed missions yet. Complete some active missions to see them here!";
+      
+    return (
+      <div>
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px',
+          color: '#666'
+        }}>
+          {emptyMessage}
+        </div>
+        
+        {/* Add Mission Modal */}
+        {showAddMission && (
+          <AddMissionCard
+            onAddMission={handleAddMission}
+            onCancel={onHideAddMission}
+          />
+        )}
+      </div>
+    );
   }
 
   return (
-    <div className="">
-      {/* User Profile Section */}
-      {userProfile && (
-        <div style={{ 
-          textAlign: 'center', 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: '#f0f0f0',
-          borderRadius: '8px'
-        }}>
-          <h2>Level {userProfile.level}</h2>
-          <p>XP: {userProfile.totalXP} | Current XP: {userProfile.currentXP}</p>
-          <p>Welcome back, {userProfile.displayName}!</p>
-        </div>
-      )}
-
-      {/* Tab Navigation */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        marginBottom: '20px',
-        gap: '10px'
-      }}>
-        <button
-          onClick={() => setActiveTab('active')}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: activeTab === 'active' ? '#007bff' : '#e9ecef',
-            color: activeTab === 'active' ? 'white' : '#333',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Active Missions ({missions.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('completed')}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: activeTab === 'completed' ? '#007bff' : '#e9ecef',
-            color: activeTab === 'completed' ? 'white' : '#333',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Completed
-        </button>
-      </div>
-
-      {/* Header with Add Button */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '20px'
-      }}>
-        <h1>
-          {activeTab === 'active' ? 'Active Missions' : 'Completed Missions'}
-        </h1>
-        
-        {activeTab === 'active' && (
-          <button
-            onClick={() => setShowAddMission(true)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px'
-            }}
-          >
-            + Add Mission
-          </button>
-        )}
-      </div>
-
-      {/* Error Display */}
-      {error && (
-        <div style={{ 
-          color: 'red', 
-          textAlign: 'center', 
-          padding: '10px',
-          backgroundColor: '#ffe6e6',
-          borderRadius: '5px',
-          marginBottom: '20px'
-        }}>
-          {error}
-          <button 
-            onClick={() => setError(null)}
-            style={{
-              marginLeft: '10px',
-              padding: '2px 8px',
-              backgroundColor: 'transparent',
-              border: '1px solid red',
-              borderRadius: '3px',
-              color: 'red',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Missions List */}
+    <div className="mission-list">
+      {/* Missions Grid */}
       <div style={{ textAlign: 'center' }}>
-        {missions.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px',
-            color: '#666'
-          }}>
-            {activeTab === 'active' 
-              ? "No active missions. Add your first mission to get started!" 
-              : "No completed missions yet. Complete some active missions to see them here!"
-            }
-          </div>
-        ) : (
-          missions.map(mission => (
-            <MissionCard
-              key={mission.id}
-              mission={mission}
-              onToggleComplete={handleToggleComplete}
-              onViewDetails={setSelectedMission}
-            />
-          ))
-        )}
+        {missions.map(mission => (
+          <MissionCard
+            key={mission.id}
+            mission={mission}
+            onToggleComplete={handleToggleComplete}
+            onViewDetails={setSelectedMission}
+          />
+        ))}
       </div>
 
       {/* Mission Detail Modal */}
@@ -292,7 +191,7 @@ const MissionList = () => {
       {showAddMission && (
         <AddMissionCard
           onAddMission={handleAddMission}
-          onCancel={() => setShowAddMission(false)}
+          onCancel={onHideAddMission}
         />
       )}
     </div>
