@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import MissionList from '../components/missions/MissionList';
 import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
 import { getUserProfile } from '../services/userService';
+import { useNavigate } from 'react-router-dom';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -19,6 +20,12 @@ const MissionBank = () => {
     includeCompleted: false,
     includeExpired: false
   });
+
+  const navigate = useNavigate('/home');
+
+  const HomeButtonClick = () => {
+    navigate('/home');
+};
 
   // Load user profile when component mounts or user changes
   useEffect(() => {
@@ -107,7 +114,13 @@ const MissionBank = () => {
     <div className="mission-bank-page">
       {/* Page Header */}
       <div className="mission-bank-header">
-        <h1>Mission Bank</h1>
+        <div classname="top-header">
+            <button className="home-button" onClick={HomeButtonClick}>
+                Home
+            </button>
+            <h1>Mission Bank</h1>
+        </div>
+        
         
         <div className="header-actions">
           {/* Filter Button */}

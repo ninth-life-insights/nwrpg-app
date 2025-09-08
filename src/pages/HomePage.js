@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
+import { useNavigate } from 'react-router-dom';
 import EditDailyMissions from '../components/missions/EditDailyMissions';
 import './HomePage.css';
 
@@ -12,6 +13,11 @@ const HomePage = () => {
   const [dailyMissions, setDailyMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
+  const Navigate = useNavigate();
+
+  const MissionBankClick = () => {
+    Navigate('/mission-bank');
+  };
 
   // Color mapping from character creation
   const colorMap = {
@@ -234,7 +240,7 @@ const HomePage = () => {
             </svg>
             Quests
           </button>
-          <button className="action-button secondary">
+          <button className="action-button secondary" onClick={MissionBankClick}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="M7 15h0M12 15h0M17 15h0"/>
