@@ -1,13 +1,7 @@
 // src/components/missions/MissionFilterModal.js
 import React, { useState, useEffect } from 'react';
 import './MissionFilterModal.css';
-
-// Available skills - you can import this from a constants file
-const AVAILABLE_SKILLS = [
-  'Cooking', 'Cleaning', 'Organization', 'Time Management', 'Parenting',
-  'Self Care', 'Exercise', 'Reading', 'Learning', 'Creativity',
-  'Communication', 'Planning', 'Budgeting', 'Health', 'Productivity'
-];
+import { AVAILABLE_SKILLS } from '../../../data/Skills';
 
 const MissionFilterModal = ({ 
   isOpen, 
