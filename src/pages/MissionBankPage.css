@@ -1,4 +1,4 @@
-/* src/pages/MissionBank.css */
+/* src/pages/MissionBankPage.css */
 
 .mission-bank-page {
   max-width: 1200px;
@@ -22,6 +22,37 @@
   font-size: 2rem;
   font-weight: 700;
   color: #2c3e50;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Filter Button */
+.filter-btn-header {
+  padding: 10px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-btn-header:hover {
+  background: #e9ecef;
+  color: #495057;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-btn-header:active {
+  transform: translateY(0);
 }
 
 /* Add Mission Button */

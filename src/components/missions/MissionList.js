@@ -6,7 +6,8 @@ import MissionDetailView from './MissionCardFull';
 import AddMissionCard from './AddMissionCard';
 import { 
   getActiveMissions, 
-  getCompletedMissions, 
+  getCompletedMissions,
+  getExpiredMissions,
   completeMission, 
   uncompleteMission 
 } from '../../services/missionService';
@@ -17,7 +18,8 @@ const MissionList = ({
   onMissionUpdate,
   showAddMission,
   onShowAddMission,
-  onHideAddMission 
+  onHideAddMission,
+  filters = {}
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
@@ -25,29 +27,103 @@ const MissionList = ({
   const [error, setError] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
 
-  // Load missions when component mounts, user changes, or mission type changes
+  // Load missions when component mounts, user changes, mission type changes, or filters change
   useEffect(() => {
     if (currentUser) {
       loadMissions();
     }
-  }, [currentUser, missionType]);
+  }, [currentUser, missionType, filters]);
+
+  const applyFiltersAndSort = (missionData, filterSettings) => {
+    let filteredMissions = [...missionData];
+
+    // Apply skill filter
+    if (filterSettings.skillFilter && filterSettings.skillFilter !== '') {
+      filteredMissions = filteredMissions.filter(mission => 
+        mission.skill === filterSettings.skillFilter
+      );
+    }
+
+    // Sort missions
+    filteredMissions.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (filterSettings.sortBy) {
+        case 'dueDate':
+          // Handle due date sorting - null values go to end
+          const aDate = a.dueDate ? (a.dueDate.toDate ? a.dueDate.toDate() : new Date(a.dueDate)) : null;
+          const bDate = b.dueDate ? (b.dueDate.toDate ? b.dueDate.toDate() : new Date(b.dueDate)) : null;
+          
+          if (!aDate && !bDate) {
+            // Both have no due date, sort by creation date
+            const aCreated = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+            const bCreated = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+            comparison = aCreated - bCreated;
+          } else if (!aDate) {
+            comparison = 1; // a goes after b
+          } else if (!bDate) {
+            comparison = -1; // a goes before b
+          } else {
+            comparison = aDate - bDate;
+          }
+          break;
+          
+        case 'createdAt':
+          const aCreated = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+          const bCreated = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          comparison = aCreated - bCreated;
+          break;
+          
+        case 'difficulty':
+          const difficultyOrder = { 'easy': 1, 'medium': 2, 'hard': 3 };
+          comparison = (difficultyOrder[a.difficulty] || 2) - (difficultyOrder[b.difficulty] || 2);
+          break;
+          
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+          
+        default:
+          comparison = 0;
+      }
+      
+      return filterSettings.sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    return filteredMissions;
+  };
 
   const loadMissions = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      let missionData;
-      if (missionType === 'active') {
+      let missionData = [];
+      
+      if (missionType === 'all') {
+        // Load all mission types
+        const [activeData, completedData, expiredData] = await Promise.all([
+          getActiveMissions(currentUser.uid),
+          getCompletedMissions(currentUser.uid),
+          getExpiredMissions(currentUser.uid).catch(() => []) // Handle if function doesn't exist
+        ]);
+        missionData = [...activeData, ...completedData, ...expiredData];
+      } else if (missionType === 'active') {
         missionData = await getActiveMissions(currentUser.uid);
       } else if (missionType === 'completed') {
         missionData = await getCompletedMissions(currentUser.uid);
-      } else {
-        // Handle other mission types if needed
-        missionData = [];
+      } else if (missionType === 'expired') {
+        try {
+          missionData = await getExpiredMissions(currentUser.uid);
+        } catch (err) {
+          console.warn('getExpiredMissions not available:', err);
+          missionData = [];
+        }
       }
       
-      setMissions(missionData);
+      // Apply filtering and sorting
+      const processedMissions = applyFiltersAndSort(missionData, filters);
+      setMissions(processedMissions);
     } catch (err) {
       console.error('Error loading missions:', err);
       setError('Failed to load missions');
