@@ -13,7 +13,6 @@ import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 import MissionBankPage from './pages/MissionBankPage';
 
-import MissionList from './components/missions/MissionList';
 
 function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
@@ -56,8 +55,7 @@ function AppContent() {
         <Route path="/character-creation" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
-        <Route path="/mission-list" element={<MissionList />} />
-        <Route path="/mission-bank" element={<MissionBankPage />} />
+        <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>
