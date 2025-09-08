@@ -84,30 +84,30 @@ const MissionBank = () => {
     }
   };
 
-  const getPageTitle = () => {
-    if (filters.includeCompleted && filters.includeExpired) {
-      return 'All Missions';
-    } else if (filters.includeCompleted) {
-      return 'Completed Missions';
-    } else if (filters.includeExpired) {
-      return 'Expired Missions';
-    }
+//   const getPageTitle = () => {
+//     if (filters.includeCompleted && filters.includeExpired) {
+//       return 'All Missions';
+//     } else if (filters.includeCompleted) {
+//       return 'Completed Missions';
+//     } else if (filters.includeExpired) {
+//       return 'Expired Missions';
+//     }
     
-    switch (activeTab) {
-      case 'active':
-        return 'Active Missions';
-      case 'completed':
-        return 'Completed Missions';
-      default:
-        return 'Missions';
-    }
-  };
+//     switch (activeTab) {
+//       case 'active':
+//         return 'Active Missions';
+//       case 'completed':
+//         return 'Completed Missions';
+//       default:
+//         return 'Missions';
+//     }
+//   };
 
   return (
     <div className="mission-bank-page">
       {/* Page Header */}
       <div className="mission-bank-header">
-        <h1>{getPageTitle()}</h1>
+        <h1>Mission Bank</h1>
         
         <div className="header-actions">
           {/* Filter Button */}
@@ -122,19 +122,19 @@ const MissionBank = () => {
           </button>
           
           {/* Add Mission Button - Only show for active missions */}
-          {activeTab === 'active' && !filters.includeCompleted && !filters.includeExpired && (
+          {/* {activeTab === 'active' && !filters.includeCompleted && !filters.includeExpired && ( */}
             <button
               onClick={handleShowAddMission}
               className="add-mission-btn"
             >
               + Add Mission
             </button>
-          )}
+          {/* )} */}
         </div>
       </div>
 
       {/* Tab Navigation - Hide when using filters that show multiple types */}
-      {!filters.includeCompleted && !filters.includeExpired && (
+      {/* {!filters.includeCompleted && !filters.includeExpired && (
         <div className="mission-tabs">
           <button
             onClick={() => setActiveTab('active')}
@@ -149,17 +149,7 @@ const MissionBank = () => {
             Completed
           </button>
         </div>
-      )}
-
-      {/* User Profile Info */}
-      {userProfile && (
-        <div className="user-info">
-          <div className="user-info-content">
-            <span className="user-level">Level {userProfile.level}</span>
-            <span className="user-xp">{userProfile.xp} XP</span>
-          </div>
-        </div>
-      )}
+      )} */}
 
       {/* Mission List Component */}
       <MissionList 
