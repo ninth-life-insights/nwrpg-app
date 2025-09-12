@@ -1,5 +1,5 @@
 // src/components/missions/MissionList.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from './MissionCard';
 import MissionDetailView from './MissionCardFull';
@@ -30,12 +30,19 @@ const MissionList = ({
   const [error, setError] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
 
+  // Memoize the filters to prevent unnecessary re-renders
+  const memoizedFilters = useMemo(() => ({
+    sortBy: filters.sortBy || 'dueDate',
+    sortOrder: filters.sortOrder || 'asc',
+    skillFilter: filters.skillFilter || ''
+  }), [filters.sortBy, filters.sortOrder, filters.skillFilter]);
+
   // Load missions when component mounts, user changes, mission type changes, or filters change
   useEffect(() => {
     if (currentUser) {
       loadMissions();
     }
-  }, [currentUser, missionType, filters]); //loading criteria, whenever one of these changes
+  }, [currentUser, missionType, memoizedFilters]);
 
   const applyFiltersAndSort = (missionData, filterSettings) => {
     let filteredMissions = [...missionData];
@@ -47,7 +54,7 @@ const MissionList = ({
       );
     }
 
-    // Sort missions
+    // Sort missions - filterSettings is now guaranteed to have values
     filteredMissions.sort((a, b) => {
       let comparison = 0;
       
@@ -87,7 +94,21 @@ const MissionList = ({
           break;
           
         default:
-          comparison = 0;
+          // Fallback to dueDate if unknown sortBy
+          const aDateDefault = a.dueDate ? (a.dueDate.toDate ? a.dueDate.toDate() : new Date(a.dueDate)) : null;
+          const bDateDefault = b.dueDate ? (b.dueDate.toDate ? b.dueDate.toDate() : new Date(b.dueDate)) : null;
+          
+          if (!aDateDefault && !bDateDefault) {
+            const aCreatedDefault = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+            const bCreatedDefault = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+            comparison = aCreatedDefault - bCreatedDefault;
+          } else if (!aDateDefault) {
+            comparison = 1;
+          } else if (!bDateDefault) {
+            comparison = -1;
+          } else {
+            comparison = aDateDefault - bDateDefault;
+          }
       }
       
       return filterSettings.sortOrder === 'desc' ? -comparison : comparison;
@@ -124,8 +145,8 @@ const MissionList = ({
         }
       }
       
-      // Apply filtering and sorting
-      const processedMissions = applyFiltersAndSort(missionData, filters);
+      // Apply filtering and sorting - now using memoizedFilters
+      const processedMissions = applyFiltersAndSort(missionData, memoizedFilters);
       setMissions(processedMissions);
     } catch (err) {
       console.error('Error loading missions:', err);
@@ -134,7 +155,7 @@ const MissionList = ({
       setLoading(false);
     }
   };
-
+  
   // Function to toggle completion status with XP handling
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
 
@@ -189,7 +210,6 @@ const MissionList = ({
       onMissionUpdate();
     }
   };
-
   // Handle mission selection for daily missions
   const handleMissionSelect = (mission) => {
     if (!selectionMode || !onMissionSelect) return;
@@ -211,7 +231,6 @@ const MissionList = ({
     // Select the mission
     onMissionSelect(mission);
   };
-
   // Handle viewing mission details
   const handleViewDetails = (mission) => {
     if (selectionMode) {
@@ -220,7 +239,6 @@ const MissionList = ({
       setSelectedMission(mission);
     }
   };
-
   // Loading state
   if (loading) {
     return (
@@ -233,7 +251,6 @@ const MissionList = ({
       </div>
     );
   }
-
   // Error state
   if (error) {
     return (
@@ -249,7 +266,6 @@ const MissionList = ({
       </div>
     );
   }
-
   // Empty state
   if (missions.length === 0) {
     const emptyMessage = missionType === 'active' 
