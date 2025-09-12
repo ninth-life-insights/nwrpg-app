@@ -17,9 +17,12 @@ const MissionList = ({
   missionType = 'active', 
   onMissionUpdate,
   showAddMission,
-  onShowAddMission,
   onHideAddMission,
-  filters = {}
+  filters = {},
+  selectionMode = false, 
+  onMissionSelect = null,
+  selectedMissions = [],
+  maxSelections = null 
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
@@ -32,7 +35,7 @@ const MissionList = ({
     if (currentUser) {
       loadMissions();
     }
-  }, [currentUser, missionType, filters]);
+  }, [currentUser, missionType, filters]); //loading criteria, whenever one of these changes
 
   const applyFiltersAndSort = (missionData, filterSettings) => {
     let filteredMissions = [...missionData];
@@ -134,6 +137,9 @@ const MissionList = ({
 
   // Function to toggle completion status with XP handling
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+
+    if (selectionMode) return; // Don't allow completion toggle in selection mode
+
     try {
       if (isCurrentlyCompleted) {
         // Uncomplete the mission
@@ -181,6 +187,37 @@ const MissionList = ({
     // Notify parent component
     if (onMissionUpdate) {
       onMissionUpdate();
+    }
+  };
+
+  // Handle mission selection for daily missions
+  const handleMissionSelect = (mission) => {
+    if (!selectionMode || !onMissionSelect) return;
+    
+    // Check if mission is already selected
+    const isSelected = selectedMissions.some(selected => selected.id === mission.id);
+    
+    if (isSelected) {
+      // Mission is already selected, don't allow deselection here
+      return;
+    }
+    
+    // Check if we've reached max selections
+    if (maxSelections && selectedMissions.length >= maxSelections) {
+      alert(`You can only select up to ${maxSelections} missions.`);
+      return;
+    }
+    
+    // Select the mission
+    onMissionSelect(mission);
+  };
+
+  // Handle viewing mission details
+  const handleViewDetails = (mission) => {
+    if (selectionMode) {
+      handleMissionSelect(mission);
+    } else {
+      setSelectedMission(mission);
     }
   };
 
@@ -241,21 +278,89 @@ const MissionList = ({
   }
 
   return (
-    <div className="mission-list">
+    
+    <div className={selectionMode ? 'mission-list-selection-mode' : 'mission-list'}>
+
+      {/* Selection mode header */}
+      {selectionMode && (
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '20px',
+          padding: '15px',
+          backgroundColor: '#e3f2fd',
+          borderRadius: '8px',
+          border: '2px solid #2196f3'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#1976d2' }}>
+            Assign to Daily Missions
+          </h3>
+          <p style={{ margin: 0, color: '#1976d2', fontSize: '14px' }}>
+            {maxSelections && selectedMissions.length > 0 
+              ? `${selectedMissions.length}/${maxSelections} selected`
+              : 'Click on a mission to add it to your daily missions'
+            }
+          </p>
+        </div>
+      )}
+
       {/* Missions Grid */}
       <div style={{ textAlign: 'center' }}>
-        {missions.map(mission => (
-          <MissionCard
-            key={mission.id}
-            mission={mission}
-            onToggleComplete={handleToggleComplete}
-            onViewDetails={setSelectedMission}
-          />
-        ))}
+        {missions.map(mission => {
+            const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
+            
+            return (
+              <div
+                key={mission.id}
+                className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''}`}
+                style={{
+                  position: 'relative',
+                  ...(selectionMode && {
+                    cursor: 'pointer',
+                    padding: '4px',
+                    margin: '8px auto',
+                    maxWidth: '400px',
+                    borderRadius: '12px',
+                    border: isSelected ? '3px solid #2196f3' : '3px solid transparent',
+                    backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
+                    transition: 'all 0.2s ease'
+                  })
+                }}
+                onClick={selectionMode ? () => handleMissionSelect(mission) : undefined}
+              >
+                {isSelected && selectionMode && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    backgroundColor: '#2196f3',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    zIndex: 10
+                  }}>
+                    ✓
+                  </div>
+                )}
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  onToggleComplete={handleToggleComplete}
+                  onViewDetails={handleViewDetails}
+                  selectionMode={selectionMode} //should this be here? I have no flippin idea
+                />
+              </div>
+            );
+          })}
       </div>
 
       {/* Mission Detail Modal */}
-      {selectedMission && (
+       {!selectionMode && selectedMission && (
         <MissionDetailView 
           mission={selectedMission} 
           onClose={() => setSelectedMission(null)} 
@@ -264,7 +369,7 @@ const MissionList = ({
       )}
 
       {/* Add Mission Modal */}
-      {showAddMission && (
+      {!selectionMode && showAddMission && (
         <AddMissionCard
           onAddMission={handleAddMission}
           onCancel={onHideAddMission}
