@@ -383,3 +383,160 @@
     max-height: calc(100vh - 2 * var(--space-md));
   }
 }
+
+.loading-message, .error-message {
+  text-align: center;
+  padding: 40px 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+
+.loading-message {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 2px solid #bae6fd;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 2px solid #fecaca;
+}
+
+/* Current Status Section */
+.current-status {
+  background-color: #f0fdf4;
+  border: 2px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  text-align: center;
+}
+
+.status-text {
+  margin: 0;
+  color: #166534;
+  font-weight: 500;
+}
+
+/* Daily Mission Badge */
+.daily-badge {
+  background-color: #fbbf24;
+  color: #92400e;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Enhanced Mission Badges */
+.mission-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.skill-badge {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.due-date-badge {
+  background-color: #fef3c7;
+  color: #92400e;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Help Text */
+.help-text {
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+/* Disabled State Enhancements */
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+  color: #9ca3af;
+}
+
+.set-missions-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+/* Improved Requirements Text */
+.requirements-text {
+  font-size: 0.9rem;
+  color: #f59e0b;
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Loading State for Button */
+.set-missions-btn.saving {
+  background-color: #9ca3af;
+  cursor: wait;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .current-status {
+    margin: 10px 0;
+    padding: 12px;
+  }
+  
+  .status-text {
+    font-size: 0.9rem;
+  }
+  
+  .help-text {
+    font-size: 0.8rem;
+  }
+  
+  .mission-badges {
+    gap: 4px;
+  }
+  
+  .daily-badge,
+  .skill-badge,
+  .due-date-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+}
+
+/* Animation for Status Messages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-message,
+.current-status {
+  animation: fadeIn 0.3s ease-out;
+}
