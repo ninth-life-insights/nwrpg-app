@@ -1,9 +1,15 @@
 // src/pages/HomePage.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
+import { 
+  getDailyMissionsConfig, 
+  getActiveMissions,
+  checkDailyMissionReset,
+  resetDailyMissions 
+} from '../services/missionService';
 import EditDailyMissions from '../components/missions/EditDailyMissions';
 import './HomePage.css';
 
@@ -11,16 +17,17 @@ const HomePage = () => {
   const { currentUser } = useAuth();
   const [character, setCharacter] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
+  const [dailyMissionsConfig, setDailyMissionsConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
 
   const MissionBankClick = () => {
-    Navigate('/mission-bank');
+    navigate('/mission-bank');
   };
 
   const DailyPlanningClick = () => {
-    Navigate('/edit-daily-missions');
+    navigate('/edit-daily-missions');
   };
 
   // Color mapping from character creation
@@ -56,11 +63,70 @@ const HomePage = () => {
     setImageError(prev => ({ ...prev, [key]: true }));
   };
 
+  // Check for daily mission reset and handle it
+  const handleDailyMissionReset = async () => {
+    if (!currentUser) return;
+
+    try {
+      const resetCheck = await checkDailyMissionReset(currentUser.uid);
+      
+      if (resetCheck.needsReset) {
+        // Optionally show user notification about reset
+        console.log('Daily missions have reset for a new day');
+        await resetDailyMissions(currentUser.uid);
+        
+        // Clear local state since missions have been reset
+        setDailyMissions([]);
+        setDailyMissionsConfig(null);
+      }
+    } catch (error) {
+      console.error('Error checking/handling daily mission reset:', error);
+    }
+  };
+
+  // Fetch daily missions using the new system
+  const fetchDailyMissions = async () => {
+    if (!currentUser) return;
+
+    try {
+      // Get daily missions configuration
+      const config = await getDailyMissionsConfig(currentUser.uid);
+      setDailyMissionsConfig(config);
+
+      if (config && config.selectedMissionIds && config.isActive) {
+        // Get all active missions
+        const allMissions = await getActiveMissions(currentUser.uid);
+        
+        // Filter to get only the selected daily missions
+        const selectedDailyMissions = config.selectedMissionIds
+          .map(missionId => allMissions.find(mission => mission.id === missionId))
+          .filter(Boolean) // Remove any null/undefined missions
+          .map(mission => ({
+            ...mission,
+            completed: mission.status === 'completed'
+          }));
+
+        setDailyMissions(selectedDailyMissions);
+      } else {
+        // No active daily missions configuration
+        setDailyMissions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching daily missions:', error);
+      setDailyMissions([]);
+    }
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (!currentUser) return;
       
       try {
+        setLoading(true);
+
+        // Check for daily mission reset first
+        await handleDailyMissionReset();
+
         // Fetch character data
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
@@ -68,27 +134,11 @@ const HomePage = () => {
           setCharacter(userData.character);
         }
 
-        // Fetch daily missions
-        const missionsRef = collection(db, 'users', currentUser.uid, 'missions');
-        const dailyMissionsQuery = query(
-          missionsRef,
-          where('isDailyMission', '==', true),
-          orderBy('createdAt', 'desc')
-        );
-        
-        const missionsSnapshot = await getDocs(dailyMissionsQuery);
-        const missions = missionsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          completed: doc.data().status === 'completed'
-        }));
-        
-        // Limit to 3 most recent daily missions
-        setDailyMissions(missions.slice(0, 3));
+        // Fetch daily missions using new system
+        await fetchDailyMissions();
         
       } catch (error) {
         console.error('Error fetching user data:', error);
-        // If no daily missions exist, show empty state or create default ones
         setDailyMissions([]);
       } finally {
         setLoading(false);
@@ -97,6 +147,11 @@ const HomePage = () => {
 
     fetchUserData();
   }, [currentUser]);
+
+  // Function to refresh daily missions after editing
+  const handleDailyMissionsUpdate = async () => {
+    await fetchDailyMissions();
+  };
 
   // Calculate current XP and level progress
   const getXPForLevel = (level) => level * 100; // Simple formula
@@ -107,6 +162,28 @@ const HomePage = () => {
   const progressXP = currentXP - xpForCurrentLevel;
   const requiredXP = xpForNextLevel - xpForCurrentLevel;
   const progressPercentage = (progressXP / requiredXP) * 100;
+
+  // Get daily missions status for display
+  const getDailyMissionsStatus = () => {
+    if (!dailyMissionsConfig || !dailyMissionsConfig.isActive) {
+      return { 
+        hasActiveDailyMissions: false, 
+        completedCount: 0, 
+        totalCount: 0 
+      };
+    }
+
+    const completedCount = dailyMissions.filter(mission => mission.completed).length;
+    const totalCount = dailyMissions.length;
+
+    return {
+      hasActiveDailyMissions: true,
+      completedCount,
+      totalCount
+    };
+  };
+
+  const dailyStatus = getDailyMissionsStatus();
 
   if (loading) {
     return (
@@ -204,7 +281,9 @@ const HomePage = () => {
       {/* Daily Missions Section */}
       <section className="daily-missions-section">
         <div className="section-header">
-          <h3 className="section-title">Daily Missions</h3>
+          <h3 className="section-title">
+            Daily Missions
+          </h3>
           <button className="edit-button" onClick={() => setShowEditDailyMissions(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -214,7 +293,7 @@ const HomePage = () => {
         </div>
         
         <div className="missions-overview">
-          {dailyMissions.length > 0 ? (
+          {dailyStatus.hasActiveDailyMissions ? (
             dailyMissions.map((mission) => (
               <div key={mission.id} className={`mission-item ${mission.completed ? 'completed' : ''}`}>
                 <div className="mission-checkbox">
@@ -258,12 +337,12 @@ const HomePage = () => {
         <EditDailyMissions 
           currentDailyMissions={dailyMissions}
           onClose={() => setShowEditDailyMissions(false)}
-          onSave={(updatedMissions) => {
-            setDailyMissions(updatedMissions);
+          onSave={async (updatedMissions) => {
+            await handleDailyMissionsUpdate();
             setShowEditDailyMissions(false);
           }}
         />
-        )}
+      )}
     </div>
   );
 };
