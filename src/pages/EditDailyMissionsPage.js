@@ -269,9 +269,6 @@ const EditDailyMissionsPage = () => {
           </p>
         )}
         
-        <p className="help-text">
-          💡 Daily missions reset each day and help you stay focused on your most important tasks.
-        </p>
       </div>
 
       {/* Modals */}
