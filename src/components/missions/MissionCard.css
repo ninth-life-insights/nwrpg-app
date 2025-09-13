@@ -27,6 +27,11 @@
   border-color: var(--color-border);
 }
 
+.mission-card.daily-mission-card {
+  background-color: #fff0d4;
+  border-color: #f7b946;
+}
+
 .mission-card.pinned {
   border-color: #fbbf24;
   box-shadow: var(--shadow-card), 0 0 0 1px rgba(251, 191, 36, 0.2);
@@ -145,7 +150,7 @@
 }
 
 .daily-mission-badge {
-  background-color: #fef3c7;
+  background-color: #ffffff;
   color: #d97706;
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);

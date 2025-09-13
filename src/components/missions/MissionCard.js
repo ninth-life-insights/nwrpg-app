@@ -89,7 +89,7 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
   };
 
   return (
-    <div className={`mission-card ${isCompleted ? 'completed' : ''} ${mission.pinned ? 'pinned' : ''}`}>
+    <div className={`mission-card ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''}`}>
       
       {/* Content area */}
       <div className="content-area" onClick={() => onViewDetails(mission)}>
@@ -106,18 +106,21 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
           </div>
           
           <div className="badges">
+
+            {/* Daily mission badge */}
+            {mission.isDailyMission && (
+              <span className="daily-mission-badge">Daily</span>
+            )}
+            
+
             <DifficultyBadge difficulty={mission.difficulty} />
+
             
             {/* Due date badge */}
             {dueDateInfo && (
               <span className={`due-date-badge ${dueDateInfo.status}`}>
                 {dueDateInfo.display}
               </span>
-            )}
-            
-            {/* Daily mission badge */}
-            {mission.isDailyMission && (
-              <span className="daily-mission-badge">Daily</span>
             )}
             
             {/* High priority badge */}
