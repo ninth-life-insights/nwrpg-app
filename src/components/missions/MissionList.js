@@ -197,10 +197,6 @@ const MissionList = ({
 
   // Handle adding a new mission
   const handleAddMission = (newMission) => {
-  console.log('=== handleAddMission called ===');
-  console.log('Received mission:', newMission);
-  console.log('Mission ID:', newMission.id);
-  console.log('Mission ID type:', typeof newMission.id);
   
   if (!newMission.id) {
     console.error('BLOCKING: Cannot add mission without ID');
@@ -208,11 +204,9 @@ const MissionList = ({
     return; // Don't add missions without IDs
   }
   
-  console.log('Adding mission to state...');
+
   setMissions(prev => {
-    console.log('Previous missions:', prev);
     const newMissions = [newMission, ...prev];
-    console.log('New missions array:', newMissions);
     return newMissions;
   });
   
@@ -301,10 +295,6 @@ const MissionList = ({
       </div>
     );
   }
-
-  console.log('Mission IDs:', missions.map(m => m.id));
-console.log('Null IDs:', missions.filter(m => !m.id));
-console.log('Duplicate IDs:', missions.filter((m, i) => missions.findIndex(other => other.id === m.id) !== i));
 
   return (
     

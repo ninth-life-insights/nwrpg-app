@@ -185,6 +185,8 @@ const handleSubmit = async (e) => {
       hasExpiryDate: true
     });
 
+    onCancel();
+
   } catch (error) {
     console.error('Error creating mission:', error);
     setErrors({ submit: 'Failed to create mission. Please try again.' });

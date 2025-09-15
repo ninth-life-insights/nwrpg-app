@@ -23,9 +23,7 @@ const getUserMissionsRef = (userId) => {
 // Create a new mission
 export const createMission = async (userId, missionData) => {
   try {
-    console.log('createMission called with:', { userId, missionData });
     const missionsRef = getUserMissionsRef(userId);
-    console.log('Got missions ref:', missionsRef);
     
     const docRef = await addDoc(missionsRef, {
       ...missionData,
@@ -33,9 +31,6 @@ export const createMission = async (userId, missionData) => {
       createdAt: serverTimestamp(),
       completedAt: null
     });
-    
-    console.log('addDoc completed, docRef:', docRef);
-    console.log('docRef.id:', docRef.id);
     
     if (!docRef.id) {
       console.error('WARNING: docRef.id is null/undefined!');
