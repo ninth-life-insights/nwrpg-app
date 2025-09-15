@@ -1,5 +1,5 @@
 // src/components/missions/AddMissionCard.js
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission } from '../../services/missionService';
 import DifficultyBadge from './sub-components/DifficultyBadge';
@@ -18,8 +18,6 @@ import './AddMissionCard.css';
 
 const AddMissionCard = ({ onAddMission, onCancel }) => {
   const { currentUser } = useAuth();
-
-
   
   // Get default expiry date (30 days from now)
   const getDefaultExpiryDate = () => {
@@ -79,7 +77,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     }));
   };
 
-  const handleCompletionTypeSelect = useCallback((completionType) => {
+  const handleCompletionTypeSelect = (completionType) => {
     setFormData(prev => ({
       ...prev,
       completionType: completionType,
@@ -87,15 +85,7 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
       timerDurationMinutes: completionType === COMPLETION_TYPES.TIMER ? prev.timerDurationMinutes : null,
       targetCount: completionType === COMPLETION_TYPES.COUNT ? prev.targetCount : null,
     }));
-  }, []);
-
-  const handleTimerDurationChange = useCallback((minutes) => {
-    setFormData(prev => ({ ...prev, timerDurationMinutes: minutes }));
-  }, []);
-
-  const handleTargetCountChange = useCallback((count) => {
-    setFormData(prev => ({ ...prev, targetCount: count }));
-  }, []);
+  };
 
   const handleSkillSelect = (skill) => {
     setFormData(prev => ({
@@ -156,75 +146,47 @@ const handleSubmit = async (e) => {
   setIsSubmitting(true);
 
   try {
-    console.log('Creating mission with data:', formData);
-    
-    const missionData = createMissionTemplate({
+    const missionData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
       difficulty: formData.difficulty,
-      completionType: formData.completionType,
-      dueType: formData.dueType,
+      // xpReward: getXPReward(formData.difficulty),
       dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
-      expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
       skill: formData.skill.trim() || null,
-      timerDurationMinutes: formData.completionType === COMPLETION_TYPES.TIMER 
-        ? parseInt(formData.timerDurationMinutes) || null 
-        : null,
-      targetCount: formData.completionType === COMPLETION_TYPES.COUNT 
-        ? parseInt(formData.targetCount) || null 
-        : null,
-      currentCount: formData.completionType === COMPLETION_TYPES.COUNT ? 0 : null,
-      priority: formData.priority,
-      pinned: formData.pinned,
-      isDailyMission: formData.isDailyMission,
-      status: MISSION_STATUS.ACTIVE
-    });
-
-    console.log('Mission data created:', missionData);
-    console.log('Current user UID:', currentUser.uid);
+      expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
+      category: 'personal', // You can expand this later
+      isDailyMission: false
+    };
 
     const missionId = await createMission(currentUser.uid, missionData);
-    console.log('createMission returned:', missionId);
-    console.log('missionId type:', typeof missionId);
     
     // Validate that we got a valid mission ID back
     if (!missionId) {
-      console.error('CRITICAL: missionId is null/undefined/falsy');
       throw new Error('Failed to create mission: No ID returned');
     }
     
-    const completeMission = {
+    // Call the parent component's callback with the new mission ID
+    onAddMission({
       ...missionData,
       id: missionId,
-      createdAt: new Date() 
-    };
-    
-    console.log('Calling onAddMission with:', completeMission);
-    
-    // Call the parent component's callback with the new mission
-    onAddMission(completeMission);
+      status: 'active',
+      completed: false,
+      createdAt: new Date()
+    });
 
-    // Reset form on success
+    // Reset form
     setFormData({
       title: '',
       description: '',
-      difficulty: DIFFICULTY_LEVELS.EASY,
-      completionType: COMPLETION_TYPES.SIMPLE,
-      dueType: DUE_TYPES.UNIQUE,
+      difficulty: 'easy',
       dueDate: '',
       skill: '',
       expiryDate: getDefaultExpiryDate(),
-      hasExpiryDate: true,
-      timerDurationMinutes: '',
-      targetCount: '',
-      priority: 'normal',
-      pinned: false,
-      isDailyMission: false
+      hasExpiryDate: true
     });
 
   } catch (error) {
-    console.error('Error in handleSubmit:', error);
-    console.error('Error stack:', error.stack);
+    console.error('Error creating mission:', error);
     setErrors({ submit: 'Failed to create mission. Please try again.' });
   } finally {
     setIsSubmitting(false);
@@ -236,38 +198,275 @@ const handleSubmit = async (e) => {
     skill.toLowerCase().includes(skillSearch.toLowerCase())
   );
 
-    console.log('=== AddMissionCard RENDER ===');
-console.log('formData:', formData);
-console.log('showDueDateField:', showDueDateField);
-console.log('showSkillField:', showSkillField); 
-console.log('showExpiryField:', showExpiryField);
-
-// Step 2: Check your data sources
-console.log('DIFFICULTY_LEVELS:', DIFFICULTY_LEVELS);
-console.log('COMPLETION_TYPES:', COMPLETION_TYPES);
-console.log('AVAILABLE_SKILLS (first 10):', AVAILABLE_SKILLS?.slice(0, 10));
-
   return (
-  <div className="add-mission-overlay" onClick={onCancel}>
-    <div className="add-mission-card" onClick={(e) => e.stopPropagation()}>
-      <form onSubmit={handleSubmit}>
-        <div className="add-mission-title-section">
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            placeholder="Mission Name *"
+    <div className="add-mission-overlay" onClick={onCancel}>
+      <div className="add-mission-card" onClick={(e) => e.stopPropagation()}>
+        
+        <form onSubmit={handleSubmit}>
+          
+          {/* Title Input */}
+          <div className="add-mission-title-section">
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              className={`add-mission-title-input ${errors.title ? 'error' : ''}`}
+              placeholder="Mission Name *"
+              disabled={isSubmitting}
+            />
+            {errors.title && <span className="error-text">{errors.title}</span>}
+          </div>
+
+          {/* Description */}
+          <div className="add-mission-description">
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              className="add-mission-description-input"
+              placeholder="Description (optional)"
+              rows="2"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          {/* Difficulty Badge Selector */}
+          <div className="add-mission-badges">
+            <div className="difficulty-selector">
+              {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
+                <button
+                  key={difficulty}
+                  type="button"
+                  onClick={() => handleDifficultySelect(difficulty)}
+                  className={`difficulty-badge-button ${formData.difficulty === difficulty ? 'selected' : 'unselected'}`}
+                  disabled={isSubmitting}
+                >
+                  <DifficultyBadge difficulty={difficulty} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Completion Type Selector */}
+          <CompletionTypeSelector
+            completionType={formData.completionType}
+            onCompletionTypeChange={handleCompletionTypeSelect}
+            timerDurationMinutes={formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null}
+            onTimerDurationChange={(minutes) => setFormData(prev => ({ ...prev, timerDurationMinutes: minutes }))}
+            targetCount={formData.targetCount ? parseInt(formData.targetCount) : null}
+            onTargetCountChange={(count) => setFormData(prev => ({ ...prev, targetCount: count }))}
+            disabled={isSubmitting}
+            errors={errors}
           />
-        </div>
-        <div className="add-mission-actions">
-          <button type="button" onClick={onCancel}>Cancel</button>
-          <button type="submit">Add Mission</button>
-        </div>
-      </form>
+
+          {/* Optional Field Ghost Badges */}
+          <div className="ghost-badges">
+            {!showDueDateField && !formData.dueDate && (
+              <button
+                type="button"
+                onClick={() => setShowDueDateField(true)}
+                className="ghost-badge"
+                disabled={isSubmitting}
+              >
+                + Due date
+              </button>
+            )}
+            
+            {!showSkillField && !formData.skill && (
+              <button
+                type="button"
+                onClick={() => setShowSkillField(true)}
+                className="ghost-badge"
+                disabled={isSubmitting}
+              >
+                + Skill
+              </button>
+            )}
+            
+            {!showExpiryField && formData.hasExpiryDate && (
+              <button
+                type="button"
+                onClick={() => setShowExpiryField(true)}
+                className="ghost-badge"
+                disabled={isSubmitting}
+              >
+                Edit expiration date
+              </button>
+            )}
+            
+            {!formData.hasExpiryDate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, expiryDate: getDefaultExpiryDate(), hasExpiryDate: true }));
+                  setShowExpiryField(true);
+                }}
+                className="ghost-badge"
+                disabled={isSubmitting}
+              >
+                + Expiration date
+              </button>
+            )}
+
+          </div>
+
+          {/* Due Date Field */}
+          {(showDueDateField || formData.dueDate) && (
+            <div className="optional-field-inline">
+              <label>Due Date</label>
+              <div className="field-with-remove">
+                <input
+                  type="date"
+                  name="dueDate"
+                  value={formData.dueDate}
+                  onChange={handleInputChange}
+                  className="optional-input"
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, dueDate: '' }));
+                    setShowDueDateField(false);
+                  }}
+                  className="remove-field-btn"
+                  disabled={isSubmitting}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Skill Field */}
+          {(showSkillField || formData.skill) && (
+            <div className="skill-field-section">
+              <label>Skill</label>
+              {formData.skill ? (
+                <div className="selected-skill-inline">
+                  <SkillBadge skill={formData.skill} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, skill: '' }));
+                      setShowSkillField(false);
+                      setSkillSearch('');
+                    }}
+                    className="remove-field-btn"
+                    disabled={isSubmitting}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="field-with-remove">
+                    <input
+                      type="text"
+                      value={skillSearch}
+                      onChange={(e) => setSkillSearch(e.target.value)}
+                      className="optional-input"
+                      placeholder="Search skills..."
+                      disabled={isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSkillField(false);
+                        setSkillSearch('');
+                      }}
+                      className="remove-field-btn"
+                      disabled={isSubmitting}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <div className="skills-grid-inline">
+                    {filteredSkills.map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => handleSkillSelect(skill)}
+                        className="skill-option-inline"
+                        disabled={isSubmitting}
+                      >
+                        <SkillBadge skill={skill} />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Expiry Date Field */}
+          {(showExpiryField || (!formData.hasExpiryDate && showExpiryField)) && (
+            <div className="optional-field-inline">
+              <label>Expires</label>
+              {formData.hasExpiryDate ? (
+                <div className="field-with-remove">
+                  <input
+                    type="date"
+                    name="expiryDate"
+                    value={formData.expiryDate}
+                    onChange={handleInputChange}
+                    className="optional-input"
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleRemoveExpiryDate();
+                      setShowExpiryField(false);
+                    }}
+                    className="remove-field-btn"
+                    disabled={isSubmitting}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {/* General Error Display */}
+          {errors.general && (
+            <div className="error-text" style={{ textAlign: 'center', marginBottom: '15px' }}>
+              {errors.general}
+            </div>
+          )}
+
+          {/* Submit Error Display */}
+          {errors.submit && (
+            <div className="error-text" style={{ textAlign: 'center', marginBottom: '15px' }}>
+              {errors.submit}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="add-mission-actions">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="cancel-btn"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="add-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Adding...' : 'Add Mission'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default AddMissionCard;
