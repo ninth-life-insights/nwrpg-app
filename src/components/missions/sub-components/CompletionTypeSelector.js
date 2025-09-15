@@ -30,10 +30,10 @@ const CompletionTypeSelector = ({
   // Update parent when timer values change
   useEffect(() => {
     const totalMinutes = (timerHours * 60) + timerMinutes;
-    if (totalMinutes !== timerDurationMinutes) {
-      onTimerDurationChange(totalMinutes || null);
+    if (totalMinutes !== timerDurationMinutes && totalMinutes > 0) {
+      onTimerDurationChange(totalMinutes);
     }
-  }, [timerHours, timerMinutes]); // Remove timerDurationMinutes and onTimerDurationChange from deps
+  }, [timerHours, timerMinutes, timerDurationMinutes, onTimerDurationChange]);
 
   const handleTimerInputChange = (type, value) => {
     const numValue = parseInt(value) || 0;
@@ -63,8 +63,8 @@ const CompletionTypeSelector = ({
         className="completion-type-selector" 
         data-selected={completionType}
       >
-        {Object.entries(COMPLETION_TYPES).map(([key, value]) => (
-          <label key={value} className="completion-type-option">
+        {Object.entries(COMPLETION_TYPES).map(([key, value], index) => (
+          <label key={`completion-${key}-${value}-${index}`} className="completion-type-option">
             <input
               type="radio"
               name="completionType"

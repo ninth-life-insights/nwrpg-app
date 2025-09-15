@@ -20,7 +20,7 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
   const missionHasSkill = hasSkill(mission);
   const canComplete = canCompleteMission(mission);
   
-  // Enhanced due date status using schema functions
+  // FIXED: Safe due date status calculation
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
     

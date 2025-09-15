@@ -293,6 +293,10 @@ const MissionList = ({
     );
   }
 
+  console.log('Mission IDs:', missions.map(m => m.id));
+console.log('Null IDs:', missions.filter(m => !m.id));
+console.log('Duplicate IDs:', missions.filter((m, i) => missions.findIndex(other => other.id === m.id) !== i));
+
   return (
     
     <div className={selectionMode ? 'mission-list-selection-mode' : 'mission-list'}>
@@ -374,6 +378,7 @@ const MissionList = ({
             );
           })}
       </div>
+      
 
       {/* Mission Detail Modal */}
        {!selectionMode && selectedMission && (

@@ -1,42 +1,39 @@
 // src/components/missions/MissionCardFull.js
 import React from 'react';
 import DifficultyBadge from './sub-components/DifficultyBadge';
+import {
+  MISSION_STATUS,
+  isMissionDueToday,
+  isMissionDueTomorrow,
+  isMissionOverdue,
+  getDaysUntilDue
+} from '../../types/Mission';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
-  const getDueDateStatus = (dueDate) => {
-    if (!dueDate) return null;
+  // FIXED: Use consistent due date logic from schema
+  const getDueDateInfo = () => {
+    if (!mission.dueDate) return null;
     
-    const today = new Date();
-    // Handle both Firestore timestamp and regular Date objects
-    const due = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
+    if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
+    if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
+    if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
     
-    today.setHours(0, 0, 0, 0);
-    due.setHours(0, 0, 0, 0);
+    // For other upcoming dates, show the actual date
+    const date = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+    const daysUntil = getDaysUntilDue(mission);
     
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (daysUntil <= 7) {
+      return {
+        status: 'upcoming-week',
+        display: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      };
+    }
     
-    if (diffDays < 0) return 'overdue';
-    if (diffDays === 0) return 'due-today';
-    return 'upcoming';
-  };
-
-  const formatDueDate = (dueDate) => {
-    if (!dueDate) return null;
-    
-    // Handle both Firestore timestamp and regular Date objects
-    const date = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
-    const status = getDueDateStatus(dueDate);
-    
-    if (status === 'due-today') return 'Due Today';
-    
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return {
+      status: 'upcoming',
+      display: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
   };
 
   const formatExpiryDate = (expiryDate) => {
@@ -63,13 +60,12 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
     });
   };
 
-  const dueDateStatus = getDueDateStatus(mission.dueDate);
-  const dueDateDisplay = formatDueDate(mission.dueDate);
+  const dueDateInfo = getDueDateInfo();
   const expiryDisplay = formatExpiryDate(mission.expiryDate);
   const createdDisplay = formatCreatedDate(mission.createdAt);
   
-  // Determine if mission is completed based on status or completed field
-  const isCompleted = mission.status === 'completed' || mission.completed;
+  // Determine if mission is completed using schema constant
+  const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
 
   return (
     <div className="mission-detail-overlay" onClick={onClose}>
@@ -124,14 +120,13 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
           <div className="mission-badges">
             <DifficultyBadge difficulty={mission.difficulty} />
             
-            
             <span className="status-badge-inline">
               Status: {isCompleted ? 'Completed' : 'Active'}
             </span>
             
-            {dueDateDisplay && (
-              <span className={`due-date-badge ${dueDateStatus}`}>
-                {dueDateDisplay}
+            {dueDateInfo && (
+              <span className={`due-date-badge ${dueDateInfo.status}`}>
+                {dueDateInfo.display}
               </span>
             )}
             

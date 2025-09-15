@@ -183,7 +183,6 @@ export const validateMission = (mission) => {
 
 
 // check if mission is overdue
-
 export const isMissionOverdue = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     return false;
@@ -192,31 +191,31 @@ export const isMissionOverdue = (mission) => {
   const now = new Date();
   const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
   
-  return now > dueDate;
+  // Reset time to end of due date for proper comparison
+  const endOfDueDate = new Date(dueDate);
+  endOfDueDate.setHours(23, 59, 59, 999);
+  
+  return now > endOfDueDate;
 };
 
-
 // check if mission is due today
-
 export const isMissionDueToday = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     return false;
   }
   
   const today = new Date();
-  // Handle both Firestore timestamp and regular Date objects
   const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
   
   // Reset time to compare dates only
   today.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
+  const dueDateOnly = new Date(dueDate);
+  dueDateOnly.setHours(0, 0, 0, 0);
   
-  return today.getTime() === dueDate.getTime();
+  return today.getTime() === dueDateOnly.getTime();
 };
 
-
 // check if mission is due tomorrow
-
 export const isMissionDueTomorrow = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     return false;
@@ -224,33 +223,31 @@ export const isMissionDueTomorrow = (mission) => {
   
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  // Handle both Firestore timestamp and regular Date objects
   const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
   
   // Reset time to compare dates only
   tomorrow.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
+  const dueDateOnly = new Date(dueDate);
+  dueDateOnly.setHours(0, 0, 0, 0);
   
-  return tomorrow.getTime() === dueDate.getTime();
+  return tomorrow.getTime() === dueDateOnly.getTime();
 };
 
-
 // get days until mission is due
-
 export const getDaysUntilDue = (mission) => {
   if (!mission.dueDate) {
     return null;
   }
   
   const today = new Date();
-  // Handle both Firestore timestamp and regular Date objects
   const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
   
   // Reset time to compare dates only
   today.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
+  const dueDateOnly = new Date(dueDate);
+  dueDateOnly.setHours(0, 0, 0, 0);
   
-  const diffTime = dueDate.getTime() - today.getTime();
+  const diffTime = dueDateOnly.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
