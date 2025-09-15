@@ -196,20 +196,29 @@ const MissionList = ({
   };
 
   // Handle adding a new mission
-  const handleAddMission = async (newMission) => {
-    // Reload missions to include the new one
-    await loadMissions();
-    
-    // Hide the add mission modal
-    if (onHideAddMission) {
-      onHideAddMission();
-    }
-    
-    // Notify parent component
-    if (onMissionUpdate) {
-      onMissionUpdate();
-    }
-  };
+  const handleAddMission = (newMission) => {
+  console.log('=== handleAddMission called ===');
+  console.log('Received mission:', newMission);
+  console.log('Mission ID:', newMission.id);
+  console.log('Mission ID type:', typeof newMission.id);
+  
+  if (!newMission.id) {
+    console.error('BLOCKING: Cannot add mission without ID');
+    console.error('Mission object:', newMission);
+    return; // Don't add missions without IDs
+  }
+  
+  console.log('Adding mission to state...');
+  setMissions(prev => {
+    console.log('Previous missions:', prev);
+    const newMissions = [newMission, ...prev];
+    console.log('New missions array:', newMissions);
+    return newMissions;
+  });
+  
+  // setShowAddMission(false);
+};
+
   // Handle mission selection for daily missions
   const handleMissionSelect = (mission) => {
     if (!selectionMode || !onMissionSelect) return;

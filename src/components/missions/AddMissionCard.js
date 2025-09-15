@@ -156,7 +156,8 @@ const handleSubmit = async (e) => {
   setIsSubmitting(true);
 
   try {
-    // FIXED: Use the schema template function to create properly structured mission data
+    console.log('Creating mission with data:', formData);
+    
     const missionData = createMissionTemplate({
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -166,38 +167,44 @@ const handleSubmit = async (e) => {
       dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
       expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
       skill: formData.skill.trim() || null,
-      // Timer-specific fields
       timerDurationMinutes: formData.completionType === COMPLETION_TYPES.TIMER 
         ? parseInt(formData.timerDurationMinutes) || null 
         : null,
-      // Count-specific fields  
       targetCount: formData.completionType === COMPLETION_TYPES.COUNT 
         ? parseInt(formData.targetCount) || null 
         : null,
       currentCount: formData.completionType === COMPLETION_TYPES.COUNT ? 0 : null,
-      // Other fields
       priority: formData.priority,
       pinned: formData.pinned,
       isDailyMission: formData.isDailyMission,
-      // Status will be set by createMission service
       status: MISSION_STATUS.ACTIVE
     });
 
+    console.log('Mission data created:', missionData);
+    console.log('Current user UID:', currentUser.uid);
+
     const missionId = await createMission(currentUser.uid, missionData);
+    console.log('createMission returned:', missionId);
+    console.log('missionId type:', typeof missionId);
     
     // Validate that we got a valid mission ID back
     if (!missionId) {
+      console.error('CRITICAL: missionId is null/undefined/falsy');
       throw new Error('Failed to create mission: No ID returned');
     }
     
-    // Call the parent component's callback with the new mission
-    onAddMission({
-      id: missionId,
+    const completeMission = {
       ...missionData,
-      createdAt: new Date() // This will be overridden by server timestamp in Firestore
-    });
+      id: missionId,
+      createdAt: new Date() 
+    };
+    
+    console.log('Calling onAddMission with:', completeMission);
+    
+    // Call the parent component's callback with the new mission
+    onAddMission(completeMission);
 
-    // Reset form
+    // Reset form on success
     setFormData({
       title: '',
       description: '',
@@ -216,7 +223,8 @@ const handleSubmit = async (e) => {
     });
 
   } catch (error) {
-    console.error('Error creating mission:', error);
+    console.error('Error in handleSubmit:', error);
+    console.error('Error stack:', error.stack);
     setErrors({ submit: 'Failed to create mission. Please try again.' });
   } finally {
     setIsSubmitting(false);
