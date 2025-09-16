@@ -12,7 +12,8 @@ import {
   DIFFICULTY_LEVELS,
   COMPLETION_TYPES,
   DUE_TYPES,
-  MISSION_STATUS
+  MISSION_STATUS,
+  normalizeToStartOfDay
 } from '../../types/Mission';
 import './AddMissionCard.css';
 
@@ -151,7 +152,7 @@ const handleSubmit = async (e) => {
       description: formData.description.trim(),
       difficulty: formData.difficulty,
       // xpReward: getXPReward(formData.difficulty),
-      dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+      dueDate: formData.dueDate ? normalizeToStartOfDay(new Date(formData.dueDate)) : null,
       skill: formData.skill.trim() || null,
       expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
       category: 'personal', // You can expand this later

@@ -182,7 +182,7 @@ export const validateMission = (mission) => {
 };
 
 // Helper function to normalize a date to start of day using date components
-const normalizeToStartOfDay = (date) => {
+export const normalizeToStartOfDay = (date) => {
   const d = new Date(date);
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 };
@@ -201,14 +201,28 @@ const extractDate = (dateInput) => {
 // check if mission is overdue
 export const isMissionOverdue = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+    console.log(mission.title);
+    console.log('mission due Date:');
+    console.log(mission.dueDate);
+    console.log('mission status:');
+    console.log(mission.status);
     return false;
   }
   
   const now = new Date();
   const dueDate = extractDate(mission.dueDate);
+
+  
   
   // Compare current time with end of due date
   const endOfDueDate = normalizeToEndOfDay(dueDate);
+  console.log(mission.title);
+  console.log('now:');
+  console.log(now);
+  console.log('dueDate:');
+  console.log(dueDate);
+  console.log('endofDueDate:');
+  console.log(endOfDueDate);
   
   return now > endOfDueDate;
 };
@@ -216,13 +230,14 @@ export const isMissionOverdue = (mission) => {
 // check if mission is due today
 export const isMissionDueToday = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+    
     return false;
   }
   
   const today = normalizeToStartOfDay(new Date());
   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  return today.getTime() === dueDate.getTime();
+  return +today === +dueDate;
 };
 
 // check if mission is due tomorrow
@@ -236,7 +251,7 @@ export const isMissionDueTomorrow = (mission) => {
   
   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  return tomorrow.getTime() === dueDate.getTime();
+  return +tomorrow === +dueDate;
 };
 
 // get days until mission is due
