@@ -181,6 +181,22 @@ export const validateMission = (mission) => {
   };
 };
 
+// Helper function to normalize a date to start of day using date components
+const normalizeToStartOfDay = (date) => {
+  const d = new Date(date);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+};
+
+// Helper function to normalize a date to end of day using date components
+const normalizeToEndOfDay = (date) => {
+  const d = new Date(date);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+};
+
+// Helper function to safely extract Date from Firestore timestamp or regular date
+const extractDate = (dateInput) => {
+  return dateInput && dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
+};
 
 // check if mission is overdue
 export const isMissionOverdue = (mission) => {
@@ -189,11 +205,10 @@ export const isMissionOverdue = (mission) => {
   }
   
   const now = new Date();
-  const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+  const dueDate = extractDate(mission.dueDate);
   
-  // Reset time to end of due date for proper comparison
-  const endOfDueDate = new Date(dueDate);
-  endOfDueDate.setHours(23, 59, 59, 999);
+  // Compare current time with end of due date
+  const endOfDueDate = normalizeToEndOfDay(dueDate);
   
   return now > endOfDueDate;
 };
@@ -204,15 +219,10 @@ export const isMissionDueToday = (mission) => {
     return false;
   }
   
-  const today = new Date();
-  const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+  const today = normalizeToStartOfDay(new Date());
+  const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  // Reset time to compare dates only
-  today.setHours(0, 0, 0, 0);
-  const dueDateOnly = new Date(dueDate);
-  dueDateOnly.setHours(0, 0, 0, 0);
-  
-  return today.getTime() === dueDateOnly.getTime();
+  return today.getTime() === dueDate.getTime();
 };
 
 // check if mission is due tomorrow
@@ -221,16 +231,12 @@ export const isMissionDueTomorrow = (mission) => {
     return false;
   }
   
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+  const today = new Date();
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0, 0);
   
-  // Reset time to compare dates only
-  tomorrow.setHours(0, 0, 0, 0);
-  const dueDateOnly = new Date(dueDate);
-  dueDateOnly.setHours(0, 0, 0, 0);
+  const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  return tomorrow.getTime() === dueDateOnly.getTime();
+  return tomorrow.getTime() === dueDate.getTime();
 };
 
 // get days until mission is due
@@ -239,18 +245,24 @@ export const getDaysUntilDue = (mission) => {
     return null;
   }
   
-  const today = new Date();
-  const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+  const today = normalizeToStartOfDay(new Date());
+  const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  // Reset time to compare dates only
-  today.setHours(0, 0, 0, 0);
-  const dueDateOnly = new Date(dueDate);
-  dueDateOnly.setHours(0, 0, 0, 0);
-  
-  const diffTime = dueDateOnly.getTime() - today.getTime();
+  const diffTime = dueDate.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
+// check if mission is expired
+export const isMissionExpired = (mission) => {
+  if (!mission.expiryDate) {
+    return false;
+  }
+  
+  const now = new Date();
+  const expiryDate = extractDate(mission.expiryDate);
+  
+  return now > expiryDate;
+};
 
 // Check if mission has a skill
 export const hasSkill = (mission) => {
@@ -269,19 +281,6 @@ export const isQuestMission = (mission) => {
 // Check if mission involves party members
 export const isPartyMission = (mission) => {
   return mission.forPartyMember !== null || mission.byPartyMember !== null;
-};
-
-// check if mission is expired
-
-export const isMissionExpired = (mission) => {
-  if (!mission.expiryDate) {
-    return false;
-  }
-  
-  const now = new Date();
-  const expiryDate = mission.expiryDate.toDate ? mission.expiryDate.toDate() : new Date(mission.expiryDate);
-  
-  return now > expiryDate;
 };
 
 // check if mission can be completed based on completion type
