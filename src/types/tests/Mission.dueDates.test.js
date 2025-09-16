@@ -24,29 +24,18 @@ describe('Mission Due Date Functions', () => {
     expiryDate: expiryDate ? createFirestoreTimestamp(expiryDate) : null
   });
 
-  // Set up consistent date for testing
-  const mockToday = new Date('2025-09-15T10:30:00.000Z'); // Monday, September 15, 2025
-  const originalDate = Date;
-
-  beforeAll(() => {
-    // Mock Date constructor to return consistent date
-    global.Date = class extends Date {
-      constructor(...args) {
-        if (args.length === 0) {
-          return mockToday;
-        }
-        return new originalDate(...args);
-      }
-      
-      static now() {
-        return mockToday.getTime();
-      }
-    };
+  // Set up consistent date for testing - using a realistic current date
+  const mockToday = new Date('2024-09-15T10:30:00.000Z'); // Sunday, September 15, 2024
+  
+  beforeEach(() => {
+    // Mock Date.now and new Date() calls
+    jest.useFakeTimers();
+    jest.setSystemTime(mockToday);
   });
 
-  afterAll(() => {
-    // Restore original Date
-    global.Date = originalDate;
+  afterEach(() => {
+    // Restore real timers
+    jest.useRealTimers();
   });
 
   describe('isMissionOverdue', () => {
@@ -62,31 +51,31 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('returns true for active mission past due date', () => {
-      const pastDate = '2025-09-14T23:59:59.999Z'; // Yesterday
+      const pastDate = '2024-09-14T23:59:59.999Z'; // Yesterday
       const mission = createMissionWithDueDate(pastDate);
       expect(isMissionOverdue(mission)).toBe(true);
     });
 
     test('returns false for mission due today', () => {
-      const todayDate = '2025-09-15T15:30:00.000Z'; // Today but later time
+      const todayDate = '2024-09-15T15:30:00.000Z'; // Today but later time
       const mission = createMissionWithDueDate(todayDate);
       expect(isMissionOverdue(mission)).toBe(false);
     });
 
     test('returns false for mission due tomorrow', () => {
-      const tomorrowDate = '2025-09-16T08:00:00.000Z'; // Tomorrow
+      const tomorrowDate = '2024-09-16T08:00:00.000Z'; // Tomorrow
       const mission = createMissionWithDueDate(tomorrowDate);
       expect(isMissionOverdue(mission)).toBe(false);
     });
 
     test('handles edge case of due date at end of day', () => {
-      const endOfYesterday = '2025-09-14T23:59:59.999Z';
+      const endOfYesterday = '2024-09-14T23:59:59.999Z';
       const mission = createMissionWithDueDate(endOfYesterday);
       expect(isMissionOverdue(mission)).toBe(true);
     });
 
     test('handles regular Date objects (not Firestore timestamps)', () => {
-      const pastDate = '2025-09-14T12:00:00.000Z';
+      const pastDate = '2024-09-14T12:00:00.000Z';
       const mission = {
         ...createMissionWithDueDate(null),
         dueDate: new Date(pastDate)
@@ -108,26 +97,26 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('returns true for mission due today (same date)', () => {
-      const todayDate = '2025-09-15T15:30:00.000Z'; // Different time but same date
+      const todayDate = '2024-09-15T15:30:00.000Z'; // Different time but same date
       const mission = createMissionWithDueDate(todayDate);
       expect(isMissionDueToday(mission)).toBe(true);
     });
 
     test('returns false for mission due yesterday', () => {
-      const yesterdayDate = '2025-09-14T12:00:00.000Z';
+      const yesterdayDate = '2024-09-14T12:00:00.000Z';
       const mission = createMissionWithDueDate(yesterdayDate);
       expect(isMissionDueToday(mission)).toBe(false);
     });
 
     test('returns false for mission due tomorrow', () => {
-      const tomorrowDate = '2025-09-16T08:00:00.000Z';
+      const tomorrowDate = '2024-09-16T08:00:00.000Z';
       const mission = createMissionWithDueDate(tomorrowDate);
       expect(isMissionDueToday(mission)).toBe(false);
     });
 
     test('handles different times on same day', () => {
-      const earlyMorning = '2025-09-15T00:00:00.000Z';
-      const lateNight = '2025-09-15T23:59:59.999Z';
+      const earlyMorning = '2024-09-15T00:00:00.000Z';
+      const lateNight = '2024-09-15T23:59:59.999Z';
       
       const missionEarly = createMissionWithDueDate(earlyMorning);
       const missionLate = createMissionWithDueDate(lateNight);
@@ -137,7 +126,7 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('handles regular Date objects', () => {
-      const todayDate = '2025-09-15T18:00:00.000Z';
+      const todayDate = '2024-09-15T18:00:00.000Z';
       const mission = {
         ...createMissionWithDueDate(null),
         dueDate: new Date(todayDate)
@@ -159,26 +148,26 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('returns true for mission due tomorrow', () => {
-      const tomorrowDate = '2025-09-16T15:30:00.000Z';
+      const tomorrowDate = '2024-09-16T15:30:00.000Z';
       const mission = createMissionWithDueDate(tomorrowDate);
       expect(isMissionDueTomorrow(mission)).toBe(true);
     });
 
     test('returns false for mission due today', () => {
-      const todayDate = '2025-09-15T12:00:00.000Z';
+      const todayDate = '2024-09-15T12:00:00.000Z';
       const mission = createMissionWithDueDate(todayDate);
       expect(isMissionDueTomorrow(mission)).toBe(false);
     });
 
     test('returns false for mission due day after tomorrow', () => {
-      const dayAfterTomorrowDate = '2025-09-17T08:00:00.000Z';
+      const dayAfterTomorrowDate = '2024-09-17T08:00:00.000Z';
       const mission = createMissionWithDueDate(dayAfterTomorrowDate);
       expect(isMissionDueTomorrow(mission)).toBe(false);
     });
 
     test('handles different times on tomorrow', () => {
-      const earlyTomorrow = '2025-09-16T00:00:00.000Z';
-      const lateTomorrow = '2025-09-16T23:59:59.999Z';
+      const earlyTomorrow = '2024-09-16T00:00:00.000Z';
+      const lateTomorrow = '2024-09-16T23:59:59.999Z';
       
       const missionEarly = createMissionWithDueDate(earlyTomorrow);
       const missionLate = createMissionWithDueDate(lateTomorrow);
@@ -188,7 +177,7 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('handles regular Date objects', () => {
-      const tomorrowDate = '2025-09-16T14:00:00.000Z';
+      const tomorrowDate = '2024-09-16T14:00:00.000Z';
       const mission = {
         ...createMissionWithDueDate(null),
         dueDate: new Date(tomorrowDate)
@@ -204,38 +193,38 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('returns 0 for mission due today', () => {
-      const todayDate = '2025-09-15T18:00:00.000Z';
+      const todayDate = '2024-09-15T18:00:00.000Z';
       const mission = createMissionWithDueDate(todayDate);
       expect(getDaysUntilDue(mission)).toBe(0);
     });
 
     test('returns 1 for mission due tomorrow', () => {
-      const tomorrowDate = '2025-09-16T08:00:00.000Z';
+      const tomorrowDate = '2024-09-16T08:00:00.000Z';
       const mission = createMissionWithDueDate(tomorrowDate);
       expect(getDaysUntilDue(mission)).toBe(1);
     });
 
     test('returns -1 for mission due yesterday', () => {
-      const yesterdayDate = '2025-09-14T12:00:00.000Z';
+      const yesterdayDate = '2024-09-14T12:00:00.000Z';
       const mission = createMissionWithDueDate(yesterdayDate);
       expect(getDaysUntilDue(mission)).toBe(-1);
     });
 
     test('returns correct days for mission due in a week', () => {
-      const nextWeekDate = '2025-09-22T10:00:00.000Z'; // 7 days from now
+      const nextWeekDate = '2024-09-22T10:00:00.000Z'; // 7 days from now
       const mission = createMissionWithDueDate(nextWeekDate);
       expect(getDaysUntilDue(mission)).toBe(7);
     });
 
     test('returns correct negative days for mission overdue by a week', () => {
-      const lastWeekDate = '2025-09-08T10:00:00.000Z'; // 7 days ago
+      const lastWeekDate = '2024-09-08T10:00:00.000Z'; // 7 days ago
       const mission = createMissionWithDueDate(lastWeekDate);
       expect(getDaysUntilDue(mission)).toBe(-7);
     });
 
     test('handles edge cases around midnight', () => {
-      const justAfterMidnightToday = '2025-09-15T00:00:01.000Z';
-      const justBeforeMidnightTomorrow = '2025-09-16T23:59:59.999Z';
+      const justAfterMidnightToday = '2024-09-15T00:00:01.000Z';
+      const justBeforeMidnightTomorrow = '2024-09-16T23:59:59.999Z';
       
       const missionToday = createMissionWithDueDate(justAfterMidnightToday);
       const missionTomorrow = createMissionWithDueDate(justBeforeMidnightTomorrow);
@@ -245,7 +234,7 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('handles regular Date objects', () => {
-      const futureDate = '2025-09-20T15:00:00.000Z'; // 5 days from now
+      const futureDate = '2024-09-20T15:00:00.000Z'; // 5 days from now
       const mission = {
         ...createMissionWithDueDate(null),
         dueDate: new Date(futureDate)
@@ -261,31 +250,31 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('returns true for mission past expiry date', () => {
-      const pastExpiryDate = '2025-09-14T23:59:59.999Z'; // Yesterday
+      const pastExpiryDate = '2024-09-14T23:59:59.999Z'; // Yesterday
       const mission = createMissionWithDueDate(null, MISSION_STATUS.ACTIVE, pastExpiryDate);
       expect(isMissionExpired(mission)).toBe(true);
     });
 
     test('returns false for mission not yet expired', () => {
-      const futureExpiryDate = '2025-09-16T00:00:00.000Z'; // Tomorrow
+      const futureExpiryDate = '2024-09-16T00:00:00.000Z'; // Tomorrow
       const mission = createMissionWithDueDate(null, MISSION_STATUS.ACTIVE, futureExpiryDate);
       expect(isMissionExpired(mission)).toBe(false);
     });
 
     test('returns false for mission expiring exactly now', () => {
-      const nowExpiryDate = '2025-09-15T10:30:00.000Z'; // Exactly current time
+      const nowExpiryDate = '2024-09-15T10:30:00.000Z'; // Exactly current time
       const mission = createMissionWithDueDate(null, MISSION_STATUS.ACTIVE, nowExpiryDate);
       expect(isMissionExpired(mission)).toBe(false);
     });
 
     test('returns true for mission expired by 1 second', () => {
-      const justExpiredDate = '2025-09-15T10:29:59.999Z'; // 1 second ago
+      const justExpiredDate = '2024-09-15T10:29:59.999Z'; // 1 second ago
       const mission = createMissionWithDueDate(null, MISSION_STATUS.ACTIVE, justExpiredDate);
       expect(isMissionExpired(mission)).toBe(true);
     });
 
     test('handles regular Date objects for expiry', () => {
-      const pastExpiryDate = '2025-09-10T12:00:00.000Z';
+      const pastExpiryDate = '2024-09-10T12:00:00.000Z';
       const mission = {
         ...createMissionWithDueDate(null),
         expiryDate: new Date(pastExpiryDate)
@@ -294,7 +283,7 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('works independently of mission status', () => {
-      const pastExpiryDate = '2025-09-14T12:00:00.000Z';
+      const pastExpiryDate = '2024-09-14T12:00:00.000Z';
       
       const activeMission = createMissionWithDueDate(null, MISSION_STATUS.ACTIVE, pastExpiryDate);
       const completedMission = createMissionWithDueDate(null, MISSION_STATUS.COMPLETED, pastExpiryDate);
@@ -308,8 +297,8 @@ describe('Mission Due Date Functions', () => {
 
   describe('Integration scenarios', () => {
     test('mission due today but expired yesterday', () => {
-      const todayDue = '2025-09-15T12:00:00.000Z';
-      const yesterdayExpiry = '2025-09-14T23:59:59.999Z';
+      const todayDue = '2024-09-15T12:00:00.000Z';
+      const yesterdayExpiry = '2024-09-14T23:59:59.999Z';
       
       const mission = {
         ...createMissionWithDueDate(todayDue),
@@ -322,8 +311,8 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('mission overdue but not yet expired', () => {
-      const yesterdayDue = '2025-09-14T12:00:00.000Z';
-      const tomorrowExpiry = '2025-09-16T23:59:59.999Z';
+      const yesterdayDue = '2024-09-14T12:00:00.000Z';
+      const tomorrowExpiry = '2024-09-16T23:59:59.999Z';
       
       const mission = {
         ...createMissionWithDueDate(yesterdayDue),
@@ -336,10 +325,10 @@ describe('Mission Due Date Functions', () => {
     });
 
     test('mission due in future with various expiry scenarios', () => {
-      const nextWeekDue = '2025-09-22T12:00:00.000Z';
+      const nextWeekDue = '2024-09-22T12:00:00.000Z';
       
       // Case 1: Expires before due date
-      const expiryBeforeDue = '2025-09-20T12:00:00.000Z';
+      const expiryBeforeDue = '2024-09-20T12:00:00.000Z';
       const missionEarlyExpiry = {
         ...createMissionWithDueDate(nextWeekDue),
         expiryDate: createFirestoreTimestamp(expiryBeforeDue)
@@ -349,7 +338,7 @@ describe('Mission Due Date Functions', () => {
       expect(isMissionExpired(missionEarlyExpiry)).toBe(false);
       
       // Case 2: Expires after due date
-      const expiryAfterDue = '2025-09-25T12:00:00.000Z';
+      const expiryAfterDue = '2024-09-25T12:00:00.000Z';
       const missionLateExpiry = {
         ...createMissionWithDueDate(nextWeekDue),
         expiryDate: createFirestoreTimestamp(expiryAfterDue)
@@ -376,7 +365,7 @@ describe('Mission Due Date Functions', () => {
     test('handles missions without toDate method', () => {
       const mission = {
         ...createMissionWithDueDate(null),
-        dueDate: '2025-09-15T12:00:00.000Z' // Plain string
+        dueDate: '2024-09-15T12:00:00.000Z' // Plain string
       };
       
       expect(isMissionDueToday(mission)).toBe(true);
@@ -384,7 +373,7 @@ describe('Mission Due Date Functions', () => {
 
     test('handles timezone differences correctly', () => {
       // Test with different timezone but same date
-      const utcDate = '2025-09-15T23:00:00.000Z'; // 11 PM UTC
+      const utcDate = '2024-09-15T23:00:00.000Z'; // 11 PM UTC
       const mission = createMissionWithDueDate(utcDate);
       
       expect(isMissionDueToday(mission)).toBe(true);
@@ -394,29 +383,15 @@ describe('Mission Due Date Functions', () => {
       // Mock a leap year date for comprehensive testing
       const leapYearMockDate = new Date('2024-02-29T10:30:00.000Z');
       
-      global.Date = class extends Date {
-        constructor(...args) {
-          if (args.length === 0) {
-            return leapYearMockDate;
-          }
-          return new originalDate(...args);
-        }
-      };
+      jest.setSystemTime(leapYearMockDate);
       
       const nextDayDate = '2024-03-01T12:00:00.000Z';
       const mission = createMissionWithDueDate(nextDayDate);
       
       expect(getDaysUntilDue(mission)).toBe(1);
       
-      // Restore the original mock
-      global.Date = class extends Date {
-        constructor(...args) {
-          if (args.length === 0) {
-            return mockToday;
-          }
-          return new originalDate(...args);
-        }
-      };
+      // Restore the original mock date
+      jest.setSystemTime(mockToday);
     });
   });
 });
