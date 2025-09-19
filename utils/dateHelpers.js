@@ -20,27 +20,33 @@ export const fromDateString = (dateString) => {
   return dayjs(dateString, 'YYYY-MM-DD');
 };
 
+// check if mission is overdue
 export const isMissionOverdue = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     return false;
   };
 
-  const today = dayjs();
-  const dueDate = dayjs(mission.dueDate);
-
   return dayjs(mission.dueDate).isBefore(dayjs(), 'day');
 };
 
-
-// Day-only comparison functions using dayjs unit parameter
-export const isSameDate = (date1, date2) => {
-  return dayjs(date1).isSame(dayjs(date2), 'day');
+// check if mission is due today
+export const isMissionDueToday = (mission) => {
+  if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+    
+    return false;
+  }
+  
+  return dayjs(mission.dueDate).isSame(dayjs(), 'day');
 };
 
-export const isBeforeDate = (date1, date2) => {
-  return dayjs(date1).isBefore(dayjs(date2), 'day');
-};
+// check if mission is due today
+export const isMissionDueTomorrow = (mission) => {
+  if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+    
+    return false;
+  }
 
-export const isAfterDate = (date1, date2) => {
-  return dayjs(date1).isAfter(dayjs(date2), 'day');
+  const tomorrow = dayjs().add(1, 'day');
+  
+  return dayjs(mission.dueDate).isSame(tomorrow, 'day');
 };

@@ -181,78 +181,64 @@ export const validateMission = (mission) => {
   };
 };
 
-// Helper function to normalize a date to start of day using date components
-export const normalizeToStartOfDay = (date) => {
-  const d = new Date(date);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-};
 
-// Helper function to normalize a date to end of day using date components
-const normalizeToEndOfDay = (date) => {
-  const d = new Date(date);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-};
-
-// Helper function to safely extract Date from Firestore timestamp or regular date
-const extractDate = (dateInput) => {
-  return dateInput && dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
-};
+// // Helper function to safely extract Date from Firestore timestamp or regular date
+// const extractDate = (dateInput) => {
+//   return dateInput && dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
+// };
 
 // check if mission is overdue
-export const isMissionOverdue = (mission) => {
-  if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
-    console.log(mission.title);
-    console.log('mission due Date:');
-    console.log(mission.dueDate);
-    console.log('mission status:');
-    console.log(mission.status);
-    return false;
-  }
+// export const isMissionOverdue = (mission) => {
+//   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+//     console.log(mission.title);
+//     console.log('mission due Date:');
+//     console.log(mission.dueDate);
+//     console.log('mission status:');
+//     console.log(mission.status);
+//     return false;
+//   }
   
-  const now = new Date();
-  const dueDate = extractDate(mission.dueDate);
+//   const now = new Date();
+//   const dueDate = extractDate(mission.dueDate);
+//   // Compare current time with end of due date
+//   const endOfDueDate = normalizeToEndOfDay(dueDate);
+//   console.log(mission.title);
+//   console.log('now:');
+//   console.log(now);
+//   console.log('dueDate:');
+//   console.log(dueDate);
+//   console.log('endofDueDate:');
+//   console.log(endOfDueDate);
+  
+//   return now > endOfDueDate;
+// };
 
-  
-  
-  // Compare current time with end of due date
-  const endOfDueDate = normalizeToEndOfDay(dueDate);
-  console.log(mission.title);
-  console.log('now:');
-  console.log(now);
-  console.log('dueDate:');
-  console.log(dueDate);
-  console.log('endofDueDate:');
-  console.log(endOfDueDate);
-  
-  return now > endOfDueDate;
-};
-
-// check if mission is due today
-export const isMissionDueToday = (mission) => {
-  if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+// // check if mission is due today
+// export const isMissionDueToday = (mission) => {
+//   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     
-    return false;
-  }
+//     return false;
+//   }
   
-  const today = normalizeToStartOfDay(new Date());
-  const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
+//   const today = normalizeToStartOfDay(new Date());
+//   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  return +today === +dueDate;
-};
+//   return +today === +dueDate;
+// };
 
-// check if mission is due tomorrow
-export const isMissionDueTomorrow = (mission) => {
-  if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
-    return false;
-  }
+// // check if mission is due tomorrow
+// export const isMissionDueTomorrow = (mission) => {
+//   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
+//     return false;
+//   }
   
-  const today = new Date();
-  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0, 0);
+//   const today = new Date();
+//   const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0, 0);
   
-  const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
+//   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  return +tomorrow === +dueDate;
-};
+//   return +tomorrow === +dueDate;
+// };
 
 // get days until mission is due
 export const getDaysUntilDue = (mission) => {
