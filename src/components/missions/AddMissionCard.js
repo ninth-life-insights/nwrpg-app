@@ -151,7 +151,7 @@ const handleSubmit = async (e) => {
       description: formData.description.trim(),
       difficulty: formData.difficulty,
       // xpReward: getXPReward(formData.difficulty),
-      dueDate: toDateString(formData.dueDate) || '',
+      dueDate: formData.dueDate ? toDateString(formData.dueDate) : '',
       skill: formData.skill.trim() || null,
       expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
       category: 'personal', // You can expand this later
