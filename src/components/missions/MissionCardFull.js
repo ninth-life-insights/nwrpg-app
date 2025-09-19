@@ -3,38 +3,30 @@ import React from 'react';
 import DifficultyBadge from './sub-components/DifficultyBadge';
 import {
   MISSION_STATUS,
+} from '../../types/Mission';
+import {
   isMissionDueToday,
   isMissionDueTomorrow,
   isMissionOverdue,
-  getDaysUntilDue
-} from '../../types/Mission';
+  formatForUser
+} from '../../utils/dateHelpers';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
   // FIXED: Use consistent due date logic from schema
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
-    
-    if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
-    if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
-    if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
-    
-    // For other upcoming dates, show the actual date
-    const date = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
-    const daysUntil = getDaysUntilDue(mission);
-    
-    if (daysUntil <= 7) {
-      return {
-        status: 'upcoming-week',
-        display: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+        
+        if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
+        if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
+        if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
+        
+        // For other upcoming dates, show the actual date
+        return {
+          status: 'upcoming',
+          display: formatForUser(mission.dueDate)
+        };
       };
-    }
-    
-    return {
-      status: 'upcoming',
-      display: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    };
-  };
 
   const formatExpiryDate = (expiryDate) => {
     if (!expiryDate) return null;

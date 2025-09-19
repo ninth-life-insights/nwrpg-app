@@ -182,10 +182,10 @@ export const validateMission = (mission) => {
 };
 
 
-// // Helper function to safely extract Date from Firestore timestamp or regular date
-// const extractDate = (dateInput) => {
-//   return dateInput && dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
-// };
+// Helper function to safely extract Date from Firestore timestamp or regular date
+ const extractDate = (dateInput) => {
+  return dateInput && dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
+};
 
 // check if mission is overdue
 // export const isMissionOverdue = (mission) => {
@@ -241,17 +241,17 @@ export const validateMission = (mission) => {
 // };
 
 // get days until mission is due
-export const getDaysUntilDue = (mission) => {
-  if (!mission.dueDate) {
-    return null;
-  }
+// export const getDaysUntilDue = (mission) => {
+//   if (!mission.dueDate) {
+//     return null;
+//   }
   
-  const today = normalizeToStartOfDay(new Date());
-  const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
+//   const today = normalizeToStartOfDay(new Date());
+//   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
   
-  const diffTime = dueDate.getTime() - today.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
+//   const diffTime = dueDate.getTime() - today.getTime();
+//   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+// };
 
 // check if mission is expired
 export const isMissionExpired = (mission) => {
