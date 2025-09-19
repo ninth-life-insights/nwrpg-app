@@ -1,11 +1,7 @@
 // src/utils/dateHelpers.js
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
+import { MISSION_STATUS } from '../src/types/Mission';
 
 //convert dates to string format w/o mins or seconds
 export const toDateString = (date) => {
@@ -20,11 +16,16 @@ export const fromDateString = (dateString) => {
   return dayjs(dateString, 'YYYY-MM-DD');
 };
 
+// Format for user display
+export const formatForUser = (dateString) => {
+  return dayjs(dateString).format('MMM D'); // "Jan 15, 2024"
+};
+
 // check if mission is overdue
 export const isMissionOverdue = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     return false;
-  };
+  }
 
   return dayjs(mission.dueDate).isBefore(dayjs(), 'day');
 };
@@ -39,7 +40,7 @@ export const isMissionDueToday = (mission) => {
   return dayjs(mission.dueDate).isSame(dayjs(), 'day');
 };
 
-// check if mission is due today
+// check if mission is due tomorrow
 export const isMissionDueTomorrow = (mission) => {
   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
     
