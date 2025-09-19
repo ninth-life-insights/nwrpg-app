@@ -59,7 +59,7 @@ export const MISSION_SCHEMA = {
   // Timestamps (Firestore Timestamp objects)
   createdAt: null,                    // Timestamp - when mission was created
   updatedAt: null,                    // Timestamp - last modification
-  dueDate: null,                      // Timestamp | null - optional due date
+  dueDate: '',                      // Timestamp | null - optional due date
   expiryDate: null,                   // Timestamp | null - optional expiry
   completedAt: null,                  // Timestamp | null - when completed
 
