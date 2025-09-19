@@ -5,12 +5,14 @@ import {
   MISSION_STATUS,
   COMPLETION_TYPES,
   hasSkill,
-  isMissionDueToday,
-  isMissionDueTomorrow,
-  isMissionOverdue,
-  getDaysUntilDue,
   canCompleteMission
 } from '../../types/Mission';
+import { 
+  formatForUser,
+  isMissionDueToday,
+  isMissionOverdue,
+  isMissionDueTomorrow
+ } from '../../../utils/dateHelpers';
 import './MissionCard.css';
 
 const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
@@ -20,7 +22,6 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
   const missionHasSkill = hasSkill(mission);
   const canComplete = canCompleteMission(mission);
   
-  // FIXED: Safe due date status calculation
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
     
@@ -29,19 +30,9 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
     if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
     
     // For other upcoming dates, show the actual date
-    const date = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
-    const daysUntil = getDaysUntilDue(mission);
-    
-    if (daysUntil <= 7) {
-      return {
-        status: 'upcoming-week',
-        display: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-      };
-    }
-    
     return {
       status: 'upcoming',
-      display: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      display: formatForUser(mission.dueDate)
     };
   };
 
