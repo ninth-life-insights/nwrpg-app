@@ -12,7 +12,7 @@ import {
   isMissionDueToday,
   isMissionOverdue,
   isMissionDueTomorrow
- } from '../../../utils/dateHelpers';
+ } from '../../utils/dateHelpers';
 import './MissionCard.css';
 
 const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {

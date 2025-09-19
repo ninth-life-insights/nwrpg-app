@@ -1,7 +1,7 @@
 // src/utils/dateHelpers.js
 import dayjs from 'dayjs';
 
-import { MISSION_STATUS } from '../src/types/Mission';
+import { MISSION_STATUS } from '../types/Mission';
 
 //convert dates to string format w/o mins or seconds
 export const toDateString = (date) => {

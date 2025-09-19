@@ -6,7 +6,7 @@ import DifficultyBadge from './sub-components/DifficultyBadge';
 import SkillBadge from './sub-components/SkillBadge';
 import CompletionTypeSelector from './sub-components/CompletionTypeSelector';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
-import { toDateString } from '../../../utils/dateHelpers';
+import { toDateString } from '../../utils/dateHelpers';
 import {
   createMissionTemplate,
   validateMission,
@@ -15,7 +15,6 @@ import {
   DUE_TYPES,
 } from '../../types/Mission';
 import './AddMissionCard.css';
-import { toDateString } from '../../../utils/dateHelpers';
 
 const AddMissionCard = ({ onAddMission, onCancel }) => {
   const { currentUser } = useAuth();
