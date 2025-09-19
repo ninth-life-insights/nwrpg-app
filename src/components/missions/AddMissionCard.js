@@ -6,16 +6,16 @@ import DifficultyBadge from './sub-components/DifficultyBadge';
 import SkillBadge from './sub-components/SkillBadge';
 import CompletionTypeSelector from './sub-components/CompletionTypeSelector';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
+import { toDateString } from '../../../utils/dateHelpers';
 import {
   createMissionTemplate,
   validateMission,
   DIFFICULTY_LEVELS,
   COMPLETION_TYPES,
   DUE_TYPES,
-  MISSION_STATUS,
-  normalizeToStartOfDay
 } from '../../types/Mission';
 import './AddMissionCard.css';
+import { toDateString } from '../../../utils/dateHelpers';
 
 const AddMissionCard = ({ onAddMission, onCancel }) => {
   const { currentUser } = useAuth();
@@ -152,7 +152,7 @@ const handleSubmit = async (e) => {
       description: formData.description.trim(),
       difficulty: formData.difficulty,
       // xpReward: getXPReward(formData.difficulty),
-      dueDate: formData.dueDate ? normalizeToStartOfDay(new Date(formData.dueDate)) : null,
+      dueDate: toDateString(formData.dueDate) || '',
       skill: formData.skill.trim() || null,
       expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
       category: 'personal', // You can expand this later
