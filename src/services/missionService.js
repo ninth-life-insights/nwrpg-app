@@ -14,6 +14,8 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase/config';
+import dayjs from 'dayjs';
+import { toDateString } from '../utils/dateHelpers';
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {
@@ -188,15 +190,17 @@ export const getDailyMissionsConfig = async (userId) => {
   }
 };
 
-// Set daily missions (save the selected 3 missions)
+// Update the setDailyMissions function to use date strings
 export const setDailyMissions = async (userId, selectedMissionIds) => {
   try {
     const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
+    const todayString = toDateString(new Date());
     
     // Save the daily mission configuration
     await setDoc(configRef, {
       selectedMissionIds: selectedMissionIds,
       lastResetDate: serverTimestamp(),
+      dateSet: todayString, // Add this for easier date tracking
       createdAt: serverTimestamp(),
       isActive: true
     });
@@ -207,8 +211,7 @@ export const setDailyMissions = async (userId, selectedMissionIds) => {
       return updateDoc(missionRef, {
         isDailyMission: true,
         dailyMissionSetAt: serverTimestamp(),
-        // Set expiry to end of day (you can adjust this logic)
-        expiryDate: getEndOfDay()
+        dailyMissionDate: todayString // Add this for tracking
       });
     });
 
@@ -286,6 +289,158 @@ export const resetDailyMissions = async (userId) => {
     throw error;
   }
 };
+
+// Archive expired daily missions and clear current ones
+export const archiveExpiredDailyMissions = async (userId) => {
+  try {
+    const config = await getDailyMissionsConfig(userId);
+    
+    if (!config || !config.isActive || !config.lastResetDate) {
+      return { needsArchiving: false };
+    }
+    
+    // Convert Firestore timestamp to dayjs and get date string
+    const lastResetDate = config.lastResetDate.toDate ? 
+      config.lastResetDate.toDate() : new Date(config.lastResetDate);
+    const lastResetDateString = toDateString(lastResetDate);
+    const todayString = toDateString(new Date());
+    
+    // Check if we need to archive (new day)
+    const needsArchiving = dayjs(lastResetDateString).isBefore(dayjs(todayString), 'day');
+    
+    if (!needsArchiving) {
+      return { needsArchiving: false };
+    }
+    
+    // Get current daily missions with their completion status
+    const activeMissions = await getActiveMissions(userId);
+    const dailyMissionsData = activeMissions
+      .filter(mission => config.selectedMissionIds.includes(mission.id))
+      .map(mission => ({
+        id: mission.id,
+        title: mission.title,
+        difficulty: mission.difficulty,
+        xpReward: mission.xpReward,
+        spReward: mission.spReward,
+        skill: mission.skill,
+        completed: mission.status === 'completed',
+        completedAt: mission.completedAt
+      }));
+    
+    // Archive the daily missions for the date they were due
+    if (dailyMissionsData.length > 0) {
+      await archiveDailyMissionsForDate(userId, lastResetDateString, dailyMissionsData);
+    }
+    
+    // Clear daily mission status from current missions
+    await clearDailyMissionStatus(userId, config.selectedMissionIds);
+    
+    // Mark config as inactive
+    const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
+    await updateDoc(configRef, {
+      isActive: false,
+      lastResetDate: serverTimestamp(),
+      archivedAt: serverTimestamp()
+    });
+    
+    return { 
+      needsArchiving: true, 
+      archivedDate: lastResetDateString,
+      archivedMissions: dailyMissionsData.length 
+    };
+    
+  } catch (error) {
+    console.error('Error archiving expired daily missions:', error);
+    throw error;
+  }
+};
+
+// Archive daily missions for a specific date
+export const archiveDailyMissionsForDate = async (userId, dateString, missionsData) => {
+  try {
+    const archiveRef = doc(db, 'users', userId, 'dailyMissionsHistory', dateString);
+    
+    await setDoc(archiveRef, {
+      date: dateString,
+      missions: missionsData,
+      completedCount: missionsData.filter(m => m.completed).length,
+      totalCount: missionsData.length,
+      archivedAt: serverTimestamp()
+    });
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error archiving daily missions for date:', error);
+    throw error;
+  }
+};
+
+// Get daily missions history for a date range
+export const getDailyMissionsHistory = async (userId, startDate, endDate) => {
+  try {
+    const historyRef = collection(db, 'users', userId, 'dailyMissionsHistory');
+    
+    let q;
+    if (startDate && endDate) {
+      q = query(
+        historyRef,
+        where('date', '>=', toDateString(startDate)),
+        where('date', '<=', toDateString(endDate)),
+        orderBy('date', 'desc')
+      );
+    } else {
+      q = query(historyRef, orderBy('date', 'desc'));
+    }
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting daily missions history:', error);
+    throw error;
+  }
+};
+
+// Get daily missions for a specific date
+export const getDailyMissionsForDate = async (userId, dateString) => {
+  try {
+    const archiveRef = doc(db, 'users', userId, 'dailyMissionsHistory', dateString);
+    const archiveSnap = await getDoc(archiveRef);
+    
+    if (archiveSnap.exists()) {
+      return archiveSnap.data();
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting daily missions for date:', error);
+    throw error;
+  }
+};
+
+// Updated check function that uses the new date system
+export const checkAndHandleDailyMissionReset = async (userId) => {
+  try {
+    // First check if we need to archive expired missions
+    const archiveResult = await archiveExpiredDailyMissions(userId);
+    
+    if (archiveResult.needsArchiving) {
+      console.log(`Archived daily missions for ${archiveResult.archivedDate}`);
+      return {
+        wasReset: true,
+        archivedDate: archiveResult.archivedDate,
+        archivedCount: archiveResult.archivedMissions
+      };
+    }
+    
+    return { wasReset: false };
+  } catch (error) {
+    console.error('Error checking and handling daily mission reset:', error);
+    throw error;
+  }
+};
+
 
 // Helper function to get end of current day
 const getEndOfDay = () => {

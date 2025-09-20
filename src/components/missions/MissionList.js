@@ -9,7 +9,8 @@ import {
   getCompletedMissions,
   getExpiredMissions,
   completeMission, 
-  uncompleteMission 
+  uncompleteMission,
+  checkAndHandleDailyMissionReset
 } from '../../services/missionService';
 import { addXP, subtractXP } from '../../services/userService';
 
@@ -155,6 +156,23 @@ const MissionList = ({
       setLoading(false);
     }
   };
+
+    // reset daily missions if expired
+    useEffect(() => {
+    const handleDailyReset = async () => {
+      if (currentUser) {
+        const result = await checkAndHandleDailyMissionReset(currentUser.uid);
+        if (result.wasReset) {
+          // Optionally show user notification
+          console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
+          // Refresh your daily missions data
+          await fetchDailyMissions();
+        }
+      }
+    };
+    
+    handleDailyReset();
+  }, [currentUser]);
   
   // Function to toggle completion status with XP handling
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {

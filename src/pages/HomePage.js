@@ -11,6 +11,7 @@ import {
   resetDailyMissions,
   uncompleteMission,
   completeMission,
+  checkAndHandleDailyMissionReset
 } from '../services/missionService';
 import { addXP, subtractXP } from '../services/userService';
 import EditDailyMissions from '../components/missions/EditDailyMissions';
@@ -160,6 +161,23 @@ const HomePage = () => {
   const handleDailyMissionsUpdate = async () => {
     await fetchDailyMissions();
   };
+
+  // reset daily missions if expired
+  useEffect(() => {
+  const handleDailyReset = async () => {
+    if (currentUser) {
+      const result = await checkAndHandleDailyMissionReset(currentUser.uid);
+      if (result.wasReset) {
+        // Optionally show user notification
+        console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
+        // Refresh your daily missions data
+        await fetchDailyMissions();
+      }
+    }
+  };
+  
+  handleDailyReset();
+}, [currentUser]);
 
   // Calculate current XP and level progress
   const getXPForLevel = (level) => level * 100; // Simple formula
@@ -367,7 +385,7 @@ const HomePage = () => {
             Mission Bank
           </button>
         </div>
-        
+
       </section>
 
       {showEditDailyMissions && (

@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
 import './EditDailyMissions.css';
+import { checkAndHandleDailyMissionReset } from '../../services/missionService';
 
 const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
   const { currentUser } = useAuth();
@@ -18,6 +19,23 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
   const [newMissionTitle, setNewMissionTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+    // reset daily missions if expired
+    useEffect(() => {
+    const handleDailyReset = async () => {
+      if (currentUser) {
+        const result = await checkAndHandleDailyMissionReset(currentUser.uid);
+        if (result.wasReset) {
+          // Optionally show user notification
+          console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
+          // Refresh your daily missions data
+          await fetchDailyMissions();
+        }
+      }
+    };
+    
+    handleDailyReset();
+  }, [currentUser]);
 
   const handleAddMission = async () => {
     if (!newMissionTitle.trim()) {
