@@ -8,9 +8,14 @@ import {
   getDailyMissionsConfig, 
   getActiveMissions,
   checkDailyMissionReset,
-  resetDailyMissions 
+  resetDailyMissions,
+  uncompleteMission,
+  completeMission,
 } from '../services/missionService';
+import { addXP, subtractXP } from '../services/userService';
 import EditDailyMissions from '../components/missions/EditDailyMissions';
+import MissionCard from '../components/missions/MissionCard';
+import MissionDetailView from '../components/missions/MissionCardFull';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -21,6 +26,7 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
   const navigate = useNavigate();
+  const [selectedMission, setSelectedMission] = useState(null);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -29,6 +35,8 @@ const HomePage = () => {
   const DailyPlanningClick = () => {
     navigate('/edit-daily-missions');
   };
+
+  
 
   // Color mapping from character creation
   const colorMap = {
@@ -193,6 +201,40 @@ const HomePage = () => {
     );
   }
 
+  // Function to toggle completion status with XP handling
+    const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+  
+      try {
+        if (isCurrentlyCompleted) {
+          // Uncomplete the mission
+          await uncompleteMission(currentUser.uid, missionId);
+          if (xpReward) {
+            await subtractXP(currentUser.uid, xpReward);
+          }
+        } else {
+          // Complete the mission
+          await completeMission(currentUser.uid, missionId);
+          if (xpReward) {
+            const result = await addXP(currentUser.uid, xpReward);
+            
+            // Show level up notification if applicable
+            if (result && result.leveledUp) {
+              // You can add a toast notification here later
+              console.log(`Level up! Now level ${result.newLevel}`);
+            }
+          }
+        }
+        
+        // Reload missions to reflect changes
+        await handleDailyMissionsUpdate();
+        
+      } catch (err) {
+        console.error('Error toggling mission completion:', err);
+      }
+    };
+
+
+
   return (
     <div className="homepage-container">
       {/* Header */}
@@ -286,7 +328,7 @@ const HomePage = () => {
           </h3>
           <button className="edit-button" onClick={() => setShowEditDailyMissions(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
           </button>
@@ -295,18 +337,12 @@ const HomePage = () => {
         <div className="missions-overview">
           {dailyStatus.hasActiveDailyMissions ? (
             dailyMissions.map((mission) => (
-              <div key={mission.id} className={`mission-item ${mission.completed ? 'completed' : ''}`}>
-                <div className="mission-checkbox">
-                  {mission.completed ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="9,11 12,14 22,4"/>
-                    </svg>
-                  ) : (
-                    <div className="checkbox-empty"></div>
-                  )}
-                </div>
-                <span className="mission-title">{mission.title}</span>
-              </div>
+              <MissionCard
+                key={mission.id}
+                mission={mission}
+                onToggleComplete={handleToggleComplete}
+                onViewDetails={setSelectedMission}
+              />
             ))
           ) : (
             <div className="no-missions">
@@ -316,7 +352,7 @@ const HomePage = () => {
           )}
         </div>
 
-        <div className="action-buttons">
+         <div className="action-buttons">
           <button className="action-button primary">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -331,6 +367,7 @@ const HomePage = () => {
             Mission Bank
           </button>
         </div>
+        
       </section>
 
       {showEditDailyMissions && (
@@ -341,6 +378,14 @@ const HomePage = () => {
             await handleDailyMissionsUpdate();
             setShowEditDailyMissions(false);
           }}
+        />
+      )}
+
+      {selectedMission && (
+        <MissionDetailView 
+          mission={selectedMission} 
+          onClose={() => setSelectedMission(null)} 
+          onToggleComplete={handleToggleComplete} 
         />
       )}
     </div>
