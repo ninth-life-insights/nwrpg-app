@@ -11,25 +11,59 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
 import './EditDailyMissions.css';
-import { checkAndHandleDailyMissionReset } from '../../services/missionService';
+import { 
+  getDailyMissionsConfig, 
+  getActiveMissions,
+  checkAndHandleDailyMissionReset 
+} from '../../services/missionService';
 
 const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
   const { currentUser } = useAuth();
-  const [missions, setMissions] = useState(currentDailyMissions || []);
+  // const [missions, setMissions] = useState(currentDailyMissions || []);
   const [newMissionTitle, setNewMissionTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-    // reset daily missions if expired
-    useEffect(() => {
+  const [missions, setMissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load data independently
+  const loadDailyMissions = async () => {
+    try {
+      setLoading(true);
+      const config = await getDailyMissionsConfig(currentUser.uid);
+      
+      if (config && config.selectedMissionIds && config.isActive) {
+        const allMissions = await getActiveMissions(currentUser.uid);
+        const dailyMissions = config.selectedMissionIds
+          .map(id => allMissions.find(m => m.id === id))
+          .filter(Boolean);
+        setMissions(dailyMissions);
+      } else {
+        setMissions([]);
+      }
+    } catch (error) {
+      console.error('Error loading daily missions:', error);
+      setMissions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      loadDailyMissions();
+    }
+  }, [currentUser]);
+
+  // Handle daily reset independently
+  useEffect(() => {
     const handleDailyReset = async () => {
       if (currentUser) {
         const result = await checkAndHandleDailyMissionReset(currentUser.uid);
         if (result.wasReset) {
-          // Optionally show user notification
-          console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
-          // Refresh your daily missions data
-          await fetchDailyMissions();
+          console.log(`Daily missions reset. Archived ${result.archivedCount} missions`);
+          await loadDailyMissions(); // Refresh our own data
         }
       }
     };
@@ -37,13 +71,30 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
     handleDailyReset();
   }, [currentUser]);
 
+  //   // reset daily missions if expired
+  //   useEffect(() => {
+  //   const handleDailyReset = async () => {
+  //     if (currentUser) {
+  //       const result = await checkAndHandleDailyMissionReset(currentUser.uid);
+  //       if (result.wasReset) {
+  //         // Optionally show user notification
+  //         console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
+  //         // Refresh your daily missions data
+  //         await fetchDailyMissions();
+  //       }
+  //     }
+  //   };
+    
+  //   handleDailyReset();
+  // }, [currentUser]);
+
   const handleAddMission = async () => {
     if (!newMissionTitle.trim()) {
       setErrors({ add: 'Please enter a mission title' });
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
     try {
       const missionData = {
         title: newMissionTitle.trim(),
@@ -73,12 +124,12 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
       console.error('Error adding daily mission:', error);
       setErrors({ add: 'Failed to add mission. Please try again.' });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const handleDeleteMission = async (missionId) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       await deleteDoc(doc(db, 'users', currentUser.uid, 'missions', missionId));
       setMissions(prev => prev.filter(mission => mission.id !== missionId));
@@ -86,7 +137,7 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
       console.error('Error deleting daily mission:', error);
       setErrors({ delete: 'Failed to delete mission' });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -139,7 +190,7 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
                     <button 
                       className="delete-mission-button"
                       onClick={() => handleDeleteMission(mission.id)}
-                      disabled={isLoading}
+                      disabled={loading}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="3,6 5,6 21,6"/>
@@ -168,7 +219,7 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
                 onChange={(e) => setNewMissionTitle(e.target.value)}
                 className={`mission-input ${errors.add ? 'error' : ''}`}
                 placeholder="Enter your daily mission..."
-                disabled={isLoading}
+                disabled={loading}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     handleAddMission();
@@ -178,7 +229,7 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
               <button 
                 className="add-mission-button"
                 onClick={handleAddMission}
-                disabled={isLoading || !newMissionTitle.trim()}
+                disabled={loading || !newMissionTitle.trim()}
               >
                 Add
               </button>
