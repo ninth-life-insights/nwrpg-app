@@ -441,6 +441,84 @@ export const checkAndHandleDailyMissionReset = async (userId) => {
   }
 };
 
+// Validate that config and mission flags are in sync
+export const validateDailyMissionConsistency = async (userId) => {
+  try {
+    const config = await getDailyMissionsConfig(userId);
+    
+    if (!config || !config.isActive) {
+      return { isConsistent: true, issues: [] };
+    }
+    
+    const activeMissions = await getActiveMissions(userId);
+    const configMissionIds = new Set(config.selectedMissionIds || []);
+    const flaggedMissions = activeMissions.filter(m => m.isDailyMission);
+    const flaggedMissionIds = new Set(flaggedMissions.map(m => m.id));
+    
+    const issues = [];
+    
+    // Check for missions in config but not flagged
+    const missingFlags = [...configMissionIds].filter(id => !flaggedMissionIds.has(id));
+    if (missingFlags.length > 0) {
+      issues.push({ type: 'missing_flags', missionIds: missingFlags });
+    }
+    
+    // Check for missions flagged but not in config
+    const extraFlags = [...flaggedMissionIds].filter(id => !configMissionIds.has(id));
+    if (extraFlags.length > 0) {
+      issues.push({ type: 'extra_flags', missionIds: extraFlags });
+    }
+    
+    return {
+      isConsistent: issues.length === 0,
+      issues,
+      configMissionIds: [...configMissionIds],
+      flaggedMissionIds: [...flaggedMissionIds]
+    };
+  } catch (error) {
+    console.error('Error validating daily mission consistency:', error);
+    throw error;
+  }
+};
+
+// Auto-fix inconsistencies (optional)
+export const syncDailyMissionFlags = async (userId) => {
+  try {
+    const validation = await validateDailyMissionConsistency(userId);
+    
+    if (validation.isConsistent) {
+      return { fixed: false, message: 'Already consistent' };
+    }
+    
+    const config = await getDailyMissionsConfig(userId);
+    const configMissionIds = config.selectedMissionIds || [];
+    
+    // Clear all daily mission flags
+    const allActiveMissions = await getActiveMissions(userId);
+    const flaggedMissions = allActiveMissions.filter(m => m.isDailyMission);
+    if (flaggedMissions.length > 0) {
+      await clearDailyMissionStatus(userId, flaggedMissions.map(m => m.id));
+    }
+    
+    // Re-apply flags based on config
+    if (configMissionIds.length > 0) {
+      const updatePromises = configMissionIds.map(async (missionId) => {
+        const missionRef = doc(db, 'users', userId, 'missions', missionId);
+        return updateDoc(missionRef, {
+          isDailyMission: true,
+          dailyMissionSetAt: serverTimestamp(),
+          dailyMissionDate: config.dateSet || toDateString(new Date())
+        });
+      });
+      await Promise.all(updatePromises);
+    }
+    
+    return { fixed: true, fixedCount: configMissionIds.length };
+  } catch (error) {
+    console.error('Error syncing daily mission flags:', error);
+    throw error;
+  }
+};
 
 // Helper function to get end of current day
 const getEndOfDay = () => {
