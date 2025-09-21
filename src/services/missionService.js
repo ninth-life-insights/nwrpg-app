@@ -419,10 +419,18 @@ export const getDailyMissionsForDate = async (userId, dateString) => {
   }
 };
 
-// Updated check function that uses the new date system
+// Checks daily missions, including validating against both storage systems
 export const checkAndHandleDailyMissionReset = async (userId) => {
   try {
-    // First check if we need to archive expired missions
+    // Validate consistency first
+    const validation = await validateDailyMissionConsistency(userId);
+    if (!validation.isConsistent) {
+      console.warn('Daily mission inconsistency detected:', validation.issues);
+      // Optionally auto-fix or just log
+      await syncDailyMissionFlags(userId);
+    }
+    
+    // Then proceed with normal reset logic
     const archiveResult = await archiveExpiredDailyMissions(userId);
     
     if (archiveResult.needsArchiving) {
