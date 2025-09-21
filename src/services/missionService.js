@@ -356,15 +356,27 @@ export const archiveExpiredDailyMissions = async (userId) => {
 };
 
 // Archive daily missions for a specific date
+// Archive daily missions for a specific date
 export const archiveDailyMissionsForDate = async (userId, dateString, missionsData) => {
   try {
+    // Clean the missions data to remove undefined values
+    const cleanedMissions = missionsData.map(mission => {
+      const cleaned = {};
+      Object.keys(mission).forEach(key => {
+        if (mission[key] !== undefined) {
+          cleaned[key] = mission[key];
+        }
+      });
+      return cleaned;
+    });
+
     const archiveRef = doc(db, 'users', userId, 'dailyMissionsHistory', dateString);
     
     await setDoc(archiveRef, {
       date: dateString,
-      missions: missionsData,
-      completedCount: missionsData.filter(m => m.completed).length,
-      totalCount: missionsData.length,
+      missions: cleanedMissions,
+      completedCount: cleanedMissions.filter(m => m.completed).length,
+      totalCount: cleanedMissions.length,
       archivedAt: serverTimestamp()
     });
     
