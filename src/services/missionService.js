@@ -211,7 +211,7 @@ export const setDailyMissions = async (userId, selectedMissionIds) => {
       return updateDoc(missionRef, {
         isDailyMission: true,
         dailyMissionSetAt: serverTimestamp(),
-        dailyMissionDate: todayString // Add this for tracking
+        dailyMissionDate: todayString 
       });
     });
 
@@ -232,7 +232,6 @@ export const clearDailyMissionStatus = async (userId, missionIds) => {
       return updateDoc(missionRef, {
         isDailyMission: false,
         dailyMissionSetAt: null,
-        expiryDate: null
       });
     });
 
