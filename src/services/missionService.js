@@ -232,6 +232,7 @@ export const clearDailyMissionStatus = async (userId, missionIds) => {
       return updateDoc(missionRef, {
         isDailyMission: false,
         dailyMissionSetAt: null,
+        dailyMissionDate: null // Clear this too for consistency
       });
     });
 
