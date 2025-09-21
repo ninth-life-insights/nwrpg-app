@@ -166,7 +166,7 @@ const MissionList = ({
           // Optionally show user notification
           console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
           // Refresh your daily missions data
-          await fetchDailyMissions();
+          await loadMissions();
         }
       }
     };
