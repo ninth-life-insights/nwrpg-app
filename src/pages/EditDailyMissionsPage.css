@@ -131,33 +131,64 @@
   text-align: left;
 }
 
+/* Mission Badges - Nuclear Option for Inline Alignment */
 .mission-badges {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-start !important;
+  margin-top: 8px !important;
+  width: 100% !important;
 }
 
-.skill-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  background-color: var(--color-skill);
-  color: #7c3aed;
-}
-
+/* Target all elements regardless of class */
+.mission-badges span,
+.mission-badges div,
+.mission-badges > *,
+.difficulty-badge,
+.skill-badge,
 .due-date-badge {
-  display: inline-block;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+  flex-shrink: 0 !important;
+  float: none !important;
+  clear: none !important;
+  position: relative !important;
+}
+
+/* Specific overrides for skill badges */
+.mission-badges .skill-badge,
+.mission-badges span.skill-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  background-color: var(--color-skill) !important;
+  color: #7c3aed !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+}
+
+/* Specific overrides for due date badges */
+.mission-badges .due-date-badge,
+.mission-badges span.due-date-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
 }
 
 .due-date-badge.upcoming {
@@ -244,6 +275,8 @@
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
+  background-color: #f3f4f6;
+  color: #9ca3af;
 }
 
 /* Set Daily Missions Section */
@@ -275,17 +308,63 @@
   box-shadow: var(--shadow-hover);
 }
 
-.set-missions-btn.disabled {
+.set-missions-btn.disabled,
+.set-missions-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
   background: var(--color-border);
   color: var(--color-text-light);
-  cursor: not-allowed;
+}
+
+.set-missions-btn.saving {
+  background-color: #9ca3af;
+  cursor: wait;
 }
 
 .requirements-text {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-light);
+  font-size: 0.9rem;
+  color: #f59e0b;
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Status Messages */
+.loading-message, .error-message {
+  text-align: center;
+  padding: 40px 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.loading-message {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 2px solid #bae6fd;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 2px solid #fecaca;
+}
+
+.current-status {
+  background-color: #f0fdf4;
+  border: 2px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  text-align: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.status-text {
   margin: 0;
-  font-style: italic;
+  color: #166534;
+  font-weight: 500;
 }
 
 /* Mission Bank Modal */
@@ -312,17 +391,6 @@
   overflow-y: auto;
   position: relative;
   animation: slideUp 0.2s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .modal-header {
@@ -373,21 +441,68 @@
   animation: selectedPulse 0.3s ease;
 }
 
-@keyframes selectedPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1.02); }
-}
-
 .mission-list-selection-mode .mission-card {
-  pointer-events: none; /* Prevent double-click handling */
+  pointer-events: none;
 }
 
 .mission-list-selection-mode .mission-wrapper.selectable {
   pointer-events: auto;
 }
 
+/* Help Text */
+.help-text {
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes selectedPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1.02); }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Mobile Responsive */
+@media (max-width: 768px) {
+  .current-status {
+    margin: 10px 0;
+    padding: 12px;
+  }
+  
+  .status-text {
+    font-size: 0.9rem;
+  }
+  
+  .help-text {
+    font-size: 0.8rem;
+  }
+}
+
 @media (max-width: 640px) {
   .daily-missions-container {
     padding: var(--space-md);
@@ -402,161 +517,4 @@
     margin: var(--space-md);
     max-height: calc(100vh - 2 * var(--space-md));
   }
-}
-
-.loading-message, .error-message {
-  text-align: center;
-  padding: 40px 20px;
-  margin: 20px 0;
-  border-radius: 8px;
-  font-size: 1.1rem;
-}
-
-.loading-message {
-  background-color: #f0f9ff;
-  color: #0369a1;
-  border: 2px solid #bae6fd;
-}
-
-.error-message {
-  background-color: #fef2f2;
-  color: #dc2626;
-  border: 2px solid #fecaca;
-}
-
-/* Current Status Section */
-.current-status {
-  background-color: #f0fdf4;
-  border: 2px solid #bbf7d0;
-  border-radius: 8px;
-  padding: 15px;
-  margin: 15px 0;
-  text-align: center;
-}
-
-.status-text {
-  margin: 0;
-  color: #166534;
-  font-weight: 500;
-}
-
-/* Daily Mission Badge */
-.daily-badge {
-  background-color: #fbbf24;
-  color: #92400e;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Enhanced Mission Badges */
-.mission-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.skill-badge {
-  background-color: #e0e7ff;
-  color: #3730a3;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.due-date-badge {
-  background-color: #fef3c7;
-  color: #92400e;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* Help Text */
-.help-text {
-  font-size: 0.9rem;
-  color: #6b7280;
-  text-align: center;
-  margin-top: 10px;
-  line-height: 1.4;
-}
-
-/* Disabled State Enhancements */
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #f3f4f6;
-  color: #9ca3af;
-}
-
-.set-missions-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #e5e7eb;
-  color: #9ca3af;
-}
-
-/* Improved Requirements Text */
-.requirements-text {
-  font-size: 0.9rem;
-  color: #f59e0b;
-  text-align: center;
-  margin-top: 8px;
-  font-weight: 500;
-}
-
-/* Loading State for Button */
-.set-missions-btn.saving {
-  background-color: #9ca3af;
-  cursor: wait;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .current-status {
-    margin: 10px 0;
-    padding: 12px;
-  }
-  
-  .status-text {
-    font-size: 0.9rem;
-  }
-  
-  .help-text {
-    font-size: 0.8rem;
-  }
-  
-  .mission-badges {
-    gap: 4px;
-  }
-  
-  .daily-badge,
-  .skill-badge,
-  .due-date-badge {
-    font-size: 0.7rem;
-    padding: 3px 6px;
-  }
-}
-
-/* Animation for Status Messages */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.error-message,
-.current-status {
-  animation: fadeIn 0.3s ease-out;
 }

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
+import DifficultyBadge from '../components/missions/sub-components/DifficultyBadge';
 import { 
   getActiveMissions, 
   getDailyMissionsConfig,
@@ -221,16 +222,14 @@ const EditDailyMissionsPage = () => {
                   <h3 className="mission-title">{mission.title}</h3>
                   <p className="mission-description">{mission.description}</p>
                   <div className="mission-badges">
-                    {mission.skill && (
-                      <span className="skill-badge">{mission.skill}</span>
-                    )}
+                    <DifficultyBadge difficulty={mission.difficulty} />
                     {mission.dueDate && (
                       <span className={`due-date-badge ${getDueDateInfo(mission)?.status}`}>
                         {getDueDateInfo(mission)?.display}
                       </span>
                     )}
-                    {mission.isDailyMission && (
-                      <span className="daily-badge">Daily Mission</span>
+                    {mission.skill && (
+                      <span className="skill-badge">{mission.skill}</span>
                     )}
                   </div>
                 </div>
