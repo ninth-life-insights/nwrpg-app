@@ -311,15 +311,14 @@
 }
 
 /* Action Buttons */
-.homepage-action-buttons {
-  display: flex;
+.action-buttons {
+  display: flex !important;
   gap: var(--space-sm);
-  flex-wrap: nowrap; /* Prevent wrapping */
-  width: 100%;
+  /* width: 100%; */
 }
 
-.homepage-action-button {
-  flex: 1;
+.action-button {
+  flex: 1 !important;
   background: var(--color-primary);
   color: white;
   border: none;
@@ -334,33 +333,31 @@
   justify-content: center;
   gap: var(--space-xs);
   min-height: 40px;
-    white-space: nowrap; /* Prevent text wrapping */
-  min-width: 0; /* Allow flex shrinking if needed */
 }
 
-.homepage-action-button:hover {
+.action-button:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-hover);
 }
 
-.homepage-action-button svg {
+.action-button svg {
   width: 16px;
   height: 16px;
 }
 
-.homepage-action-button.primary {
+.action-button.primary {
   background: var(--color-primary);
 }
 
-.homepage-action-button.primary:hover {
+.action-button.primary:hover {
   background: var(--color-primary-hover);
 }
 
-.homepage-action-button.secondary {
+.action-button.secondary {
   background: var(--color-text-light);
 }
 
-.homepage-action-button.secondary:hover {
+.action-button.secondary:hover {
   background: var(--color-text-medium);
 }
 
