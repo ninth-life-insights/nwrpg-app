@@ -11,6 +11,7 @@ import {
   resetDailyMissions,
   uncompleteMission,
   completeMission,
+  getCompletedMissions,
   checkAndHandleDailyMissionReset
 } from '../services/missionService';
 import { addXP, subtractXP } from '../services/userService';
@@ -98,7 +99,7 @@ const HomePage = () => {
   };
 
   // Fetch daily missions using the new system
-  const fetchDailyMissions = async () => {
+  const fetchDailyMissions = async (preserveCompletionState = false) => {
     if (!currentUser) return;
 
     try {
@@ -107,8 +108,13 @@ const HomePage = () => {
       setDailyMissionsConfig(config);
 
       if (config && config.selectedMissionIds && config.isActive) {
-        // Get all active missions
-        const allMissions = await getActiveMissions(currentUser.uid);
+        // Get all active missions AND completed missions to ensure we don't lose completed daily missions
+        const [activeMissions, completedMissions] = await Promise.all([
+          getActiveMissions(currentUser.uid),
+          getCompletedMissions(currentUser.uid)
+        ]);
+        
+        const allMissions = [...activeMissions, ...completedMissions];
         
         // Filter to get only the selected daily missions
         const selectedDailyMissions = config.selectedMissionIds
@@ -248,6 +254,13 @@ const HomePage = () => {
           newSet.delete(missionId);
           return newSet;
         });
+        
+        // Update the mission in local state immediately
+        setDailyMissions(prev => prev.map(mission => 
+          mission.id === missionId 
+            ? { ...mission, completed: false, status: 'active' }
+            : mission
+        ));
       } else {
         // Complete the mission
         await completeMission(currentUser.uid, missionId);
@@ -263,13 +276,22 @@ const HomePage = () => {
         
         // Add to completed daily missions tracking
         setCompletedDailyMissions(prev => new Set([...prev, missionId]));
+        
+        // Update the mission in local state immediately
+        setDailyMissions(prev => prev.map(mission => 
+          mission.id === missionId 
+            ? { ...mission, completed: true, status: 'completed' }
+            : mission
+        ));
       }
       
-      // Reload missions to reflect changes
-      await handleDailyMissionsUpdate();
+      // Don't reload missions - we're managing state locally for daily missions
+      // await handleDailyMissionsUpdate();
       
     } catch (err) {
       console.error('Error toggling mission completion:', err);
+      // On error, revert the local state change by refetching
+      await handleDailyMissionsUpdate();
     }
   };
 
