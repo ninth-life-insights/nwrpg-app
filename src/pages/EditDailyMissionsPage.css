@@ -151,14 +151,34 @@
 }
 
 .due-date-badge {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  background-color: var(--color-warning);
-  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.due-date-badge.upcoming {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.due-date-badge.due-tomorrow {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.due-date-badge.due-today {
+  background-color: #fed7aa;
+  color: #ea580c;
+}
+
+.due-date-badge.overdue {
+  background-color: #fee2e2;
+  color: #dc2626;
+  animation: pulse 2s infinite;
 }
 
 .remove-mission-btn {

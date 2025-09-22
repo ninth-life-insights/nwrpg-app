@@ -5,11 +5,16 @@ import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
 import { 
   getActiveMissions, 
-  updateMission,
   getDailyMissionsConfig,
   setDailyMissions as saveDailyMissions,
-  clearDailyMissionStatus 
+  clearDailyMissionStatus,
 } from '../services/missionService';
+import {
+  isMissionDueToday,
+  isMissionDueTomorrow,
+  isMissionOverdue,
+  formatForUser
+} from '../utils/dateHelpers'
 import './EditDailyMissionsPage.css';
 
 const EditDailyMissionsPage = () => {
@@ -165,7 +170,22 @@ const EditDailyMissionsPage = () => {
     );
   }
 
+  const getDueDateInfo = (mission) => {
+            if (!mission.dueDate) return null;
+            
+            if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
+            if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
+            if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
+            
+            // For other upcoming dates, show the actual date
+            return {
+              status: 'upcoming',
+              display: formatForUser(mission.dueDate)
+            };
+          };
+
   return (
+    
     <div className="daily-missions-container">
       <div className="daily-missions-header">
         <h1 className="page-title">Set Daily Missions</h1>
@@ -205,8 +225,8 @@ const EditDailyMissionsPage = () => {
                       <span className="skill-badge">{mission.skill}</span>
                     )}
                     {mission.dueDate && (
-                      <span className="due-date-badge">
-                        Due: {new Date(mission.dueDate.seconds * 1000).toLocaleDateString()}
+                      <span className={`due-date-badge ${getDueDateInfo(mission)?.status}`}>
+                        {getDueDateInfo(mission)?.display}
                       </span>
                     )}
                     {mission.isDailyMission && (
