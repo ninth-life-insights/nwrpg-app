@@ -17,6 +17,7 @@ import {
   formatForUser
 } from '../utils/dateHelpers'
 import './EditDailyMissionsPage.css';
+import { Navigate } from 'react-router-dom';
 
 const EditDailyMissionsPage = () => {
   const { currentUser } = useAuth();
@@ -28,6 +29,10 @@ const EditDailyMissionsPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [currentDailyConfig, setCurrentDailyConfig] = useState(null);
+
+  const navigate = Navigate();
+
+  const navigatetoHome = navigate('/home');
 
   // Load existing daily missions configuration on component mount
   useEffect(() => {
@@ -155,6 +160,8 @@ const EditDailyMissionsPage = () => {
       });
       
       alert('Daily missions set successfully! Your 3 daily missions are now active.');
+
+      navigatetoHome();
       
     } catch (err) {
       console.error('Error setting daily missions:', err);
