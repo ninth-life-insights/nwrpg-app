@@ -311,12 +311,14 @@
 }
 
 /* Action Buttons */
-.action-buttons {
+.homepage-action-buttons {
   display: flex;
   gap: var(--space-sm);
+  flex-wrap: nowrap; /* Prevent wrapping */
+  width: 100%;
 }
 
-.action-button {
+.homepage-action-button {
   flex: 1;
   background: var(--color-primary);
   color: white;
@@ -332,31 +334,33 @@
   justify-content: center;
   gap: var(--space-xs);
   min-height: 40px;
+    white-space: nowrap; /* Prevent text wrapping */
+  min-width: 0; /* Allow flex shrinking if needed */
 }
 
-.action-button:hover {
+.homepage-action-button:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-hover);
 }
 
-.action-button svg {
+.homepage-action-button svg {
   width: 16px;
   height: 16px;
 }
 
-.action-button.primary {
+.homepage-action-button.primary {
   background: var(--color-primary);
 }
 
-.action-button.primary:hover {
+.homepage-action-button.primary:hover {
   background: var(--color-primary-hover);
 }
 
-.action-button.secondary {
+.homepage-action-button.secondary {
   background: var(--color-text-light);
 }
 
-.action-button.secondary:hover {
+.homepage-action-button.secondary:hover {
   background: var(--color-text-medium);
 }
 
