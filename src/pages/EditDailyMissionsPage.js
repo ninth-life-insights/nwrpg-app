@@ -85,6 +85,12 @@ const EditDailyMissionsPage = () => {
     setDailyMissions(newDailyMissions);
   };
 
+  // Handle clicking on an empty slot
+  const handleEmptySlotClick = (slotIndex) => {
+    setCurrentSlotIndex(slotIndex);
+    setShowAddMission(true);
+  };
+
   // Handle adding new mission - finds first empty slot
   const handleAddNewMission = () => {
     const emptySlotIndex = dailyMissions.findIndex(mission => mission === null);
@@ -242,8 +248,18 @@ const EditDailyMissionsPage = () => {
                 </button>
               </div>
             ) : (
-              // Empty slot
-              <div className="mission-slot-empty">
+              // Empty slot - now clickable
+              <div 
+                className="mission-slot-empty clickable"
+                onClick={() => handleEmptySlotClick(index)}
+                role="button"
+                tabIndex="0"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleEmptySlotClick(index);
+                  }
+                }}
+              >
                 <div className="slot-placeholder">
                   <div className="slot-number">{index + 1}</div>
                 </div>
