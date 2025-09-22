@@ -21,11 +21,14 @@ const MissionBank = () => {
     includeExpired: false
   });
 
+  // New state to track recently completed missions
+  const [recentlyCompletedMissions, setRecentlyCompletedMissions] = useState([]);
+
   const navigate = useNavigate('/home');
 
   const HomeButtonClick = () => {
     navigate('/home');
-};
+  };
 
   // Load user profile when component mounts or user changes
   useEffect(() => {
@@ -48,6 +51,28 @@ const MissionBank = () => {
     loadUserProfile();
   };
 
+  // New function to handle mission completion updates
+  const handleMissionCompletion = (completedMission) => {
+    // Add to recently completed missions if not already there
+    setRecentlyCompletedMissions(prev => {
+      const existingIndex = prev.findIndex(mission => mission.id === completedMission.id);
+      if (existingIndex >= 0) {
+        // Mission already in list, don't add duplicate
+        return prev;
+      }
+      // Add to the beginning of the array
+      return [completedMission, ...prev];
+    });
+  };
+
+  // New function to handle mission un-completion
+  const handleMissionUncompletion = (uncompletedMissionId) => {
+    // Remove from recently completed missions
+    setRecentlyCompletedMissions(prev => 
+      prev.filter(mission => mission.id !== uncompletedMissionId)
+    );
+  };
+
   const handleShowAddMission = () => {
     setShowAddMission(true);
   };
@@ -65,6 +90,9 @@ const MissionBank = () => {
   };
 
   const handleApplyFilters = (newFilters) => {
+    // Clear recently completed missions when filters change
+    setRecentlyCompletedMissions([]);
+    
     setFilters(newFilters);
     
     // Update activeTab based on include options
@@ -91,36 +119,16 @@ const MissionBank = () => {
     }
   };
 
-//   const getPageTitle = () => {
-//     if (filters.includeCompleted && filters.includeExpired) {
-//       return 'All Missions';
-//     } else if (filters.includeCompleted) {
-//       return 'Completed Missions';
-//     } else if (filters.includeExpired) {
-//       return 'Expired Missions';
-//     }
-    
-//     switch (activeTab) {
-//       case 'active':
-//         return 'Active Missions';
-//       case 'completed':
-//         return 'Completed Missions';
-//       default:
-//         return 'Missions';
-//     }
-//   };
-
   return (
     <div className="mission-bank-page">
       {/* Page Header */}
       <div className="mission-bank-header">
-        <div classname="top-header">
-            <button className="home-button" onClick={HomeButtonClick}>
-                Home
-            </button>
-            <h1>Mission Bank</h1>
+        <div className="top-header">
+          <button className="home-button" onClick={HomeButtonClick}>
+            Home
+          </button>
+          <h1>Mission Bank</h1>
         </div>
-        
         
         <div className="header-actions">
           {/* Filter Button */}
@@ -134,35 +142,15 @@ const MissionBank = () => {
             </svg>
           </button>
           
-          {/* Add Mission Button - Only show for active missions */}
-          {/* {activeTab === 'active' && !filters.includeCompleted && !filters.includeExpired && ( */}
-            <button
-              onClick={handleShowAddMission}
-              className="add-mission-btn"
-            >
-              + Add Mission
-            </button>
-          {/* )} */}
+          {/* Add Mission Button */}
+          <button
+            onClick={handleShowAddMission}
+            className="add-mission-btn"
+          >
+            + Add Mission
+          </button>
         </div>
       </div>
-
-      {/* Tab Navigation - Hide when using filters that show multiple types */}
-      {/* {!filters.includeCompleted && !filters.includeExpired && (
-        <div className="mission-tabs">
-          <button
-            onClick={() => setActiveTab('active')}
-            className={`mission-tab-btn ${activeTab === 'active' ? 'active' : 'inactive'}`}
-          >
-            Active
-          </button>
-          <button
-            onClick={() => setActiveTab('completed')}
-            className={`mission-tab-btn ${activeTab === 'completed' ? 'active' : 'inactive'}`}
-          >
-            Completed
-          </button>
-        </div>
-      )} */}
 
       {/* Mission List Component */}
       <MissionList 
@@ -172,6 +160,9 @@ const MissionBank = () => {
         onShowAddMission={handleShowAddMission}
         onHideAddMission={handleHideAddMission}
         filters={filters}
+        recentlyCompletedMissions={recentlyCompletedMissions}
+        onMissionCompletion={handleMissionCompletion}
+        onMissionUncompletion={handleMissionUncompletion}
       />
 
       {/* Filter Modal */}

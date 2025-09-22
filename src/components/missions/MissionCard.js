@@ -15,7 +15,12 @@ import {
  } from '../../utils/dateHelpers';
 import './MissionCard.css';
 
-const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
+const MissionCard = ({ 
+  mission, 
+  onToggleComplete, 
+  onViewDetails, 
+  isRecentlyCompleted = false 
+}) => {
   
   // Use schema utility functions for consistency
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
@@ -80,8 +85,8 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
   };
 
   return (
-    <div className={`mission-card ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''}`}>
-      
+    <div className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''}`}>
+
       {/* Content area */}
       <div className="content-area" onClick={() => onViewDetails(mission)}>
         
@@ -162,7 +167,7 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
       <div className="mission-actions">
         <button
           onClick={handleToggleComplete}
-          className={`mission-toggle ${isCompleted ? 'completed' : ''}`}
+          className={`mission-toggle ${isCompleted || isRecentlyCompleted ? 'completed' : ''}`}
           aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
         >
           {/* Checkmark icon */}
@@ -176,8 +181,6 @@ const MissionCard = ({ mission, onToggleComplete, onViewDetails }) => {
             <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
           </svg>
         </button>
-        
-
       </div>
     </div>
   );

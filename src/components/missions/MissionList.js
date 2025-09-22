@@ -23,7 +23,10 @@ const MissionList = ({
   selectionMode = false, 
   onMissionSelect = null,
   selectedMissions = [],
-  maxSelections = null 
+  maxSelections = null,
+  recentlyCompletedMissions = [],
+  onMissionCompletion = null,
+  onMissionUncompletion = null
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
@@ -157,8 +160,8 @@ const MissionList = ({
     }
   };
 
-    // reset daily missions if expired
-    useEffect(() => {
+  // reset daily missions if expired
+  useEffect(() => {
     const handleDailyReset = async () => {
       if (currentUser) {
         const result = await checkAndHandleDailyMissionReset(currentUser.uid);
@@ -186,6 +189,11 @@ const MissionList = ({
         if (xpReward) {
           await subtractXP(currentUser.uid, xpReward);
         }
+        
+        // Notify parent about uncompletion
+        if (onMissionUncompletion) {
+          onMissionUncompletion(missionId);
+        }
       } else {
         // Complete the mission
         await completeMission(currentUser.uid, missionId);
@@ -197,6 +205,14 @@ const MissionList = ({
             // You can add a toast notification here later
             console.log(`Level up! Now level ${result.newLevel}`);
           }
+        }
+        
+        // Find the completed mission and notify parent
+        const completedMission = missions.find(mission => mission.id === missionId);
+        if (completedMission && onMissionCompletion) {
+          // Update the mission status for the parent
+          const updatedMission = { ...completedMission, status: 'completed' };
+          onMissionCompletion(updatedMission);
         }
       }
       
@@ -215,21 +231,17 @@ const MissionList = ({
 
   // Handle adding a new mission
   const handleAddMission = (newMission) => {
-  
-  if (!newMission.id) {
-    console.error('BLOCKING: Cannot add mission without ID');
-    console.error('Mission object:', newMission);
-    return; // Don't add missions without IDs
-  }
-  
+    if (!newMission.id) {
+      console.error('BLOCKING: Cannot add mission without ID');
+      console.error('Mission object:', newMission);
+      return; // Don't add missions without IDs
+    }
 
-  setMissions(prev => {
-    const newMissions = [newMission, ...prev];
-    return newMissions;
-  });
-  
-  // setShowAddMission(false);
-};
+    setMissions(prev => {
+      const newMissions = [newMission, ...prev];
+      return newMissions;
+    });
+  };
 
   // Handle mission selection for daily missions
   const handleMissionSelect = (mission) => {
@@ -252,6 +264,7 @@ const MissionList = ({
     // Select the mission
     onMissionSelect(mission);
   };
+
   // Handle viewing mission details
   const handleViewDetails = (mission) => {
     if (selectionMode) {
@@ -260,6 +273,24 @@ const MissionList = ({
       setSelectedMission(mission);
     }
   };
+
+  // Combine and organize missions for display
+  const getDisplayMissions = () => {
+    // Remove recently completed missions from the main list to avoid duplicates
+    const recentlyCompletedIds = recentlyCompletedMissions.map(mission => mission.id);
+    const filteredMissions = missions.filter(mission => !recentlyCompletedIds.includes(mission.id));
+    
+    // Only show recently completed for active missions view
+    if (missionType === 'active') {
+      return [...recentlyCompletedMissions, ...filteredMissions];
+    }
+    
+    // For other views, just show the regular missions
+    return missions;
+  };
+
+  const displayMissions = getDisplayMissions();
+
   // Loading state
   if (loading) {
     return (
@@ -272,6 +303,7 @@ const MissionList = ({
       </div>
     );
   }
+
   // Error state
   if (error) {
     return (
@@ -287,8 +319,9 @@ const MissionList = ({
       </div>
     );
   }
+
   // Empty state
-  if (missions.length === 0) {
+  if (displayMissions.length === 0) {
     const emptyMessage = missionType === 'active' 
       ? "No active missions. Add your first mission to get started!" 
       : "No completed missions yet. Complete some active missions to see them here!";
@@ -315,7 +348,6 @@ const MissionList = ({
   }
 
   return (
-    
     <div className={selectionMode ? 'mission-list-selection-mode' : 'mission-list'}>
 
       {/* Selection mode header */}
@@ -340,62 +372,67 @@ const MissionList = ({
         </div>
       )}
 
+
       {/* Missions Grid */}
       <div style={{ textAlign: 'center' }}>
-        {missions.map(mission => {
-            const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
-            
-            return (
-              <div
+        {displayMissions.map((mission, index) => {
+          const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
+          const isRecentlyCompleted = recentlyCompletedMissions.some(completed => completed.id === mission.id);
+          
+          return (
+            <div
+              key={mission.id}
+              className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''} ${isRecentlyCompleted ? 'recently-completed' : ''}`}
+              style={{
+                position: 'relative',
+                ...(selectionMode && {
+                  cursor: 'pointer',
+                  padding: '4px',
+                  margin: '8px auto',
+                  maxWidth: '400px',
+                  borderRadius: '12px',
+                  border: isSelected ? '3px solid #2196f3' : '3px solid transparent',
+                  backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
+                  transition: 'all 0.2s ease'
+                }),
+                ...(isRecentlyCompleted && {
+                  marginBottom: index === recentlyCompletedMissions.length - 1 ? '25px' : '8px'
+                })
+              }}
+              onClick={selectionMode ? () => handleMissionSelect(mission) : undefined}
+            >
+              {isSelected && selectionMode && (
+                <div style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '8px',
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  backgroundColor: '#2196f3',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  zIndex: 10
+                }}>
+                  ✓
+                </div>
+              )}
+              <MissionCard
                 key={mission.id}
-                className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''}`}
-                style={{
-                  position: 'relative',
-                  ...(selectionMode && {
-                    cursor: 'pointer',
-                    padding: '4px',
-                    margin: '8px auto',
-                    maxWidth: '400px',
-                    borderRadius: '12px',
-                    border: isSelected ? '3px solid #2196f3' : '3px solid transparent',
-                    backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
-                    transition: 'all 0.2s ease'
-                  })
-                }}
-                onClick={selectionMode ? () => handleMissionSelect(mission) : undefined}
-              >
-                {isSelected && selectionMode && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    backgroundColor: '#2196f3',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    zIndex: 10
-                  }}>
-                    ✓
-                  </div>
-                )}
-                <MissionCard
-                  key={mission.id}
-                  mission={mission}
-                  onToggleComplete={handleToggleComplete}
-                  onViewDetails={handleViewDetails}
-                  selectionMode={selectionMode} //should this be here? I have no flippin idea
-                />
-              </div>
-            );
-          })}
+                mission={mission}
+                onToggleComplete={handleToggleComplete}
+                onViewDetails={handleViewDetails}
+                selectionMode={selectionMode}
+                isRecentlyCompleted={isRecentlyCompleted}
+              />
+            </div>
+          );
+        })}
       </div>
-      
 
       {/* Mission Detail Modal */}
        {!selectionMode && selectedMission && (
