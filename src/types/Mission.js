@@ -66,6 +66,17 @@ export const MISSION_SCHEMA = {
   // Repetition data
   dueType: DUE_TYPES.UNIQUE,              // string - completion/due date type
 
+  recurrence: {
+  pattern: null,                // string - 'daily', 'weekly', 'monthly', 'yearly', 'custom'
+  interval: 1,                  // number - every X days/weeks/months (e.g., every 2 weeks)
+  weekdays: [],                 // array - [0,1,2,3,4,5,6] for weekly (0=Sunday)
+  dayOfMonth: null,             // number - for monthly (1-31) or null for "same day"
+  endDate: null,                // Date - when to stop recurring (optional)
+  maxOccurrences: null,         // number - max times to recur (optional)
+  parentMissionId: null,        // string - ID of original recurring mission
+  nextDueDate: null,            // Date - when next instance should be created
+  },
+
   // Completion mechanics
   completionType: COMPLETION_TYPES.SIMPLE, // string - how mission is completed
   
@@ -186,72 +197,6 @@ export const validateMission = (mission) => {
  const extractDate = (dateInput) => {
   return dateInput && dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
 };
-
-// check if mission is overdue
-// export const isMissionOverdue = (mission) => {
-//   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
-//     console.log(mission.title);
-//     console.log('mission due Date:');
-//     console.log(mission.dueDate);
-//     console.log('mission status:');
-//     console.log(mission.status);
-//     return false;
-//   }
-  
-//   const now = new Date();
-//   const dueDate = extractDate(mission.dueDate);
-//   // Compare current time with end of due date
-//   const endOfDueDate = normalizeToEndOfDay(dueDate);
-//   console.log(mission.title);
-//   console.log('now:');
-//   console.log(now);
-//   console.log('dueDate:');
-//   console.log(dueDate);
-//   console.log('endofDueDate:');
-//   console.log(endOfDueDate);
-  
-//   return now > endOfDueDate;
-// };
-
-// // check if mission is due today
-// export const isMissionDueToday = (mission) => {
-//   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
-    
-//     return false;
-//   }
-  
-//   const today = normalizeToStartOfDay(new Date());
-//   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
-  
-//   return +today === +dueDate;
-// };
-
-// // check if mission is due tomorrow
-// export const isMissionDueTomorrow = (mission) => {
-//   if (!mission.dueDate || mission.status === MISSION_STATUS.COMPLETED) {
-//     return false;
-//   }
-  
-//   const today = new Date();
-//   const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0, 0);
-  
-//   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
-  
-//   return +tomorrow === +dueDate;
-// };
-
-// get days until mission is due
-// export const getDaysUntilDue = (mission) => {
-//   if (!mission.dueDate) {
-//     return null;
-//   }
-  
-//   const today = normalizeToStartOfDay(new Date());
-//   const dueDate = normalizeToStartOfDay(extractDate(mission.dueDate));
-  
-//   const diffTime = dueDate.getTime() - today.getTime();
-//   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-// };
 
 // check if mission is expired
 export const isMissionExpired = (mission) => {
