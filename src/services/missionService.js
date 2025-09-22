@@ -106,6 +106,22 @@ export const getExpiredMissions = async (userId) => {
   }
 };
 
+// Get all missions regardless of status
+export const getAllMissions = async (userId) => {
+  try {
+    const missionsRef = getUserMissionsRef(userId);
+    const q = query(missionsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting all missions:', error);
+    throw error;
+  }
+};
+
 // Complete a mission
 export const completeMission = async (userId, missionId) => {
   try {
@@ -470,9 +486,9 @@ export const validateDailyMissionConsistency = async (userId) => {
       return { isConsistent: true, issues: [] };
     }
     
-    const activeMissions = await getActiveMissions(userId);
+    const allMissions = await getAllMissions(userId);
     const configMissionIds = new Set(config.selectedMissionIds || []);
-    const flaggedMissions = activeMissions.filter(m => m.isDailyMission);
+    const flaggedMissions = allMissions.filter(m => m.isDailyMission);
     const flaggedMissionIds = new Set(flaggedMissions.map(m => m.id));
     
     const issues = [];
