@@ -158,6 +158,40 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     return validation.isValid;
   };
 
+  const resetForm = () => {
+  setFormData({
+    title: '',
+    description: '',
+    difficulty: DIFFICULTY_LEVELS.EASY,
+    completionType: COMPLETION_TYPES.SIMPLE,
+    dueType: DUE_TYPES.UNIQUE,
+    dueDate: '',
+    skill: '',
+    expiryDate: getDefaultExpiryDate(),
+    hasExpiryDate: true,
+    timerDurationMinutes: '',
+    targetCount: '',
+    recurrence: {
+      pattern: RECURRENCE_PATTERNS.NONE,
+      interval: 1,
+      weekdays: [],
+      dayOfMonth: null,
+      endDate: null,
+      maxOccurrences: null
+    },
+    priority: 'normal',
+    pinned: false,
+    isDailyMission: false
+  });
+  
+  // Reset UI state
+  setShowDueDateField(false);
+  setShowSkillField(false);
+  setShowExpiryField(false);
+  setSkillSearch('');
+  setErrors({});
+};
+
   
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -169,68 +203,49 @@ const handleSubmit = async (e) => {
   setIsSubmitting(true);
 
   try {
-    const missionData = {
+    // Use createMissionTemplate for consistency with your types
+    const missionData = createMissionTemplate({
       title: formData.title.trim(),
       description: formData.description.trim(),
       difficulty: formData.difficulty,
+      
+      // FIXED: Consistent date string handling
       dueDate: formData.dueDate ? toDateString(formData.dueDate) : '',
+      expiryDate: formData.hasExpiryDate ? toDateString(formData.expiryDate) : null,
+      
       skill: formData.skill.trim() || null,
-      expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
       completionType: formData.completionType,
-      timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null,
-      targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
+      
+      // FIXED: Proper null handling for optional fields
+      timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes, 10) : null,
+      targetCount: formData.targetCount ? parseInt(formData.targetCount, 10) : null,
+      
       dueType: formData.dueType,
       recurrence: formData.recurrence,
       category: 'personal',
-      isDailyMission: false
-    };
+      isDailyMission: false,
+      priority: formData.priority,
+      pinned: formData.pinned
+    });
 
     console.log('Mission data being submitted:', missionData);
-  console.log('Due date:', missionData.dueDate);
-  console.log('Recurrence:', missionData.recurrence);
 
     const missionId = await createMission(currentUser.uid, missionData);
     
-    // Validate that we got a valid mission ID back
     if (!missionId) {
       throw new Error('Failed to create mission: No ID returned');
     }
     
-    // Call the parent component's callback with the new mission ID
+    // Call parent callback
     onAddMission({
       ...missionData,
       id: missionId,
       status: 'active',
-      completed: false,
       createdAt: new Date()
     });
 
-    // Reset form
-    setFormData({
-      title: '',
-      description: '',
-      difficulty: DIFFICULTY_LEVELS.EASY,
-      completionType: COMPLETION_TYPES.SIMPLE,
-      dueType: DUE_TYPES.UNIQUE,
-      dueDate: '',
-      skill: '',
-      expiryDate: getDefaultExpiryDate(),
-      hasExpiryDate: true,
-      timerDurationMinutes: '',
-      targetCount: '',
-      recurrence: {
-        pattern: RECURRENCE_PATTERNS.NONE,
-        interval: 1,
-        weekdays: [],
-        dayOfMonth: null,
-        endDate: null,
-        maxOccurrences: null
-      },
-      priority: 'normal',
-      pinned: false,
-      isDailyMission: false
-    });
-
+    // Reset form using helper function
+    resetForm();
     onCancel();
 
   } catch (error) {
@@ -240,6 +255,8 @@ const handleSubmit = async (e) => {
     setIsSubmitting(false);
   }
 };
+
+
 
   // Filter skills based on search
   const filteredSkills = AVAILABLE_SKILLS.filter(skill =>
