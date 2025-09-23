@@ -72,12 +72,19 @@ export const shouldCreateNextOccurrence = (recurrence, currentOccurrenceCount = 
     return false;
   }
 
-  // Check end date
+  // Check if we've passed the end date
   if (recurrence.endDate) {
     const endDate = dayjs(recurrence.endDate);
-    const nextDueDate = dayjs(calculateNextDueDate(currentDueDate, recurrence)); // Use the mission's due date
+    const today = dayjs();
     
-    if (nextDueDate.isAfter(endDate)) {
+    // If today is after the end date, stop creating new instances
+    if (today.isAfter(endDate, 'day')) {
+      return false;
+    }
+    
+    // Also check if the next calculated due date would be after the end date
+    const nextDueDate = dayjs(calculateNextDueDate(currentDueDate, recurrence));
+    if (nextDueDate.isAfter(endDate, 'day')) {
       return false;
     }
   }
