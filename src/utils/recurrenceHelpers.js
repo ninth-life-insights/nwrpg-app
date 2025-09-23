@@ -118,7 +118,7 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     recurrence: originalMission.recurrence,
     // Track relationship to original
     parentMissionId: originalMission.parentMissionId || originalMission.id,
-    occurrenceNumber: (originalMission.occurrenceNumber || 0) + 1
+    occurrenceNumber: (originalMission.occurrenceNumber || 1) + 1
   };
 };
 
