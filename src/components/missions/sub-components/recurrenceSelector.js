@@ -205,52 +205,42 @@ const RecurrenceSelector = ({
         <div className="advanced-options-compact">
           
           <div className="end-options-compact">
-            <label>Ends:</label>
-            <div className="end-options-row">
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="endType"
-                  checked={!recurrence.endDate && !recurrence.maxOccurrences}
-                  onChange={() => onRecurrenceChange({
-                    ...recurrence,
-                    endDate: null,
-                    maxOccurrences: null
-                  })}
-                  disabled={disabled}
-                />
-                Never
-              </label>
-              
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="endType"
-                  checked={!!recurrence.endDate}
-                  onChange={() => onRecurrenceChange({
-                    ...recurrence,
-                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    maxOccurrences: null
-                  })}
-                  disabled={disabled}
-                />
-                On date
-              </label>
-              
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="endType"
-                  checked={!!recurrence.maxOccurrences}
-                  onChange={() => onRecurrenceChange({
-                    ...recurrence,
-                    maxOccurrences: 10,
-                    endDate: null
-                  })}
-                  disabled={disabled}
-                />
-                After
-              </label>
+            <div className="end-main-row">
+              <label>Ends:</label>
+              <select
+                value={
+                  recurrence.endDate ? 'date' :
+                  recurrence.maxOccurrences ? 'count' : 'never'
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === 'never') {
+                    onRecurrenceChange({
+                      ...recurrence,
+                      endDate: null,
+                      maxOccurrences: null
+                    });
+                  } else if (value === 'date') {
+                    onRecurrenceChange({
+                      ...recurrence,
+                      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                      maxOccurrences: null
+                    });
+                  } else if (value === 'count') {
+                    onRecurrenceChange({
+                      ...recurrence,
+                      maxOccurrences: 10,
+                      endDate: null
+                    });
+                  }
+                }}
+                className="end-select-compact"
+                disabled={disabled}
+              >
+                <option value="never">Never</option>
+                <option value="date">On date</option>
+                <option value="count">After # times</option>
+              </select>
             </div>
 
             {/* End Date Input */}
