@@ -13,6 +13,7 @@ import {
   isMissionOverdue,
   isMissionDueTomorrow
  } from '../../utils/dateHelpers';
+import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCard.css';
 
 const MissionCard = ({ 
@@ -26,6 +27,8 @@ const MissionCard = ({
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const missionHasSkill = hasSkill(mission);
   const canComplete = canCompleteMission(mission);
+  const isRecurring = isRecurringMission(mission);
+  const recurrenceText = getRecurrenceDisplayText(mission);
   
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -108,10 +111,19 @@ const MissionCard = ({
               <span className="daily-mission-badge">Daily</span>
             )}
             
+            {/* Recurrence badge */}
+            {isRecurring && (
+              <span className="recurrence-badge" title={`Repeats ${recurrenceText.toLowerCase()}`}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.5 0 4.74 1.02 6.36 2.68l1.39-1.39"/>
+                  <path d="M17 8l4 4-4 4"/>
+                </svg>
+                {recurrenceText}
+              </span>
+            )}
 
             <DifficultyBadge difficulty={mission.difficulty} />
 
-            
             {/* Due date badge */}
             {dueDateInfo && (
               <span className={`due-date-badge ${dueDateInfo.status}`}>
