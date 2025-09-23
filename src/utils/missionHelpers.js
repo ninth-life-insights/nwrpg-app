@@ -102,3 +102,75 @@ export const validateMissionData = (mission) => {
   const { validateMission } = require('../types/Mission');
   return validateMission(mission);
 };
+
+// Daily mission helpers - moved from service for better separation
+export const shouldResetDailyMissions = (lastResetDate) => {
+  if (!lastResetDate) return false;
+  
+  const lastReset = lastResetDate.toDate ? 
+    lastResetDate.toDate() : new Date(lastResetDate);
+  const today = new Date();
+  
+  return lastReset.toDateString() !== today.toDateString();
+};
+
+export const calculateDailyMissionStats = (missions) => {
+  if (!missions || missions.length === 0) {
+    return { completed: 0, total: 0, percentage: 0 };
+  }
+  
+  const completed = missions.filter(m => isMissionCompleted(m)).length;
+  const total = missions.length;
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  return { completed, total, percentage };
+};
+
+export const prepareDailyMissionArchiveData = (missions) => {
+  return missions.map(mission => {
+    const cleaned = {};
+    // Only include defined values to avoid Firestore issues
+    Object.keys(mission).forEach(key => {
+      if (mission[key] !== undefined) {
+        cleaned[key] = mission[key];
+      }
+    });
+    return {
+      id: cleaned.id,
+      title: cleaned.title,
+      difficulty: cleaned.difficulty,
+      xpReward: cleaned.xpReward,
+      spReward: cleaned.spReward,
+      skill: cleaned.skill,
+      completed: isMissionCompleted(mission),
+      completedAt: cleaned.completedAt
+    };
+  });
+};
+
+// Daily mission consistency checking - pure logic
+export const detectDailyMissionInconsistencies = (configMissionIds, flaggedMissions) => {
+  const configIds = new Set(configMissionIds || []);
+  const flaggedIds = new Set(flaggedMissions.map(m => m.id));
+  
+  const issues = [];
+  
+  // Missions in config but not flagged
+  const missingFlags = [...configIds].filter(id => !flaggedIds.has(id));
+  if (missingFlags.length > 0) {
+    issues.push({ type: 'missing_flags', missionIds: missingFlags });
+  }
+  
+  // Missions flagged but not in config
+  const extraFlags = [...flaggedIds].filter(id => !configIds.has(id));
+  if (extraFlags.length > 0) {
+    issues.push({ type: 'extra_flags', missionIds: extraFlags });
+  }
+  
+  return {
+    isConsistent: issues.length === 0,
+    issues,
+    configMissionIds: [...configIds],
+    flaggedMissionIds: [...flaggedIds]
+  };
+};
