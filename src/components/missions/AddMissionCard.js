@@ -151,52 +151,20 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
 
 
   const validateForm = () => {
-  // Create the exact mission data that will be submitted
-  const missionData = createMissionTemplate({
-    title: formData.title.trim(),
-    description: formData.description.trim(),
-    difficulty: formData.difficulty,
-    completionType: formData.completionType,
-    dueType: formData.dueType,
-    
-    // Use the same date handling as submit
-    dueDate: formData.dueDate ? toDateString(formData.dueDate) : '',
-    expiryDate: formData.hasExpiryDate ? toDateString(formData.expiryDate) : null,
-    
-    skill: formData.skill.trim() || null,
-    timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes, 10) : null,
-    targetCount: formData.targetCount ? parseInt(formData.targetCount, 10) : null,
-    recurrence: formData.recurrence,
-    priority: formData.priority,
-    pinned: formData.pinned,
-    isDailyMission: formData.isDailyMission,
-  });
-
-  // Use the helper for validation
+  const missionData = createMissionDataFromForm();
   const validation = validateMissionData(missionData);
   
   if (!validation.isValid) {
     const newErrors = {};
-    
-    // Map validation errors to form fields
     validation.errors.forEach(error => {
       const errorLower = error.toLowerCase();
-      
-      if (errorLower.includes('title')) {
-        newErrors.title = error;
-      } else if (errorLower.includes('timer') || errorLower.includes('duration')) {
-        newErrors.timerDurationMinutes = error;
-      } else if (errorLower.includes('count') || errorLower.includes('target')) {
-        newErrors.targetCount = error;
-      } else if (errorLower.includes('due date') || errorLower.includes('recurring')) {
-        newErrors.dueDate = error;
-      } else if (errorLower.includes('recurrence') || errorLower.includes('weekday')) {
-        newErrors.recurrence = error;
-      } else {
-        newErrors.general = error;
-      }
+      if (errorLower.includes('title')) newErrors.title = error;
+      else if (errorLower.includes('timer') || errorLower.includes('duration')) newErrors.timerDurationMinutes = error;
+      else if (errorLower.includes('count') || errorLower.includes('target')) newErrors.targetCount = error;
+      else if (errorLower.includes('due date') || errorLower.includes('recurring')) newErrors.dueDate = error;
+      else if (errorLower.includes('recurrence') || errorLower.includes('weekday')) newErrors.recurrence = error;
+      else newErrors.general = error;
     });
-    
     setErrors(newErrors);
   }
   
@@ -248,30 +216,8 @@ const handleSubmit = async (e) => {
   setIsSubmitting(true);
 
   try {
-    // Use createMissionTemplate for consistency with your types
-    const missionData = createMissionTemplate({
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      difficulty: formData.difficulty,
-      
-      // FIXED: Consistent date string handling
-      dueDate: formData.dueDate ? toDateString(formData.dueDate) : '',
-      expiryDate: formData.hasExpiryDate ? toDateString(formData.expiryDate) : null,
-      
-      skill: formData.skill.trim() || null,
-      completionType: formData.completionType,
-      
-      // FIXED: Proper null handling for optional fields
-      timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes, 10) : null,
-      targetCount: formData.targetCount ? parseInt(formData.targetCount, 10) : null,
-      
-      dueType: formData.dueType,
-      recurrence: formData.recurrence,
-      category: 'personal',
-      isDailyMission: false,
-      priority: formData.priority,
-      pinned: formData.pinned
-    });
+    // Use the same helper function
+    const missionData = createMissionDataFromForm();
 
     console.log('Mission data being submitted:', missionData);
 
@@ -281,7 +227,6 @@ const handleSubmit = async (e) => {
       throw new Error('Failed to create mission: No ID returned');
     }
     
-    // Call parent callback
     onAddMission({
       ...missionData,
       id: missionId,
@@ -289,7 +234,6 @@ const handleSubmit = async (e) => {
       createdAt: new Date()
     });
 
-    // Reset form using helper function
     resetForm();
     onCancel();
 
@@ -300,8 +244,6 @@ const handleSubmit = async (e) => {
     setIsSubmitting(false);
   }
 };
-
-
 
   // Filter skills based on search
   const filteredSkills = AVAILABLE_SKILLS.filter(skill =>
