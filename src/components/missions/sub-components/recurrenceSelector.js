@@ -1,6 +1,6 @@
 // src/components/missions/sub-components/RecurrenceSelector.js
 import React, { useState } from 'react';
-import './RecurrenceSelector.css';
+import './recurrenceSelector.css';
 
 const RECURRENCE_PATTERNS = {
   NONE: 'none',

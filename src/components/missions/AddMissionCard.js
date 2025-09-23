@@ -5,6 +5,7 @@ import { createMission } from '../../services/missionService';
 import DifficultyBadge from './sub-components/DifficultyBadge';
 import SkillBadge from './sub-components/SkillBadge';
 import CompletionTypeSelector from './sub-components/CompletionTypeSelector';
+import RecurrenceSelector, { RECURRENCE_PATTERNS } from './sub-components/recurrenceSelector';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import { toDateString } from '../../utils/dateHelpers';
 import {
@@ -40,6 +41,16 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     timerDurationMinutes: '',
     // Count fields  
     targetCount: '',
+    // Recurrence fields
+    recurrence: {
+      isRecurring: false,
+      pattern: RECURRENCE_PATTERNS.NONE,
+      interval: 1,
+      weekdays: [],
+      dayOfMonth: null,
+      endDate: null,
+      maxOccurrences: null
+    },
     // Other fields
     priority: 'normal',
     pinned: false,
@@ -95,6 +106,15 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     setSkillSearch('');
   };
 
+  const handleRecurrenceChange = (newRecurrence) => {
+    setFormData(prev => ({
+      ...prev,
+      recurrence: newRecurrence,
+      // Update dueType based on recurrence
+      dueType: newRecurrence.isRecurring ? DUE_TYPES.RECURRING : DUE_TYPES.UNIQUE
+    }));
+  };
+
   const handleRemoveExpiryDate = () => {
     setFormData(prev => ({
       ...prev,
@@ -116,7 +136,8 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
       targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
       priority: formData.priority,
       pinned: formData.pinned,
-      isDailyMission: formData.isDailyMission
+      isDailyMission: formData.isDailyMission,
+      recurrence: formData.recurrence
     });
 
     const validation = validateMission(missionData);
@@ -127,6 +148,8 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
         if (error.includes('title')) newErrors.title = error;
         else if (error.includes('timer')) newErrors.timerDurationMinutes = error;
         else if (error.includes('count')) newErrors.targetCount = error;
+        else if (error.includes('due date') || error.includes('recurring')) newErrors.dueDate = error;
+        else if (error.includes('recurrence') || error.includes('weekday')) newErrors.recurrence = error;
         else newErrors.general = error;
       });
       setErrors(newErrors);
@@ -150,11 +173,15 @@ const handleSubmit = async (e) => {
       title: formData.title.trim(),
       description: formData.description.trim(),
       difficulty: formData.difficulty,
-      // xpReward: getXPReward(formData.difficulty),
       dueDate: formData.dueDate ? toDateString(formData.dueDate) : '',
       skill: formData.skill.trim() || null,
       expiryDate: formData.hasExpiryDate ? new Date(formData.expiryDate) : null,
-      category: 'personal', // You can expand this later
+      completionType: formData.completionType,
+      timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null,
+      targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
+      dueType: formData.dueType,
+      recurrence: formData.recurrence,
+      category: 'personal',
       isDailyMission: false
     };
 
@@ -178,11 +205,27 @@ const handleSubmit = async (e) => {
     setFormData({
       title: '',
       description: '',
-      difficulty: 'easy',
+      difficulty: DIFFICULTY_LEVELS.EASY,
+      completionType: COMPLETION_TYPES.SIMPLE,
+      dueType: DUE_TYPES.UNIQUE,
       dueDate: '',
       skill: '',
       expiryDate: getDefaultExpiryDate(),
-      hasExpiryDate: true
+      hasExpiryDate: true,
+      timerDurationMinutes: '',
+      targetCount: '',
+      recurrence: {
+        isRecurring: false,
+        pattern: RECURRENCE_PATTERNS.NONE,
+        interval: 1,
+        weekdays: [],
+        dayOfMonth: null,
+        endDate: null,
+        maxOccurrences: null
+      },
+      priority: 'normal',
+      pinned: false,
+      isDailyMission: false
     });
 
     onCancel();
@@ -323,13 +366,27 @@ const handleSubmit = async (e) => {
                   name="dueDate"
                   value={formData.dueDate}
                   onChange={handleInputChange}
-                  className="optional-input"
+                  className={`optional-input ${errors.dueDate ? 'error' : ''}`}
                   disabled={isSubmitting}
                 />
                 <button
                   type="button"
                   onClick={() => {
-                    setFormData(prev => ({ ...prev, dueDate: '' }));
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      dueDate: '',
+                      // Reset recurrence when due date is removed
+                      recurrence: {
+                        isRecurring: false,
+                        pattern: RECURRENCE_PATTERNS.NONE,
+                        interval: 1,
+                        weekdays: [],
+                        dayOfMonth: null,
+                        endDate: null,
+                        maxOccurrences: null
+                      },
+                      dueType: DUE_TYPES.UNIQUE
+                    }));
                     setShowDueDateField(false);
                   }}
                   className="remove-field-btn"
@@ -338,6 +395,20 @@ const handleSubmit = async (e) => {
                   ×
                 </button>
               </div>
+              {errors.dueDate && <span className="error-text">{errors.dueDate}</span>}
+            </div>
+          )}
+
+          {/* Recurrence Selector - only show if due date is set */}
+          {formData.dueDate && (
+            <div className="recurrence-section">
+              <RecurrenceSelector
+                recurrence={formData.recurrence}
+                onRecurrenceChange={handleRecurrenceChange}
+                dueDate={formData.dueDate}
+                disabled={isSubmitting}
+                errors={errors}
+              />
             </div>
           )}
 
