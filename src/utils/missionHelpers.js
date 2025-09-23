@@ -103,6 +103,19 @@ export const validateMissionData = (mission) => {
   return validateMission(mission);
 };
 
+// Form validation helpers for AddMissionCard
+export const parseFormNumber = (value, defaultValue = null) => {
+  if (!value || value === '') return defaultValue;
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+};
+
+export const sanitizeFormString = (value) => {
+  if (!value || typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+};
+
 // Daily mission helpers - moved from service for better separation
 export const shouldResetDailyMissions = (lastResetDate) => {
   if (!lastResetDate) return false;
