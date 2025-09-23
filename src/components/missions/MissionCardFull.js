@@ -10,6 +10,7 @@ import {
   isMissionOverdue,
   formatForUser
 } from '../../utils/dateHelpers';
+import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
@@ -55,6 +56,8 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
   const dueDateInfo = getDueDateInfo();
   const expiryDisplay = formatExpiryDate(mission.expiryDate);
   const createdDisplay = formatCreatedDate(mission.createdAt);
+  const isRecurring = isRecurringMission(mission);
+  const recurrenceText = getRecurrenceDisplayText(mission);
   
   // Determine if mission is completed using schema constant
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
@@ -116,6 +119,17 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
               Status: {isCompleted ? 'Completed' : 'Active'}
             </span>
             
+            {/* Recurrence badge */}
+            {isRecurring && (
+              <span className="recurrence-badge-full" title={`Repeats ${recurrenceText.toLowerCase()}`}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.5 0 4.74 1.02 6.36 2.68l1.39-1.39"/>
+                  <path d="M17 8l4 4-4 4"/>
+                </svg>
+                Repeats {recurrenceText}
+              </span>
+            )}
+            
             {dueDateInfo && (
               <span className={`due-date-badge ${dueDateInfo.status}`}>
                 {dueDateInfo.display}
@@ -155,6 +169,20 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
               <div className="detail-item">
                 <h4>Completed</h4>
                 <p>{formatCreatedDate(mission.completedAt)}</p>
+              </div>
+            )}
+
+            {/* Recurrence Details */}
+            {isRecurring && (
+              <div className="detail-item">
+                <h4>Recurrence</h4>
+                <p>{recurrenceText}</p>
+                {mission.recurrence.endDate && (
+                  <p className="recurrence-end">Ends: {formatForUser(mission.recurrence.endDate)}</p>
+                )}
+                {mission.recurrence.maxOccurrences && (
+                  <p className="recurrence-end">Ends after: {mission.recurrence.maxOccurrences} times</p>
+                )}
               </div>
             )}
           </div>

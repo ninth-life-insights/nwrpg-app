@@ -240,6 +240,80 @@
   color: var(--color-error);
 }
 
+/* Add these styles to your existing MissionCard.css and MissionCardFull.css files */
+
+/* Recurrence Badge for MissionCard */
+.recurrence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #dbeafe; /* Light blue background */
+  color: #1d4ed8; /* Blue text */
+  border: 1px solid #93c5fd; /* Blue border */
+}
+
+.recurrence-badge svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.5;
+}
+
+/* Recurrence Badge for MissionCardFull */
+.recurrence-badge-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background-color: #dbeafe; /* Light blue background */
+  color: #1d4ed8; /* Blue text */
+  border: 1px solid #93c5fd; /* Blue border */
+}
+
+.recurrence-badge-full svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+/* Recurrence details in mission details section */
+.recurrence-end {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+  margin-top: 4px;
+}
+
+/* Hover effects */
+.recurrence-badge:hover,
+.recurrence-badge-full:hover {
+  background-color: #bfdbfe;
+  border-color: #60a5fa;
+}
+
+/* Dark mode support (if you have dark mode) */
+@media (prefers-color-scheme: dark) {
+  .recurrence-badge,
+  .recurrence-badge-full {
+    background-color: #1e3a8a;
+    color: #93c5fd;
+    border-color: #3730a3;
+  }
+  
+  .recurrence-badge:hover,
+  .recurrence-badge-full:hover {
+    background-color: #1e40af;
+    border-color: #2563eb;
+  }
+}
+
 /* Mobile optimizations */
 @media (max-width: 480px) {
   .mission-detail-overlay {
