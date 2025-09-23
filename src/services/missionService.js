@@ -357,6 +357,116 @@ export const setDailyMissions = async (userId, selectedMissionIds) => {
   }
 };
 
+// Update existing daily missions configuration (for EditDailyMissions)
+export const updateDailyMissionsConfig = async (userId, selectedMissionIds) => {
+  try {
+    const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
+    const todayString = toDateString(new Date());
+    
+    // Get current config to preserve createdAt
+    const currentConfig = await getDailyMissionsConfig(userId);
+    const currentMissionIds = currentConfig?.selectedMissionIds || [];
+    
+    // Determine which missions to add/remove flags
+    const toAdd = selectedMissionIds.filter(id => !currentMissionIds.includes(id));
+    const toRemove = currentMissionIds.filter(id => !selectedMissionIds.includes(id));
+    
+    // Update the config (preserve createdAt if it exists)
+    await updateDoc(configRef, {
+      selectedMissionIds: selectedMissionIds,
+      lastResetDate: serverTimestamp(),
+      dateSet: todayString,
+      updatedAt: serverTimestamp(),
+      isActive: selectedMissionIds.length > 0
+    });
+    
+    // Add daily mission flags to new missions
+    if (toAdd.length > 0) {
+      const addPromises = toAdd.map(async (missionId) => {
+        const missionRef = doc(db, 'users', userId, 'missions', missionId);
+        return updateDoc(missionRef, {
+          isDailyMission: true,
+          dailyMissionSetAt: serverTimestamp(),
+          dailyMissionDate: todayString 
+        });
+      });
+      await Promise.all(addPromises);
+    }
+    
+    // Remove daily mission flags from removed missions
+    if (toRemove.length > 0) {
+      await clearDailyMissionStatus(userId, toRemove);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating daily missions config:', error);
+    throw error;
+  }
+};
+
+// Add a single mission to daily missions (for EditDailyMissions add)
+export const addMissionToDailyMissions = async (userId, missionId) => {
+  try {
+    const config = await getDailyMissionsConfig(userId);
+    
+    if (!config) {
+      // If no config exists, create it with this mission
+      return await setDailyMissions(userId, [missionId]);
+    }
+    
+    const currentIds = config.selectedMissionIds || [];
+    
+    // Check if mission is already in daily missions
+    if (currentIds.includes(missionId)) {
+      return { success: true, alreadyExists: true };
+    }
+    
+    // Add to existing list
+    const updatedIds = [...currentIds, missionId];
+    return await updateDailyMissionsConfig(userId, updatedIds);
+    
+  } catch (error) {
+    console.error('Error adding mission to daily missions:', error);
+    throw error;
+  }
+};
+
+// Remove a single mission from daily missions (for EditDailyMissions delete)
+export const removeMissionFromDailyMissions = async (userId, missionId) => {
+  try {
+    const config = await getDailyMissionsConfig(userId);
+    
+    if (!config || !config.selectedMissionIds) {
+      return { success: true, notFound: true };
+    }
+    
+    const currentIds = config.selectedMissionIds;
+    const updatedIds = currentIds.filter(id => id !== missionId);
+    
+    // If no missions left, deactivate config
+    if (updatedIds.length === 0) {
+      const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
+      await updateDoc(configRef, {
+        selectedMissionIds: [],
+        isActive: false,
+        updatedAt: serverTimestamp()
+      });
+      
+      // Clear the flag from the mission
+      await clearDailyMissionStatus(userId, [missionId]);
+      
+      return { success: true };
+    }
+    
+    return await updateDailyMissionsConfig(userId, updatedIds);
+    
+  } catch (error) {
+    console.error('Error removing mission from daily missions:', error);
+    throw error;
+  }
+};
+
 // Clear daily mission status from missions
 export const clearDailyMissionStatus = async (userId, missionIds) => {
   try {
