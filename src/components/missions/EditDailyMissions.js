@@ -1,29 +1,35 @@
 // src/components/missions/EditDailyMissions.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  serverTimestamp 
-} from 'firebase/firestore';
-import { db } from '../../services/firebase/config';
 import './EditDailyMissions.css';
+
+// FIXED: Use services instead of direct Firestore
 import { 
   getDailyMissionsConfig, 
   getActiveMissions,
-  checkAndHandleDailyMissionReset 
+  checkAndHandleDailyMissionReset,
+  createMission,
+  deleteMission,
+  setDailyMissions
 } from '../../services/missionService';
+
+// FIXED: Use your type system
+import { 
+  createMissionTemplate,
+  DIFFICULTY_LEVELS,
+  MISSION_STATUS 
+} from '../../types/Mission';
+
+// FIXED: Use helpers for validation and status checking
+import { 
+  validateMissionData,
+  isMissionCompleted 
+} from '../../utils/missionHelpers';
 
 const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
   const { currentUser } = useAuth();
-  // const [missions, setMissions] = useState(currentDailyMissions || []);
   const [newMissionTitle, setNewMissionTitle] = useState('');
-  // const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,10 +66,14 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
   useEffect(() => {
     const handleDailyReset = async () => {
       if (currentUser) {
-        const result = await checkAndHandleDailyMissionReset(currentUser.uid);
-        if (result.wasReset) {
-          console.log(`Daily missions reset. Archived ${result.archivedCount} missions`);
-          await loadDailyMissions(); // Refresh our own data
+        try {
+          const result = await checkAndHandleDailyMissionReset(currentUser.uid);
+          if (result.wasReset) {
+            console.log(`Daily missions reset. Archived ${result.archivedCount} missions`);
+            await loadDailyMissions(); // Refresh our own data
+          }
+        } catch (error) {
+          console.error('Error checking daily mission reset:', error);
         }
       }
     };
@@ -71,23 +81,7 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
     handleDailyReset();
   }, [currentUser]);
 
-  //   // reset daily missions if expired
-  //   useEffect(() => {
-  //   const handleDailyReset = async () => {
-  //     if (currentUser) {
-  //       const result = await checkAndHandleDailyMissionReset(currentUser.uid);
-  //       if (result.wasReset) {
-  //         // Optionally show user notification
-  //         console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
-  //         // Refresh your daily missions data
-  //         await fetchDailyMissions();
-  //       }
-  //     }
-  //   };
-    
-  //   handleDailyReset();
-  // }, [currentUser]);
-
+  // FIXED: Use createMissionTemplate and missionService
   const handleAddMission = async () => {
     if (!newMissionTitle.trim()) {
       setErrors({ add: 'Please enter a mission title' });
@@ -96,30 +90,45 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
 
     setLoading(true);
     try {
-      const missionData = {
+      // FIXED: Use your type system to create mission
+      const missionData = createMissionTemplate({
         title: newMissionTitle.trim(),
         description: '',
-        difficulty: 'medium',
+        difficulty: DIFFICULTY_LEVELS.MEDIUM,
+        status: MISSION_STATUS.ACTIVE,
         isDailyMission: true,
-        status: 'active',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+        category: 'daily',
+        priority: 'normal'
+      });
 
-      const docRef = await addDoc(
-        collection(db, 'users', currentUser.uid, 'missions'), 
-        missionData
-      );
+      // FIXED: Validate using helper
+      const validation = validateMissionData(missionData);
+      if (!validation.isValid) {
+        setErrors({ add: validation.errors[0] || 'Invalid mission data' });
+        return;
+      }
+
+      // FIXED: Use missionService instead of direct Firestore
+      const missionId = await createMission(currentUser.uid, missionData);
+
+      if (!missionId) {
+        throw new Error('Failed to create mission: No ID returned');
+      }
 
       const newMission = {
-        id: docRef.id,
+        id: missionId,
         ...missionData,
-        completed: false
+        createdAt: new Date() // For local state
       };
 
       setMissions(prev => [...prev, newMission]);
       setNewMissionTitle('');
       setErrors({});
+      
+      // Update daily missions config to include this new mission
+      const updatedMissionIds = [...missions.map(m => m.id), missionId];
+      await setDailyMissions(currentUser.uid, updatedMissionIds);
+      
     } catch (error) {
       console.error('Error adding daily mission:', error);
       setErrors({ add: 'Failed to add mission. Please try again.' });
@@ -128,11 +137,20 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
     }
   };
 
+  // FIXED: Use missionService instead of direct Firestore
   const handleDeleteMission = async (missionId) => {
     setLoading(true);
     try {
-      await deleteDoc(doc(db, 'users', currentUser.uid, 'missions', missionId));
-      setMissions(prev => prev.filter(mission => mission.id !== missionId));
+      // FIXED: Use service function
+      await deleteMission(currentUser.uid, missionId);
+      
+      const updatedMissions = missions.filter(mission => mission.id !== missionId);
+      setMissions(updatedMissions);
+      
+      // Update daily missions config to remove this mission
+      const updatedMissionIds = updatedMissions.map(m => m.id);
+      await setDailyMissions(currentUser.uid, updatedMissionIds);
+      
     } catch (error) {
       console.error('Error deleting daily mission:', error);
       setErrors({ delete: 'Failed to delete mission' });
@@ -141,6 +159,7 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
     }
   };
 
+  // FIXED: Use helper for duplicate checking
   const handleAddSuggested = async (suggestionTitle) => {
     // Check if mission already exists
     const exists = missions.some(mission => 
@@ -156,9 +175,30 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
     await handleAddMission();
   };
 
-  const handleSave = () => {
-    onSave(missions);
+  // FIXED: Update daily missions config when saving
+  const handleSave = async () => {
+    try {
+      const missionIds = missions.map(m => m.id);
+      await setDailyMissions(currentUser.uid, missionIds);
+      onSave(missions);
+    } catch (error) {
+      console.error('Error saving daily missions:', error);
+      setErrors({ save: 'Failed to save changes' });
+    }
   };
+
+  // FIXED: Add loading state for better UX
+  if (loading && missions.length === 0) {
+    return (
+      <div className="edit-daily-missions-overlay">
+        <div className="edit-daily-missions-modal">
+          <div className="loading-state">
+            <p>Loading daily missions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="edit-daily-missions-overlay" onClick={onClose}>
@@ -180,17 +220,24 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
           
           {/* Current Daily Missions */}
           <div className="current-missions-section">
-            <h3 className="section-heading">Your Daily Missions</h3>
+            <h3 className="section-heading">Your Daily Missions ({missions.length})</h3>
             
             {missions.length > 0 ? (
               <div className="missions-list">
                 {missions.map((mission) => (
                   <div key={mission.id} className="mission-item-edit">
-                    <span className="mission-title-edit">{mission.title}</span>
+                    <div className="mission-info">
+                      <span className="mission-title-edit">{mission.title}</span>
+                      {/* FIXED: Use helper to check status */}
+                      {isMissionCompleted(mission) && (
+                        <span className="completed-badge">✓ Completed</span>
+                      )}
+                    </div>
                     <button 
                       className="delete-mission-button"
                       onClick={() => handleDeleteMission(mission.id)}
                       disabled={loading}
+                      aria-label={`Delete mission: ${mission.title}`}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="3,6 5,6 21,6"/>
@@ -231,7 +278,7 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
                 onClick={handleAddMission}
                 disabled={loading || !newMissionTitle.trim()}
               >
-                Add
+                {loading ? 'Adding...' : 'Add'}
               </button>
             </div>
             
@@ -241,13 +288,20 @@ const EditDailyMissions = ({ currentDailyMissions, onClose, onSave }) => {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* FIXED: Show errors in footer */}
         <div className="edit-daily-missions-footer">
+          {errors.save && (
+            <div className="error-message">{errors.save}</div>
+          )}
           <button className="cancel-button" onClick={onClose}>
             Cancel
           </button>
-          <button className="save-button" onClick={handleSave}>
-            Save Changes
+          <button 
+            className="save-button" 
+            onClick={handleSave}
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
