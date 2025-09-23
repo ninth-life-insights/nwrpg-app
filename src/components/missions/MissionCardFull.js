@@ -141,12 +141,6 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
                 Skill: {mission.skill}
               </span>
             )}
-
-            {mission.category && (
-              <span className="category-badge">
-                {mission.category}
-              </span>
-            )}
           </div>
 
           {/* Mission Details */}
