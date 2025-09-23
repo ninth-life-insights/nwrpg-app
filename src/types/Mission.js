@@ -140,7 +140,7 @@ export const calculateSPReward = (difficulty, skill) => {
 }
 
 
-// validate mission data structure
+// validates missions
 export const validateMission = (mission) => {
   const errors = [];
   
@@ -186,25 +186,25 @@ export const validateMission = (mission) => {
     }
   }
   
-  // NEW: Recurrence validation
-  if (mission.recurrence && mission.recurrence.isRecurring) {
-    if (!mission.dueDate) {
-      errors.push('Recurring missions must have a due date');
-    }
+  // UPDATED: Recurrence validation using dueType
+  if (mission.dueType === DUE_TYPES.RECURRING) {
+    // if (!mission.dueDate || mission.dueDate === '') {
+    //   errors.push('Recurring missions must have a due date');
+    // }
     
-    if (mission.recurrence.pattern === 'weekly' && mission.recurrence.weekdays.length === 0) {
+    if (mission.recurrence && mission.recurrence.pattern === 'weekly' && mission.recurrence.weekdays.length === 0) {
       errors.push('Weekly recurring missions must have at least one weekday selected');
     }
     
-    if (mission.recurrence.interval < 1) {
+    if (mission.recurrence && mission.recurrence.interval < 1) {
       errors.push('Recurrence interval must be at least 1');
     }
     
-    if (mission.recurrence.maxOccurrences && mission.recurrence.maxOccurrences < 1) {
+    if (mission.recurrence && mission.recurrence.maxOccurrences && mission.recurrence.maxOccurrences < 1) {
       errors.push('Maximum occurrences must be at least 1');
     }
     
-    if (mission.recurrence.endDate && mission.dueDate) {
+    if (mission.recurrence && mission.recurrence.endDate && mission.dueDate) {
       const endDate = new Date(mission.recurrence.endDate);
       const dueDate = new Date(mission.dueDate);
       

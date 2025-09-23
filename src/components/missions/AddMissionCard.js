@@ -43,7 +43,6 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     targetCount: '',
     // Recurrence fields
     recurrence: {
-      isRecurring: false,
       pattern: RECURRENCE_PATTERNS.NONE,
       interval: 1,
       weekdays: [],
@@ -110,8 +109,8 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     setFormData(prev => ({
       ...prev,
       recurrence: newRecurrence,
-      // Update dueType based on recurrence
-      dueType: newRecurrence.isRecurring ? DUE_TYPES.RECURRING : DUE_TYPES.UNIQUE
+      // Update dueType based on recurrence pattern (not isRecurring)
+      dueType: newRecurrence.pattern !== RECURRENCE_PATTERNS.NONE ? DUE_TYPES.RECURRING : DUE_TYPES.UNIQUE
     }));
   };
 
@@ -131,13 +130,14 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
       difficulty: formData.difficulty,
       completionType: formData.completionType,
       dueType: formData.dueType,
+      dueDate: formData.dueDate, // Add this line
+      recurrence: formData.recurrence, // Add this line
       skill: formData.skill.trim() || null,
       timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null,
       targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
       priority: formData.priority,
       pinned: formData.pinned,
       isDailyMission: formData.isDailyMission,
-      recurrence: formData.recurrence
     });
 
     const validation = validateMission(missionData);
@@ -185,6 +185,10 @@ const handleSubmit = async (e) => {
       isDailyMission: false
     };
 
+    console.log('Mission data being submitted:', missionData);
+  console.log('Due date:', missionData.dueDate);
+  console.log('Recurrence:', missionData.recurrence);
+
     const missionId = await createMission(currentUser.uid, missionData);
     
     // Validate that we got a valid mission ID back
@@ -215,7 +219,6 @@ const handleSubmit = async (e) => {
       timerDurationMinutes: '',
       targetCount: '',
       recurrence: {
-        isRecurring: false,
         pattern: RECURRENCE_PATTERNS.NONE,
         interval: 1,
         weekdays: [],
