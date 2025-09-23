@@ -89,7 +89,26 @@ const RecurrenceSelector = ({
   if (recurrence.pattern === RECURRENCE_PATTERNS.NONE) return null;
 
   const { pattern, interval, weekdays } = recurrence;
-  // ... rest of the function stays the same
+  switch (pattern) {
+      case RECURRENCE_PATTERNS.DAILY:
+        return interval === 1 ? 'Daily' : `Every ${interval} days`;
+      
+      case RECURRENCE_PATTERNS.WEEKLY:
+        if (weekdays.length === 0) return 'Weekly';
+        if (weekdays.length === 7) return interval === 1 ? 'Daily' : `Every ${interval} weeks`;
+        
+        const dayNames = weekdays.map(day => WEEKDAYS[day].label).join('');
+        return interval === 1 ? `Weekly (${dayNames})` : `Every ${interval} weeks (${dayNames})`;
+      
+      case RECURRENCE_PATTERNS.MONTHLY:
+        return interval === 1 ? 'Monthly' : `Every ${interval} months`;
+      
+      case RECURRENCE_PATTERNS.YEARLY:
+        return interval === 1 ? 'Yearly' : `Every ${interval} years`;
+      
+      default:
+        return 'Custom';
+    }
 };
 
 const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY && recurrence.pattern !== RECURRENCE_PATTERNS.NONE;
@@ -176,15 +195,9 @@ const showIntervalPicker = recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (r
             </button>
         </div>
         )}
-
-        {showCustomOptions && recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (
-        <div className="advanced-options-compact">
-            // ... rest of advanced options
-        </div>
-        )}
-
+        
       {/* Advanced Options (collapsed by default) */}
-      {showCustomOptions && recurrence.isRecurring && (
+      {showCustomOptions && recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (
         <div className="advanced-options-compact">
           
           <div className="end-options-compact">
