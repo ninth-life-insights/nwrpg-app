@@ -15,6 +15,7 @@ import {
   COMPLETION_TYPES,
   DUE_TYPES,
 } from '../../types/Mission';
+import { validateMissionData } from '../../utils/missionHelpers';
 import './AddMissionCard.css';
 
 const AddMissionCard = ({ onAddMission, onCancel }) => {
@@ -123,40 +124,57 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
   };
 
   const validateForm = () => {
-    // Create a mission object using our schema
-    const missionData = createMissionTemplate({
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      difficulty: formData.difficulty,
-      completionType: formData.completionType,
-      dueType: formData.dueType,
-      dueDate: formData.dueDate, // Add this line
-      recurrence: formData.recurrence, // Add this line
-      skill: formData.skill.trim() || null,
-      timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null,
-      targetCount: formData.targetCount ? parseInt(formData.targetCount) : null,
-      priority: formData.priority,
-      pinned: formData.pinned,
-      isDailyMission: formData.isDailyMission,
-    });
+  // Create the exact mission data that will be submitted
+  const missionData = createMissionTemplate({
+    title: formData.title.trim(),
+    description: formData.description.trim(),
+    difficulty: formData.difficulty,
+    completionType: formData.completionType,
+    dueType: formData.dueType,
+    
+    // Use the same date handling as submit
+    dueDate: formData.dueDate ? toDateString(formData.dueDate) : '',
+    expiryDate: formData.hasExpiryDate ? toDateString(formData.expiryDate) : null,
+    
+    skill: formData.skill.trim() || null,
+    timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes, 10) : null,
+    targetCount: formData.targetCount ? parseInt(formData.targetCount, 10) : null,
+    recurrence: formData.recurrence,
+    priority: formData.priority,
+    pinned: formData.pinned,
+    isDailyMission: formData.isDailyMission,
+  });
 
-    const validation = validateMission(missionData);
+  // Use the helper for validation
+  const validation = validateMissionData(missionData);
+  
+  if (!validation.isValid) {
+    const newErrors = {};
     
-    if (!validation.isValid) {
-      const newErrors = {};
-      validation.errors.forEach(error => {
-        if (error.includes('title')) newErrors.title = error;
-        else if (error.includes('timer')) newErrors.timerDurationMinutes = error;
-        else if (error.includes('count')) newErrors.targetCount = error;
-        else if (error.includes('due date') || error.includes('recurring')) newErrors.dueDate = error;
-        else if (error.includes('recurrence') || error.includes('weekday')) newErrors.recurrence = error;
-        else newErrors.general = error;
-      });
-      setErrors(newErrors);
-    }
+    // Map validation errors to form fields
+    validation.errors.forEach(error => {
+      const errorLower = error.toLowerCase();
+      
+      if (errorLower.includes('title')) {
+        newErrors.title = error;
+      } else if (errorLower.includes('timer') || errorLower.includes('duration')) {
+        newErrors.timerDurationMinutes = error;
+      } else if (errorLower.includes('count') || errorLower.includes('target')) {
+        newErrors.targetCount = error;
+      } else if (errorLower.includes('due date') || errorLower.includes('recurring')) {
+        newErrors.dueDate = error;
+      } else if (errorLower.includes('recurrence') || errorLower.includes('weekday')) {
+        newErrors.recurrence = error;
+      } else {
+        newErrors.general = error;
+      }
+    });
     
-    return validation.isValid;
-  };
+    setErrors(newErrors);
+  }
+  
+  return validation.isValid;
+};
 
   const resetForm = () => {
   setFormData({
