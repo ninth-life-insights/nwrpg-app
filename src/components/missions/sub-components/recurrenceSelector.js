@@ -12,13 +12,13 @@ const RECURRENCE_PATTERNS = {
 };
 
 const WEEKDAYS = [
-  { value: 0, label: 'Sun', full: 'Sunday' },
-  { value: 1, label: 'Mon', full: 'Monday' },
-  { value: 2, label: 'Tue', full: 'Tuesday' },
-  { value: 3, label: 'Wed', full: 'Wednesday' },
-  { value: 4, label: 'Thu', full: 'Thursday' },
-  { value: 5, label: 'Fri', full: 'Friday' },
-  { value: 6, label: 'Sat', full: 'Saturday' }
+  { value: 0, label: 'S', full: 'Sunday' },
+  { value: 1, label: 'M', full: 'Monday' },
+  { value: 2, label: 'T', full: 'Tuesday' },
+  { value: 3, label: 'W', full: 'Wednesday' },
+  { value: 4, label: 'T', full: 'Thursday' },
+  { value: 5, label: 'F', full: 'Friday' },
+  { value: 6, label: 'S', full: 'Saturday' }
 ];
 
 const RecurrenceSelector = ({
@@ -36,16 +36,17 @@ const RecurrenceSelector = ({
   disabled = false,
   errors = {}
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showCustomOptions, setShowCustomOptions] = useState(false);
 
   const handlePatternChange = (pattern) => {
     let newRecurrence = {
       ...recurrence,
       pattern,
-      isRecurring: pattern !== RECURRENCE_PATTERNS.NONE
+      isRecurring: pattern !== RECURRENCE_PATTERNS.NONE,
+      interval: 1 // Reset interval when changing patterns
     };
 
-    // Set defaults based on pattern
+    // Set smart defaults based on pattern and due date
     if (pattern === RECURRENCE_PATTERNS.WEEKLY && dueDate) {
       const dueDateObj = new Date(dueDate);
       newRecurrence.weekdays = [dueDateObj.getDay()];
@@ -53,7 +54,7 @@ const RecurrenceSelector = ({
       const dueDateObj = new Date(dueDate);
       newRecurrence.dayOfMonth = dueDateObj.getDate();
     } else if (pattern === RECURRENCE_PATTERNS.NONE) {
-      // Reset to defaults when turning off recurrence
+      // Reset everything when turning off recurrence
       newRecurrence = {
         isRecurring: false,
         pattern: RECURRENCE_PATTERNS.NONE,
@@ -63,6 +64,7 @@ const RecurrenceSelector = ({
         endDate: null,
         maxOccurrences: null
       };
+      setShowCustomOptions(false);
     }
 
     onRecurrenceChange(newRecurrence);
@@ -86,304 +88,210 @@ const RecurrenceSelector = ({
     });
   };
 
-  const handleDayOfMonthChange = (day) => {
-    onRecurrenceChange({
-      ...recurrence,
-      dayOfMonth: parseInt(day) || null
-    });
-  };
-
-  const getRecurrencePreview = () => {
+  const getRecurrenceLabel = () => {
     if (!recurrence.isRecurring) return null;
 
-    const { pattern, interval, weekdays, dayOfMonth } = recurrence;
+    const { pattern, interval, weekdays } = recurrence;
 
     switch (pattern) {
       case RECURRENCE_PATTERNS.DAILY:
-        return interval === 1 ? 'Every day' : `Every ${interval} days`;
+        return interval === 1 ? 'Daily' : `Every ${interval} days`;
       
       case RECURRENCE_PATTERNS.WEEKLY:
-        if (weekdays.length === 0) return 'Weekly (no days selected)';
-        if (weekdays.length === 7) return interval === 1 ? 'Every day' : `Every ${interval} weeks`;
+        if (weekdays.length === 0) return 'Weekly';
+        if (weekdays.length === 7) return interval === 1 ? 'Daily' : `Every ${interval} weeks`;
         
-        const dayNames = weekdays.map(day => WEEKDAYS[day].label).join(', ');
-        const weekText = interval === 1 ? 'Every' : `Every ${interval}`;
-        return `${weekText} ${dayNames}`;
+        const dayNames = weekdays.map(day => WEEKDAYS[day].label).join('');
+        return interval === 1 ? `Weekly (${dayNames})` : `Every ${interval} weeks (${dayNames})`;
       
       case RECURRENCE_PATTERNS.MONTHLY:
-        const monthText = interval === 1 ? 'Monthly' : `Every ${interval} months`;
-        if (dayOfMonth) {
-          return `${monthText} on the ${dayOfMonth}${getOrdinalSuffix(dayOfMonth)}`;
-        }
-        return `${monthText} on the same day`;
+        return interval === 1 ? 'Monthly' : `Every ${interval} months`;
       
       case RECURRENCE_PATTERNS.YEARLY:
         return interval === 1 ? 'Yearly' : `Every ${interval} years`;
       
       default:
-        return 'Custom recurrence';
+        return 'Custom';
     }
   };
 
-  const getOrdinalSuffix = (num) => {
-    const remainder = num % 10;
-    const teen = Math.floor(num / 10) % 10;
-    if (teen === 1) return 'th';
-    if (remainder === 1) return 'st';
-    if (remainder === 2) return 'nd';
-    if (remainder === 3) return 'rd';
-    return 'th';
-  };
-
-  const isPatternSelected = (pattern) => recurrence.pattern === pattern;
+  const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY && recurrence.isRecurring;
+  const showIntervalPicker = recurrence.isRecurring && (recurrence.interval > 1 || showCustomOptions);
 
   return (
-    <div className="recurrence-selector">
+    <div className="recurrence-selector-compact">
       
-      {/* Basic Pattern Selection */}
-      <div className="pattern-selector">
-        <div className="pattern-buttons">
-          <button
-            type="button"
-            onClick={() => handlePatternChange(RECURRENCE_PATTERNS.NONE)}
-            className={`pattern-btn ${isPatternSelected(RECURRENCE_PATTERNS.NONE) ? 'selected' : ''}`}
-            disabled={disabled}
-          >
-            One-time
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => handlePatternChange(RECURRENCE_PATTERNS.DAILY)}
-            className={`pattern-btn ${isPatternSelected(RECURRENCE_PATTERNS.DAILY) ? 'selected' : ''}`}
-            disabled={disabled}
-          >
-            Daily
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => handlePatternChange(RECURRENCE_PATTERNS.WEEKLY)}
-            className={`pattern-btn ${isPatternSelected(RECURRENCE_PATTERNS.WEEKLY) ? 'selected' : ''}`}
-            disabled={disabled}
-          >
-            Weekly
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => handlePatternChange(RECURRENCE_PATTERNS.MONTHLY)}
-            className={`pattern-btn ${isPatternSelected(RECURRENCE_PATTERNS.MONTHLY) ? 'selected' : ''}`}
-            disabled={disabled}
-          >
-            Monthly
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => handlePatternChange(RECURRENCE_PATTERNS.YEARLY)}
-            className={`pattern-btn ${isPatternSelected(RECURRENCE_PATTERNS.YEARLY) ? 'selected' : ''}`}
-            disabled={disabled}
-          >
-            Yearly
-          </button>
-        </div>
+      {/* Main Dropdown */}
+      <div className="recurrence-main">
+        <label>Repeat</label>
+        <select
+          value={recurrence.pattern}
+          onChange={(e) => handlePatternChange(e.target.value)}
+          className="recurrence-select"
+          disabled={disabled}
+        >
+          <option value={RECURRENCE_PATTERNS.NONE}>Does not repeat</option>
+          <option value={RECURRENCE_PATTERNS.DAILY}>Daily</option>
+          <option value={RECURRENCE_PATTERNS.WEEKLY}>Weekly</option>
+          <option value={RECURRENCE_PATTERNS.MONTHLY}>Monthly</option>
+          <option value={RECURRENCE_PATTERNS.YEARLY}>Yearly</option>
+        </select>
+
+        {/* Show current pattern as compact label */}
+        {recurrence.isRecurring && (
+          <span className="recurrence-label">{getRecurrenceLabel()}</span>
+        )}
       </div>
 
-      {/* Pattern-specific Options */}
+      {/* Weekday Picker (only for weekly) */}
+      {showWeekdayPicker && (
+        <div className="weekday-picker-compact">
+          <span className="picker-label">On:</span>
+          <div className="weekday-buttons-compact">
+            {WEEKDAYS.map((day) => (
+              <button
+                key={day.value}
+                type="button"
+                onClick={() => handleWeekdayToggle(day.value)}
+                className={`weekday-btn-compact ${recurrence.weekdays.includes(day.value) ? 'selected' : ''}`}
+                disabled={disabled}
+                title={day.full}
+              >
+                {day.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Interval Picker */}
+      {showIntervalPicker && (
+        <div className="interval-picker-compact">
+          <span className="picker-label">Every:</span>
+          <input
+            type="number"
+            min="1"
+            max="365"
+            value={recurrence.interval}
+            onChange={(e) => handleIntervalChange(e.target.value)}
+            className="interval-input-compact"
+            disabled={disabled}
+          />
+          <span className="interval-unit-compact">
+            {recurrence.pattern === RECURRENCE_PATTERNS.DAILY ? 'day(s)' :
+             recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY ? 'week(s)' :
+             recurrence.pattern === RECURRENCE_PATTERNS.MONTHLY ? 'month(s)' :
+             recurrence.pattern === RECURRENCE_PATTERNS.YEARLY ? 'year(s)' : ''}
+          </span>
+        </div>
+      )}
+
+      {/* Custom Options Toggle */}
       {recurrence.isRecurring && (
-        <div className="recurrence-options">
+        <div className="custom-options-toggle">
+          <button
+            type="button"
+            onClick={() => setShowCustomOptions(!showCustomOptions)}
+            className="toggle-btn-compact"
+            disabled={disabled}
+          >
+            {showCustomOptions ? 'Less options' : 'More options'}
+          </button>
+        </div>
+      )}
+
+      {/* Advanced Options (collapsed by default) */}
+      {showCustomOptions && recurrence.isRecurring && (
+        <div className="advanced-options-compact">
           
-          {/* Interval Selection for non-weekly patterns */}
-          {recurrence.pattern !== RECURRENCE_PATTERNS.WEEKLY && (
-            <div className="interval-section">
-              <label>Repeat every</label>
-              <div className="interval-input-group">
+          <div className="end-options-compact">
+            <label>Ends:</label>
+            <div className="end-options-row">
+              <label className="radio-option">
+                <input
+                  type="radio"
+                  name="endType"
+                  checked={!recurrence.endDate && !recurrence.maxOccurrences}
+                  onChange={() => onRecurrenceChange({
+                    ...recurrence,
+                    endDate: null,
+                    maxOccurrences: null
+                  })}
+                  disabled={disabled}
+                />
+                Never
+              </label>
+              
+              <label className="radio-option">
+                <input
+                  type="radio"
+                  name="endType"
+                  checked={!!recurrence.endDate}
+                  onChange={() => onRecurrenceChange({
+                    ...recurrence,
+                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    maxOccurrences: null
+                  })}
+                  disabled={disabled}
+                />
+                On date
+              </label>
+              
+              <label className="radio-option">
+                <input
+                  type="radio"
+                  name="endType"
+                  checked={!!recurrence.maxOccurrences}
+                  onChange={() => onRecurrenceChange({
+                    ...recurrence,
+                    maxOccurrences: 10,
+                    endDate: null
+                  })}
+                  disabled={disabled}
+                />
+                After
+              </label>
+            </div>
+
+            {/* End Date Input */}
+            {recurrence.endDate && (
+              <input
+                type="date"
+                value={recurrence.endDate}
+                onChange={(e) => onRecurrenceChange({
+                  ...recurrence,
+                  endDate: e.target.value
+                })}
+                className="end-date-input-compact"
+                disabled={disabled}
+              />
+            )}
+
+            {/* Max Occurrences Input */}
+            {recurrence.maxOccurrences && (
+              <div className="max-occurrences-compact">
                 <input
                   type="number"
                   min="1"
                   max="365"
-                  value={recurrence.interval}
-                  onChange={(e) => handleIntervalChange(e.target.value)}
-                  className="interval-input"
+                  value={recurrence.maxOccurrences}
+                  onChange={(e) => onRecurrenceChange({
+                    ...recurrence,
+                    maxOccurrences: parseInt(e.target.value) || 1
+                  })}
+                  className="max-occurrences-input-compact"
                   disabled={disabled}
                 />
-                <span className="interval-unit">
-                  {recurrence.pattern === RECURRENCE_PATTERNS.DAILY ? 'day(s)' :
-                   recurrence.pattern === RECURRENCE_PATTERNS.MONTHLY ? 'month(s)' :
-                   recurrence.pattern === RECURRENCE_PATTERNS.YEARLY ? 'year(s)' : ''}
-                </span>
+                <span>times</span>
               </div>
-            </div>
-          )}
-
-          {/* Weekly Day Selection */}
-          {recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY && (
-            <div className="weekday-section">
-              <label>Repeat on</label>
-              <div className="weekday-buttons">
-                {WEEKDAYS.map((day) => (
-                  <button
-                    key={day.value}
-                    type="button"
-                    onClick={() => handleWeekdayToggle(day.value)}
-                    className={`weekday-btn ${recurrence.weekdays.includes(day.value) ? 'selected' : ''}`}
-                    disabled={disabled}
-                    title={day.full}
-                  >
-                    {day.label}
-                  </button>
-                ))}
-              </div>
-              {recurrence.interval > 1 && (
-                <div className="interval-section weekly-interval">
-                  <label>Every</label>
-                  <div className="interval-input-group">
-                    <input
-                      type="number"
-                      min="1"
-                      max="52"
-                      value={recurrence.interval}
-                      onChange={(e) => handleIntervalChange(e.target.value)}
-                      className="interval-input"
-                      disabled={disabled}
-                    />
-                    <span className="interval-unit">week(s)</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Monthly Day Selection */}
-          {recurrence.pattern === RECURRENCE_PATTERNS.MONTHLY && (
-            <div className="monthly-section">
-              <label>On day</label>
-              <input
-                type="number"
-                min="1"
-                max="31"
-                value={recurrence.dayOfMonth || ''}
-                onChange={(e) => handleDayOfMonthChange(e.target.value)}
-                className="day-input"
-                placeholder="Same day as due date"
-                disabled={disabled}
-              />
-              <span className="helper-text">Leave blank to use the same day as the due date</span>
-            </div>
-          )}
-
-          {/* Recurrence Preview */}
-          <div className="recurrence-preview">
-            <span className="preview-label">Repeats:</span>
-            <span className="preview-text">{getRecurrencePreview()}</span>
+            )}
           </div>
-
-          {/* Advanced Options Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="advanced-toggle"
-            disabled={disabled}
-          >
-            {showAdvanced ? 'Hide' : 'Show'} advanced options
-          </button>
-
-          {/* Advanced Options */}
-          {showAdvanced && (
-            <div className="advanced-options">
-              
-              <div className="end-condition-section">
-                <label>End recurrence</label>
-                
-                <div className="end-option">
-                  <label>
-                    <input
-                      type="radio"
-                      name="endType"
-                      checked={!recurrence.endDate && !recurrence.maxOccurrences}
-                      onChange={() => onRecurrenceChange({
-                        ...recurrence,
-                        endDate: null,
-                        maxOccurrences: null
-                      })}
-                      disabled={disabled}
-                    />
-                    Never
-                  </label>
-                </div>
-                
-                <div className="end-option">
-                  <label>
-                    <input
-                      type="radio"
-                      name="endType"
-                      checked={!!recurrence.endDate}
-                      onChange={() => onRecurrenceChange({
-                        ...recurrence,
-                        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        maxOccurrences: null
-                      })}
-                      disabled={disabled}
-                    />
-                    On date
-                  </label>
-                  {recurrence.endDate && (
-                    <input
-                      type="date"
-                      value={recurrence.endDate}
-                      onChange={(e) => onRecurrenceChange({
-                        ...recurrence,
-                        endDate: e.target.value
-                      })}
-                      className="end-date-input"
-                      disabled={disabled}
-                    />
-                  )}
-                </div>
-                
-                <div className="end-option">
-                  <label>
-                    <input
-                      type="radio"
-                      name="endType"
-                      checked={!!recurrence.maxOccurrences}
-                      onChange={() => onRecurrenceChange({
-                        ...recurrence,
-                        maxOccurrences: 10,
-                        endDate: null
-                      })}
-                      disabled={disabled}
-                    />
-                    After
-                  </label>
-                  {recurrence.maxOccurrences && (
-                    <div className="max-occurrences-group">
-                      <input
-                        type="number"
-                        min="1"
-                        max="365"
-                        value={recurrence.maxOccurrences}
-                        onChange={(e) => onRecurrenceChange({
-                          ...recurrence,
-                          maxOccurrences: parseInt(e.target.value) || 1
-                        })}
-                        className="max-occurrences-input"
-                        disabled={disabled}
-                      />
-                      <span>occurrences</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
       {/* Error Display */}
       {errors.recurrence && (
-        <div className="error-text">{errors.recurrence}</div>
+        <div className="error-text-compact">{errors.recurrence}</div>
       )}
     </div>
   );
