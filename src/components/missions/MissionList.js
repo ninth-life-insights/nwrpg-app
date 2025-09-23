@@ -10,9 +10,11 @@ import {
   getExpiredMissions,
   completeMission, 
   uncompleteMission,
-  checkAndHandleDailyMissionReset
+  checkAndHandleDailyMissionReset,
+  completeMissionWithRecurrence // Add the new function
 } from '../../services/missionService';
 import { addXP, subtractXP } from '../../services/userService';
+import { isRecurringMission } from '../../utils/recurrenceHelpers';
 
 const MissionList = ({ 
   missionType = 'active', 
@@ -26,7 +28,8 @@ const MissionList = ({
   maxSelections = null,
   recentlyCompletedMissions = [],
   onMissionCompletion = null,
-  onMissionUncompletion = null
+  onMissionUncompletion = null,
+  onRecurringMissionCreated = null // New prop for recurring mission notifications
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
@@ -177,14 +180,14 @@ const MissionList = ({
     handleDailyReset();
   }, [currentUser]);
   
-  // Function to toggle completion status with XP handling
+  // Enhanced function to toggle completion status with XP and recurring mission handling
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
 
     if (selectionMode) return; // Don't allow completion toggle in selection mode
 
     try {
       if (isCurrentlyCompleted) {
-        // Uncomplete the mission
+        // Uncomplete the mission (regular logic)
         await uncompleteMission(currentUser.uid, missionId);
         if (xpReward) {
           await subtractXP(currentUser.uid, xpReward);
@@ -195,8 +198,32 @@ const MissionList = ({
           onMissionUncompletion(missionId);
         }
       } else {
-        // Complete the mission
-        await completeMission(currentUser.uid, missionId);
+        // Complete the mission - check if it's recurring
+        const completedMission = missions.find(mission => mission.id === missionId);
+        
+        if (completedMission && isRecurringMission(completedMission)) {
+          // Use enhanced completion for recurring missions
+          const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
+          
+          if (result.nextMissionCreated) {
+            console.log(`Next recurring mission created: ${result.nextMissionId}, due: ${result.nextDueDate}`);
+            
+            // Notify parent about the new recurring mission
+            if (onRecurringMissionCreated) {
+              onRecurringMissionCreated({
+                originalMissionId: missionId,
+                nextMissionId: result.nextMissionId,
+                nextDueDate: result.nextDueDate,
+                missionTitle: completedMission.title
+              });
+            }
+          }
+        } else {
+          // Use regular completion for non-recurring missions
+          await completeMission(currentUser.uid, missionId);
+        }
+        
+        // Handle XP reward
         if (xpReward) {
           const result = await addXP(currentUser.uid, xpReward);
           
@@ -207,8 +234,7 @@ const MissionList = ({
           }
         }
         
-        // Find the completed mission and notify parent
-        const completedMission = missions.find(mission => mission.id === missionId);
+        // Notify parent about completion
         if (completedMission && onMissionCompletion) {
           // Update the mission status for the parent
           const updatedMission = { ...completedMission, status: 'completed' };

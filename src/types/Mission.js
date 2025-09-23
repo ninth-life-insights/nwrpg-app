@@ -144,7 +144,7 @@ export const calculateSPReward = (difficulty, skill) => {
 export const validateMission = (mission) => {
   const errors = [];
   
-  // Required fields
+  // Existing validation...
   if (!mission.title || mission.title.trim().length === 0) {
     errors.push('Mission title is required');
   }
@@ -167,8 +167,8 @@ export const validateMission = (mission) => {
   }
 
   if (!Object.values(DUE_TYPES).includes(mission.dueType)) {
-  errors.push('Invalid due type');
-}
+    errors.push('Invalid due type');
+  }
   
   // Completion type specific validation
   if (mission.completionType === COMPLETION_TYPES.TIMER) {
@@ -183,6 +183,34 @@ export const validateMission = (mission) => {
     }
     if (mission.currentCount < 0) {
       errors.push('Current count cannot be negative');
+    }
+  }
+  
+  // NEW: Recurrence validation
+  if (mission.recurrence && mission.recurrence.isRecurring) {
+    if (!mission.dueDate) {
+      errors.push('Recurring missions must have a due date');
+    }
+    
+    if (mission.recurrence.pattern === 'weekly' && mission.recurrence.weekdays.length === 0) {
+      errors.push('Weekly recurring missions must have at least one weekday selected');
+    }
+    
+    if (mission.recurrence.interval < 1) {
+      errors.push('Recurrence interval must be at least 1');
+    }
+    
+    if (mission.recurrence.maxOccurrences && mission.recurrence.maxOccurrences < 1) {
+      errors.push('Maximum occurrences must be at least 1');
+    }
+    
+    if (mission.recurrence.endDate && mission.dueDate) {
+      const endDate = new Date(mission.recurrence.endDate);
+      const dueDate = new Date(mission.dueDate);
+      
+      if (endDate <= dueDate) {
+        errors.push('Recurrence end date must be after the due date');
+      }
     }
   }
   
@@ -250,3 +278,4 @@ export const canCompleteMission = (mission) => {
       return true;
   }
 };
+

@@ -21,8 +21,9 @@ const MissionBank = () => {
     includeExpired: false
   });
 
-  // New state to track recently completed missions
+  // State to track recently completed missions
   const [recentlyCompletedMissions, setRecentlyCompletedMissions] = useState([]);
+
 
   const navigate = useNavigate('/home');
 
@@ -51,7 +52,7 @@ const MissionBank = () => {
     loadUserProfile();
   };
 
-  // New function to handle mission completion updates
+  // Handle mission completion updates
   const handleMissionCompletion = (completedMission) => {
     // Add to recently completed missions if not already there
     setRecentlyCompletedMissions(prev => {
@@ -65,7 +66,7 @@ const MissionBank = () => {
     });
   };
 
-  // New function to handle mission un-completion
+  // Handle mission un-completion
   const handleMissionUncompletion = (uncompletedMissionId) => {
     // Remove from recently completed missions
     setRecentlyCompletedMissions(prev => 
