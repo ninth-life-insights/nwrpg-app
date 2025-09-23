@@ -123,6 +123,33 @@ const AddMissionCard = ({ onAddMission, onCancel }) => {
     }));
   };
 
+  const createMissionDataFromForm = () => {
+  return createMissionTemplate({
+    title: formData.title.trim(),
+    description: formData.description.trim(),
+    difficulty: formData.difficulty,
+    completionType: formData.completionType,
+    dueType: formData.dueType,
+    
+    // Consistent date handling
+    dueDate: formData.dueDate ? toDateString(formData.dueDate) : '',
+    expiryDate: formData.hasExpiryDate ? toDateString(formData.expiryDate) : null,
+    
+    skill: formData.skill.trim() || null,
+    
+    // Proper null handling for numbers
+    timerDurationMinutes: formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes, 10) : null,
+    targetCount: formData.targetCount ? parseInt(formData.targetCount, 10) : null,
+    
+    recurrence: formData.recurrence,
+    category: 'personal',
+    isDailyMission: formData.isDailyMission,
+    priority: formData.priority,
+    pinned: formData.pinned
+  });
+};
+
+
   const validateForm = () => {
   // Create the exact mission data that will be submitted
   const missionData = createMissionTemplate({
