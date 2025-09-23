@@ -205,7 +205,7 @@ export const completeRecurringMission = async (userId, missionId) => {
     if (isRecurringMission(mission)) {
       const currentOccurrence = mission.occurrenceNumber || 1;
       
-      if (shouldCreateNextOccurrence(mission.recurrence, currentOccurrence)) {
+      if (shouldCreateNextOccurrence(mission.recurrence, currentOccurrence, mission.dueDate)) {
         const nextDueDate = calculateNextDueDate(mission.dueDate, mission.recurrence);
         
         if (nextDueDate) {
