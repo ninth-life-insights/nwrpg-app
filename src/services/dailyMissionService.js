@@ -11,7 +11,7 @@ import {
   orderBy, 
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from './firebase/config';
 import { toDateString } from '../utils/dateHelpers';
 import { getActiveMissions, getCompletedMissions, completeMission } from './missionService';
 

@@ -1,32 +1,39 @@
-// src/pages/EditDailyMissionsPage.js
+// src/pages/EditDailyMissionsPage.js - UPDATED FOR SIMPLIFIED SYSTEM
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-// FIXED: Use refactored components and correct imports
+// Component imports
 import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
 import DifficultyBadge from '../components/missions/sub-components/DifficultyBadge';
 
-// FIXED: Use proper service functions
+// Service imports - UPDATED for simplified system
 import { 
-  getActiveMissions, 
-  getDailyMissionsConfig,
-  updateDailyMissionsConfig,
+  getActiveMissions,
   createMission
 } from '../services/missionService';
 
-// FIXED: Use standardized date helpers
+// UPDATED: Import from separate daily mission service
+import { 
+  getDailyMissionsConfig,
+  updateDailyMissionsConfig,
+  saveDailyMissionSelection
+} from '../services/dailyMissionService';
+
+// Date helpers
 import {
   formatDueDateForUser,
-  getDueDateStatus
+  getDueDateStatus,
+  toDateString
 } from '../utils/dateHelpers';
 
-// FIXED: Use mission helpers for status and creation
+// Mission helpers
 import { 
   isMissionCompleted 
 } from '../utils/missionHelpers';
 
-// FIXED: Use type system for mission creation
+// Types
 import {
   createMissionTemplate,
   DIFFICULTY_LEVELS,
@@ -34,7 +41,6 @@ import {
 } from '../types/Mission';
 
 import './EditDailyMissionsPage.css';
-import { useNavigate } from 'react-router-dom';
 
 const EditDailyMissionsPage = () => {
   const { currentUser } = useAuth();
@@ -47,9 +53,9 @@ const EditDailyMissionsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [currentDailyConfig, setCurrentDailyConfig] = useState(null);
+  const [currentConfig, setCurrentConfig] = useState(null);
 
-  // Load existing daily missions configuration on component mount
+  // Load existing daily missions configuration
   useEffect(() => {
     loadExistingDailyMissions();
   }, [currentUser]);
@@ -59,32 +65,39 @@ const EditDailyMissionsPage = () => {
     
     try {
       setLoading(true);
+      setError('');
       
-      // Load current daily mission configuration
+      // Get current config using simplified structure
       const config = await getDailyMissionsConfig(currentUser.uid);
-      console.log('Loaded daily config:', config); // DEBUG
-      setCurrentDailyConfig(config);
+      const today = toDateString(new Date());
       
-      if (config && config.selectedMissionIds && config.isActive) {
-        console.log('Config is active with missions:', config.selectedMissionIds); // DEBUG
-        // Load the actual mission data for each selected mission
-        const allMissions = await getActiveMissions(currentUser.uid);
-        console.log('All active missions:', allMissions.length); // DEBUG
+      console.log('Loaded config:', config); // DEBUG
+      setCurrentConfig(config);
+      
+      // UPDATED: Check if config is for today using new structure
+      if (config && config.setForDate === today && config.missionIds?.length > 0) {
+        console.log('Config is active for today with missions:', config.missionIds); // DEBUG
         
-        // FIXED: Better handling of mission loading with validation
-        const selectedMissions = config.selectedMissionIds
+        // Load the actual mission data
+        const allMissions = await getActiveMissions(currentUser.uid);
+        console.log('All missions (active + completed):', allMissions.length); // DEBUG
+console.log('First few mission IDs:', allMissions.slice(0, 5).map(m => m.id)); // DEBUG
+        
+        // UPDATED: Find missions using new missionIds field
+        const selectedMissions = config.missionIds
           .map(missionId => {
-            const mission = allMissions.find(mission => mission.id === missionId);
+            const mission = allMissions.find(m => m.id === missionId);
             if (!mission) {
-              console.warn('Mission not found for ID:', missionId); // DEBUG
+              console.warn('Mission not found for ID:', missionId);
             }
             return mission;
           })
-          .filter(mission => mission != null); // Remove any null/undefined missions
+          .filter(mission => mission != null); // Remove null missions
         
         console.log('Found selected missions:', selectedMissions.length); // DEBUG
+console.log('Selected mission details:', selectedMissions.map(m => ({ id: m?.id, title: m?.title }))); // DEBUG
         
-        // Fill the slots with the selected missions
+        // Fill slots with selected missions
         const newDailyMissions = [null, null, null];
         selectedMissions.forEach((mission, index) => {
           if (index < 3) {
@@ -92,13 +105,9 @@ const EditDailyMissionsPage = () => {
           }
         });
         setDailyMissions(newDailyMissions);
+        
       } else {
-        console.log('Config not active or missing missions:', { 
-          hasConfig: !!config, 
-          isActive: config?.isActive, 
-          hasMissionIds: !!config?.selectedMissionIds?.length 
-        }); // DEBUG
-        // Reset slots if no active config
+        console.log('No active daily missions for today'); // DEBUG
         setDailyMissions([null, null, null]);
       }
       
@@ -110,20 +119,21 @@ const EditDailyMissionsPage = () => {
     }
   };
 
-  // FIXED: Handle mission creation using proper types and helpers
+  // Handle creating new mission
   const handleAddNewMission = async (missionData) => {
     try {
       setSaving(true);
+      setError('');
       
-      // Use createMissionTemplate to ensure proper structure
+      // Create mission with proper structure
       const properMissionData = createMissionTemplate({
         ...missionData,
         status: MISSION_STATUS.ACTIVE,
-        category: 'daily',
-        isDailyMission: false // Will be set when we save daily missions
+        category: 'daily'
+        // REMOVED: isDailyMission flag - not needed in simplified system
       });
 
-      // Create the mission using service
+      // Create the mission
       const missionId = await createMission(currentUser.uid, properMissionData);
       
       if (!missionId) {
@@ -147,7 +157,7 @@ const EditDailyMissionsPage = () => {
     }
   };
 
-  // Handle adding a mission to a specific slot
+  // Handle selecting a mission for a slot
   const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
     const newDailyMissions = [...dailyMissions];
     newDailyMissions[slotIndex] = mission;
@@ -163,13 +173,13 @@ const EditDailyMissionsPage = () => {
     setDailyMissions(newDailyMissions);
   };
 
-  // Handle clicking on an empty slot
+  // Handle clicking empty slot
   const handleEmptySlotClick = (slotIndex) => {
     setCurrentSlotIndex(slotIndex);
     setShowAddMission(true);
   };
 
-  // Handle adding new mission - finds first empty slot
+  // Handle add new mission button
   const handleAddNewMissionClick = () => {
     const emptySlotIndex = dailyMissions.findIndex(mission => mission === null);
     if (emptySlotIndex !== -1) {
@@ -178,7 +188,7 @@ const EditDailyMissionsPage = () => {
     }
   };
 
-  // Handle choosing from mission bank - finds first empty slot
+  // Handle choose from bank button
   const handleChooseFromBank = () => {
     const emptySlotIndex = dailyMissions.findIndex(mission => mission === null);
     if (emptySlotIndex !== -1) {
@@ -187,7 +197,7 @@ const EditDailyMissionsPage = () => {
     }
   };
 
-  // FIXED: Use proper service function for updating daily missions
+  // UPDATED: Use simplified daily mission setting
   const handleSetDailyMissions = async () => {
     if (!currentUser) {
       setError('You must be logged in to set daily missions');
@@ -207,14 +217,18 @@ const EditDailyMissionsPage = () => {
       
       console.log('Setting daily missions:', validMissions);
       
-      // FIXED: Use the proper service function
       const selectedMissionIds = validMissions.map(mission => mission.id);
+      
+      // UPDATED: Use simplified service function
       await updateDailyMissionsConfig(currentUser.uid, selectedMissionIds);
       
-      // FIXED: Reload the actual config from database instead of assuming
+      // Save selection to history for tracking
+      await saveDailyMissionSelection(currentUser.uid, selectedMissionIds);
+      
+      // Update local state
       const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
       console.log('Updated config after save:', updatedConfig); // DEBUG
-      setCurrentDailyConfig(updatedConfig);
+      setCurrentConfig(updatedConfig);
       
       alert('Daily missions set successfully! Your 3 daily missions are now active.');
       navigate('/home');
@@ -227,9 +241,20 @@ const EditDailyMissionsPage = () => {
     }
   };
 
+  // Helper to get due date info
+  const getDueDateInfo = (mission) => {
+    if (!mission.dueDate) return null;
+    
+    const status = getDueDateStatus(mission);
+    const display = formatDueDateForUser(mission);
+    
+    return { status, display };
+  };
+
   // Check if all slots are filled
   const allSlotsFilled = dailyMissions.every(mission => mission !== null);
 
+  // Show loading state
   if (loading) {
     return (
       <div className="daily-missions-container">
@@ -240,15 +265,11 @@ const EditDailyMissionsPage = () => {
     );
   }
 
-  // FIXED: Use standardized date helper
-  const getDueDateInfo = (mission) => {
-    if (!mission.dueDate) return null;
-    
-    const status = getDueDateStatus(mission);
-    const display = formatDueDateForUser(mission);
-    
-    return { status, display };
-  };
+  // UPDATED: Simplified current status display
+  const today = toDateString(new Date());
+  const isActiveForToday = currentConfig && 
+                          currentConfig.setForDate === today && 
+                          currentConfig.missionIds?.length > 0;
 
   return (
     <div className="daily-missions-container">
@@ -258,29 +279,18 @@ const EditDailyMissionsPage = () => {
           What are your three most important priorities for the day?
         </p>
         
-        {/* Show current status if daily missions are already set */}
-        {currentDailyConfig && currentDailyConfig.isActive ? (
-          <div className="current-status">
+        {/* UPDATED: Simplified status display */}
+        <div className="current-status">
+          {isActiveForToday ? (
             <p className="status-text">
-              ✅ Daily missions are currently active. You can update them below.
+              ✅ Daily missions are currently active for today. You can update them below.
             </p>
-            <p style={{ fontSize: '12px', color: '#666' }}>
-              DEBUG: Config has {currentDailyConfig.selectedMissionIds?.length || 0} missions, 
-              active: {String(currentDailyConfig.isActive)}
-            </p>
-          </div>
-        ) : (
-          <div className="current-status">
+          ) : (
             <p className="status-text">
-              No daily missions are currently active.
+              No daily missions are currently set for today.
             </p>
-            <p style={{ fontSize: '12px', color: '#666' }}>
-              DEBUG: Config - {currentDailyConfig ? 
-                `exists but inactive (${currentDailyConfig.isActive})` : 
-                'does not exist'}
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Error Display */}
@@ -295,7 +305,7 @@ const EditDailyMissionsPage = () => {
         {dailyMissions.map((mission, index) => (
           <div key={index} className="mission-slot">
             {mission ? (
-              // Filled slot with mission
+              // Filled slot
               <div className="mission-slot-filled">
                 <div className="mission-info">
                   <h3 className="mission-title">{mission.title}</h3>
@@ -303,7 +313,6 @@ const EditDailyMissionsPage = () => {
                   <div className="mission-badges">
                     <DifficultyBadge difficulty={mission.difficulty} />
                     
-                    {/* FIXED: Use helper for date status */}
                     {mission.dueDate && getDueDateInfo(mission) && (
                       <span className={`due-date-badge ${getDueDateInfo(mission).status}`}>
                         {getDueDateInfo(mission).display}
@@ -314,7 +323,6 @@ const EditDailyMissionsPage = () => {
                       <span className="skill-badge">{mission.skill}</span>
                     )}
                     
-                    {/* FIXED: Use helper for completion status */}
                     {isMissionCompleted(mission) && (
                       <span className="completed-badge">✓ Completed</span>
                     )}
@@ -330,7 +338,7 @@ const EditDailyMissionsPage = () => {
                 </button>
               </div>
             ) : (
-              // Empty slot - clickable
+              // Empty slot
               <div 
                 className="mission-slot-empty clickable"
                 onClick={() => handleEmptySlotClick(index)}
@@ -351,7 +359,7 @@ const EditDailyMissionsPage = () => {
         ))}
       </div>
 
-       {/* Action Buttons */}
+      {/* Action Buttons */}
       <div className="action-buttons">
         <button 
           className="action-btn secondary"
