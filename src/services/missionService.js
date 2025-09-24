@@ -363,22 +363,32 @@ export const updateDailyMissionsConfig = async (userId, selectedMissionIds) => {
     const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
     const todayString = toDateString(new Date());
     
-    // Get current config to preserve createdAt
+    // Get current config to preserve createdAt AND dateSet
     const currentConfig = await getDailyMissionsConfig(userId);
     const currentMissionIds = currentConfig?.selectedMissionIds || [];
+    
+    // Determine if this is a new day (should update dateSet) or same day (preserve dateSet)
+    const shouldUpdateDateSet = !currentConfig?.dateSet || 
+                               dayjs(currentConfig.dateSet).isBefore(dayjs(todayString), 'day');
     
     // Determine which missions to add/remove flags
     const toAdd = selectedMissionIds.filter(id => !currentMissionIds.includes(id));
     const toRemove = currentMissionIds.filter(id => !selectedMissionIds.includes(id));
     
-    // Update the config (preserve createdAt if it exists)
-    await updateDoc(configRef, {
+    // Update the config
+    const updateData = {
       selectedMissionIds: selectedMissionIds,
       lastResetDate: serverTimestamp(),
-      dateSet: todayString,
       updatedAt: serverTimestamp(),
       isActive: selectedMissionIds.length > 0
-    });
+    };
+    
+    // Only update dateSet if it's a new day or doesn't exist
+    if (shouldUpdateDateSet) {
+      updateData.dateSet = todayString;
+    }
+    
+    await updateDoc(configRef, updateData);
     
     // Add daily mission flags to new missions
     if (toAdd.length > 0) {
@@ -387,7 +397,7 @@ export const updateDailyMissionsConfig = async (userId, selectedMissionIds) => {
         return updateDoc(missionRef, {
           isDailyMission: true,
           dailyMissionSetAt: serverTimestamp(),
-          dailyMissionDate: todayString 
+          dailyMissionDate: shouldUpdateDateSet ? todayString : (currentConfig?.dateSet || todayString)
         });
       });
       await Promise.all(addPromises);
@@ -470,13 +480,26 @@ export const removeMissionFromDailyMissions = async (userId, missionId) => {
 // Clear daily mission status from missions
 export const clearDailyMissionStatus = async (userId, missionIds) => {
   try {
-    const updatePromises = missionIds.map(async (missionId) => {
-      const missionRef = doc(db, 'users', userId, 'missions', missionId);
-      return updateDoc(missionRef, {
-        isDailyMission: false,
-        dailyMissionSetAt: null,
-        dailyMissionDate: null // Clear this too for consistency
-      });
+    // FIXED: Filter out null/invalid IDs and only update existing missions
+    const validMissionIds = missionIds.filter(id => id != null && id !== '');
+    
+    if (validMissionIds.length === 0) {
+      return { success: true };
+    }
+
+    const updatePromises = validMissionIds.map(async (missionId) => {
+      try {
+        const missionRef = doc(db, 'users', userId, 'missions', missionId);
+        return updateDoc(missionRef, {
+          isDailyMission: false,
+          dailyMissionSetAt: null,
+          dailyMissionDate: null
+        });
+      } catch (error) {
+        // If mission doesn't exist, log but don't fail the whole operation
+        console.warn(`Mission ${missionId} not found, skipping flag clear`);
+        return null;
+      }
     });
 
     await Promise.all(updatePromises);
@@ -556,19 +579,26 @@ export const archiveExpiredDailyMissions = async (userId) => {
     }
     
     // Get current daily missions with their completion status
-    const activeMissions = await getActiveMissions(userId);
-    const dailyMissionsData = activeMissions
-      .filter(mission => config.selectedMissionIds.includes(mission.id))
-      .map(mission => ({
-        id: mission.id,
-        title: mission.title,
-        difficulty: mission.difficulty,
-        xpReward: mission.xpReward,
-        spReward: mission.spReward,
-        skill: mission.skill,
-        completed: mission.status === 'completed',
-        completedAt: mission.completedAt
-      }));
+    // FIXED: Get both active AND completed missions
+      const [activeMissions, completedMissions] = await Promise.all([
+        getActiveMissions(userId),
+        getCompletedMissions(userId)
+      ]);
+
+      const allMissions = [...activeMissions, ...completedMissions];
+
+      const dailyMissionsData = allMissions
+        .filter(mission => config.selectedMissionIds.includes(mission.id))
+        .map(mission => ({
+          id: mission.id,
+          title: mission.title,
+          difficulty: mission.difficulty,
+          xpReward: mission.xpReward,
+          spReward: mission.spReward,
+          skill: mission.skill,
+          completed: mission.status === 'completed',
+          completedAt: mission.completedAt
+        }));
     
     // Archive the daily missions for the date they were due
     if (dailyMissionsData.length > 0) {
@@ -794,17 +824,31 @@ const getEndOfDay = () => {
 export const checkDailyMissionReset = async (userId) => {
   try {
     const config = await getDailyMissionsConfig(userId);
+
+    console.log('Date comparison details:', {
+  configDateSet: config.dateSet,
+  todayString: toDateString(new Date()),
+  isBeforeToday: dayjs(config.dateSet).isBefore(dayjs(toDateString(new Date())), 'day'),
+  configIsActive: config.isActive
+});
     
-    if (!config || !config.lastResetDate) {
+    if (!config || !config.dateSet) {
       return { needsReset: false };
     }
     
-    const lastReset = config.lastResetDate.toDate ? 
-      config.lastResetDate.toDate() : new Date(config.lastResetDate);
-    const today = new Date();
+    // Use dateSet (when missions were set for) instead of lastResetDate
+    const missionSetForDate = config.dateSet; // This should be '2025-09-22' if they were set yesterday
+    const todayString = toDateString(new Date()); // This is '2025-09-23'
     
-    // Check if last reset was before today
-    const isNewDay = lastReset.toDateString() !== today.toDateString();
+    // Check if the missions were set for a previous day
+    const isNewDay = dayjs(missionSetForDate).isBefore(dayjs(todayString), 'day');
+    
+    console.log('Date comparison:', {
+      missionSetForDate,
+      todayString,
+      isNewDay,
+      isActive: config.isActive
+    });
     
     return { 
       needsReset: isNewDay && config.isActive,

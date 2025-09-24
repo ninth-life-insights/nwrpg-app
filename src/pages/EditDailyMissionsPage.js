@@ -62,16 +62,27 @@ const EditDailyMissionsPage = () => {
       
       // Load current daily mission configuration
       const config = await getDailyMissionsConfig(currentUser.uid);
+      console.log('Loaded daily config:', config); // DEBUG
       setCurrentDailyConfig(config);
       
       if (config && config.selectedMissionIds && config.isActive) {
+        console.log('Config is active with missions:', config.selectedMissionIds); // DEBUG
         // Load the actual mission data for each selected mission
         const allMissions = await getActiveMissions(currentUser.uid);
+        console.log('All active missions:', allMissions.length); // DEBUG
         
         // FIXED: Better handling of mission loading with validation
         const selectedMissions = config.selectedMissionIds
-          .map(missionId => allMissions.find(mission => mission.id === missionId))
+          .map(missionId => {
+            const mission = allMissions.find(mission => mission.id === missionId);
+            if (!mission) {
+              console.warn('Mission not found for ID:', missionId); // DEBUG
+            }
+            return mission;
+          })
           .filter(mission => mission != null); // Remove any null/undefined missions
+        
+        console.log('Found selected missions:', selectedMissions.length); // DEBUG
         
         // Fill the slots with the selected missions
         const newDailyMissions = [null, null, null];
@@ -81,6 +92,14 @@ const EditDailyMissionsPage = () => {
           }
         });
         setDailyMissions(newDailyMissions);
+      } else {
+        console.log('Config not active or missing missions:', { 
+          hasConfig: !!config, 
+          isActive: config?.isActive, 
+          hasMissionIds: !!config?.selectedMissionIds?.length 
+        }); // DEBUG
+        // Reset slots if no active config
+        setDailyMissions([null, null, null]);
       }
       
     } catch (err) {
@@ -192,12 +211,10 @@ const EditDailyMissionsPage = () => {
       const selectedMissionIds = validMissions.map(mission => mission.id);
       await updateDailyMissionsConfig(currentUser.uid, selectedMissionIds);
       
-      // Update the current config state
-      setCurrentDailyConfig({
-        selectedMissionIds,
-        isActive: true,
-        lastResetDate: new Date()
-      });
+      // FIXED: Reload the actual config from database instead of assuming
+      const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
+      console.log('Updated config after save:', updatedConfig); // DEBUG
+      setCurrentDailyConfig(updatedConfig);
       
       alert('Daily missions set successfully! Your 3 daily missions are now active.');
       navigate('/home');
@@ -242,10 +259,25 @@ const EditDailyMissionsPage = () => {
         </p>
         
         {/* Show current status if daily missions are already set */}
-        {currentDailyConfig && currentDailyConfig.isActive && (
+        {currentDailyConfig && currentDailyConfig.isActive ? (
           <div className="current-status">
             <p className="status-text">
               ✅ Daily missions are currently active. You can update them below.
+            </p>
+            <p style={{ fontSize: '12px', color: '#666' }}>
+              DEBUG: Config has {currentDailyConfig.selectedMissionIds?.length || 0} missions, 
+              active: {String(currentDailyConfig.isActive)}
+            </p>
+          </div>
+        ) : (
+          <div className="current-status">
+            <p className="status-text">
+              No daily missions are currently active.
+            </p>
+            <p style={{ fontSize: '12px', color: '#666' }}>
+              DEBUG: Config - {currentDailyConfig ? 
+                `exists but inactive (${currentDailyConfig.isActive})` : 
+                'does not exist'}
             </p>
           </div>
         )}
