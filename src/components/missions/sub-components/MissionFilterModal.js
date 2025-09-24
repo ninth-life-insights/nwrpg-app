@@ -15,6 +15,7 @@ const MissionFilterModal = ({
     skillFilter: '',
     includeCompleted: false,
     includeExpired: false,
+    completedDateRange: 'last7days', // New field for completion date range
     ...currentFilters
   });
 
@@ -26,6 +27,7 @@ const MissionFilterModal = ({
       skillFilter: '',
       includeCompleted: false,
       includeExpired: false,
+      completedDateRange: 'last7days',
       ...currentFilters
     });
   }, [currentFilters]);
@@ -48,7 +50,8 @@ const MissionFilterModal = ({
       sortOrder: 'asc',
       skillFilter: '',
       includeCompleted: false,
-      includeExpired: false
+      includeExpired: false,
+      completedDateRange: 'last7days'
     };
     setFilters(defaultFilters);
     onApplyFilters(defaultFilters);
@@ -129,6 +132,23 @@ const MissionFilterModal = ({
                 <span className="checkmark"></span>
                 Include Completed Missions
               </label>
+              
+              {/* Completion Date Range - Only show when includeCompleted is checked */}
+              {filters.includeCompleted && (
+                <div className="date-range-section">
+                  <label className="date-range-label">Completed within:</label>
+                  <select 
+                    value={filters.completedDateRange}
+                    onChange={(e) => handleFilterChange('completedDateRange', e.target.value)}
+                    className="filter-select date-range-select"
+                  >
+                    <option value="today">Today</option>
+                    <option value="last7days">Last 7 days</option>
+                    <option value="last30days">Last 30 days</option>
+                    <option value="alltime">All time</option>
+                  </select>
+                </div>
+              )}
               
               <label className="checkbox-label">
                 <input
