@@ -19,7 +19,7 @@ import {
 } from '../services/missionService';
 
 import { addXP, subtractXP } from '../services/userService';
-import EditDailyMissions from '../components/missions/EditDailyMissions';
+import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModal';
 import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
 import './HomePage.css';
@@ -169,9 +169,9 @@ const HomePage = () => {
       hasActiveDailyMissions: true,
       completedCount: dailyMissionStatus.completed,
       totalCount: dailyMissionStatus.total,
-      // statusText: dailyMissionStatus.completed === dailyMissionStatus.total 
-      //   ? 'All daily missions completed! 🎉'
-      //   : `${dailyMissionStatus.completed}/${dailyMissionStatus.total} completed`
+      statusText: dailyMissionStatus.completed === dailyMissionStatus.total 
+        ? 'All daily missions completed! 🎉'
+        : `${dailyMissionStatus.completed}/${dailyMissionStatus.total} completed`
     };
   };
 
@@ -363,13 +363,10 @@ const HomePage = () => {
       </section>
 
       {showEditDailyMissions && (
-        <EditDailyMissions 
+        <EditDailyMissionsModal 
           currentDailyMissions={dailyMissions}
           onClose={() => setShowEditDailyMissions(false)}
-          onSave={async (updatedMissions) => {
-            await handleDailyMissionsUpdate();
-            setShowEditDailyMissions(false);
-          }}
+          onSave={handleDailyMissionsUpdate}
         />
       )}
 

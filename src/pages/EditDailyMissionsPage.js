@@ -11,6 +11,7 @@ import DifficultyBadge from '../components/missions/sub-components/DifficultyBad
 // Service imports - UPDATED for simplified system
 import { 
   getActiveMissions,
+  getCompletedMissions,
   createMission
 } from '../services/missionService';
 
@@ -42,7 +43,11 @@ import {
 
 import './EditDailyMissionsPage.css';
 
-const EditDailyMissionsPage = () => {
+const EditDailyMissionsPage = ({ 
+  isModal = false, 
+  onComplete = null, 
+  showNavigation = true 
+}) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   
@@ -70,20 +75,21 @@ const EditDailyMissionsPage = () => {
       // Get current config using simplified structure
       const config = await getDailyMissionsConfig(currentUser.uid);
       const today = toDateString(new Date());
-      
-      console.log('Loaded config:', config); // DEBUG
+     
       setCurrentConfig(config);
       
       // UPDATED: Check if config is for today using new structure
       if (config && config.setForDate === today && config.missionIds?.length > 0) {
-        console.log('Config is active for today with missions:', config.missionIds); // DEBUG
         
-        // Load the actual mission data
-        const allMissions = await getActiveMissions(currentUser.uid);
-        console.log('All missions (active + completed):', allMissions.length); // DEBUG
-console.log('First few mission IDs:', allMissions.slice(0, 5).map(m => m.id)); // DEBUG
+        // FIXED: Load both active AND completed missions to find all daily missions
+        const [activeMissions, completedMissions] = await Promise.all([
+          getActiveMissions(currentUser.uid),
+          getCompletedMissions ? getCompletedMissions(currentUser.uid) : Promise.resolve([])
+        ]);
         
-        // UPDATED: Find missions using new missionIds field
+        const allMissions = [...activeMissions, ...completedMissions];
+        
+        // UPDATED: Find missions using new missionIds field from all missions
         const selectedMissions = config.missionIds
           .map(missionId => {
             const mission = allMissions.find(m => m.id === missionId);
@@ -93,9 +99,6 @@ console.log('First few mission IDs:', allMissions.slice(0, 5).map(m => m.id)); /
             return mission;
           })
           .filter(mission => mission != null); // Remove null missions
-        
-        console.log('Found selected missions:', selectedMissions.length); // DEBUG
-console.log('Selected mission details:', selectedMissions.map(m => ({ id: m?.id, title: m?.title }))); // DEBUG
         
         // Fill slots with selected missions
         const newDailyMissions = [null, null, null];
@@ -107,7 +110,6 @@ console.log('Selected mission details:', selectedMissions.map(m => ({ id: m?.id,
         setDailyMissions(newDailyMissions);
         
       } else {
-        console.log('No active daily missions for today'); // DEBUG
         setDailyMissions([null, null, null]);
       }
       
@@ -227,11 +229,17 @@ console.log('Selected mission details:', selectedMissions.map(m => ({ id: m?.id,
       
       // Update local state
       const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
-      console.log('Updated config after save:', updatedConfig); // DEBUG
       setCurrentConfig(updatedConfig);
       
       alert('Daily missions set successfully! Your 3 daily missions are now active.');
-      navigate('/home');
+      
+      if (isModal && onComplete) {
+        // Modal mode - call completion callback and let parent handle closing
+        onComplete();
+      } else {
+        // Full page mode - navigate to home
+        navigate('/home');
+      }
       
     } catch (err) {
       console.error('Error setting daily missions:', err);
@@ -272,9 +280,10 @@ console.log('Selected mission details:', selectedMissions.map(m => ({ id: m?.id,
                           currentConfig.missionIds?.length > 0;
 
   return (
-    <div className="daily-missions-container">
+    <div className={`daily-missions-container ${isModal ? 'modal-mode' : ''}`}>
       <div className="daily-missions-header">
-        <h1 className="page-title">Set Daily Missions</h1>
+        {!isModal && <h1 className="page-title">Set Daily Missions</h1>}
+        {isModal && <h2 className="modal-title">Set Daily Missions</h2>}
         <p className="page-subtitle">
           What are your three most important priorities for the day?
         </p>
