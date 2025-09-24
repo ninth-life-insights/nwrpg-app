@@ -1,18 +1,23 @@
-// src/pages/HomePage.js
+// src/pages/HomePage.js - UPDATED FOR SIMPLIFIED DAILY MISSIONS
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
+
+// UPDATED: Import simplified daily mission services
 import { 
-  getDailyMissionsConfig, 
-  getActiveMissions,
-  checkDailyMissionReset,
-  resetDailyMissions,
-  uncompleteMission,
+  getTodaysDailyMissions,
+  getDailyMissionStatus,
+  needsToSetDailyMissions
+} from '../services/dailyMissionService';
+
+// Keep regular mission services for completion
+import {
   completeMission,
-  checkAndHandleDailyMissionReset
+  uncompleteMission
 } from '../services/missionService';
+
 import { addXP, subtractXP } from '../services/userService';
 import EditDailyMissions from '../components/missions/EditDailyMissions';
 import MissionCard from '../components/missions/MissionCard';
@@ -23,7 +28,7 @@ const HomePage = () => {
   const { currentUser } = useAuth();
   const [character, setCharacter] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
-  const [dailyMissionsConfig, setDailyMissionsConfig] = useState(null);
+  const [dailyMissionStatus, setDailyMissionStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
   const navigate = useNavigate();
@@ -36,8 +41,6 @@ const HomePage = () => {
   const DailyPlanningClick = () => {
     navigate('/edit-daily-missions');
   };
-
-  
 
   // Color mapping from character creation
   const colorMap = {
@@ -72,68 +75,34 @@ const HomePage = () => {
     setImageError(prev => ({ ...prev, [key]: true }));
   };
 
-  // Check for daily mission reset and handle it
- const handleDailyMissionReset = async () => {
-  if (!currentUser) return;
-
-  try {
-    const resetCheck = await checkDailyMissionReset(currentUser.uid);
-    console.log('Reset check result:', resetCheck); // ADD THIS
-    
-    if (resetCheck.needsReset) {
-      console.log('Daily missions have reset for a new day');
-      await resetDailyMissions(currentUser.uid);
-      console.log('resetDailyMissions completed'); // ADD THIS
-      
-      setDailyMissions([]);
-      setDailyMissionsConfig(null);
-    }
-  } catch (error) {
-    console.error('Error checking/handling daily mission reset:', error);
-  }
-};
-
-  // Fetch daily missions using the new system
+  // SIMPLIFIED: Fetch daily missions using new system
   const fetchDailyMissions = async () => {
     if (!currentUser) return;
 
-    
-
     try {
-      // Get daily missions configuration
-      const config = await getDailyMissionsConfig(currentUser.uid);
-      setDailyMissionsConfig(config);
-
+      console.log('Fetching daily missions...'); // DEBUG
       
+      // UPDATED: Use simplified daily mission functions
+      const [todaysMissions, status] = await Promise.all([
+        getTodaysDailyMissions(currentUser.uid),
+        getDailyMissionStatus(currentUser.uid)
+      ]);
 
-      if (config && config.selectedMissionIds && config.isActive) {
-        // Get all active missions
-        const allMissions = await getActiveMissions(currentUser.uid);
+      console.log('Todays missions:', todaysMissions); // DEBUG
+      console.log('Daily mission status:', status); // DEBUG
 
-        console.log('Config loaded:', config);
-console.log('All missions count:', allMissions?.length);
-console.log('Config selectedMissionIds:', config?.selectedMissionIds);
-console.log('Missions with isDailyMission true:', 
-  allMissions?.filter(m => m.isDailyMission === true)?.map(m => ({id: m.id, title: m.title}))
-);
-        
-        // Filter to get only the selected daily missions
-        const selectedDailyMissions = config.selectedMissionIds
-          .map(missionId => allMissions.find(mission => mission.id === missionId))
-          .filter(Boolean) // Remove any null/undefined missions
-          .map(mission => ({
-            ...mission,
-            completed: mission.status === 'completed'
-          }));
+      setDailyMissions(todaysMissions);
+      setDailyMissionStatus(status);
 
-        setDailyMissions(selectedDailyMissions);
-      } else {
-        // No active daily missions configuration
-        setDailyMissions([]);
-      }
     } catch (error) {
       console.error('Error fetching daily missions:', error);
       setDailyMissions([]);
+      setDailyMissionStatus({
+        hasSetDailyMissions: false,
+        completed: 0,
+        total: 0,
+        percentage: 0
+      });
     }
   };
 
@@ -144,8 +113,8 @@ console.log('Missions with isDailyMission true:',
       try {
         setLoading(true);
 
-        // Check for daily mission reset first
-        await handleDailyMissionReset();
+        // SIMPLIFIED: No reset logic needed - handled automatically by date checking
+        console.log('Loading user data...'); // DEBUG
 
         // Fetch character data
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
@@ -154,7 +123,7 @@ console.log('Missions with isDailyMission true:',
           setCharacter(userData.character);
         }
 
-        // Fetch daily missions using new system
+        // UPDATED: Fetch daily missions using simplified system
         await fetchDailyMissions();
         
       } catch (error) {
@@ -168,27 +137,12 @@ console.log('Missions with isDailyMission true:',
     fetchUserData();
   }, [currentUser]);
 
-  // Function to refresh daily missions after editing
+  // SIMPLIFIED: Function to refresh daily missions after editing
   const handleDailyMissionsUpdate = async () => {
     await fetchDailyMissions();
   };
 
-  // reset daily missions if expired
-  useEffect(() => {
-  const handleDailyReset = async () => {
-    if (currentUser) {
-      const result = await checkAndHandleDailyMissionReset(currentUser.uid);
-      if (result.wasReset) {
-        // Optionally show user notification
-        console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
-        // Refresh your daily missions data
-        await fetchDailyMissions();
-      }
-    }
-  };
-  
-  handleDailyReset();
-}, [currentUser]);
+  // REMOVED: Complex reset logic - no longer needed
 
   // Calculate current XP and level progress
   const getXPForLevel = (level) => level * 100; // Simple formula
@@ -200,27 +154,28 @@ console.log('Missions with isDailyMission true:',
   const requiredXP = xpForNextLevel - xpForCurrentLevel;
   const progressPercentage = (progressXP / requiredXP) * 100;
 
-  // Get daily missions status for display
-  const getDailyMissionsStatus = () => {
-    if (!dailyMissionsConfig || !dailyMissionsConfig.isActive) {
+  // SIMPLIFIED: Get daily missions status for display
+  const getDailyMissionsDisplayInfo = () => {
+    if (!dailyMissionStatus || !dailyMissionStatus.hasSetDailyMissions) {
       return { 
         hasActiveDailyMissions: false, 
         completedCount: 0, 
-        totalCount: 0 
+        totalCount: 0,
+        statusText: 'No daily missions set for today'
       };
     }
 
-    const completedCount = dailyMissions.filter(mission => mission.completed).length;
-    const totalCount = dailyMissions.length;
-
     return {
       hasActiveDailyMissions: true,
-      completedCount,
-      totalCount
+      completedCount: dailyMissionStatus.completed,
+      totalCount: dailyMissionStatus.total,
+      // statusText: dailyMissionStatus.completed === dailyMissionStatus.total 
+      //   ? 'All daily missions completed! 🎉'
+      //   : `${dailyMissionStatus.completed}/${dailyMissionStatus.total} completed`
     };
   };
 
-  const dailyStatus = getDailyMissionsStatus();
+  const dailyStatus = getDailyMissionsDisplayInfo();
 
   if (loading) {
     return (
@@ -230,39 +185,35 @@ console.log('Missions with isDailyMission true:',
     );
   }
 
-  // Function to toggle completion status with XP handling
-    const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
-  
-      try {
-        if (isCurrentlyCompleted) {
-          // Uncomplete the mission
-          await uncompleteMission(currentUser.uid, missionId);
-          if (xpReward) {
-            await subtractXP(currentUser.uid, xpReward);
-          }
-        } else {
-          // Complete the mission
-          await completeMission(currentUser.uid, missionId);
-          if (xpReward) {
-            const result = await addXP(currentUser.uid, xpReward);
-            
-            // Show level up notification if applicable
-            if (result && result.leveledUp) {
-              // You can add a toast notification here later
-              console.log(`Level up! Now level ${result.newLevel}`);
-            }
+  // SIMPLIFIED: Function to toggle completion status with XP handling
+  const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+    try {
+      if (isCurrentlyCompleted) {
+        // Uncomplete the mission
+        await uncompleteMission(currentUser.uid, missionId);
+        if (xpReward) {
+          await subtractXP(currentUser.uid, xpReward);
+        }
+      } else {
+        // Complete the mission
+        await completeMission(currentUser.uid, missionId);
+        if (xpReward) {
+          const result = await addXP(currentUser.uid, xpReward);
+          
+          // Show level up notification if applicable
+          if (result && result.leveledUp) {
+            console.log(`Level up! Now level ${result.newLevel}`);
           }
         }
-        
-        // Reload missions to reflect changes
-        await handleDailyMissionsUpdate();
-        
-      } catch (err) {
-        console.error('Error toggling mission completion:', err);
       }
-    };
-
-
+      
+      // UPDATED: Reload missions to reflect changes
+      await handleDailyMissionsUpdate();
+      
+    } catch (err) {
+      console.error('Error toggling mission completion:', err);
+    }
+  };
 
   return (
     <div className="homepage-container">
@@ -363,25 +314,38 @@ console.log('Missions with isDailyMission true:',
           </button>
         </div>
         
+        {/* UPDATED: Status display */}
+        <div className="missions-status">
+          <p className="status-text">{dailyStatus.statusText}</p>
+        </div>
+        
         <div className="missions-overview">
           {dailyStatus.hasActiveDailyMissions ? (
             dailyMissions.map((mission) => (
               <MissionCard
                 key={mission.id}
-                mission={mission}
+                mission={{
+                  ...mission,
+                  isDailyMission: true // All missions here are daily missions
+                }}
                 onToggleComplete={handleToggleComplete}
                 onViewDetails={setSelectedMission}
               />
             ))
           ) : (
             <div className="no-missions">
-              <p>No daily missions set up yet.</p>
-              <p>Use the edit button to create your daily routine!</p>
+              <p>No daily missions set for today.</p>
+              <button 
+                className="set-daily-missions-btn"
+                onClick={DailyPlanningClick}
+              >
+                Set Daily Missions
+              </button>
             </div>
           )}
         </div>
 
-         <div className="action-buttons">
+        <div className="action-buttons">
           <button className="action-button primary">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -396,7 +360,6 @@ console.log('Missions with isDailyMission true:',
             Mission Bank
           </button>
         </div>
-
       </section>
 
       {showEditDailyMissions && (
