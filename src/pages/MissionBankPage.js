@@ -1,4 +1,4 @@
-// src/pages/MissionBank.js (or src/components/pages/MissionBank.js)
+// src/pages/MissionBank.js - UPDATED FOR SIMPLIFIED DAILY MISSIONS
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import MissionList from '../components/missions/MissionList';
@@ -24,8 +24,7 @@ const MissionBank = () => {
   // State to track recently completed missions
   const [recentlyCompletedMissions, setRecentlyCompletedMissions] = useState([]);
 
-
-  const navigate = useNavigate('/home');
+  const navigate = useNavigate();
 
   const HomeButtonClick = () => {
     navigate('/home');
@@ -153,7 +152,7 @@ const MissionBank = () => {
         </div>
       </div>
 
-      {/* Mission List Component */}
+      {/* UPDATED: MissionList component now automatically computes daily mission badges */}
       <MissionList 
         missionType={getMissionType()}
         onMissionUpdate={handleMissionUpdate}
@@ -164,6 +163,7 @@ const MissionBank = () => {
         recentlyCompletedMissions={recentlyCompletedMissions}
         onMissionCompletion={handleMissionCompletion}
         onMissionUncompletion={handleMissionUncompletion}
+        // Note: Daily mission badges will be computed automatically by addDailyMissionStatus
       />
 
       {/* Filter Modal */}

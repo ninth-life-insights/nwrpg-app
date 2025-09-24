@@ -1,4 +1,4 @@
-// src/components/missions/MissionList.js
+// src/components/missions/MissionList.js - UPDATED FOR SIMPLIFIED DAILY MISSIONS
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from './MissionCard';
@@ -10,9 +10,14 @@ import {
   getExpiredMissions,
   completeMission, 
   uncompleteMission,
-  checkAndHandleDailyMissionReset,
   completeMissionWithRecurrence // Add the new function
 } from '../../services/missionService';
+
+// UPDATED: Import simplified daily mission service
+import { 
+  addDailyMissionStatus 
+} from '../../services/dailyMissionService';
+
 import { addXP, subtractXP } from '../../services/userService';
 import { isRecurringMission } from '../../utils/recurrenceHelpers';
 
@@ -152,8 +157,12 @@ const MissionList = ({
         }
       }
       
-      // Apply filtering and sorting - now using memoizedFilters
-      const processedMissions = applyFiltersAndSort(missionData, memoizedFilters);
+      // UPDATED: Add computed daily mission status to all missions
+      const missionsWithDailyStatus = await addDailyMissionStatus(currentUser.uid, missionData);
+      console.log('Missions with daily status:', missionsWithDailyStatus.filter(m => m.isDailyMission)); // DEBUG
+      
+      // Apply filtering and sorting
+      const processedMissions = applyFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
       setMissions(processedMissions);
     } catch (err) {
       console.error('Error loading missions:', err);
@@ -163,22 +172,7 @@ const MissionList = ({
     }
   };
 
-  // reset daily missions if expired
-  useEffect(() => {
-    const handleDailyReset = async () => {
-      if (currentUser) {
-        const result = await checkAndHandleDailyMissionReset(currentUser.uid);
-        if (result.wasReset) {
-          // Optionally show user notification
-          console.log(`Daily missions reset. Archived ${result.archivedCount} missions from ${result.archivedDate}`);
-          // Refresh your daily missions data
-          await loadMissions();
-        }
-      }
-    };
-    
-    handleDailyReset();
-  }, [currentUser]);
+  // REMOVED: Complex daily mission reset logic - no longer needed
   
   // Enhanced function to toggle completion status with XP and recurring mission handling
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
@@ -263,10 +257,27 @@ const MissionList = ({
       return; // Don't add missions without IDs
     }
 
-    setMissions(prev => {
-      const newMissions = [newMission, ...prev];
-      return newMissions;
-    });
+    // UPDATED: Add daily mission status to new mission
+    const enhanceMissionWithDailyStatus = async () => {
+      try {
+        const enhancedMissions = await addDailyMissionStatus(currentUser.uid, [newMission]);
+        const enhancedMission = enhancedMissions[0];
+        
+        setMissions(prev => {
+          const newMissions = [enhancedMission, ...prev];
+          return newMissions;
+        });
+      } catch (error) {
+        console.error('Error enhancing mission with daily status:', error);
+        // Fallback to adding without daily status
+        setMissions(prev => {
+          const newMissions = [{...newMission, isDailyMission: false}, ...prev];
+          return newMissions;
+        });
+      }
+    };
+
+    enhanceMissionWithDailyStatus();
   };
 
   // Handle mission selection for daily missions
@@ -397,7 +408,6 @@ const MissionList = ({
           </p>
         </div>
       )}
-
 
       {/* Missions Grid */}
       <div style={{ textAlign: 'center' }}>
