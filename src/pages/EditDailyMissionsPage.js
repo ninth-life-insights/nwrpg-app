@@ -75,11 +75,13 @@ const EditDailyMissionsPage = ({
       // Get current config using simplified structure
       const config = await getDailyMissionsConfig(currentUser.uid);
       const today = toDateString(new Date());
-     
+      
+      console.log('Loaded config:', config); // DEBUG
       setCurrentConfig(config);
       
       // UPDATED: Check if config is for today using new structure
       if (config && config.setForDate === today && config.missionIds?.length > 0) {
+        console.log('Config is active for today with missions:', config.missionIds); // DEBUG
         
         // FIXED: Load both active AND completed missions to find all daily missions
         const [activeMissions, completedMissions] = await Promise.all([
@@ -88,6 +90,7 @@ const EditDailyMissionsPage = ({
         ]);
         
         const allMissions = [...activeMissions, ...completedMissions];
+        console.log('All missions (active + completed):', allMissions.length); // DEBUG
         
         // UPDATED: Find missions using new missionIds field from all missions
         const selectedMissions = config.missionIds
@@ -100,6 +103,8 @@ const EditDailyMissionsPage = ({
           })
           .filter(mission => mission != null); // Remove null missions
         
+        console.log('Found selected missions:', selectedMissions.length); // DEBUG
+        
         // Fill slots with selected missions
         const newDailyMissions = [null, null, null];
         selectedMissions.forEach((mission, index) => {
@@ -110,6 +115,7 @@ const EditDailyMissionsPage = ({
         setDailyMissions(newDailyMissions);
         
       } else {
+        console.log('No active daily missions for today'); // DEBUG
         setDailyMissions([null, null, null]);
       }
       
@@ -229,6 +235,7 @@ const EditDailyMissionsPage = ({
       
       // Update local state
       const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
+      console.log('Updated config after save:', updatedConfig); // DEBUG
       setCurrentConfig(updatedConfig);
       
       alert('Daily missions set successfully! Your 3 daily missions are now active.');
@@ -315,10 +322,10 @@ const EditDailyMissionsPage = ({
           <div key={index} className="mission-slot">
             {mission ? (
               // Filled slot
-              <div className="mission-slot-filled">
+              <div className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}>
                 <div className="mission-info">
-                  <h3 className="mission-title">{mission.title}</h3>
-                  <p className="mission-description">{mission.description || 'No description'}</p>
+                  <h3 className={`mission-title ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.title}</h3>
+                  <p className={`mission-description ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.description || 'No description'}</p>
                   <div className="mission-badges">
                     <DifficultyBadge difficulty={mission.difficulty} />
                     
@@ -330,10 +337,6 @@ const EditDailyMissionsPage = ({
                     
                     {mission.skill && (
                       <span className="skill-badge">{mission.skill}</span>
-                    )}
-                    
-                    {isMissionCompleted(mission) && (
-                      <span className="completed-badge">✓ Completed</span>
                     )}
                   </div>
                 </div>
