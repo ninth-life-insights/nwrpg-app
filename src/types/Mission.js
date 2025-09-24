@@ -1,5 +1,8 @@
 // src/types/Mission.js
 
+import dayjs from 'dayjs';
+import { fromDateString } from '../utils/dateHelpers';
+
 // Mission completion and due dates
 export const COMPLETION_TYPES = {
   SIMPLE: 'simple',     // Basic toggle completion
@@ -59,8 +62,8 @@ export const MISSION_SCHEMA = {
   // Timestamps (Firestore Timestamp objects)
   createdAt: null,                    // Timestamp - when mission was created
   updatedAt: null,                    // Timestamp - last modification
-  dueDate: '',                      // Timestamp | null - optional due date
-  expiryDate: null,                   // Timestamp | null - optional expiry
+  dueDate: '',                      // dayjs string
+  expiryDate: '',                   // should be dayjs string
   completedAt: null,                  // Timestamp | null - when completed
 
   // Repetition data
@@ -220,22 +223,16 @@ export const validateMission = (mission) => {
   };
 };
 
-
-// Helper function to safely extract Date from Firestore timestamp or regular date
- const extractDate = (dateInput) => {
-  return dateInput && dateInput.toDate ? dateInput.toDate() : new Date(dateInput);
-};
-
 // check if mission is expired
 export const isMissionExpired = (mission) => {
-  if (!mission.expiryDate) {
+  if (!mission.expiryDate || mission.expiryDate === '') {
     return false;
   }
   
-  const now = new Date();
-  const expiryDate = extractDate(mission.expiryDate);
+  const now = dayjs();
+  const expiryDate = fromDateString(mission.expiryDate); // Convert from YYYY-MM-DD string to dayjs
   
-  return now > expiryDate;
+  return now.isAfter(expiryDate, 'day');
 };
 
 // Check if mission has a skill
