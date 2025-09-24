@@ -1,26 +1,45 @@
 // src/pages/EditDailyMissionsPage.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+
+// FIXED: Use refactored components and correct imports
 import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
 import DifficultyBadge from '../components/missions/sub-components/DifficultyBadge';
+
+// FIXED: Use proper service functions
 import { 
   getActiveMissions, 
   getDailyMissionsConfig,
-  setDailyMissions as saveDailyMissions,
-  clearDailyMissionStatus,
+  updateDailyMissionsConfig,
+  createMission
 } from '../services/missionService';
+
+// FIXED: Use standardized date helpers
 import {
-  isMissionDueToday,
-  isMissionDueTomorrow,
-  isMissionOverdue,
-  formatForUser
-} from '../utils/dateHelpers'
+  formatDueDateForUser,
+  getDueDateStatus
+} from '../utils/dateHelpers';
+
+// FIXED: Use mission helpers for status and creation
+import { 
+  isMissionCompleted 
+} from '../utils/missionHelpers';
+
+// FIXED: Use type system for mission creation
+import {
+  createMissionTemplate,
+  DIFFICULTY_LEVELS,
+  MISSION_STATUS
+} from '../types/Mission';
+
 import './EditDailyMissionsPage.css';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const EditDailyMissionsPage = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
@@ -29,10 +48,6 @@ const EditDailyMissionsPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [currentDailyConfig, setCurrentDailyConfig] = useState(null);
-
-  const navigate = Navigate();
-
-  const navigatetoHome = navigate('/home');
 
   // Load existing daily missions configuration on component mount
   useEffect(() => {
@@ -52,12 +67,14 @@ const EditDailyMissionsPage = () => {
       if (config && config.selectedMissionIds && config.isActive) {
         // Load the actual mission data for each selected mission
         const allMissions = await getActiveMissions(currentUser.uid);
-        const selectedMissions = config.selectedMissionIds.map(missionId => 
-          allMissions.find(mission => mission.id === missionId)
-        ).filter(Boolean); // Remove any null/undefined missions
+        
+        // FIXED: Better handling of mission loading with validation
+        const selectedMissions = config.selectedMissionIds
+          .map(missionId => allMissions.find(mission => mission.id === missionId))
+          .filter(mission => mission != null); // Remove any null/undefined missions
         
         // Fill the slots with the selected missions
-        const newDailyMissions = [...dailyMissions];
+        const newDailyMissions = [null, null, null];
         selectedMissions.forEach((mission, index) => {
           if (index < 3) {
             newDailyMissions[index] = mission;
@@ -74,7 +91,44 @@ const EditDailyMissionsPage = () => {
     }
   };
 
-  // Handle adding a new mission to a specific slot
+  // FIXED: Handle mission creation using proper types and helpers
+  const handleAddNewMission = async (missionData) => {
+    try {
+      setSaving(true);
+      
+      // Use createMissionTemplate to ensure proper structure
+      const properMissionData = createMissionTemplate({
+        ...missionData,
+        status: MISSION_STATUS.ACTIVE,
+        category: 'daily',
+        isDailyMission: false // Will be set when we save daily missions
+      });
+
+      // Create the mission using service
+      const missionId = await createMission(currentUser.uid, properMissionData);
+      
+      if (!missionId) {
+        throw new Error('Failed to create mission: No ID returned');
+      }
+
+      const newMission = {
+        ...properMissionData,
+        id: missionId,
+        createdAt: new Date()
+      };
+
+      // Add to current slot
+      handleMissionSelect(newMission, currentSlotIndex);
+      
+    } catch (err) {
+      console.error('Error creating new mission:', err);
+      setError('Failed to create mission. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle adding a mission to a specific slot
   const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
     const newDailyMissions = [...dailyMissions];
     newDailyMissions[slotIndex] = mission;
@@ -97,7 +151,7 @@ const EditDailyMissionsPage = () => {
   };
 
   // Handle adding new mission - finds first empty slot
-  const handleAddNewMission = () => {
+  const handleAddNewMissionClick = () => {
     const emptySlotIndex = dailyMissions.findIndex(mission => mission === null);
     if (emptySlotIndex !== -1) {
       setCurrentSlotIndex(emptySlotIndex);
@@ -114,7 +168,7 @@ const EditDailyMissionsPage = () => {
     }
   };
 
-  // Handle setting daily missions (save functionality)
+  // FIXED: Use proper service function for updating daily missions
   const handleSetDailyMissions = async () => {
     if (!currentUser) {
       setError('You must be logged in to set daily missions');
@@ -134,23 +188,9 @@ const EditDailyMissionsPage = () => {
       
       console.log('Setting daily missions:', validMissions);
       
-      // Clear daily status from previously selected missions if they exist
-      if (currentDailyConfig && currentDailyConfig.selectedMissionIds) {
-        const currentMissionIds = validMissions.map(m => m.id);
-        const previousMissions = currentDailyConfig.selectedMissionIds.filter(
-          id => !currentMissionIds.includes(id)
-        );
-        
-        if (previousMissions.length > 0) {
-          await clearDailyMissionStatus(currentUser.uid, previousMissions);
-        }
-      }
-      
-      // Extract mission IDs
+      // FIXED: Use the proper service function
       const selectedMissionIds = validMissions.map(mission => mission.id);
-      
-      // Save the daily missions configuration
-      await saveDailyMissions(currentUser.uid, selectedMissionIds);
+      await updateDailyMissionsConfig(currentUser.uid, selectedMissionIds);
       
       // Update the current config state
       setCurrentDailyConfig({
@@ -160,8 +200,7 @@ const EditDailyMissionsPage = () => {
       });
       
       alert('Daily missions set successfully! Your 3 daily missions are now active.');
-
-      navigatetoHome();
+      navigate('/home');
       
     } catch (err) {
       console.error('Error setting daily missions:', err);
@@ -184,22 +223,17 @@ const EditDailyMissionsPage = () => {
     );
   }
 
+  // FIXED: Use standardized date helper
   const getDueDateInfo = (mission) => {
-            if (!mission.dueDate) return null;
-            
-            if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
-            if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
-            if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
-            
-            // For other upcoming dates, show the actual date
-            return {
-              status: 'upcoming',
-              display: formatForUser(mission.dueDate)
-            };
-          };
+    if (!mission.dueDate) return null;
+    
+    const status = getDueDateStatus(mission);
+    const display = formatDueDateForUser(mission);
+    
+    return { status, display };
+  };
 
   return (
-    
     <div className="daily-missions-container">
       <div className="daily-missions-header">
         <h1 className="page-title">Set Daily Missions</h1>
@@ -233,16 +267,24 @@ const EditDailyMissionsPage = () => {
               <div className="mission-slot-filled">
                 <div className="mission-info">
                   <h3 className="mission-title">{mission.title}</h3>
-                  <p className="mission-description">{mission.description}</p>
+                  <p className="mission-description">{mission.description || 'No description'}</p>
                   <div className="mission-badges">
                     <DifficultyBadge difficulty={mission.difficulty} />
-                    {mission.dueDate && (
-                      <span className={`due-date-badge ${getDueDateInfo(mission)?.status}`}>
-                        {getDueDateInfo(mission)?.display}
+                    
+                    {/* FIXED: Use helper for date status */}
+                    {mission.dueDate && getDueDateInfo(mission) && (
+                      <span className={`due-date-badge ${getDueDateInfo(mission).status}`}>
+                        {getDueDateInfo(mission).display}
                       </span>
                     )}
+                    
                     {mission.skill && (
                       <span className="skill-badge">{mission.skill}</span>
+                    )}
+                    
+                    {/* FIXED: Use helper for completion status */}
+                    {isMissionCompleted(mission) && (
+                      <span className="completed-badge">✓ Completed</span>
                     )}
                   </div>
                 </div>
@@ -250,12 +292,13 @@ const EditDailyMissionsPage = () => {
                   className="remove-mission-btn"
                   onClick={() => handleRemoveMission(index)}
                   title="Remove mission"
+                  disabled={saving}
                 >
                   −
                 </button>
               </div>
             ) : (
-              // Empty slot - now clickable
+              // Empty slot - clickable
               <div 
                 className="mission-slot-empty clickable"
                 onClick={() => handleEmptySlotClick(index)}
@@ -280,7 +323,7 @@ const EditDailyMissionsPage = () => {
       <div className="action-buttons">
         <button 
           className="action-btn secondary"
-          onClick={handleAddNewMission}
+          onClick={handleAddNewMissionClick}
           disabled={allSlotsFilled || saving}
         >
           + Add New Mission
@@ -310,13 +353,12 @@ const EditDailyMissionsPage = () => {
             Fill all 3 slots to set your daily missions
           </p>
         )}
-        
       </div>
 
       {/* Modals */}
       {showAddMission && (
         <AddMissionCard
-          onAddMission={(mission) => handleMissionSelect(mission)}
+          onAddMission={handleAddNewMission}
           onCancel={() => setShowAddMission(false)}
         />
       )}
@@ -334,11 +376,11 @@ const EditDailyMissionsPage = () => {
               </button>
             </div>
             <MissionList 
-                selectionMode={true}
-                onMissionSelect={(mission) => handleMissionSelect(mission)}
-                selectedMissions={dailyMissions.filter(m => m !== null)}
-                maxSelections={3}
-                />
+              selectionMode={true}
+              onMissionSelect={(mission) => handleMissionSelect(mission)}
+              selectedMissions={dailyMissions.filter(m => m !== null)}
+              maxSelections={3}
+            />
           </div>
         </div>
       )}
