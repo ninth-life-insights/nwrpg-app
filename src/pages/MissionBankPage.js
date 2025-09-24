@@ -18,7 +18,8 @@ const MissionBank = () => {
     sortOrder: 'asc',
     skillFilter: '',
     includeCompleted: false,
-    includeExpired: false
+    includeExpired: false,
+    completedDateRange: 'last7days' // Added new filter field
   });
 
   // State to track recently completed missions

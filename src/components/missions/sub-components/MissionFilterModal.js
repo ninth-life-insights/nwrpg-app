@@ -3,6 +3,53 @@ import React, { useState, useEffect } from 'react';
 import './MissionFilterModal.css';
 import { AVAILABLE_SKILLS } from '../../../data/Skills';
 
+// Helper function to check if a mission's completion date falls within the specified range
+export const isWithinCompletedDateRange = (mission, dateRange) => {
+  // If mission isn't completed or has no completedAt timestamp, return false
+  if (mission.status !== 'completed' || !mission.completedAt) {
+    return false;
+  }
+
+  // Convert Firestore timestamp to JavaScript Date
+  const completedDate = mission.completedAt.toDate ? mission.completedAt.toDate() : new Date(mission.completedAt);
+  const now = new Date();
+
+  switch (dateRange) {
+    case 'today':
+      // Check if completed today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return completedDate >= today && completedDate < tomorrow;
+
+    case 'last7days':
+      // Check if completed in last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+      return completedDate >= sevenDaysAgo && completedDate <= now;
+
+    case 'last30days':
+      // Check if completed in last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      thirtyDaysAgo.setHours(0, 0, 0, 0);
+      return completedDate >= thirtyDaysAgo && completedDate <= now;
+
+    case 'alltime':
+      // Include all completed missions regardless of date
+      return true;
+
+    default:
+      // Default to last 7 days if invalid range provided
+      const defaultSevenDaysAgo = new Date();
+      defaultSevenDaysAgo.setDate(defaultSevenDaysAgo.getDate() - 7);
+      defaultSevenDaysAgo.setHours(0, 0, 0, 0);
+      return completedDate >= defaultSevenDaysAgo && completedDate <= now;
+  }
+};
+
 const MissionFilterModal = ({ 
   isOpen, 
   onClose, 

@@ -21,6 +21,9 @@ import {
 import { addXP, subtractXP } from '../../services/userService';
 import { isRecurringMission } from '../../utils/recurrenceHelpers';
 
+// Import the date range filtering function from MissionFilterModal
+import { isWithinCompletedDateRange } from './sub-components/MissionFilterModal';
+
 const MissionList = ({ 
   missionType = 'active', 
   onMissionUpdate,
@@ -46,8 +49,11 @@ const MissionList = ({
   const memoizedFilters = useMemo(() => ({
     sortBy: filters.sortBy || 'dueDate',
     sortOrder: filters.sortOrder || 'asc',
-    skillFilter: filters.skillFilter || ''
-  }), [filters.sortBy, filters.sortOrder, filters.skillFilter]);
+    skillFilter: filters.skillFilter || '',
+    includeCompleted: filters.includeCompleted || false,
+    includeExpired: filters.includeExpired || false,
+    completedDateRange: filters.completedDateRange || 'last7days'
+  }), [filters.sortBy, filters.sortOrder, filters.skillFilter, filters.includeCompleted, filters.includeExpired, filters.completedDateRange]);
 
   // Load missions when component mounts, user changes, mission type changes, or filters change
   useEffect(() => {
@@ -64,6 +70,19 @@ const MissionList = ({
       filteredMissions = filteredMissions.filter(mission => 
         mission.skill === filterSettings.skillFilter
       );
+    }
+
+    // Apply completed date range filter - only if including completed missions
+    if (filterSettings.includeCompleted && filterSettings.completedDateRange) {
+      filteredMissions = filteredMissions.filter(mission => {
+        // If mission is not completed, include it (for mixed lists)
+        if (mission.status !== 'completed') {
+          return true;
+        }
+        
+        // For completed missions, check if they fall within the date range
+        return isWithinCompletedDateRange(mission, filterSettings.completedDateRange);
+      });
     }
 
     // Sort missions - filterSettings is now guaranteed to have values
