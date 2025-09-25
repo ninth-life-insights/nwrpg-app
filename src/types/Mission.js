@@ -20,6 +20,7 @@ export const MISSION_STATUS = {
   ACTIVE: 'active',
   COMPLETED: 'completed',
   EXPIRED: 'expired',
+  DELETED: 'deleted'
 };
 
 // XP and SP

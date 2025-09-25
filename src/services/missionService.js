@@ -158,7 +158,11 @@ export const updateMission = async (userId, missionId, updates) => {
 export const deleteMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
-    await deleteDoc(missionRef);
+    await updateDoc(missionRef, {
+      status: MISSION_STATUS.DELETED,
+      deletedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
   } catch (error) {
     console.error('Error deleting mission:', error);
     throw error;
