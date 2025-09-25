@@ -333,10 +333,16 @@ const MissionList = ({
 
     const handleDeleteMission = async (missionId) => {
     try {
-      await deleteMission(userId, missionId);
+      await deleteMission(currentUser.uid, missionId);
       // Close the modal and refresh the mission list
       setSelectedMission(null);
       // You might want to refresh your missions list here
+      await loadMissions();
+
+      if (onMissionUpdate) {
+      onMissionUpdate();
+    }
+    
     } catch (error) {
       console.error('Failed to delete mission:', error);
       // Handle error (maybe show a toast notification)
@@ -495,7 +501,6 @@ const MissionList = ({
                 onToggleComplete={handleToggleComplete}
                 onViewDetails={handleViewDetails}
                 selectionMode={selectionMode}
-                onDeleteMission={handleDeleteMission}
                 isRecentlyCompleted={isRecentlyCompleted}
               />
             </div>
@@ -509,6 +514,7 @@ const MissionList = ({
           mission={selectedMission} 
           onClose={() => setSelectedMission(null)} 
           onToggleComplete={handleToggleComplete} 
+          onDeleteMission={handleDeleteMission}
         />
       )}
 

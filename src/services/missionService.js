@@ -14,6 +14,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase/config';
+import { MISSION_STATUS } from '../types/Mission';
 import { 
   calculateNextDueDate, 
   shouldCreateNextOccurrence, 
@@ -33,7 +34,7 @@ export const createMission = async (userId, missionData) => {
     
     const docRef = await addDoc(missionsRef, {
       ...missionData,
-      status: 'active',
+      status: MISSION_STATUS.ACTIVE,
       createdAt: serverTimestamp(),
       completedAt: null
     });
@@ -131,7 +132,7 @@ export const completeMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     await updateDoc(missionRef, {
-      status: 'completed',
+      status: MISSION_STATUS.COMPLETED,
       completedAt: serverTimestamp()
     });
   } catch (error) {
@@ -174,7 +175,7 @@ export const uncompleteMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     await updateDoc(missionRef, {
-      status: 'active',
+      status: MISSION_STATUS.ACTIVE,
       completedAt: null,
       uncompletedAt: serverTimestamp()
     });
@@ -199,7 +200,7 @@ export const completeRecurringMission = async (userId, missionId) => {
     
     // Complete the current mission
     await updateDoc(missionRef, {
-      status: 'completed',
+      status: MISSION_STATUS.COMPLETED,
       completedAt: serverTimestamp()
     });
     
@@ -300,7 +301,7 @@ export const expireMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     await updateDoc(missionRef, {
-      status: 'expired',
+      status: MISSION_STATUS.EXPIRED,
       expiredAt: serverTimestamp()
     });
   } catch (error) {
