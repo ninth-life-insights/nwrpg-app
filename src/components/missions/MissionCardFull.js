@@ -13,7 +13,7 @@ import {
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardFull.css';
 
-const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
+const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission }) => {
   // FIXED: Use consistent due date logic from schema
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -61,6 +61,12 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
   
   // Determine if mission is completed using schema constant
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
+
+  const handleDeleteMission = async () => {
+    if (onDeleteMission) {
+      await onDeleteMission(mission.id);
+    }
+  };
 
   return (
     <div className="mission-detail-overlay" onClick={onClose}>
@@ -181,8 +187,21 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete }) => {
             )}
           </div>
 
-          {/* Action Button */}
+          {/* Action Buttons */}
           <div className="mission-actions">
+            <button
+              onClick={handleDeleteMission}
+              className="action-button delete-button"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3,6 5,6 21,6"></polyline>
+                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              Delete Mission
+            </button>
+            
             <button
               onClick={() => onToggleComplete(mission.id, isCompleted, mission.xpReward)}
               className={`action-button ${isCompleted ? 'mark-incomplete' : 'mark-complete'}`}

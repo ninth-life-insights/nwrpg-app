@@ -10,7 +10,8 @@ import {
   getExpiredMissions,
   completeMission, 
   uncompleteMission,
-  completeMissionWithRecurrence // Add the new function
+  completeMissionWithRecurrence,
+  deleteMission
 } from '../../services/missionService';
 
 // UPDATED: Import simplified daily mission service
@@ -330,6 +331,18 @@ const MissionList = ({
     }
   };
 
+    const handleDeleteMission = async (missionId) => {
+    try {
+      await deleteMission(userId, missionId);
+      // Close the modal and refresh the mission list
+      setSelectedMission(null);
+      // You might want to refresh your missions list here
+    } catch (error) {
+      console.error('Failed to delete mission:', error);
+      // Handle error (maybe show a toast notification)
+    }
+  };
+
   // Combine and organize missions for display
   const getDisplayMissions = () => {
     // Remove recently completed missions from the main list to avoid duplicates
@@ -482,6 +495,7 @@ const MissionList = ({
                 onToggleComplete={handleToggleComplete}
                 onViewDetails={handleViewDetails}
                 selectionMode={selectionMode}
+                onDeleteMission={handleDeleteMission}
                 isRecentlyCompleted={isRecentlyCompleted}
               />
             </div>
