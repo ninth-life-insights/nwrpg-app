@@ -75,13 +75,11 @@ const EditDailyMissionsPage = ({
       // Get current config using simplified structure
       const config = await getDailyMissionsConfig(currentUser.uid);
       const today = toDateString(new Date());
-      
-      console.log('Loaded config:', config); // DEBUG
+
       setCurrentConfig(config);
       
       // UPDATED: Check if config is for today using new structure
       if (config && config.setForDate === today && config.missionIds?.length > 0) {
-        console.log('Config is active for today with missions:', config.missionIds); // DEBUG
         
         // FIXED: Load both active AND completed missions to find all daily missions
         const [activeMissions, completedMissions] = await Promise.all([
@@ -90,8 +88,7 @@ const EditDailyMissionsPage = ({
         ]);
         
         const allMissions = [...activeMissions, ...completedMissions];
-        console.log('All missions (active + completed):', allMissions.length); // DEBUG
-        
+           
         // UPDATED: Find missions using new missionIds field from all missions
         const selectedMissions = config.missionIds
           .map(missionId => {
@@ -103,8 +100,6 @@ const EditDailyMissionsPage = ({
           })
           .filter(mission => mission != null); // Remove null missions
         
-        console.log('Found selected missions:', selectedMissions.length); // DEBUG
-        
         // Fill slots with selected missions
         const newDailyMissions = [null, null, null];
         selectedMissions.forEach((mission, index) => {
@@ -115,7 +110,6 @@ const EditDailyMissionsPage = ({
         setDailyMissions(newDailyMissions);
         
       } else {
-        console.log('No active daily missions for today'); // DEBUG
         setDailyMissions([null, null, null]);
       }
       
@@ -129,29 +123,15 @@ const EditDailyMissionsPage = ({
 
   // Handle creating new mission
 const handleAddNewMission = async (missionData) => {
-  console.log('🔥🔥🔥 handleAddNewMission STARTED', {
-    timestamp: new Date().toISOString(),
-    missionTitle: missionData.title,
-    currentSlotIndex
-  });
   
   try {
     setSaving(true);
     setError('');
-    
-    // AddMissionCard has already created the mission and returns the complete object
-    // We just need to add it to the slot
-    console.log('🔥 Received mission from AddMissionCard:', {
-      missionId: missionData.id,
-      slotIndex: currentSlotIndex
-    });
 
     handleMissionSelect(missionData, currentSlotIndex);
     
-    console.log('🔥🔥🔥 handleAddNewMission COMPLETED');
     
   } catch (err) {
-    console.error('🔥 ERROR in handleAddNewMission:', err);
     setError('Failed to add mission. Please try again.');
   } finally {
     setSaving(false);
@@ -160,19 +140,12 @@ const handleAddNewMission = async (missionData) => {
 
   // Handle selecting a mission for a slot
  const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
-  console.log('🔥 handleMissionSelect called with:', {
-    mission: mission.id,
-    slotIndex,
-    currentDailyMissions: dailyMissions.map(m => m?.id || 'null')
-  });
   
   const newDailyMissions = [...dailyMissions];
   newDailyMissions[slotIndex] = mission;
   setDailyMissions(newDailyMissions);
   setShowAddMission(false);
   setShowMissionBank(false);
-  
-  console.log('🔥 Updated dailyMissions state:', newDailyMissions.map(m => m?.id || 'null'));
 };
 
   // Handle removing a mission from a slot
@@ -208,11 +181,6 @@ const handleAddNewMission = async (missionData) => {
 
   // UPDATED: Use simplified daily mission setting
   const handleSetDailyMissions = async () => {
-  console.log('🔥 handleSetDailyMissions called');
-  console.log('🔥 Current dailyMissions state:', dailyMissions.map(m => ({
-    id: m?.id,
-    title: m?.title
-  })));
   
   if (!currentUser) {
     setError('You must be logged in to set daily missions');
@@ -220,8 +188,6 @@ const handleAddNewMission = async (missionData) => {
   }
 
   const validMissions = dailyMissions.filter(mission => mission !== null);
-  
-  console.log('🔥 Valid missions:', validMissions.map(m => m.id));
     
     if (validMissions.length !== 3) {
       setError('Please select exactly 3 missions for your daily missions.');
@@ -231,8 +197,6 @@ const handleAddNewMission = async (missionData) => {
     try {
       setSaving(true);
       setError('');
-      
-      console.log('Setting daily missions:', validMissions);
       
       const selectedMissionIds = validMissions.map(mission => mission.id);
       
@@ -244,7 +208,6 @@ const handleAddNewMission = async (missionData) => {
       
       // Update local state
       const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
-      console.log('Updated config after save:', updatedConfig); // DEBUG
       setCurrentConfig(updatedConfig);
       
       alert('Daily missions set successfully! Your 3 daily missions are now active.');

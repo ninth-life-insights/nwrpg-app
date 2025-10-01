@@ -80,16 +80,12 @@ const HomePage = () => {
     if (!currentUser) return;
 
     try {
-      console.log('Fetching daily missions...'); // DEBUG
       
       // UPDATED: Use simplified daily mission functions
       const [todaysMissions, status] = await Promise.all([
         getTodaysDailyMissions(currentUser.uid),
         getDailyMissionStatus(currentUser.uid)
       ]);
-
-      console.log('Todays missions:', todaysMissions); // DEBUG
-      console.log('Daily mission status:', status); // DEBUG
 
       setDailyMissions(todaysMissions);
       setDailyMissionStatus(status);
@@ -112,9 +108,6 @@ const HomePage = () => {
       
       try {
         setLoading(true);
-
-        // SIMPLIFIED: No reset logic needed - handled automatically by date checking
-        console.log('Loading user data...'); // DEBUG
 
         // Fetch character data
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
