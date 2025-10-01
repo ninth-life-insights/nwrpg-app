@@ -315,9 +315,9 @@ const HomePage = () => {
         </div>
         
         {/* UPDATED: Status display */}
-        <div className="missions-status">
-          <p className="status-text">{dailyStatus.statusText}</p>
-        </div>
+        {/* <div className="missions-status"> */}
+          {/* <p className="status-text">{dailyStatus.statusText}</p> */}
+        {/* </div> */}
         
         <div className="missions-overview">
           {dailyStatus.hasActiveDailyMissions ? (
