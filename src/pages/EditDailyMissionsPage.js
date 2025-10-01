@@ -128,7 +128,7 @@ const EditDailyMissionsPage = ({
   };
 
   // Handle creating new mission
-  const handleAddNewMission = async (missionData) => {
+const handleAddNewMission = async (missionData) => {
   console.log('🔥🔥🔥 handleAddNewMission STARTED', {
     timestamp: new Date().toISOString(),
     missionTitle: missionData.title,
@@ -139,42 +139,20 @@ const EditDailyMissionsPage = ({
     setSaving(true);
     setError('');
     
-    const properMissionData = createMissionTemplate({
-      ...missionData,
-      status: MISSION_STATUS.ACTIVE,
-    });
-
-    console.log('🔥 About to call createMission', {
-      userId: currentUser.uid,
-      missionTitle: properMissionData.title
-    });
-
-    const missionId = await createMission(currentUser.uid, properMissionData);
-    
-    console.log('🔥 createMission returned ID:', missionId);
-    
-    if (!missionId) {
-      throw new Error('Failed to create mission: No ID returned');
-    }
-
-    const newMission = {
-      ...properMissionData,
-      id: missionId,
-      createdAt: new Date()
-    };
-
-    console.log('🔥 About to call handleMissionSelect with:', {
-      missionId: newMission.id,
+    // AddMissionCard has already created the mission and returns the complete object
+    // We just need to add it to the slot
+    console.log('🔥 Received mission from AddMissionCard:', {
+      missionId: missionData.id,
       slotIndex: currentSlotIndex
     });
 
-    handleMissionSelect(newMission, currentSlotIndex);
+    handleMissionSelect(missionData, currentSlotIndex);
     
     console.log('🔥🔥🔥 handleAddNewMission COMPLETED');
     
   } catch (err) {
     console.error('🔥 ERROR in handleAddNewMission:', err);
-    setError('Failed to create mission. Please try again.');
+    setError('Failed to add mission. Please try again.');
   } finally {
     setSaving(false);
   }
