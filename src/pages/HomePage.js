@@ -334,13 +334,13 @@ const HomePage = () => {
             ))
           ) : (
             <div className="no-missions">
-              <p>No daily missions set for today.</p>
+              {/* <p>No daily missions set for today.</p>
               <button 
                 className="set-daily-missions-btn"
                 onClick={DailyPlanningClick}
               >
                 Set Daily Missions
-              </button>
+              </button> */}
             </div>
           )}
         </div>
