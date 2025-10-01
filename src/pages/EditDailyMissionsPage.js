@@ -19,7 +19,7 @@ import {
 import { 
   getDailyMissionsConfig,
   updateDailyMissionsConfig,
-  saveDailyMissionSelection
+  saveDailyMissionSelection,
 } from '../services/dailyMissionService';
 
 // Date helpers
@@ -166,13 +166,21 @@ const EditDailyMissionsPage = ({
   };
 
   // Handle selecting a mission for a slot
-  const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
-    const newDailyMissions = [...dailyMissions];
-    newDailyMissions[slotIndex] = mission;
-    setDailyMissions(newDailyMissions);
-    setShowAddMission(false);
-    setShowMissionBank(false);
-  };
+ const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
+  console.log('🔥 handleMissionSelect called with:', {
+    mission: mission.id,
+    slotIndex,
+    currentDailyMissions: dailyMissions.map(m => m?.id || 'null')
+  });
+  
+  const newDailyMissions = [...dailyMissions];
+  newDailyMissions[slotIndex] = mission;
+  setDailyMissions(newDailyMissions);
+  setShowAddMission(false);
+  setShowMissionBank(false);
+  
+  console.log('🔥 Updated dailyMissions state:', newDailyMissions.map(m => m?.id || 'null'));
+};
 
   // Handle removing a mission from a slot
   const handleRemoveMission = (slotIndex) => {
@@ -207,12 +215,20 @@ const EditDailyMissionsPage = ({
 
   // UPDATED: Use simplified daily mission setting
   const handleSetDailyMissions = async () => {
-    if (!currentUser) {
-      setError('You must be logged in to set daily missions');
-      return;
-    }
+  console.log('🔥 handleSetDailyMissions called');
+  console.log('🔥 Current dailyMissions state:', dailyMissions.map(m => ({
+    id: m?.id,
+    title: m?.title
+  })));
+  
+  if (!currentUser) {
+    setError('You must be logged in to set daily missions');
+    return;
+  }
 
-    const validMissions = dailyMissions.filter(mission => mission !== null);
+  const validMissions = dailyMissions.filter(mission => mission !== null);
+  
+  console.log('🔥 Valid missions:', validMissions.map(m => m.id));
     
     if (validMissions.length !== 3) {
       setError('Please select exactly 3 missions for your daily missions.');
