@@ -129,41 +129,56 @@ const EditDailyMissionsPage = ({
 
   // Handle creating new mission
   const handleAddNewMission = async (missionData) => {
-    try {
-      setSaving(true);
-      setError('');
-      
-      // Create mission with proper structure
-      const properMissionData = createMissionTemplate({
-        ...missionData,
-        status: MISSION_STATUS.ACTIVE,
-        category: 'daily'
-        // REMOVED: isDailyMission flag - not needed in simplified system
-      });
+  console.log('🔥🔥🔥 handleAddNewMission STARTED', {
+    timestamp: new Date().toISOString(),
+    missionTitle: missionData.title,
+    currentSlotIndex
+  });
+  
+  try {
+    setSaving(true);
+    setError('');
+    
+    const properMissionData = createMissionTemplate({
+      ...missionData,
+      status: MISSION_STATUS.ACTIVE,
+    });
 
-      // Create the mission
-      const missionId = await createMission(currentUser.uid, properMissionData);
-      
-      if (!missionId) {
-        throw new Error('Failed to create mission: No ID returned');
-      }
+    console.log('🔥 About to call createMission', {
+      userId: currentUser.uid,
+      missionTitle: properMissionData.title
+    });
 
-      const newMission = {
-        ...properMissionData,
-        id: missionId,
-        createdAt: new Date()
-      };
-
-      // Add to current slot
-      handleMissionSelect(newMission, currentSlotIndex);
-      
-    } catch (err) {
-      console.error('Error creating new mission:', err);
-      setError('Failed to create mission. Please try again.');
-    } finally {
-      setSaving(false);
+    const missionId = await createMission(currentUser.uid, properMissionData);
+    
+    console.log('🔥 createMission returned ID:', missionId);
+    
+    if (!missionId) {
+      throw new Error('Failed to create mission: No ID returned');
     }
-  };
+
+    const newMission = {
+      ...properMissionData,
+      id: missionId,
+      createdAt: new Date()
+    };
+
+    console.log('🔥 About to call handleMissionSelect with:', {
+      missionId: newMission.id,
+      slotIndex: currentSlotIndex
+    });
+
+    handleMissionSelect(newMission, currentSlotIndex);
+    
+    console.log('🔥🔥🔥 handleAddNewMission COMPLETED');
+    
+  } catch (err) {
+    console.error('🔥 ERROR in handleAddNewMission:', err);
+    setError('Failed to create mission. Please try again.');
+  } finally {
+    setSaving(false);
+  }
+};
 
   // Handle selecting a mission for a slot
  const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
