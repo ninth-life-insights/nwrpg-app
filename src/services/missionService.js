@@ -32,8 +32,11 @@ export const createMission = async (userId, missionData) => {
   try {
     const missionsRef = getUserMissionsRef(userId);
     
+    // Remove id field if it exists in the data being saved
+    const { id, ...dataWithoutId } = missionData;
+    
     const docRef = await addDoc(missionsRef, {
-      ...missionData,
+      ...dataWithoutId,  // Don't include id field in the document
       status: MISSION_STATUS.ACTIVE,
       createdAt: serverTimestamp(),
       completedAt: null
@@ -46,8 +49,7 @@ export const createMission = async (userId, missionData) => {
     return docRef.id;
   } catch (error) {
     console.error('Error creating mission:', error);
-    console.error('Error details:', error.message);
-    throw error; // Re-throw to let AddMissionCard handle it
+    throw error;
   }
 };
 
