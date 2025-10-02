@@ -136,7 +136,7 @@ export const getAllMissions = async (userId) => {
   }
 };
 
-// Complete a mission
+// USE WRAPPER FUNCTION NOT THIS
 export const completeMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
@@ -225,7 +225,7 @@ export const uncompleteMission = async (userId, missionId) => {
   }
 };
 
-// Complete a recurring mission and create next instance if needed
+// USE WRAPPER FUNCTION NOT THIS (Complete a recurring mission and create next instance if needed)
 export const completeRecurringMission = async (userId, missionId) => {
   try {
     // 1. Get the mission to check if it's recurring
