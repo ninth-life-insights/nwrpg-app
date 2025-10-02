@@ -136,14 +136,24 @@ export const getAllMissions = async (userId) => {
 export const completeMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
-    const xpAward = calculateTotalMissionXP(missionRef);
+    const missionDoc = await getDoc(missionRef);
+    
+    if (!missionDoc.exists()) {
+      throw new Error('Mission not found');
+    }
+    
+    const missionData = missionDoc.data();
+    
+    const xpAwarded = calculateTotalMissionXP(missionData);
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
-      xpAwarded: xpAward,
+      xpAwarded: xpAwarded,
       completedAt: serverTimestamp()
     });
 
     await addXP(userId, xpAward);
+
+    return { xpAwarded };
 
   } catch (error) {
     console.error('Error completing mission:', error);
@@ -184,6 +194,7 @@ export const deleteMission = async (userId, missionId) => {
 export const uncompleteMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    const xpToRemove = mission.xpAwarded || 0;
     await updateDoc(missionRef, {
       status: MISSION_STATUS.ACTIVE,
       completedAt: null,
