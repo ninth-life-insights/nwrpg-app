@@ -2,6 +2,7 @@
 
 import dayjs from 'dayjs';
 import { fromDateString } from '../utils/dateHelpers';
+import { checkIsDailyMission } from '../services/dailyMissionService';
 
 // Mission completion and due dates
 export const COMPLETION_TYPES = {
@@ -146,9 +147,11 @@ export const calculateSPReward = (difficulty, skill) => {
 
 export const calculateTotalMissionXP = (mission) => {
   let totalXP = mission.xpReward; // Base XP from difficulty
+
+  const isDailyMission = checkIsDailyMission(mission);
   
   // Add daily mission bonus
-  if (mission.isDailyMission) {
+  if (isDailyMission) {
     totalXP += 5;
   }
   
