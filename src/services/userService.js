@@ -39,6 +39,61 @@ export const getUserProfile = async (userId) => {
   }
 };
 
+// Calculate XP required for a specific level
+export const getXPRequiredForLevel = (level) => {
+  if (level <= 1) return 0;
+  if (level === 2) return 50;
+  if (level === 3) return 100;
+  
+  // For level 4+, scale by 1.5x from previous
+  let xpRequired = 100;
+  for (let i = 3; i < level; i++) {
+    xpRequired = Math.round(xpRequired * 1.5);
+  }
+  return xpRequired;
+};
+
+// Calculate total XP needed to reach a level
+export const getTotalXPForLevel = (level) => {
+  let total = 0;
+  for (let i = 2; i <= level; i++) {
+    total += getXPRequiredForLevel(i);
+  }
+  return total;
+};
+
+// Calculate level from total XP
+export const calculateLevelFromXP = (totalXP) => {
+  let level = 1;
+  let xpAccumulated = 0;
+  
+  while (xpAccumulated <= totalXP) {
+    level++;
+    const xpForNextLevel = getXPRequiredForLevel(level);
+    xpAccumulated += xpForNextLevel;
+    
+    if (xpAccumulated > totalXP) {
+      return level - 1;
+    }
+  }
+  
+  return level;
+};
+
+// Calculate current XP progress within current level
+export const getXPProgressInLevel = (totalXP, currentLevel) => {
+  const xpForPreviousLevels = getTotalXPForLevel(currentLevel);
+  const currentLevelXP = totalXP - xpForPreviousLevels;
+  const xpNeededForNextLevel = getXPRequiredForLevel(currentLevel + 1);
+  
+  return {
+    current: currentLevelXP,
+    required: xpNeededForNextLevel,
+    percentage: Math.round((currentLevelXP / xpNeededForNextLevel) * 100)
+  };
+};
+
+// Update user XP (call when mission completed)
 // Update user XP (call when mission completed)
 export const addXP = async (userId, xpAmount) => {
   try {
@@ -46,20 +101,23 @@ export const addXP = async (userId, xpAmount) => {
     const profile = await getUserProfile(userId);
     
     if (profile) {
-      const newCurrentXP = profile.currentXP + xpAmount;
       const newTotalXP = profile.totalXP + xpAmount;
-      
-      // Simple leveling system: 100 XP per level
-      const newLevel = Math.floor(newTotalXP / 100) + 1;
+      const newLevel = calculateLevelFromXP(newTotalXP);
+      const progress = getXPProgressInLevel(newTotalXP, newLevel);
       
       await updateDoc(userRef, {
-        currentXP: newCurrentXP,
+        currentXP: progress.current,
         totalXP: newTotalXP,
         level: newLevel,
         lastActiveDate: serverTimestamp()
       });
       
-      return { newLevel, newTotalXP, leveledUp: newLevel > profile.level };
+      return { 
+        newLevel, 
+        newTotalXP, 
+        leveledUp: newLevel > profile.level,
+        progress
+      };
     }
   } catch (error) {
     console.error('Error adding XP:', error);
@@ -74,20 +132,23 @@ export const subtractXP = async (userId, xpAmount) => {
     const profile = await getUserProfile(userId);
     
     if (profile) {
-      const newCurrentXP = Math.max(0, profile.currentXP - xpAmount);
       const newTotalXP = Math.max(0, profile.totalXP - xpAmount);
-      
-      // Recalculate level based on new total XP
-      const newLevel = Math.floor(newTotalXP / 100) + 1;
+      const newLevel = calculateLevelFromXP(newTotalXP);
+      const progress = getXPProgressInLevel(newTotalXP, newLevel);
       
       await updateDoc(userRef, {
-        currentXP: newCurrentXP,
+        currentXP: progress.current,
         totalXP: newTotalXP,
         level: newLevel,
         lastActiveDate: serverTimestamp()
       });
       
-      return { newLevel, newTotalXP, leveledDown: newLevel < profile.level };
+      return { 
+        newLevel, 
+        newTotalXP, 
+        leveledDown: newLevel < profile.level,
+        progress
+      };
     }
   } catch (error) {
     console.error('Error subtracting XP:', error);
