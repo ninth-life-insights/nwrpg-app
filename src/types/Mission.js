@@ -154,6 +154,8 @@ export const calculateTotalMissionXP = (mission) => {
   if (isDailyMission) {
     totalXP += 5;
   }
+
+  console.log('totalXP:', totalXP);
   
   return totalXP;
 };
