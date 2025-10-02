@@ -14,7 +14,8 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase/config';
-import { MISSION_STATUS,
+import { 
+  MISSION_STATUS,
   calculateTotalMissionXP
  } from '../types/Mission';
 import { 
@@ -23,7 +24,10 @@ import {
   createNextMissionInstance,
   isRecurringMission
 } from '../utils/recurrenceHelpers';
-import { addXP } from './userService';
+import { 
+  addXP,
+  subtractXP
+ } from './userService';
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {
@@ -194,12 +198,27 @@ export const deleteMission = async (userId, missionId) => {
 export const uncompleteMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
-    const xpToRemove = mission.xpAwarded || 0;
+    const missionDoc = await getDoc(missionRef);
+    const missionData = missionDoc.data;
+
+    const xpToRemove = missionData.xpAwarded || 0;
+    if (xpToRemove === 0) {
+      console.warn('Mission has no xpAwarded value, skipping XP removal');
+    }
+
     await updateDoc(missionRef, {
       status: MISSION_STATUS.ACTIVE,
       completedAt: null,
-      uncompletedAt: serverTimestamp()
+      uncompletedAt: serverTimestamp(),
+      xpAwarded: null, // Clear the stored XP
     });
+
+    if (xpToRemove > 0) {
+      await subtractXP(userId, xpToRemove);
+    }
+
+    return { xpRemoved: xpToRemove };
+
   } catch (error) {
     console.error('Error uncompleting mission:', error);
     throw error;
