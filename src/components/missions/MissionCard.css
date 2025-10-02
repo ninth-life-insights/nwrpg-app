@@ -23,7 +23,6 @@
 
 .mission-card.completed {
   background-color: #e5e7eb;
-  opacity: 0.7;
   border-color: var(--color-border);
 }
 
@@ -74,7 +73,7 @@
 
 .title-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-xs);
   gap: var(--space-sm);
@@ -91,12 +90,7 @@
   background-color: #10b981;
   color: white;
   white-space: nowrap;
-  opacity: 1;
-  transition: opacity 0.5s ease;
-}
-
-.xp-completion-badge.faded {
-  opacity: 0.7;
+  opacity: 1 !important;
 }
 
 .mission-title {
@@ -112,11 +106,17 @@
 .mission-title.completed {
   text-decoration: line-through;
   color: var(--color-text-placeholder);
+  opacity: 0.7;
 }
 
 .pin-indicator {
   font-size: 14px;
   margin-left: var(--space-xs);
+  opacity: 0.7;
+}
+
+/* Fade badges on completed cards */
+.mission-card.completed .badges {
   opacity: 0.7;
 }
 
@@ -292,6 +292,11 @@
   overflow: hidden;
 }
 
+/* Fade description on completed cards */
+.mission-card.completed .mission-description p {
+  opacity: 0.7;
+}
+
 /* ===== COMPLETION PROGRESS ===== */
 .completion-progress {
   margin-top: var(--space-sm);
@@ -328,6 +333,11 @@
   background: linear-gradient(90deg, #10b981, #059669);
   border-radius: 2px;
   transition: width 0.3s ease;
+}
+
+/* Fade completion progress on completed cards */
+.mission-card.completed .completion-progress {
+  opacity: 0.7;
 }
 
 /* ===== MISSION ACTIONS ===== */
@@ -420,10 +430,6 @@
   
   .due-date-badge.overdue {
     animation: none;
-  }
-  
-  .xp-completion-badge {
-    transition: none;
   }
 }
 

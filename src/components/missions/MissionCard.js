@@ -23,7 +23,6 @@ const MissionCard = ({
   isRecentlyCompleted = false 
 }) => {
   const [showXpBadge, setShowXpBadge] = useState(false);
-  const [xpBadgeFaded, setXpBadgeFaded] = useState(false);
   
   // Use schema utility functions for consistency
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
@@ -32,22 +31,13 @@ const MissionCard = ({
   const isRecurring = isRecurringMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
 
-  // Handle XP badge display and fade animation
+  // Handle XP badge display
   useEffect(() => {
     if (isCompleted || isRecentlyCompleted) {
       setShowXpBadge(true);
-      setXpBadgeFaded(false);
-      
-      // Start fade after 1.5 seconds
-      const fadeTimer = setTimeout(() => {
-        setXpBadgeFaded(true);
-      }, 1500);
-      
-      return () => clearTimeout(fadeTimer);
     } else {
       // Hide immediately when uncompleted
       setShowXpBadge(false);
-      setXpBadgeFaded(false);
     }
   }, [isCompleted, isRecentlyCompleted]);
   
@@ -118,7 +108,7 @@ const MissionCard = ({
         <div className="mission-header">
           <div className="title-row">
             {showXpBadge && mission.xpAwarded && (
-              <span className={`xp-completion-badge ${xpBadgeFaded ? 'faded' : ''}`}>
+              <span className="xp-completion-badge">
                 +{mission.xpAwarded} XP
               </span>
             )}
