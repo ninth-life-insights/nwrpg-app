@@ -18,7 +18,7 @@ function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
   
   if (!currentUser) {
-    return <Navigate to="/landing-page" />;
+    return <Navigate to="/" />;
   }
   
   return children;
