@@ -212,10 +212,10 @@ const MissionList = ({
       } else {
         const completedMission = missions.find(mission => mission.id === missionId);
         
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
+        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
 
           // Notify parent about the new recurring mission
-            if (onRecurringMissionCreated) {
+            if (result.nextMissionCreated && onRecurringMissionCreated) {
               onRecurringMissionCreated({
                 originalMissionId: missionId,
                 nextMissionId: result.nextMissionId,
