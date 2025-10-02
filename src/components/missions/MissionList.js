@@ -24,6 +24,7 @@ import { isRecurringMission } from '../../utils/recurrenceHelpers';
 
 // Import the date range filtering function from MissionFilterModal
 import { isWithinCompletedDateRange } from './sub-components/MissionFilterModal';
+import { calculateTotalMissionXP } from '../../types/Mission';
 
 const MissionList = ({ 
   missionType = 'active', 
@@ -203,26 +204,17 @@ const MissionList = ({
       if (isCurrentlyCompleted) {
         // Uncomplete the mission (regular logic)
         await uncompleteMission(currentUser.uid, missionId);
-        if (xpReward) {
-          await subtractXP(currentUser.uid, xpReward);
-        }
         
         // Notify parent about uncompletion
         if (onMissionUncompletion) {
           onMissionUncompletion(missionId);
         }
       } else {
-        // Complete the mission - check if it's recurring
         const completedMission = missions.find(mission => mission.id === missionId);
         
-        if (completedMission && isRecurringMission(completedMission)) {
-          // Use enhanced completion for recurring missions
-          const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-          
-          if (result.nextMissionCreated) {
-            console.log(`Next recurring mission created: ${result.nextMissionId}, due: ${result.nextDueDate}`);
-            
-            // Notify parent about the new recurring mission
+        await completeMissionWithRecurrence(currentUser.uid, missionId);
+
+          // Notify parent about the new recurring mission
             if (onRecurringMissionCreated) {
               onRecurringMissionCreated({
                 originalMissionId: missionId,
@@ -231,27 +223,11 @@ const MissionList = ({
                 missionTitle: completedMission.title
               });
             }
-          }
-        } else {
-          // Use regular completion for non-recurring missions
-          await completeMission(currentUser.uid, missionId);
-        }
-        
-        // Handle XP reward
-        if (xpReward) {
-          const result = await addXP(currentUser.uid, xpReward);
-          
-          // Show level up notification if applicable
-          if (result && result.leveledUp) {
-            // You can add a toast notification here later
-            console.log(`Level up! Now level ${result.newLevel}`);
-          }
-        }
-        
+
         // Notify parent about completion
         if (completedMission && onMissionCompletion) {
           // Update the mission status for the parent
-          const updatedMission = { ...completedMission, status: 'completed' };
+          const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded };
           onMissionCompletion(updatedMission);
         }
       }
