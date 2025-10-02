@@ -77,6 +77,26 @@
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: var(--space-xs);
+  gap: var(--space-sm);
+}
+
+/* XP Completion Badge */
+.xp-completion-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #10b981;
+  color: white;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.xp-completion-badge.faded {
+  opacity: 0.7;
 }
 
 .mission-title {
@@ -361,33 +381,6 @@
   fill: white;
 }
 
-/* ===== REWARDS PREVIEW ===== */
-.rewards-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: center;
-}
-
-.xp-reward,
-.sp-reward {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  letter-spacing: 0.3px;
-}
-
-.xp-reward {
-  background-color: #dbeafe;
-  color: #1d4ed8;
-}
-
-.sp-reward {
-  background-color: #f3e8ff;
-  color: #7c3aed;
-}
-
 /* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
   .mission-card {
@@ -427,6 +420,10 @@
   
   .due-date-badge.overdue {
     animation: none;
+  }
+  
+  .xp-completion-badge {
+    transition: none;
   }
 }
 
