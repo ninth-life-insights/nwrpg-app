@@ -40,9 +40,9 @@ function PublicRoute({ children }) {
 function AppContent() {
   const { currentUser, logout } = useAuth();
   
-  if (!currentUser) {
-    return <LandingPage />;
-  }
+  // if (!currentUser) {
+  //   return <LandingPage />;
+  // }
   
   return (
     <div className="App">
