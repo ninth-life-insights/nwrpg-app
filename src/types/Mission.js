@@ -57,6 +57,7 @@ export const MISSION_SCHEMA = {
   // Difficulty and rewards
   difficulty: DIFFICULTY_LEVELS.EASY, // string - mission difficulty
   xpReward: null,                     // number - calculated based on difficulty/completion type
+  xpAwarded: null,                    // number - keeps track of XP given if task is completed
   skill: null,                        // string | null - associated skill
   spReward: null,
   
@@ -142,6 +143,17 @@ export const calculateSPReward = (difficulty, skill) => {
     }
     return null;
 }
+
+export const calculateTotalMissionXP = (mission) => {
+  let totalXP = mission.xpReward; // Base XP from difficulty
+  
+  // Add daily mission bonus
+  if (mission.isDailyMission) {
+    totalXP += 5;
+  }
+  
+  return totalXP;
+};
 
 
 // validates missions

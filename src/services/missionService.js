@@ -14,13 +14,16 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase/config';
-import { MISSION_STATUS } from '../types/Mission';
+import { MISSION_STATUS,
+  calculateTotalMissionXP
+ } from '../types/Mission';
 import { 
   calculateNextDueDate, 
   shouldCreateNextOccurrence, 
   createNextMissionInstance,
   isRecurringMission
 } from '../utils/recurrenceHelpers';
+import { addXP } from './userService';
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {
@@ -133,10 +136,15 @@ export const getAllMissions = async (userId) => {
 export const completeMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    const xpAward = calculateTotalMissionXP(missionRef);
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
+      xpAwarded: xpAward,
       completedAt: serverTimestamp()
     });
+
+    await addXP(userId, xpAward);
+
   } catch (error) {
     console.error('Error completing mission:', error);
     throw error;
