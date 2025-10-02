@@ -155,7 +155,7 @@ export const completeMission = async (userId, missionId) => {
       completedAt: serverTimestamp()
     });
 
-    await addXP(userId, xpAward);
+    await addXP(userId, xpAwarded);
 
     return { xpAwarded };
 
