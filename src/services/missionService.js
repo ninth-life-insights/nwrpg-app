@@ -228,7 +228,7 @@ export const uncompleteMission = async (userId, missionId) => {
 // Complete a recurring mission and create next instance if needed
 export const completeRecurringMission = async (userId, missionId) => {
   try {
-    // First, get the mission to check if it's recurring
+    // 1. Get the mission to check if it's recurring
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     const missionSnap = await getDoc(missionRef);
     
@@ -238,13 +238,10 @@ export const completeRecurringMission = async (userId, missionId) => {
     
     const mission = { id: missionSnap.id, ...missionSnap.data() };
     
-    // Complete the current mission
-    await updateDoc(missionRef, {
-      status: MISSION_STATUS.COMPLETED,
-      completedAt: serverTimestamp()
-    });
+    // 2. Complete the current mission (handles XP, status, completion timestamp)
+    const { xpAwarded } = await completeMission(userId, missionId);
     
-    // Check if this is a recurring mission and should create next instance
+    // 3. Check if this is a recurring mission and should create next instance
     if (isRecurringMission(mission)) {
       const currentOccurrence = mission.occurrenceNumber || 1;
       
@@ -266,6 +263,7 @@ export const completeRecurringMission = async (userId, missionId) => {
           
           return {
             completed: true,
+            xpAwarded,
             nextMissionCreated: true,
             nextMissionId: newMissionRef.id,
             nextDueDate: nextDueDate
@@ -276,6 +274,7 @@ export const completeRecurringMission = async (userId, missionId) => {
     
     return {
       completed: true,
+      xpAwarded,
       nextMissionCreated: false
     };
     
