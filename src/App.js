@@ -41,7 +41,7 @@ function AppContent() {
   const { currentUser, logout } = useAuth();
   
   if (!currentUser) {
-    return <SignupPage />;
+    return <LandingPage />;
   }
   
   return (
