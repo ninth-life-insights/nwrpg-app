@@ -4,21 +4,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
-
-// UPDATED: Import simplified daily mission services
 import { 
   getTodaysDailyMissions,
   getDailyMissionStatus,
   needsToSetDailyMissions
 } from '../services/dailyMissionService';
-
-// Keep regular mission services for completion
 import {
-  completeMission,
+  completeMissionWithRecurrence,
   uncompleteMission
 } from '../services/missionService';
-
-import { addXP, subtractXP } from '../services/userService';
+import { addXP, 
+  subtractXP, 
+  getUserProfile,  
+  getXPProgressInLevel, 
+  getXPRequiredForLevel  
+} from '../services/userService';
 import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModal';
 import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
@@ -27,6 +27,7 @@ import './HomePage.css';
 const HomePage = () => {
   const { currentUser } = useAuth();
   const [character, setCharacter] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
   const [dailyMissionStatus, setDailyMissionStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -109,14 +110,18 @@ const HomePage = () => {
       try {
         setLoading(true);
 
-        // Fetch character data
+        // Fetch character data (for avatar/name)
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setCharacter(userData.character);
         }
 
-        // UPDATED: Fetch daily missions using simplified system
+        // NEW: Fetch user profile (for XP/level)
+        const profile = await getUserProfile(currentUser.uid);
+        setUserProfile(profile);
+
+        // Fetch daily missions
         await fetchDailyMissions();
         
       } catch (error) {
@@ -138,14 +143,10 @@ const HomePage = () => {
   // REMOVED: Complex reset logic - no longer needed
 
   // Calculate current XP and level progress
-  const getXPForLevel = (level) => level * 100; // Simple formula
-  const currentXP = character?.experience || 0;
-  const currentLevel = character?.level || 1;
-  const xpForCurrentLevel = getXPForLevel(currentLevel - 1);
-  const xpForNextLevel = getXPForLevel(currentLevel);
-  const progressXP = currentXP - xpForCurrentLevel;
-  const requiredXP = xpForNextLevel - xpForCurrentLevel;
-  const progressPercentage = (progressXP / requiredXP) * 100;
+  const currentLevel = userProfile?.level || 1;
+  const totalXP = userProfile?.totalXP || 0;
+  const progress = getXPProgressInLevel(totalXP, currentLevel);
+  const progressPercentage = progress.percentage;
 
   // SIMPLIFIED: Get daily missions status for display
   const getDailyMissionsDisplayInfo = () => {
@@ -188,19 +189,21 @@ const HomePage = () => {
           await subtractXP(currentUser.uid, xpReward);
         }
       } else {
-        // Complete the mission
-        await completeMission(currentUser.uid, missionId);
-        if (xpReward) {
-          const result = await addXP(currentUser.uid, xpReward);
-          
-          // Show level up notification if applicable
-          if (result && result.leveledUp) {
-            console.log(`Level up! Now level ${result.newLevel}`);
-          }
+        // UPDATED: Complete with recurrence support
+        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
+        
+        // Show level up notification if applicable
+        if (result && result.leveledUp) {
+          console.log(`Level up! Now level ${result.newLevel}`);
+          // TODO: Show level up animation/modal
         }
       }
       
-      // UPDATED: Reload missions to reflect changes
+      // NEW: Refresh user profile to show updated XP/level
+      const updatedProfile = await getUserProfile(currentUser.uid);
+      setUserProfile(updatedProfile);
+      
+      // Reload missions to reflect changes
       await handleDailyMissionsUpdate();
       
     } catch (err) {
@@ -286,7 +289,7 @@ const HomePage = () => {
                 ></div>
               </div>
               <div className="xp-counter">
-                {progressXP} / {requiredXP} XP
+                {progress.current} / {progress.required} XP
               </div>
             </div>
           </div>
@@ -327,7 +330,8 @@ const HomePage = () => {
             ))
           ) : (
             <div className="no-missions">
-              {/* <p>No daily missions set for today.</p>
+              <p>No daily missions set for today.</p>
+               {/*
               <button 
                 className="set-daily-missions-btn"
                 onClick={DailyPlanningClick}
