@@ -302,9 +302,10 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       return await completeRecurringMission(userId, missionId);
     } else {
       // Use the regular completion logic
-      await completeMission(userId, missionId);
+      const { xpAwarded } = await completeMission(userId, missionId);
       return {
         completed: true,
+        xpAwarded,
         nextMissionCreated: false
       };
     }
