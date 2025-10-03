@@ -1,6 +1,7 @@
 // services/userService.js
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase/config';
+import { initializeEntireBaseRoom } from './roomService';
 
 // Create initial user profile (call this when user signs up)
 export const createUserProfile = async (userId, email) => {
@@ -16,6 +17,10 @@ export const createUserProfile = async (userId, email) => {
       lastActiveDate: serverTimestamp(),
       createdAt: serverTimestamp()
     });
+    
+    // Initialize the Entire Base room
+    await initializeEntireBaseRoom(userId);
+    
   } catch (error) {
     console.error('Error creating user profile:', error);
     throw error;
@@ -93,7 +98,6 @@ export const getXPProgressInLevel = (totalXP, currentLevel) => {
   };
 };
 
-// Update user XP (call when mission completed)
 // Update user XP (call when mission completed)
 export const addXP = async (userId, xpAmount) => {
   try {
