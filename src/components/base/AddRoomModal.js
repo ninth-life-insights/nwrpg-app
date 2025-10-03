@@ -4,22 +4,21 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createRoom } from '../../services/roomService';
 import './AddRoomModal.css';
 
-// Common room icons
+// Common room icons - using verified Material Icons names
 const ROOM_ICONS = [
   'kitchen',
   'bed',
   'bathroom',
-  'living_room',
-  'dining_room',
+  'weekend', // Using 'weekend' instead of 'living_room'
+  'restaurant', // Using 'restaurant' instead of 'dining_room'
   'garage',
-  'yard',
+  'grass', // Using 'grass' instead of 'yard'
   'balcony',
-  'office',
+  'computer', // Using 'computer' instead of 'office'
   'child_care',
   'pets',
   'fitness_center',
   'local_laundry_service',
-  'room',
   'meeting_room',
   'storage',
   'stairs',
