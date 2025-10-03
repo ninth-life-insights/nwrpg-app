@@ -134,6 +134,7 @@ const MissionFilterModal = ({
                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                 className="filter-select"
               >
+                <option value="custom">Custom Order</option>
                 <option value="dueDate">Due Date</option>
                 <option value="createdAt">Created Date</option>
                 <option value="difficulty">Difficulty</option>
