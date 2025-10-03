@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 24px;
   animation: fadeIn 0.2s ease;
 }
 
@@ -120,6 +120,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  padding: 0;
 }
 
 .icon-option-compact:hover:not(.selected) {
@@ -139,56 +140,69 @@
 .icon-option-compact .material-icons {
   font-size: 28px;
   color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .icon-option-compact.selected .material-icons {
   color: #3b82f6;
 }
 
-/* Cleanliness Slider */
+/* Cleanliness Section */
+.cleanliness-section {
+  margin-bottom: 32px;
+}
+
+.cleanliness-label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  transition: color 0.3s ease;
+}
+
 .cleanliness-slider-compact {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
 }
 
 .slider-input {
   flex: 1;
-  height: 6px;
+  height: 12px;
   -webkit-appearance: none;
   appearance: none;
-  background: #e5e7eb;
-  border-radius: 3px;
+  background: linear-gradient(to right, 
+    #ef4444 0%, 
+    #f97316 25%, 
+    #eab308 50%, 
+    #84cc16 75%, 
+    #10b981 100%);
+  border-radius: 6px;
   outline: none;
+  position: relative;
 }
 
 .slider-input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--slider-color, #3b82f6);
+  background: white;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 3px solid white;
 }
 
 .slider-input::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--slider-color, #3b82f6);
+  background: white;
   cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.slider-value {
-  font-size: 16px;
-  font-weight: 600;
-  min-width: 40px;
-  text-align: right;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Submit Button */
@@ -221,7 +235,7 @@
 /* Mobile specific */
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 16px;
+    padding: 20px;
   }
   
   .add-room-modal-compact {

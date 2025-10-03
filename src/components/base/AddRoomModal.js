@@ -57,6 +57,17 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
     }
   };
 
+  const getCleanlinessLabel = (value) => {
+    const labels = {
+      1: 'Messy',
+      2: 'Needs help',
+      3: 'Workable',
+      4: 'Clean',
+      5: 'Spotless'
+    };
+    return labels[value];
+  };
+
   const getCleanlinessColor = (value) => {
     const colors = {
       1: '#ef4444',
@@ -103,20 +114,22 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
           </div>
 
           {/* Cleanliness Slider */}
-          <div className="cleanliness-slider-compact">
-            <input
-              type="range"
-              min="1"
-              max="5"
-              value={cleanliness}
-              onChange={(e) => setCleanliness(parseInt(e.target.value))}
-              className="slider-input"
-              style={{
-                '--slider-color': getCleanlinessColor(cleanliness)
-              }}
-            />
-            <div className="slider-value" style={{ color: getCleanlinessColor(cleanliness) }}>
-              {cleanliness}/5
+          <div className="cleanliness-section">
+            <div className="cleanliness-label" style={{ color: getCleanlinessColor(cleanliness) }}>
+              {getCleanlinessLabel(cleanliness)}
+            </div>
+            <div className="cleanliness-slider-compact">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={cleanliness}
+                onChange={(e) => setCleanliness(parseInt(e.target.value))}
+                className="slider-input"
+                style={{
+                  '--slider-color': getCleanlinessColor(cleanliness)
+                }}
+              />
             </div>
           </div>
 
