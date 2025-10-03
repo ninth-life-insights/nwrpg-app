@@ -69,7 +69,8 @@
 
 @media (max-width: 768px) {
   .rooms-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
     padding: var(--space-lg);
   }
 }
