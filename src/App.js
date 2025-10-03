@@ -12,6 +12,7 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 import MissionBankPage from './pages/MissionBankPage';
+import BasePage from './pages/BasePage';
 
 
 function ProtectedRoute({ children }) {
@@ -56,6 +57,7 @@ function AppContent() {
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
+        <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>
