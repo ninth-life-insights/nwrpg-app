@@ -108,7 +108,8 @@ export const MISSION_SCHEMA = {
   pinned: false,
   
   // Metadata
-  version: 1                          // number - for future schema migrations
+  version: 1,                          // number - for future schema migrations
+  customSortOrder: null,               // number | null - for manual drag-and-drop ordering
 };
 
 
