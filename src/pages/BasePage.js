@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { getRooms, getAllRoomStats } from '../services/roomService';
 import { getAllMissions } from '../services/missionService';
 import RoomCard from '../components/base/RoomCard';
-import AddRoomModal from '../components/base/AddRoomModal';
+// import AddRoomModal from '../components/base/AddRoomModal';
 import './BasePage.css';
 
 const BasePage = () => {
@@ -99,12 +99,12 @@ const BasePage = () => {
       </div>
 
       {/* Add Room Modal */}
-      {showAddRoomModal && (
+      {/* {showAddRoomModal && (
         <AddRoomModal
           onClose={() => setShowAddRoomModal(false)}
           onRoomAdded={handleRoomAdded}
         />
-      )}
+      )} */}
     </div>
   );
 };
