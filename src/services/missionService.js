@@ -349,3 +349,36 @@ export const expireMission = async (userId, missionId) => {
     throw error;
   }
 };
+
+// Update a single mission's custom sort order
+export const updateMissionCustomOrder = async (userId, missionId, customSortOrder) => {
+  try {
+    const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    await updateDoc(missionRef, {
+      customSortOrder: customSortOrder,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating mission custom order:', error);
+    throw error;
+  }
+};
+
+// Batch update multiple missions' custom sort orders
+export const batchUpdateMissionOrders = async (userId, updates) => {
+  try {
+    // updates is an array of { missionId, customSortOrder }
+    const updatePromises = updates.map(({ missionId, customSortOrder }) => {
+      const missionRef = doc(db, 'users', userId, 'missions', missionId);
+      return updateDoc(missionRef, {
+        customSortOrder: customSortOrder,
+        updatedAt: serverTimestamp()
+      });
+    });
+    
+    await Promise.all(updatePromises);
+  } catch (error) {
+    console.error('Error batch updating mission orders:', error);
+    throw error;
+  }
+};
