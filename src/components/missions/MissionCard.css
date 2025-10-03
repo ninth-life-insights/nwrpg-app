@@ -437,3 +437,40 @@
   outline: 2px solid var(--color-primary, #3b82f6);
   outline-offset: 2px;
 }
+
+/* Drag handle styling */
+.mission-card {
+  display: flex;
+  align-items: stretch;
+  /* ... your existing styles ... */
+}
+
+.drag-handle {
+  cursor: grab;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.drag-handle:hover {
+  color: #2196f3;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Ensure content area takes remaining space */
+.content-area {
+  flex: 1;
+  /* ... your existing styles ... */
+}

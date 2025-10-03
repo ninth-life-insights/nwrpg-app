@@ -1,4 +1,4 @@
-// src/components/missions/MissionCard.js
+// src/components/missions/MissionCard.js - WITH DRAG HANDLE
 import React, { useState, useEffect } from 'react';
 import DifficultyBadge from './sub-components/DifficultyBadge';
 import {
@@ -14,15 +14,37 @@ import {
   isMissionDueTomorrow
  } from '../../utils/dateHelpers';
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import './MissionCard.css';
 
 const MissionCard = ({ 
   mission, 
   onToggleComplete, 
   onViewDetails, 
-  isRecentlyCompleted = false 
+  isRecentlyCompleted = false,
+  selectionMode = false,
+  isCustomOrderMode = false
 }) => {
   const [showXpBadge, setShowXpBadge] = useState(false);
+  
+  // Drag and drop setup
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: mission.id,
+    disabled: !isCustomOrderMode || selectionMode
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
   
   // Use schema utility functions for consistency
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
@@ -36,7 +58,6 @@ const MissionCard = ({
     if (isCompleted || isRecentlyCompleted) {
       setShowXpBadge(true);
     } else {
-      // Hide immediately when uncompleted
       setShowXpBadge(false);
     }
   }, [isCompleted, isRecentlyCompleted]);
@@ -48,14 +69,12 @@ const MissionCard = ({
     if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
     if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
     
-    // For other upcoming dates, show the actual date
     return {
       status: 'upcoming',
       display: formatForUser(mission.dueDate)
     };
   };
 
-  // Get completion type display info
   const getCompletionTypeInfo = () => {
     switch (mission.completionType) {
       case COMPLETION_TYPES.TIMER:
@@ -80,26 +99,43 @@ const MissionCard = ({
   const dueDateInfo = getDueDateInfo();
   const completionInfo = getCompletionTypeInfo();
 
-  // Handle completion toggle with schema validation
   const handleToggleComplete = (e) => {
     e.stopPropagation();
     
     if (isCompleted) {
-      // Always allow uncompleting
       onToggleComplete(mission.id, true, mission.xpReward, mission.spReward);
     } else {
-      // Check if mission can be completed based on completion type
       if (canComplete) {
         onToggleComplete(mission.id, false, mission.xpReward, mission.spReward);
       } else {
-        // Could show a toast here about why it can't be completed
         console.log('Mission cannot be completed yet');
       }
     }
   };
 
   return (
-    <div className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''}`}>
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
+    >
+      {/* Drag Handle - only visible in custom order mode */}
+      {isCustomOrderMode && !selectionMode && (
+        <div 
+          className="drag-handle"
+          {...attributes}
+          {...listeners}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="9" cy="6" r="1.5"/>
+            <circle cx="9" cy="12" r="1.5"/>
+            <circle cx="9" cy="18" r="1.5"/>
+            <circle cx="15" cy="6" r="1.5"/>
+            <circle cx="15" cy="12" r="1.5"/>
+            <circle cx="15" cy="18" r="1.5"/>
+          </svg>
+        </div>
+      )}
 
       {/* Content area */}
       <div className="content-area" onClick={() => onViewDetails(mission)}>
