@@ -1,5 +1,5 @@
 // src/components/rooms/AddRoomModal.js
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createRoom } from '../../services/roomService';
 import './AddRoomModal.css';
@@ -22,7 +22,10 @@ const ROOM_ICONS = [
   'room',
   'meeting_room',
   'storage',
-  'stairs'
+  'stairs',
+  'deck',
+  'home',
+  'door_front'
 ];
 
 const AddRoomModal = ({ onClose, onRoomAdded }) => {
@@ -31,19 +34,15 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
   const [selectedIcon, setSelectedIcon] = useState('room');
   const [cleanliness, setCleanliness] = useState(3);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const iconScrollRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!roomName.trim()) {
-      setError('Please enter a room name');
-      return;
-    }
+    if (!roomName.trim()) return;
 
     try {
       setSaving(true);
-      setError('');
       
       await createRoom(currentUser.uid, {
         name: roomName.trim(),
@@ -54,7 +53,6 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
       onRoomAdded();
     } catch (err) {
       console.error('Error creating room:', err);
-      setError('Failed to create room. Please try again.');
       setSaving(false);
     }
   };
@@ -72,37 +70,30 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content add-room-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Add New Room</h2>
-          <button className="close-button" onClick={onClose}>
-            <span className="material-icons">close</span>
-          </button>
-        </div>
+      <div className="modal-content add-room-modal-compact" onClick={(e) => e.stopPropagation()}>
+        <button className="close-button-compact" onClick={onClose}>
+          <span className="material-icons">close</span>
+        </button>
 
-        <form onSubmit={handleSubmit} className="add-room-form">
-          {/* Room Name */}
-          <div className="form-section">
-            <label className="form-label">Room Name</label>
-            <input
-              type="text"
-              className="text-input"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              placeholder="e.g., Kitchen, Master Bedroom"
-              autoFocus
-            />
-          </div>
+        <form onSubmit={handleSubmit}>
+          {/* Room Name Input */}
+          <input
+            type="text"
+            className="room-name-input"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            placeholder="Room name (e.g., Kitchen)"
+            autoFocus
+          />
 
-          {/* Icon Picker */}
-          <div className="form-section">
-            <label className="form-label">Choose an Icon</label>
-            <div className="icon-grid">
+          {/* Icon Picker - Single Row Scroll */}
+          <div className="icon-scroll-container" ref={iconScrollRef}>
+            <div className="icon-scroll">
               {ROOM_ICONS.map((icon) => (
                 <button
                   key={icon}
                   type="button"
-                  className={`icon-option ${selectedIcon === icon ? 'selected' : ''}`}
+                  className={`icon-option-compact ${selectedIcon === icon ? 'selected' : ''}`}
                   onClick={() => setSelectedIcon(icon)}
                 >
                   <span className="material-icons">{icon}</span>
@@ -112,49 +103,31 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
           </div>
 
           {/* Cleanliness Slider */}
-          <div className="form-section">
-            <label className="form-label">
-              Current Cleanliness: {cleanliness}/5
-            </label>
-            <div className="slider-container">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                value={cleanliness}
-                onChange={(e) => setCleanliness(parseInt(e.target.value))}
-                className="cleanliness-slider"
-                style={{
-                  '--slider-color': getCleanlinessColor(cleanliness)
-                }}
-              />
-              <div className="slider-labels">
-                <span>Needs Work</span>
-                <span>Spotless</span>
-              </div>
+          <div className="cleanliness-slider-compact">
+            <input
+              type="range"
+              min="1"
+              max="5"
+              value={cleanliness}
+              onChange={(e) => setCleanliness(parseInt(e.target.value))}
+              className="slider-input"
+              style={{
+                '--slider-color': getCleanlinessColor(cleanliness)
+              }}
+            />
+            <div className="slider-value" style={{ color: getCleanlinessColor(cleanliness) }}>
+              {cleanliness}/5
             </div>
           </div>
 
-          {error && <div className="error-message">{error}</div>}
-
-          {/* Action Buttons */}
-          <div className="modal-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={onClose}
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={saving}
-            >
-              {saving ? 'Adding...' : 'Add Room'}
-            </button>
-          </div>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="submit-button-compact"
+            disabled={saving || !roomName.trim()}
+          >
+            {saving ? 'Adding...' : 'Add Room'}
+          </button>
         </form>
       </div>
     </div>
