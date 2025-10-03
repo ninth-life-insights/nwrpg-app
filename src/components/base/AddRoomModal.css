@@ -5,13 +5,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 24px;
-  animation: fadeIn 0.2s ease;
+  padding: var(--space-xl) var(--space-xl);
+  animation: fadeIn var(--transition);
 }
 
 @keyframes fadeIn {
@@ -20,13 +20,13 @@
 }
 
 .add-room-modal-compact {
-  background: white;
-  border-radius: 16px;
+  background: var(--color-bg-white);
+  border-radius: var(--radius-xl);
   width: 100%;
   max-width: 500px;
-  padding: 32px 24px 24px;
+  padding: 32px var(--space-xl) var(--space-xl);
   position: relative;
-  animation: scaleIn 0.2s ease;
+  animation: scaleIn var(--transition);
 }
 
 @keyframes scaleIn {
@@ -36,19 +36,19 @@
 
 .close-button-compact {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--space-lg);
+  right: var(--space-lg);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: var(--space-xs);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: var(--color-text-placeholder);
   z-index: 1;
-  border-radius: 6px;
-  transition: background 0.2s ease;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
 }
 
 .close-button-compact:hover {
@@ -56,29 +56,29 @@
 }
 
 .close-button-compact .material-icons {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
 }
 
 /* Room Name Input */
 .room-name-input {
   width: 100%;
-  padding: 16px;
+  padding: var(--space-lg);
   border: none;
-  border-bottom: 2px solid #e5e7eb;
-  font-size: 18px;
+  border-bottom: 2px solid var(--color-border);
+  font-size: var(--font-size-xl);
   font-weight: 500;
   margin-bottom: 32px;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--transition);
   box-sizing: border-box;
 }
 
 .room-name-input:focus {
   outline: none;
-  border-bottom-color: #3b82f6;
+  border-bottom-color: var(--color-primary);
 }
 
 .room-name-input::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-placeholder);
   font-weight: 400;
 }
 
@@ -91,9 +91,9 @@
 
 .icon-scroll {
   display: flex;
-  gap: 12px;
+  gap: var(--space-md);
   overflow-x: auto;
-  padding: 4px 0 12px 0;
+  padding: var(--space-xs) 0 var(--space-md) 0;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
@@ -113,13 +113,13 @@
   width: 56px;
   height: 56px;
   background: #f9fafb;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all var(--transition);
   padding: 0;
 }
 
@@ -134,7 +134,7 @@
 
 .icon-option-compact.selected {
   background: #dbeafe;
-  border-color: #3b82f6;
+  border-color: var(--color-primary);
 }
 
 .icon-option-compact .material-icons {
@@ -147,7 +147,7 @@
 }
 
 .icon-option-compact.selected .material-icons {
-  color: #3b82f6;
+  color: var(--color-primary);
 }
 
 /* Cleanliness Section */
@@ -159,6 +159,7 @@
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
+  text-align: left;
   transition: color 0.3s ease;
 }
 
@@ -208,19 +209,19 @@
 /* Submit Button */
 .submit-button-compact {
   width: 100%;
-  padding: 16px;
-  background: #3b82f6;
-  color: white;
+  padding: var(--space-lg);
+  background: var(--color-primary);
+  color: var(--color-bg-white);
   border: none;
-  border-radius: 12px;
-  font-size: 16px;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-lg);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition);
 }
 
 .submit-button-compact:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--color-primary-hover);
 }
 
 .submit-button-compact:active:not(:disabled) {
@@ -228,17 +229,17 @@
 }
 
 .submit-button-compact:disabled {
-  background: #9ca3af;
+  background: var(--color-text-placeholder);
   cursor: not-allowed;
 }
 
 /* Mobile specific */
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 20px;
+    padding: var(--space-xl);
   }
   
   .add-room-modal-compact {
-    padding: 28px 20px 20px;
+    padding: 28px var(--space-xl) var(--space-xl);
   }
 }

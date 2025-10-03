@@ -9,9 +9,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: var(--space-xl);
+  background: var(--color-bg-white);
+  box-shadow: var(--shadow-card);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -21,12 +21,12 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: var(--space-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  transition: background 0.2s ease;
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
 }
 
 .back-button:hover {
@@ -34,12 +34,12 @@
 }
 
 .back-button .material-icons {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   color: #374151;
 }
 
 .page-title {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   margin: 0;
   color: #1a1a1a;
@@ -52,8 +52,8 @@
 .rooms-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  padding: 24px;
+  gap: var(--space-xl);
+  padding: var(--space-xl) var(--space-xs);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -63,13 +63,13 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   color: #666;
 }
 
 @media (max-width: 768px) {
   .rooms-grid {
     grid-template-columns: 1fr;
-    padding: 16px;
+    padding: var(--space-lg);
   }
 }
