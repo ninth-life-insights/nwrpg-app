@@ -1,0 +1,130 @@
+/* src/components/ui/Badge.css */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.badge-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Variant: Skill */
+.badge-skill {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+  max-width: 120px;
+}
+
+/* Variant: Daily */
+.badge-daily {
+  background-color: #ffffff;
+  color: #d97706;
+  font-weight: 600;
+}
+
+/* Variant: Recurrence */
+.badge-recurrence {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.badge-recurrence .badge-icon svg {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+/* Variant: Due Date statuses */
+.badge-due-upcoming {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.badge-due-tomorrow {
+  background-color: #fef3c7;
+  color: #d97706;
+  font-weight: 600;
+}
+
+.badge-due-today {
+  background-color: #fed7aa;
+  color: #ea580c;
+  font-weight: 600;
+}
+
+.badge-due-overdue {
+  background-color: #fee2e2;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Variant: Priority */
+.badge-priority-high {
+  background-color: #fee2e2;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Variant: Difficulty (used by DifficultyBadge) */
+.badge-difficulty-easy {
+  background-color: var(--color-easy);
+  color: var(--color-success);
+}
+
+.badge-difficulty-easy .badge-icon svg {
+  fill: var(--color-success);
+}
+
+.badge-difficulty-medium {
+  background-color: var(--color-medium);
+  color: #a08300;
+}
+
+.badge-difficulty-medium .badge-icon svg {
+  fill: #a08300;
+}
+
+.badge-difficulty-hard {
+  background-color: var(--color-hard);
+  color: var(--color-error);
+}
+
+.badge-difficulty-hard .badge-icon svg {
+  fill: var(--color-error);
+}
+
+.badge-difficulty-easy .badge-icon svg,
+.badge-difficulty-medium .badge-icon svg,
+.badge-difficulty-hard .badge-icon svg {
+  width: 10px;
+  height: 10px;
+  margin: 2px 0.1px;
+}
+
+.badge-difficulty-easy .badge-text,
+.badge-difficulty-medium .badge-text,
+.badge-difficulty-hard .badge-text {
+  font-size: 10px;
+  margin-left: 2px;
+}
