@@ -531,7 +531,6 @@ const MissionList = ({
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        modifiers={[]} // Add this to prevent default animations
       >
         <SortableContext
           items={displayMissions.map(m => m.id)}
