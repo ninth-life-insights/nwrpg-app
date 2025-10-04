@@ -2,15 +2,21 @@
 import React from 'react';
 import './Badge.css';
 
+const StarIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px">
+    <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z" />
+  </svg>
+);
+
 const Badge = ({ 
   variant = 'default',
   icon,
-  iconPosition = 'left',
+  difficulty, // For difficulty variants
   children 
 }) => {
-  // Auto-assign icons based on variant
   let defaultIcon = icon;
   
+  // Handle recurrence icon
   if (!icon && variant === 'recurrence') {
     defaultIcon = (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -20,15 +26,24 @@ const Badge = ({
     );
   }
   
+  // Handle difficulty stars
+  if (!icon && variant === 'difficulty' && difficulty) {
+    const numStars = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
+    const stars = Array(numStars).fill(null).map((_, i) => <StarIcon key={i} />);
+    defaultIcon = <>{stars}</>;
+  }
+  
+  // Determine the actual variant class
+  const variantClass = variant === 'difficulty' && difficulty 
+    ? `difficulty-${difficulty}` 
+    : variant;
+  
   return (
-    <span className={`badge badge-${variant}`}>
-      {defaultIcon && iconPosition === 'left' && (
+    <span className={`badge badge-${variantClass}`}>
+      {defaultIcon && (
         <span className="badge-icon">{defaultIcon}</span>
       )}
       <span className="badge-text">{children}</span>
-      {defaultIcon && iconPosition === 'right' && (
-        <span className="badge-icon">{defaultIcon}</span>
-      )}
     </span>
   );
 };
