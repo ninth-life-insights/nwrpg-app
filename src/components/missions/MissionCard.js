@@ -114,31 +114,35 @@ const MissionCard = ({
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style}
-      className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
-    >
-      {/* Drag Handle - only visible in custom order mode */}
-      {isCustomOrderMode && !selectionMode && (
-        <div 
-          className="drag-handle"
-          {...attributes}
-          {...listeners}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="9" cy="6" r="1.5"/>
-            <circle cx="9" cy="12" r="1.5"/>
-            <circle cx="9" cy="18" r="1.5"/>
-            <circle cx="15" cy="6" r="1.5"/>
-            <circle cx="15" cy="12" r="1.5"/>
-            <circle cx="15" cy="18" r="1.5"/>
-          </svg>
-        </div>
-      )}
+  <div 
+    ref={setNodeRef} 
+    style={style}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
+  >
+    {/* Drag Handle - only visible in custom order mode */}
+    {isCustomOrderMode && !selectionMode && (
+      <div 
+        className="drag-handle"
+        {...attributes}
+        {...listeners}
+        style={{ touchAction: 'none' }} // Add inline style
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="9" cy="6" r="1.5"/>
+          <circle cx="9" cy="12" r="1.5"/>
+          <circle cx="9" cy="18" r="1.5"/>
+          <circle cx="15" cy="6" r="1.5"/>
+          <circle cx="15" cy="12" r="1.5"/>
+          <circle cx="15" cy="18" r="1.5"/>
+        </svg>
+      </div>
+    )}
 
-      {/* Content area */}
-      <div className="content-area" onClick={() => onViewDetails(mission)}>
+    {/* Content area - remove onClick when in custom order mode to prevent conflicts */}
+    <div 
+      className="content-area" 
+      onClick={isCustomOrderMode ? undefined : () => onViewDetails(mission)}
+    >
         
         {/* Header with title and badges */}
         <div className="mission-header">

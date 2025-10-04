@@ -276,6 +276,11 @@
   justify-content: center;
   color: #666;
   transition: color 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -webkit-touch-callout: none; /* Prevent iOS callout menu */
+  touch-action: none;
 }
 
 .drag-handle:hover {
@@ -295,9 +300,16 @@
   display: none;
 }
 
+.mission-card {
+  touch-action: none;
+}
+
 .mission-card.dragging {
   opacity: 0.5;
   transform: scale(0.98);
+  user-select: none; /* Prevent text selection while dragging */
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 .mission-card.drag-over {
