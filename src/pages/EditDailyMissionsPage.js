@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 // Component imports
 import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
-import DifficultyBadge from '../components/missions/sub-components/DifficultyBadge';
+import Badge from '../components/ui/Badge';
 
 // Service imports - UPDATED for simplified system
 import { 
@@ -24,22 +24,23 @@ import {
 
 // Date helpers
 import {
-  formatDueDateForUser,
-  getDueDateStatus,
-  toDateString
+  isMissionDueToday,
+  isMissionDueTomorrow,
+  isMissionOverdue,
+  toDateString,
+  formatForUser
 } from '../utils/dateHelpers';
+
+import { isRecurringMission, 
+  getRecurrenceDisplayText 
+} from '../utils/recurrenceHelpers';
+
+import { hasSkill } from '../types/Mission';
 
 // Mission helpers
 import { 
   isMissionCompleted 
 } from '../utils/missionHelpers';
-
-// Types
-import {
-  createMissionTemplate,
-  DIFFICULTY_LEVELS,
-  MISSION_STATUS
-} from '../types/Mission';
 
 import './EditDailyMissionsPage.css';
 
@@ -228,15 +229,7 @@ const handleAddNewMission = async (missionData) => {
     }
   };
 
-  // Helper to get due date info
-  const getDueDateInfo = (mission) => {
-    if (!mission.dueDate) return null;
-    
-    const status = getDueDateStatus(mission);
-    const display = formatDueDateForUser(mission);
-    
-    return { status, display };
-  };
+  
 
   // Check if all slots are filled
   const allSlotsFilled = dailyMissions.every(mission => mission !== null);
@@ -288,28 +281,58 @@ const handleAddNewMission = async (missionData) => {
         </div>
       )}
 
+      
+
       {/* Mission Slots */}
       <div className="mission-slots">
         {dailyMissions.map((mission, index) => (
           <div key={index} className="mission-slot">
             {mission ? (
-              // Filled slot
+            (() => {
+              // Helper to get due date info
+              const getDueDateInfo = () => {
+                  if (!mission.dueDate) return null;
+                  
+                  // Remove "due-" prefix from status since we add it in the Badge variant
+                  if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
+                  if (isMissionDueToday(mission)) return { status: 'today', display: 'Today' };
+                  if (isMissionDueTomorrow(mission)) return { status: 'tomorrow', display: 'Tomorrow' };
+                  
+                  return {
+                    status: 'upcoming',
+                    display: formatForUser(mission.dueDate)
+                  };
+                };
+              // Calculate these once per mission
+              const isRecurring = isRecurringMission(mission);
+              const recurrenceText = getRecurrenceDisplayText(mission);
+              const dueDateInfo = getDueDateInfo(mission);
+              const missionHasSkill = hasSkill(mission);
+            
+            return (
               <div className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}>
                 <div className="mission-info">
                   <h3 className={`mission-title ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.title}</h3>
                   <p className={`mission-description ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.description || 'No description'}</p>
                   <div className="mission-badges">
-                    <DifficultyBadge difficulty={mission.difficulty} />
-                    
-                    {mission.dueDate && getDueDateInfo(mission) && (
-                      <span className={`due-date-badge ${getDueDateInfo(mission).status}`}>
-                        {getDueDateInfo(mission).display}
-                      </span>
+                    {/* Recurrence badge */}
+                    {isRecurring && (
+                      <Badge variant="recurrence">
+                        {recurrenceText}
+                      </Badge>
                     )}
-                    
-                    {mission.skill && (
-                      <span className="skill-badge">{mission.skill}</span>
+
+                    {/* Due date badge */}
+                    {dueDateInfo && (
+                      <Badge variant={`due-${dueDateInfo.status}`}>
+                        {dueDateInfo.display}
+                      </Badge>
                     )}
+
+                    {/* Difficulty badge */}
+                    <Badge variant="difficulty" difficulty={mission.difficulty}>
+                      {mission.difficulty.charAt(0).toUpperCase() + mission.difficulty.slice(1)}
+                    </Badge>
                   </div>
                 </div>
                 <button 
@@ -321,7 +344,9 @@ const handleAddNewMission = async (missionData) => {
                   −
                 </button>
               </div>
-            ) : (
+            );
+          })()
+        ) : (
               // Empty slot
               <div 
                 className="mission-slot-empty clickable"
