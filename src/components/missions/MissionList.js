@@ -503,19 +503,6 @@ const MissionList = ({
 
   return (
     <div className={selectionMode ? 'mission-list-selection-mode' : 'mission-list'}>
-      
-      {/* Custom Order Mode Indicator */}
-      {isCustomOrderMode && !selectionMode && (
-        <div className="custom-order-indicator">
-          <div className="custom-order-indicator-content">
-            <span className="custom-order-indicator-icon">⋮⋮</span>
-            <div className="custom-order-indicator-text">
-              <h4>Custom Order Mode</h4>
-              <p>Drag missions to reorder them</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {selectionMode && (
         <div style={{
