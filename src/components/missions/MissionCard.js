@@ -34,7 +34,6 @@ const MissionCard = ({
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({ 
     id: mission.id,
@@ -43,7 +42,6 @@ const MissionCard = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
   };
   
   // Use schema utility functions for consistency
