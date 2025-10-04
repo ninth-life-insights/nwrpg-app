@@ -7,9 +7,27 @@
   border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform: uppercase; /* Default to uppercase */
   letter-spacing: 0.5px;
   white-space: nowrap;
+}
+
+.badge-skill,
+.badge-recurrence {
+  text-transform: none; /* Override to use normal casing */
+}
+
+/* Keep uppercase for these (already default, but explicit for clarity) */
+.badge-daily,
+.badge-due-upcoming,
+.badge-due-tomorrow,
+.badge-due-today,
+.badge-due-overdue,
+.badge-difficulty-easy,
+.badge-difficulty-medium,
+.badge-difficulty-hard,
+.badge-priority-high {
+  text-transform: uppercase;
 }
 
 .badge-icon {
@@ -68,7 +86,7 @@
 }
 
 .badge-due-today {
-  background-color: #fed7aa;
+  background-color: #ffe6c9;
   color: #ea580c;
   font-weight: 600;
 }
