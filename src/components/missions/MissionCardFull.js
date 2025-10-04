@@ -1,6 +1,7 @@
 // src/components/missions/MissionCardFull.js
 import React from 'react';
 import DifficultyBadge from './sub-components/DifficultyBadge';
+import Badge from '../ui/Badge';
 import {
   MISSION_STATUS,
 } from '../../types/Mission';
@@ -19,8 +20,8 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission }
     if (!mission.dueDate) return null;
         
         if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
-        if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
-        if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
+        if (isMissionDueToday(mission)) return { status: 'today', display: 'Due Today' };
+        if (isMissionDueTomorrow(mission)) return { status: 'tomorrow', display: 'Due Tomorrow' };
         
         // For other upcoming dates, show the actual date
         return {
@@ -88,20 +89,7 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission }
           {/* Daily Mission Badge - Above Title */}
           {mission.isDailyMission && (
             <div className="daily-mission-header">
-              <span className="daily-mission-badge-orange">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="5"/>
-                  <line x1="12" y1="1" x2="12" y2="3"/>
-                  <line x1="12" y1="21" x2="12" y2="23"/>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                  <line x1="1" y1="12" x2="3" y2="12"/>
-                  <line x1="21" y1="12" x2="23" y2="12"/>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                </svg>
-                Daily Mission
-              </span>
+              <Badge variant="daily" icon="sunny">Daily</Badge>
             </div>
           )}
           
@@ -119,33 +107,22 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission }
 
           {/* Badges - All on one line */}
           <div className="mission-badges">
-            <DifficultyBadge difficulty={mission.difficulty} />
-            
-            <span className="status-badge-inline">
-              Status: {isCompleted ? 'Completed' : 'Active'}
-            </span>
-            
+
             {/* Recurrence badge */}
             {isRecurring && (
-              <span className="recurrence-badge-full" title={`Repeats ${recurrenceText.toLowerCase()}`}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.5 0 4.74 1.02 6.36 2.68l1.39-1.39"/>
-                  <path d="M17 8l4 4-4 4"/>
-                </svg>
-                Repeats {recurrenceText}
-              </span>
+              <Badge variant="recurrence">{recurrenceText}</Badge>
             )}
             
             {dueDateInfo && (
-              <span className={`due-date-badge ${dueDateInfo.status}`}>
+              <Badge variant={`due-${dueDateInfo.status}`}>
                 {dueDateInfo.display}
-              </span>
+              </Badge>
             )}
+
+            <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
             
             {mission.skill && (
-              <span className="skill-badge">
-                Skill: {mission.skill}
-              </span>
+              <Badge variant="skill">Skill: {mission.skill}</Badge>
             )}
           </div>
 
@@ -169,20 +146,6 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission }
               <div className="detail-item">
                 <h4>Completed</h4>
                 <p>{formatCreatedDate(mission.completedAt)}</p>
-              </div>
-            )}
-
-            {/* Recurrence Details */}
-            {isRecurring && (
-              <div className="detail-item">
-                <h4>Recurrence</h4>
-                <p>{recurrenceText}</p>
-                {mission.recurrence.endDate && (
-                  <p className="recurrence-end">Ends: {formatForUser(mission.recurrence.endDate)}</p>
-                )}
-                {mission.recurrence.maxOccurrences && (
-                  <p className="recurrence-end">Ends after: {mission.recurrence.maxOccurrences} times</p>
-                )}
               </div>
             )}
           </div>
