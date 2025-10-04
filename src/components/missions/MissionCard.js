@@ -1,6 +1,6 @@
 // src/components/missions/MissionCard.js - WITH DRAG HANDLE
 import React, { useState, useEffect } from 'react';
-import DifficultyBadge from './sub-components/DifficultyBadge';
+import Badge from '../ui/Badge';
 import {
   MISSION_STATUS,
   COMPLETION_TYPES,
@@ -159,37 +159,28 @@ const MissionCard = ({
 
             {/* Daily mission badge */}
             {mission.isDailyMission && (
-              <span className="daily-mission-badge">Daily</span>
+              <Badge variant="daily">Daily</Badge>
             )}
             
             {/* Recurrence badge */}
             {isRecurring && (
-              <span className="recurrence-badge" title={`Repeats ${recurrenceText.toLowerCase()}`}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.5 0 4.74 1.02 6.36 2.68l1.39-1.39"/>
-                  <path d="M17 8l4 4-4 4"/>
-                </svg>
+              <Badge variant="recurrence">
                 {recurrenceText}
-              </span>
+              </Badge>
             )}
-
-            <DifficultyBadge difficulty={mission.difficulty} />
 
             {/* Due date badge */}
             {dueDateInfo && (
-              <span className={`due-date-badge ${dueDateInfo.status}`}>
+              <Badge variant={`due-${dueDateInfo.status}`}>
                 {dueDateInfo.display}
-              </span>
+              </Badge>
             )}
-            
-            {/* High priority badge */}
-            {mission.priority === 'high' && (
-              <span className="priority-badge high">High Priority</span>
-            )}
+
+            <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>          
             
             {/* Skill badge */}
             {missionHasSkill && (
-              <span className="skill-badge-mini">{mission.skill}</span>
+              <Badge variant="skill">{mission.skill}</Badge>
             )}
           </div>
         </div>
