@@ -389,7 +389,7 @@ const MissionList = ({
   const handleDragEnd = async (event) => {
     const { active, over } = event;
 
-    if (!isCustomOrderMode || !over) {
+    if (!isCustomOrderMode) {
       return;
     }
 
@@ -407,21 +407,16 @@ const MissionList = ({
       // Update local state immediately for responsiveness
       setMissions(reorderedMissions);
 
-      // Update ALL missions with their new positions in Firestore
+      // Update just the dragged mission's order in Firestore
       try {
+        await updateMissionCustomOrder(currentUser.uid, active.id, newIndex);
+        
+        // Update all affected missions in local state
         const updates = reorderedMissions.map((mission, index) => ({
-          missionId: mission.id,
-          customSortOrder: index
-        }));
-        
-        await batchUpdateMissionOrders(currentUser.uid, updates);
-        
-        // Update local state with the new order values
-        const updatedMissions = reorderedMissions.map((mission, index) => ({
           ...mission,
           customSortOrder: index
         }));
-        setMissions(updatedMissions);
+        setMissions(updates);
         
       } catch (error) {
         console.error('Error updating mission order:', error);
