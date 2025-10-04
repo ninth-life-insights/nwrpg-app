@@ -447,9 +447,9 @@
 
 .drag-handle {
   cursor: grab;
-  padding: 0 12px; /* Increased from 8px */
-  min-width: 44px; /* Apple's recommended touch target */
-  min-height: 44px; /* Apple's recommended touch target */
+  padding: 0 0 0 8px; /* Increased from 8px */
+  /* min-width: 44px; /* Apple's recommended touch target */
+  /* min-height: 44px; Apple's recommended touch target */
   display: flex;
   align-items: center;
   justify-content: center;
