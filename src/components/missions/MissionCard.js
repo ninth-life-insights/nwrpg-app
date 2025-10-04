@@ -63,9 +63,10 @@ const MissionCard = ({
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
     
+    // Remove "due-" prefix from status since we add it in the Badge variant
     if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
-    if (isMissionDueToday(mission)) return { status: 'due-today', display: 'Due Today' };
-    if (isMissionDueTomorrow(mission)) return { status: 'due-tomorrow', display: 'Due Tomorrow' };
+    if (isMissionDueToday(mission)) return { status: 'today', display: 'Today' };
+    if (isMissionDueTomorrow(mission)) return { status: 'tomorrow', display: 'Tomorrow' };
     
     return {
       status: 'upcoming',
