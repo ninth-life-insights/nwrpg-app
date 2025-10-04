@@ -41,10 +41,10 @@ const MissionCard = ({
     disabled: !isCustomOrderMode || selectionMode
   });
 
-  const style = {
+  const style = transform ? {
     transform: CSS.Transform.toString(transform),
-    transition,
-  };
+    transition: isDragging ? 'none' : 'transform 150ms cubic-bezier(0.2, 0, 0, 1)', // Custom easing
+  } : undefined;
   
   // Use schema utility functions for consistency
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
