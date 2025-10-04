@@ -139,10 +139,7 @@ const MissionCard = ({
     )}
 
     {/* Content area - remove onClick when in custom order mode to prevent conflicts */}
-    <div 
-      className="content-area" 
-      onClick={isCustomOrderMode ? undefined : () => onViewDetails(mission)}
-    >
+    <div className="content-area" onClick={() => onViewDetails(mission)}>
         
         {/* Header with title and badges */}
         <div className="mission-header">
