@@ -69,15 +69,15 @@ const MissionList = ({
 
   // Drag and drop sensors
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        // delay: 150,
-        tolerance: 8,
+        delay: 150,
+        tolerance: 5,
+      },
+    }),
+    useSensor(PointerSensor, { // Only for desktop
+      activationConstraint: {
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {

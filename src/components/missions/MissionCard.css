@@ -447,13 +447,19 @@
 
 .drag-handle {
   cursor: grab;
-  padding: 0 8px;
+  padding: 0 12px; /* Increased from 8px */
+  min-width: 44px; /* Apple's recommended touch target */
+  min-height: 44px; /* Apple's recommended touch target */
   display: flex;
   align-items: center;
   justify-content: center;
   color: #666;
   transition: color 0.2s ease;
-  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -webkit-touch-callout: none; /* Prevent iOS callout menu */
+  touch-action: none;
 }
 
 .drag-handle:hover {
@@ -467,6 +473,10 @@
 .drag-handle svg {
   width: 20px;
   height: 20px;
+}
+
+.drag-handle.hidden {
+  display: none;
 }
 
 /* Ensure content area takes remaining space */
