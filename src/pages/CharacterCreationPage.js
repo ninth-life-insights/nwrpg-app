@@ -20,7 +20,7 @@ const CharacterCreationPage = () => {
   
   const { currentUser } = useAuth();
 
-  const classes = ['Knight', 'Sorceress', 'Storm Tamer', "l'Artiste"];
+  const classes = ['Knight', 'Sorceress', 'Ranger', 'Storm Tamer', "Entrepreneur", "Vacationer"];
   const colors = [
     { name: 'blue', value: '#3b82f6' },
     { name: 'green', value: '#10b981' },
@@ -29,15 +29,9 @@ const CharacterCreationPage = () => {
     { name: 'red', value: '#ef4444' }
   ];
 
-  
-  // Helper function to get the appropriate avatar image for Sorceress class
-  const getSorceressAvatar = (colorName) => {
-    return `/assets/Avatars/Party-Leader/Sorceress/char-preview/sorceress-${colorName}.png`;
-  };
-
-  // Helper function to check if current selection is Sorceress
-  const isSorceressSelected = () => {
-    return selectedClass === 1; // Sorceress is at index 1 in the classes array
+  const getAvatar = (className, colorName) => {
+    const classSlug = className.toLowerCase().replace(/\s+/g, '-');
+    return `/assets/Avatars/Party-Leader/small/${classSlug}-${colorName}-sm.png`;
   };
 
   const nextClass = () => {
@@ -198,30 +192,28 @@ const CharacterCreationPage = () => {
                 transform: `translateX(-${currentIndex * (100 / 3)}%)`
                 }}>
                 {classes.map((className, index) => (
-                    <div 
+                  <div 
                     key={index} 
                     className={`class-slide ${index === selectedClass ? 'selected' : ''}`}
                     onClick={() => setSelectedClass(index)}
-                    >
+                  >
                     <div className="class-avatar-placeholder">
-                        {/* Show Sorceress avatar if this is Sorceress class AND it's selected */}
-                        {className === 'Sorceress' && index === selectedClass ? (
-                          <img 
-                            src={getSorceressAvatar(selectedColor)}
-                            alt={`${className} ${selectedColor}`}
-                            className="class-avatar-image"
-                            onError={(e) => {
-                              // Fallback to placeholder if image fails to load
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'block';
-                            }}
-                          />
-                        ) : null}
-                        <span className={`class-name ${className === 'Sorceress' && index === selectedClass ? 'with-avatar' : ''}`}>
-                          {className}
-                        </span>
+                      <img 
+                        src={getAvatar(className, selectedColor)}
+                        alt={`${className} ${selectedColor}`}
+                        className="class-avatar-image"
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails to load
+                          console.warn(`Failed to load avatar for ${className} ${selectedColor}`);
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                      <span className="class-name with-avatar">
+                        {className}
+                      </span>
                     </div>
-                    </div>
+                  </div>
                 ))}
                 </div>
                 {/* Gradient overlays for fade effect */}
