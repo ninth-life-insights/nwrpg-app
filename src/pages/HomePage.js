@@ -56,16 +56,10 @@ const HomePage = () => {
   const getAvatarImage = (characterClass, color) => {
     if (!characterClass || !color) return null;
     
-    // Convert class name to filename format
-    const classMap = {
-      'Knight': 'knight',
-      'Sorceress': 'sorceress', 
-      'Storm Tamer': 'storm-tamer',
-      "l'Artiste": 'artiste'
-    };
+    // Convert class name to filename format (lowercase with hyphens)
+    const classSlug = characterClass.toLowerCase().replace(/\s+/g, '-');
     
-    const className = classMap[characterClass] || 'knight';
-    return `/assets/Avatars/Party-Leader/Sorceress/char-preview/${className}-${color}.png`;
+    return `/assets/Avatars/Party-Leader/small/${classSlug}-${color}-sm.png`;
   };
 
   // Check if image exists (for fallback handling)
