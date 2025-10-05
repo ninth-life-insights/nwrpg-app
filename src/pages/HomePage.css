@@ -68,6 +68,17 @@
   height: 20px;
 }
 
+.material-icons {
+  font-size: 16px;
+  color: #4c4b50;
+}
+
+.material-icons-outlined {
+  font-family: 'Material Icons Outlined';
+  font-size: 24px;
+  color: #4c4b50;
+}
+
 /* Profile Section */
 .profile-section {
   background: var(--color-bg-white);
