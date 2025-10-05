@@ -173,43 +173,66 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
-  .class-carousel {
-    width: 100%;
-  }
+ .class-carousel {
+  width: 100%;
+  margin-left: calc(-1 * var(--space-lg));
+  margin-right: calc(-1 * var(--space-lg));
+}
 
- .class-container {
+.class-container {
   position: relative;
-  overflow-x: auto; /* Changed to allow scrolling */
+  overflow-x: auto;
   overflow-y: hidden;
+  width: 100%;
   border-radius: var(--radius-md);
   margin-bottom: var(--space-md);
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  scrollbar-width: none; /* Hide scrollbar on Firefox */
+  margin-right: 5px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 5px var(--space-lg); /* Add padding here instead */
 }
 
 .class-container::-webkit-scrollbar {
-  display: none; /* Hide scrollbar on Chrome/Safari */
+  display: none;
 }
-        
+
 .class-slides {
-  display: flex;
-  gap: var(--space-md); /* Add spacing between cards */
-  padding: var(--space-sm) var(--space-md); /* Add padding for better touch area */
-  transition: none; /* Remove transform transition */
+  display: inline-flex; /* Changed from flex to inline-flex */
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  transition: none;
+  min-width: min-content; /* Force it to be as wide as its content */
 }
 
 .class-slide {
-  flex-shrink: 0; /* Prevent cards from shrinking */
-  min-width: 90px; /* Match avatar width */
+  flex-shrink: 0;
+  min-width: 90px;
+  width: 90px; /* Fixed width */
   display: flex;
   justify-content: center;
   cursor: pointer;
   transition: var(--transition);
 }
 
-.class-slide:hover {
-  transform: scale(1.05);
+.class-slide:first-child {
+  margin-left: var(--space-md); /* Space from left edge */
 }
+
+.class-slide:last-child {
+  margin-right: var(--space-md); /* Space from right edge, allows peek of partial card */
+}
+/* Keep the gradient inside the container */
+/* .class-container::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, var(--color-bg-white), transparent);
+  pointer-events: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0; /* Match container radius 
+} */
 
 /* Gradient overlays for fade effect */
 .gradient-overlay {
