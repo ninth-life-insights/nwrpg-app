@@ -55,7 +55,7 @@
 .badge-skill {
   background-color: #f3e8ff;
   color: #7c3aed;
-  max-width: 120px;
+  font-size: 12px;
 }
 
 /* Variant: Daily */
