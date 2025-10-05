@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission } from '../../services/missionService';
-import DifficultyBadge from './sub-components/DifficultyBadge';
-import SkillBadge from './sub-components/SkillBadge';
+import Badge from '../ui/Badge';
 import CompletionTypeSelector from './sub-components/CompletionTypeSelector';
 import RecurrenceSelector, { RECURRENCE_PATTERNS } from './sub-components/recurrenceSelector';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
@@ -294,7 +293,7 @@ const handleSubmit = async (e) => {
                   className={`difficulty-badge-button ${formData.difficulty === difficulty ? 'selected' : 'unselected'}`}
                   disabled={isSubmitting}
                 >
-                  <DifficultyBadge difficulty={difficulty} />
+                  <Badge variant="difficulty" difficulty={difficulty}>{difficulty}</Badge> 
                 </button>
               ))}
             </div>
@@ -425,7 +424,7 @@ const handleSubmit = async (e) => {
               <label>Skill</label>
               {formData.skill ? (
                 <div className="selected-skill-inline">
-                  <SkillBadge skill={formData.skill} />
+                  <Badge variant="skill">Skill: {formData.skill}</Badge>
                   <button
                     type="button"
                     onClick={() => {
@@ -472,7 +471,7 @@ const handleSubmit = async (e) => {
                         className="skill-option-inline"
                         disabled={isSubmitting}
                       >
-                        <SkillBadge skill={skill} />
+                        <Badge variant="skill">{skill}</Badge>
                       </button>
                     ))}
                   </div>
