@@ -169,6 +169,7 @@ const CharacterCreationPage = () => {
             placeholder="Enter your name"
           />
           </div>
+          <div className="form-grouping">
     <label htmlFor="name" className="section-label">Title:</label>
           <input
             id="title"
@@ -179,6 +180,7 @@ const CharacterCreationPage = () => {
             className="character-input"
             placeholder="Enter your RPG title"
           />
+          </div>
 
           <label className="section-label">Class:</label>
             <div 

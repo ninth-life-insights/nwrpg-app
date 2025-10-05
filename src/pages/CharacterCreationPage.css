@@ -86,7 +86,8 @@
 }
 
         .character-title {
-          font-size: var(--font-size-2xl);
+          font-size: var(--font-size-xl) !important;
+          font-style: normal !important;
           font-weight: 700;
           color: var(--color-text-dark);
           margin: 0 0 var(--space-sm) 0;
@@ -116,7 +117,8 @@
             display: flex;
             flex-direction: row;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between; /* Changed from center */
+            gap: var(--space-sm); /* Added gap for spacing */
         }
 
         .section-header {
@@ -156,17 +158,16 @@
         }
 
         .character-input {
-            width: 70%;
-          padding: var(--space-md);
-          margin: var(--space-sm) var(--space-sm) var(--space-md);
-          font-size: var(--font-size-base);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-md);
-          background: var(--color-bg-white);
-          color: var(--color-text-dark);
-          transition: var(--transition);
-          box-sizing: border-box;
-  
+            flex: 1; /* Changed from width: 70% to make it flexible */
+            padding: var(--space-md);
+            margin: var(--space-sm) 0 var(--space-md); /* Removed horizontal margin */
+            font-size: var(--font-size-base);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-bg-white);
+            color: var(--color-text-dark);
+            transition: var(--transition);
+            box-sizing: border-box;
         }
 
         .character-input:focus {
