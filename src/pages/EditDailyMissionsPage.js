@@ -255,10 +255,9 @@ const handleAddNewMission = async (missionData) => {
     <div className={`daily-missions-container ${isModal ? 'modal-mode' : ''}`}>
       <div className="daily-missions-header">
         {!isModal && <h1 className="page-title">Set Daily Missions</h1>}
-        {isModal && <h2 className="modal-title">Set Daily Missions</h2>}
-        <p className="page-subtitle">
+        {!isModal && <p className="page-subtitle">
           What are your three most important priorities for the day?
-        </p>
+        </p>}
         
         {/* UPDATED: Simplified status display */}
         <div className="current-status">
