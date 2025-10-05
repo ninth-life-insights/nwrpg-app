@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../services/firebase/config';
@@ -27,6 +27,45 @@ const CharacterCreationPage = () => {
     { name: 'red', value: '#ef4444' }
   ];
 
+  // Helper to darken color for hover state
+  const adjustColorBrightness = (hex, percent) => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+      (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+      (B < 255 ? B < 1 ? 0 : B : 255))
+      .toString(16).slice(1);
+  };
+
+  const updateThemeColor = (colorName) => {
+    const colorMap = {
+      'blue': '#3b82f6',
+      'green': '#10b981',
+      'purple': '#8b5cf6',
+      'pink': '#ec4899',
+      'red': '#ef4444'
+    };
+    
+    const hexColor = colorMap[colorName];
+    if (hexColor) {
+      document.documentElement.style.setProperty('--color-primary', hexColor);
+      document.documentElement.style.setProperty('--color-primary-hover', adjustColorBrightness(hexColor, -20));
+    }
+  };
+
+  // Apply theme color on mount
+  useEffect(() => {
+    updateThemeColor(selectedColor);
+  }, []);
+
+  const handleColorChange = (colorName) => {
+    setSelectedColor(colorName);
+    updateThemeColor(colorName);
+  };
+
   const getAvatar = (className, colorName) => {
     const classSlug = className.toLowerCase().replace(/\s+/g, '-');
     return `/assets/Avatars/Party-Leader/small/${classSlug}-${colorName}-sm.png`;
@@ -49,7 +88,6 @@ const CharacterCreationPage = () => {
   // Handle touch events for class carousel
   const minSwipeDistance = 50;
 
-
   const autoGenerate = () => {
     // Generate random title
     const randomTitle = PARTY_LEADER_TITLES[Math.floor(Math.random() * PARTY_LEADER_TITLES.length)];
@@ -61,7 +99,7 @@ const CharacterCreationPage = () => {
 
     // Generate random color
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    setSelectedColor(randomColor.name);
+    handleColorChange(randomColor.name);
   };
 
   const navigate = useNavigate();
@@ -143,7 +181,7 @@ const CharacterCreationPage = () => {
           />
           </div>
           <div className="form-grouping">
-    <label htmlFor="name" className="section-label">Title:</label>
+    <label htmlFor="title" className="section-label">Title:</label>
           <input
             id="title"
             type="text"
@@ -193,7 +231,7 @@ const CharacterCreationPage = () => {
               <button
                 key={color.name}
                 type="button"
-                onClick={() => setSelectedColor(color.name)}
+                onClick={() => handleColorChange(color.name)}
                 className={`color-option ${selectedColor === color.name ? 'selected' : ''}`}
                 style={{ backgroundColor: color.value }}
 
