@@ -483,6 +483,23 @@
   transform: scale(1.02);
 }
 
+.skill-badge-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.skill-badge-button:hover {
+  opacity: 0.8;
+}
+
+.skill-badge-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* Action Buttons */
 .add-mission-actions {
   display: flex;

@@ -424,7 +424,18 @@ const handleSubmit = async (e) => {
               <label>Skill</label>
               {formData.skill ? (
                 <div className="selected-skill-inline">
-                  <Badge variant="skill">Skill: {formData.skill}</Badge>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, skill: '' }));
+                      setShowSkillField(true);
+                      setSkillSearch('');
+                    }}
+                    className="skill-badge-button"
+                    disabled={isSubmitting}
+                  >
+                    <Badge variant="skill">Skill: {formData.skill}</Badge>
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
