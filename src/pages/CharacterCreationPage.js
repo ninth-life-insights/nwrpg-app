@@ -13,8 +13,6 @@ const CharacterCreationPage = () => {
   const [title, setTitle] = useState('');
   const [selectedClass, setSelectedClass] = useState(0);
   const [selectedColor, setSelectedColor] = useState('blue');
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -51,31 +49,6 @@ const CharacterCreationPage = () => {
   // Handle touch events for class carousel
   const minSwipeDistance = 50;
 
-  // Updated touch handlers for multi-card carousel
-    const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-    };
-
-    const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-    };
-
-    const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe && currentIndex < classes.length - 3) {
-        // Swipe left - move to next set of cards
-        setCurrentIndex(prev => Math.min(prev + 1, classes.length - 3));
-    } else if (isRightSwipe && currentIndex > 0) {
-        // Swipe right - move to previous set of cards
-        setCurrentIndex(prev => Math.max(prev - 1, 0));
-    }
-    };
 
   const autoGenerate = () => {
     // Generate random title
@@ -183,63 +156,34 @@ const CharacterCreationPage = () => {
           </div>
 
           <label className="section-label">Class:</label>
-            <div 
-            className="class-carousel"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-            >
-            <div className="class-container">
-                <div className="class-slides" style={{
-                transform: `translateX(-${currentIndex * (100 / 3)}%)`
-                }}>
-                {classes.map((className, index) => (
-                  <div 
-                    key={index} 
-                    className={`class-slide ${index === selectedClass ? 'selected' : ''}`}
-                    onClick={() => setSelectedClass(index)}
-                  >
-                    <div className="class-avatar-placeholder">
-                      <img 
-                        src={getAvatar(className, selectedColor)}
-                        alt={`${className} ${selectedColor}`}
-                        className="class-avatar-image"
-                        onError={(e) => {
-                          // Fallback to placeholder if image fails to load
-                          console.warn(`Failed to load avatar for ${className} ${selectedColor}`);
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'block';
-                        }}
-                      />
-                      <span className="class-name with-avatar">
-                        {className}
-                      </span>
+            <div className="class-carousel">
+              <div className="class-container">
+                <div className="class-slides">
+                  {classes.map((className, index) => (
+                    <div 
+                      key={index} 
+                      className={`class-slide ${index === selectedClass ? 'selected' : ''}`}
+                      onClick={() => setSelectedClass(index)}
+                    >
+                      <div className="class-avatar-placeholder">
+                        <img 
+                          src={getAvatar(className, selectedColor)}
+                          alt={`${className} ${selectedColor}`}
+                          className="class-avatar-image"
+                          onError={(e) => {
+                            console.warn(`Failed to load avatar for ${className} ${selectedColor}`);
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <span className="class-name with-avatar">
+                          {className}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
                 </div>
-                {/* Gradient overlays for fade effect */}
-                <div className="gradient-overlay gradient-left"></div>
-                <div className="gradient-overlay gradient-right"></div>
-            </div>
-
-            {/* Class dots indicator */}
-            <div className="class-dots">
-                {classes.map((_, index) => (
-                <button
-                // TODO: Update for relevance to multiple visible scroll carousel
-                    key={index}
-                    type="button"
-                    onClick={() => {
-                    setSelectedClass(index);
-                    // Auto-scroll to show selected item if it's not visible
-                    const newIndex = Math.max(0, Math.min(index - 1, classes.length - 3));
-                    setCurrentIndex(newIndex);
-                    }}
-                    className={`class-dot ${index === selectedClass ? 'active' : 'inactive'}`}
-                />
-                ))}
-            </div>
+              </div>
             </div>
 
             {/* Color Select */}
