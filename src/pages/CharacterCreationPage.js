@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 import './CharacterCreationPage.css';
 
+import { updateThemeColor } from '../utils/themeUtils';
+
 import { PARTY_LEADER_TITLES } from '../data/partyLeaderTitles';
 
 const CharacterCreationPage = () => {
@@ -38,22 +40,6 @@ const CharacterCreationPage = () => {
       (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
       (B < 255 ? B < 1 ? 0 : B : 255))
       .toString(16).slice(1);
-  };
-
-  const updateThemeColor = (colorName) => {
-    const colorMap = {
-      'blue': '#3b82f6',
-      'green': '#10b981',
-      'purple': '#8b5cf6',
-      'pink': '#ec4899',
-      'red': '#ef4444'
-    };
-    
-    const hexColor = colorMap[colorName];
-    if (hexColor) {
-      document.documentElement.style.setProperty('--color-primary', hexColor);
-      document.documentElement.style.setProperty('--color-primary-hover', adjustColorBrightness(hexColor, -20));
-    }
   };
 
   // Apply theme color on mount
