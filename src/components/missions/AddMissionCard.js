@@ -92,7 +92,7 @@ const AddMissionCard = ({
   const [errors, setErrors] = useState({});
   const [showDueDateField, setShowDueDateField] = useState(mode === 'edit' && initialMission?.dueDate);
   const [showSkillField, setShowSkillField] = useState(mode === 'edit' && initialMission?.skill);
-  const [showExpiryField, setShowExpiryField] = useState(mode === 'edit' && initialMission?.expiryDate);
+  const [showExpiryField, setShowExpiryField] = useState(false);
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
