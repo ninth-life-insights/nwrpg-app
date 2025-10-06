@@ -7,11 +7,12 @@ import { useNavigate } from 'react-router-dom';
 import { 
   getTodaysDailyMissions,
   getDailyMissionStatus,
-  needsToSetDailyMissions
+  needsToSetDailyMissions,
 } from '../services/dailyMissionService';
 import {
   completeMissionWithRecurrence,
-  uncompleteMission
+  uncompleteMission,
+  deleteMission
 } from '../services/missionService';
 import { addXP, 
   subtractXP, 
@@ -205,6 +206,40 @@ const HomePage = () => {
     }
   };
 
+  // Add after handleToggleComplete function (around line 164)
+
+  const handleDeleteMission = async (missionId) => {
+    try {
+      await deleteMission(currentUser.uid, missionId);
+      setSelectedMission(null);
+      
+      // Refresh daily missions and user profile
+      await fetchDailyMissions();
+      const updatedProfile = await getUserProfile(currentUser.uid);
+      setUserProfile(updatedProfile);
+      
+    } catch (error) {
+      console.error('Failed to delete mission:', error);
+    }
+  };
+
+  const handleUpdateMission = async (updatedMission) => {
+    // Update the mission in local state
+    setDailyMissions(prevMissions =>
+      prevMissions.map(m =>
+        m.id === updatedMission.id ? updatedMission : m
+      )
+    );
+
+    // If this is the currently selected mission, update that too
+    if (selectedMission && selectedMission.id === updatedMission.id) {
+      setSelectedMission(updatedMission);
+    }
+
+    // Refresh to ensure data consistency
+    await fetchDailyMissions();
+  };
+
   return (
     <div className="homepage-container">
       {/* Header */}
@@ -351,7 +386,9 @@ const HomePage = () => {
         <MissionDetailView 
           mission={selectedMission} 
           onClose={() => setSelectedMission(null)} 
-          onToggleComplete={handleToggleComplete} 
+          onToggleComplete={handleToggleComplete}
+          onDeleteMission={handleDeleteMission}     
+          onUpdateMission={handleUpdateMission}    
         />
       )}
     </div>

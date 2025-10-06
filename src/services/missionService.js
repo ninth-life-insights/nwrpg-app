@@ -169,10 +169,16 @@ export const completeMission = async (userId, missionId) => {
 export const updateMission = async (userId, missionId, updates) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    
+    // Remove fields that shouldn't be directly updated
+    const { id, createdAt, completedAt, status, xpAwarded, ...updateData } = updates;
+    
     await updateDoc(missionRef, {
-      ...updates,
+      ...updateData,
       updatedAt: serverTimestamp()
     });
+    
+    console.log(`Mission ${missionId} updated successfully`);
   } catch (error) {
     console.error('Error updating mission:', error);
     throw error;

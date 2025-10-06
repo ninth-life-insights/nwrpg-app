@@ -347,6 +347,25 @@ const MissionList = ({
     }
   };
 
+  const handleUpdateMission = (updatedMission) => {
+  // Update the mission in local state
+  setMissions(prevMissions =>
+    prevMissions.map(m =>
+      m.id === updatedMission.id ? updatedMission : m
+    )
+  );
+
+  // If this is the currently selected mission, update that too
+  if (selectedMission && selectedMission.id === updatedMission.id) {
+    setSelectedMission(updatedMission);
+  }
+
+  // Notify parent component if needed
+  if (onMissionUpdate) {
+    onMissionUpdate();
+  }
+};
+
   // Initialize custom order when first switching to custom mode
   const initializeCustomOrder = async () => {
     if (hasInitializedCustomOrder) return;
@@ -635,6 +654,7 @@ const MissionList = ({
           onClose={() => setSelectedMission(null)} 
           onToggleComplete={handleToggleComplete} 
           onDeleteMission={handleDeleteMission}
+          onUpdateMission={handleUpdateMission}  // <- Add this line
         />
       )}
 
