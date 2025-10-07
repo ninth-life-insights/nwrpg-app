@@ -4,10 +4,8 @@ import {
   doc, 
   addDoc, 
   updateDoc, 
-  deleteDoc, 
   getDocs, 
   getDoc,
-  setDoc,
   query, 
   where, 
   orderBy, 
@@ -158,6 +156,17 @@ export const completeMission = async (userId, missionId) => {
 
     await addXP(userId, xpAwarded);
 
+    // Update quest progress if mission is part of a quest
+    if (missionData.questId) {
+      try {
+        const { updateQuestProgress } = await import('./questService');
+        await updateQuestProgress(userId, missionData.questId, missionId, true);
+      } catch (error) {
+        console.error('Error updating quest progress:', error);
+        // Don't throw - mission is still completed even if quest update fails
+      }
+    }
+
     return { xpAwarded };
 
   } catch (error) {
@@ -189,11 +198,30 @@ export const updateMission = async (userId, missionId, updates) => {
 export const deleteMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    const missionDoc = await getDoc(missionRef);
+    
+    if (!missionDoc.exists()) {
+      throw new Error('Mission not found');
+    }
+    
+    const missionData = missionDoc.data();
+    
     await updateDoc(missionRef, {
       status: MISSION_STATUS.DELETED,
       deletedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+
+    // Remove mission from quest if it's part of one
+    if (missionData.questId) {
+      try {
+        const { removeMissionFromQuest } = await import('./questService');
+        await removeMissionFromQuest(userId, missionData.questId, missionId);
+      } catch (error) {
+        console.error('Error removing mission from quest:', error);
+        // Don't throw - mission is still deleted even if quest update fails
+      }
+    }
   } catch (error) {
     console.error('Error deleting mission:', error);
     throw error;
@@ -224,6 +252,17 @@ export const uncompleteMission = async (userId, missionId) => {
       await subtractXP(userId, xpToRemove);
     }
 
+    // Update quest progress if mission is part of a quest
+    if (missionData.questId) {
+      try {
+        const { updateQuestProgress } = await import('./questService');
+        await updateQuestProgress(userId, missionData.questId, missionId, false);
+      } catch (error) {
+        console.error('Error updating quest progress:', error);
+        // Don't throw - mission is still uncompleted even if quest update fails
+      }
+    }
+
     return { xpRemoved: xpToRemove };
 
   } catch (error) {
@@ -245,7 +284,7 @@ export const completeRecurringMission = async (userId, missionId) => {
     
     const mission = { id: missionSnap.id, ...missionSnap.data() };
     
-    // 2. Complete the current mission (handles XP, status, completion timestamp)
+    // 2. Complete the current mission (handles XP, status, completion timestamp, and quest progress)
     const { xpAwarded } = await completeMission(userId, missionId);
     
     // 3. Check if this is a recurring mission and should create next instance
