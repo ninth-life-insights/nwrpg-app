@@ -89,13 +89,6 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
           
           {/* Header */}
           <div className="mission-detail-header">
-            {/* Edit button - only show for active missions */}
-            {isActive && (
-              <button className="edit-button" onClick={handleEditClick} title="Edit mission">
-                <span className="material-icons">edit</span>
-              </button>
-            )}
-            
             <button className="close-button" onClick={onClose}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -114,11 +107,18 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
               </div>
             )}
             
-            {/* Title */}
+            {/* Title with Edit Button */}
             <div className="mission-title-section">
-              <h2 className={`mission-detail-title ${isCompleted ? 'completed' : ''}`}>
-                {mission.title}
-              </h2>
+              <div className="title-with-edit">
+                <h2 className={`mission-detail-title ${isCompleted ? 'completed' : ''}`}>
+                  {mission.title}
+                </h2>
+                {isActive && (
+                  <button className="edit-button-inline" onClick={handleEditClick} title="Edit mission">
+                    <span className="material-icons">edit</span>
+                  </button>
+                )}
+              </div>
               
               {/* Description */}
               <div className="mission-description">
