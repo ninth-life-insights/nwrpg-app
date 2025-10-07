@@ -51,11 +51,11 @@ export const calculateNextDueDate = (currentDueDate, recurrence) => {
 
     case RECURRENCE_PATTERNS.WEEKLY:
     case 'weekly':
-      // ... rest stays the same
+      return current.add(interval, 'week').format('YYYY-MM-DD');
       
     case RECURRENCE_PATTERNS.MONTHLY:
     case 'monthly':
-      // ... rest stays the same
+      return current.add(interval, 'month').format('YYYY-MM-DD');
       
     case RECURRENCE_PATTERNS.YEARLY:
     case 'yearly':
