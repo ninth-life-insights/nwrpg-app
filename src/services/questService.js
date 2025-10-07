@@ -14,13 +14,13 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from './firebase/config';
 import { 
   QUEST_STATUS, 
   createQuestTemplate,
   validateQuest,
   isQuestComplete
-} from '../types/Quest';
+} from '../types/Quests';
 
 // Collection reference
 const getQuestsCollection = (userId) => {

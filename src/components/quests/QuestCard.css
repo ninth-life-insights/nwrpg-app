@@ -1,0 +1,228 @@
+/* src/components/quests/QuestCard.css */
+
+.quest-card {
+  background: var(--color-bg-main);
+  border: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  transition: box-shadow var(--transition);
+}
+
+.quest-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+/* Header Section */
+.quest-card-header {
+  margin-bottom: var(--space-lg);
+}
+
+.quest-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-sm);
+  gap: var(--space-lg);
+}
+
+.quest-card-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  flex: 1;
+}
+
+.quest-card-description {
+  margin: var(--space-sm) 0 var(--space-md) 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
+  line-height: 1.5;
+}
+
+/* Progress Circle */
+.quest-card-progress {
+  flex-shrink: 0;
+}
+
+.progress-circle {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.circular-progress {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #e0e0e0;
+  stroke-width: 3;
+}
+
+.circle {
+  fill: none;
+  stroke: var(--color-success);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: baseline;
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.progress-number {
+  font-size: var(--font-size-xl);
+}
+
+.progress-divider {
+  font-size: var(--font-size-base);
+  margin: 0 2px;
+  color: var(--color-text-light);
+}
+
+.progress-total {
+  font-size: var(--font-size-base);
+  color: var(--color-text-light);
+}
+
+/* Meta badges */
+.quest-card-meta {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Next Mission Section */
+.quest-next-mission-section {
+  margin: var(--space-lg) 0;
+  padding: var(--space-lg);
+  background-color: var(--color-bg-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.quest-next-mission-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quest-mission-wrapper {
+  position: relative;
+}
+
+/* Quest tab indicator on mission card */
+.quest-mission-wrapper::before {
+  content: attr(data-quest-name);
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px 0 0 8px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 8px 4px;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Completed Quest Message */
+.quest-completed-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--color-success);
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 600;
+  margin: var(--space-lg) 0;
+}
+
+.quest-completed-icon {
+  font-size: var(--font-size-2xl);
+}
+
+/* Footer */
+.quest-card-footer {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.view-full-quest-button {
+  width: 100%;
+  padding: var(--space-md);
+  background-color: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.view-full-quest-button:hover {
+  background-color: #e3f2fd;
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
+}
+
+.view-full-quest-button:active {
+  transform: scale(0.98);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .quest-card {
+    padding: var(--space-lg);
+  }
+
+  .quest-card-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .progress-circle {
+    width: 56px;
+    height: 56px;
+  }
+
+  .progress-number {
+    font-size: var(--font-size-lg);
+  }
+
+  .quest-next-mission-section {
+    padding: var(--space-md);
+  }
+}
