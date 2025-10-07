@@ -14,6 +14,8 @@ import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 import MissionBankPage from './pages/MissionBankPage';
 import BasePage from './pages/BasePage';
 
+import QuestCardPreview from './components/quests/QuestCardPreview';
+
 
 function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
@@ -58,6 +60,7 @@ function AppContent() {
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
         <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
+        <Route path="/quest-card" element={<ProtectedRoute><QuestCardPreview /></ProtectedRoute>} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>
