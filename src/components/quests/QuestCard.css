@@ -1,8 +1,8 @@
 /* src/components/quests/QuestCard.css */
 
 .quest-card {
-  background: var(--color-bg-main);
-  border: 2px solid var(--color-border-yellow);
+  background: #dbeafe;
+  border: 2px solid #93c5fd;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--space-xl);
@@ -26,8 +26,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--space-sm);
   gap: var(--space-lg);
+}
+
+.quest-card-title-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
 }
 
 .quest-card-title {
@@ -35,14 +41,15 @@
   font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--color-text-dark);
-  flex: 1;
+  text-align: left;
 }
 
-.quest-card-description {
-  margin: var(--space-sm) 0 var(--space-md) 0;
-  font-size: var(--font-size-base);
-  color: var(--color-text-medium);
-  line-height: 1.5;
+/* Meta badges */
+.quest-card-meta {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Progress Circle */
@@ -102,21 +109,9 @@
   color: var(--color-text-light);
 }
 
-/* Meta badges */
-.quest-card-meta {
-  display: flex;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-  align-items: center;
-}
-
 /* Next Mission Section */
 .quest-next-mission-section {
-  margin: var(--space-lg) 0;
-  padding: var(--space-lg);
-  background-color: var(--color-bg-white);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+  margin-bottom: var(--space-lg);
 }
 
 .quest-next-mission-label {
@@ -126,33 +121,6 @@
   margin-bottom: var(--space-md);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.quest-mission-wrapper {
-  position: relative;
-}
-
-/* Quest tab indicator on mission card */
-.quest-mission-wrapper::before {
-  content: attr(data-quest-name);
-  position: absolute;
-  left: -8px;
-  top: 0;
-  bottom: 0;
-  width: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8px 0 0 8px;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  padding: 8px 4px;
-  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Completed Quest Message */
@@ -166,37 +134,31 @@
   border-radius: var(--radius-md);
   color: white;
   font-weight: 600;
-  margin: var(--space-lg) 0;
+  margin-bottom: var(--space-lg);
 }
 
 .quest-completed-icon {
   font-size: var(--font-size-2xl);
 }
 
-/* Footer */
-.quest-card-footer {
-  margin-top: var(--space-lg);
-  padding-top: var(--space-lg);
-  border-top: 1px solid var(--color-border);
-}
-
+/* View Full Quest Button */
 .view-full-quest-button {
-  width: 100%;
-  padding: var(--space-md);
-  background-color: var(--color-bg-white);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  padding: 0;
   font-size: var(--font-size-base);
   font-weight: 600;
-  color: var(--color-text-medium);
+  color: var(--color-primary);
   cursor: pointer;
-  transition: all var(--transition);
+  transition: color var(--transition);
+  text-align: right;
+  width: 100%;
+  display: block;
 }
 
 .view-full-quest-button:hover {
-  background-color: #e3f2fd;
-  border-color: var(--color-primary);
   color: var(--color-primary-hover);
+  text-decoration: underline;
 }
 
 .view-full-quest-button:active {
@@ -213,6 +175,10 @@
     font-size: var(--font-size-lg);
   }
 
+  .quest-card-title-row {
+    gap: var(--space-md);
+  }
+
   .progress-circle {
     width: 56px;
     height: 56px;
@@ -220,9 +186,5 @@
 
   .progress-number {
     font-size: var(--font-size-lg);
-  }
-
-  .quest-next-mission-section {
-    padding: var(--space-md);
   }
 }

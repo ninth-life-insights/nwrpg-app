@@ -41,7 +41,17 @@ const QuestCard = ({
       {/* Quest Header */}
       <div className="quest-card-header">
         <div className="quest-card-title-row">
-          <h3 className="quest-card-title">{quest.title}</h3>
+          <div className="quest-card-title-section">
+            <h3 className="quest-card-title">{quest.title}</h3>
+            <div className="quest-card-meta">
+              <Badge variant="difficulty" difficulty={quest.difficulty}>
+                {quest.difficulty}
+              </Badge>
+              <Badge variant="default">
+                {getStatusLabel(quest.status)}
+              </Badge>
+            </div>
+          </div>
           <div className="quest-card-progress">
             <div className="progress-circle">
               <svg viewBox="0 0 36 36" className="circular-progress">
@@ -67,33 +77,17 @@ const QuestCard = ({
             </div>
           </div>
         </div>
-
-        {quest.description && (
-          <p className="quest-card-description">{quest.description}</p>
-        )}
-
-        <div className="quest-card-meta">
-          <Badge variant="difficulty" difficulty={quest.difficulty}>
-            {quest.difficulty}
-          </Badge>
-          <Badge variant="default">
-            {getStatusLabel(quest.status)}
-          </Badge>
-        </div>
       </div>
 
       {/* Next Mission Section */}
       {nextMission && quest.status !== 'completed' && (
         <div className="quest-next-mission-section">
           <div className="quest-next-mission-label">Next up:</div>
-          <div className="quest-mission-wrapper">
-            <MissionCard
-              mission={nextMission}
-              onToggleComplete={onMissionToggleComplete}
-              onViewDetails={onMissionViewDetails}
-              isQuestMission={true}
-            />
-          </div>
+          <MissionCard
+            mission={nextMission}
+            onToggleComplete={onMissionToggleComplete}
+            onViewDetails={onMissionViewDetails}
+          />
         </div>
       )}
 
@@ -105,14 +99,12 @@ const QuestCard = ({
       )}
 
       {/* View Full Quest Button */}
-      <div className="quest-card-footer">
-        <button 
-          className="view-full-quest-button"
-          onClick={handleViewFullQuest}
-        >
-          View Full Quest →
-        </button>
-      </div>
+      <button 
+        className="view-full-quest-button"
+        onClick={handleViewFullQuest}
+      >
+        View Full Quest →
+      </button>
     </div>
   );
 };

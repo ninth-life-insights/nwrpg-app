@@ -10,7 +10,6 @@ const QuestCardPreview = () => {
   const mockActiveQuest = {
     id: 'quest-1',
     title: 'Spring Cleaning',
-    description: 'Deep clean the house and organize everything for spring',
     status: QUEST_STATUS.ACTIVE,
     difficulty: QUEST_DIFFICULTY.MEDIUM,
     xpReward: 20,
@@ -28,7 +27,6 @@ const QuestCardPreview = () => {
   const mockPlanningQuest = {
     id: 'quest-2',
     title: 'Plan Family Vacation',
-    description: 'Research and book our summer vacation',
     status: QUEST_STATUS.PLANNING,
     difficulty: QUEST_DIFFICULTY.EASY,
     xpReward: 10,
@@ -46,7 +44,6 @@ const QuestCardPreview = () => {
   const mockCompletedQuest = {
     id: 'quest-3',
     title: 'Organize Home Office',
-    description: 'Set up a productive workspace',
     status: QUEST_STATUS.COMPLETED,
     difficulty: QUEST_DIFFICULTY.HARD,
     xpReward: 40,
