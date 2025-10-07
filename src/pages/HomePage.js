@@ -180,9 +180,6 @@ const HomePage = () => {
       if (isCurrentlyCompleted) {
         // Uncomplete the mission
         await uncompleteMission(currentUser.uid, missionId);
-        if (xpReward) {
-          await subtractXP(currentUser.uid, xpReward);
-        }
       } else {
         // UPDATED: Complete with recurrence support
         const result = await completeMissionWithRecurrence(currentUser.uid, missionId);

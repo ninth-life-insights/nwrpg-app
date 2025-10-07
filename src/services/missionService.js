@@ -149,6 +149,7 @@ export const completeMission = async (userId, missionId) => {
     const missionData = missionDoc.data();
     
     const xpAwarded = calculateTotalMissionXP(missionData);
+
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
       xpAwarded: xpAwarded,
@@ -177,8 +178,7 @@ export const updateMission = async (userId, missionId, updates) => {
       ...updateData,
       updatedAt: serverTimestamp()
     });
-    
-    console.log(`Mission ${missionId} updated successfully`);
+
   } catch (error) {
     console.error('Error updating mission:', error);
     throw error;
@@ -205,9 +205,10 @@ export const uncompleteMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     const missionDoc = await getDoc(missionRef);
-    const missionData = missionDoc.data;
+    const missionData = missionDoc.data(); 
 
     const xpToRemove = missionData.xpAwarded || 0;
+
     if (xpToRemove === 0) {
       console.warn('Mission has no xpAwarded value, skipping XP removal');
     }
@@ -309,6 +310,7 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
     } else {
       // Use the regular completion logic
       const { xpAwarded } = await completeMission(userId, missionId);
+
       return {
         completed: true,
         xpAwarded,

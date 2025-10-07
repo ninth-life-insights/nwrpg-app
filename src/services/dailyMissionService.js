@@ -135,39 +135,24 @@ export const getTodaysDailyMissions = async (userId) => {
     const config = await getDailyMissionsConfig(userId);
     const today = toDateString(new Date());
     
-    console.log('🔍 getTodaysDailyMissions DEBUG:');
-    console.log('Config:', config);
-    console.log('Today:', today);
     
     if (!config || config.setForDate !== today) {
       console.log('❌ No config or wrong date');
       return [];
     }
     
-    console.log('✅ Config is valid, fetching missions...');
-    console.log('Looking for mission IDs:', config.missionIds);
-    
     // Get all missions and filter for the daily ones
     const [activeMissions, completedMissions] = await Promise.all([
       getActiveMissions(userId),
       getCompletedMissions(userId)
     ]);
-
-    console.log(toDateString(new Date()));
-    
-    console.log('🔍 Active missions found:', activeMissions.length, activeMissions.map(m => ({ id: m.id, title: m.title, status: m.status })));
-    console.log('🔍 Completed missions found:', completedMissions.length, completedMissions.map(m => ({ id: m.id, title: m.title, status: m.status })));
     
     const allMissions = [...activeMissions, ...completedMissions];
-    console.log('🔍 All missions:', allMissions.length, allMissions.map(m => m.id));
     
     const dailyMissions = allMissions.filter(mission => {
       const isDaily = config.missionIds.includes(mission.id);
-      console.log(`Mission ${mission.id} (${mission.title}) is daily:`, isDaily);
       return isDaily;
     });
-    
-    console.log('🔍 Final daily missions:', dailyMissions.length, dailyMissions.map(m => ({ id: m.id, title: m.title })));
     
     // Add the computed isDailyMission flag
     return dailyMissions.map(mission => ({
