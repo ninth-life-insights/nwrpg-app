@@ -1,19 +1,24 @@
 {
-  "short_name": "NWRPG",
-  "name": "Mom Life RPG - Productivity Adventure",
+  "short_name": "MomRPG",
+  "name": "Mom Life RPG - Your Productivity Story",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/assets/App-Icon/Nwrpg-icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
+      "src": "/assets/App-Icon/Nwrpg-icon-192.png",
+      "type": "any maskable",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "/assets/App-Icon/Nwrpg-icon-384.png",
+      "type": "image/png",
+      "sizes": "384x384"
+    },
+    {
+      "src": "/assets/App-Icon/Nwrpg-icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
