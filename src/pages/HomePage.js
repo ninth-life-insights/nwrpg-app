@@ -337,10 +337,11 @@ const HomePage = () => {
                 key={mission.id}
                 mission={{
                   ...mission,
-                  isDailyMission: true // All missions here are daily missions
+                  isDailyMission: true, // All missions here are daily missions
                 }}
                 onToggleComplete={handleToggleComplete}
                 onViewDetails={setSelectedMission}
+                hideDailyBadge={true}
               />
             ))
           ) : (

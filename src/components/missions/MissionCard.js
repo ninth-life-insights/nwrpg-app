@@ -24,7 +24,8 @@ const MissionCard = ({
   onViewDetails, 
   isRecentlyCompleted = false,
   selectionMode = false,
-  isCustomOrderMode = false
+  isCustomOrderMode = false,
+  hideDailyBadge = false
 }) => {
   const [showXpBadge, setShowXpBadge] = useState(false);
   
@@ -158,8 +159,7 @@ const MissionCard = ({
           
           <div className="badges">
 
-            {/* Daily mission badge */}
-            {mission.isDailyMission && (
+            {mission.isDailyMission && !hideDailyBadge && (
               <Badge variant="daily">Daily</Badge>
             )}
             
