@@ -49,13 +49,37 @@ export const calculateNextDueDate = (currentDueDate, recurrence) => {
     case 'daily': // Support both formats
       return current.add(interval, 'day').format('YYYY-MM-DD');
 
-    case RECURRENCE_PATTERNS.WEEKLY:
-    case 'weekly':
+      case RECURRENCE_PATTERNS.WEEKLY:
+      if (weekdays && weekdays.length > 0) {
+        // Find the next occurrence of any selected weekday
+        let nextDate = current.add(1, 'day');
+        let daysChecked = 0;
+        
+        // Look for the next occurrence within the next 7 days
+        while (daysChecked < 7 && !weekdays.includes(nextDate.day())) {
+          nextDate = nextDate.add(1, 'day');
+          daysChecked++;
+        }
+        
+        // If we found a day in this week, use it. Otherwise, go to next interval
+        if (weekdays.includes(nextDate.day())) {
+          return nextDate.format('YYYY-MM-DD');
+        }
+      }
+      // Fallback to simple weekly interval
       return current.add(interval, 'week').format('YYYY-MM-DD');
-      
+
     case RECURRENCE_PATTERNS.MONTHLY:
-    case 'monthly':
-      return current.add(interval, 'month').format('YYYY-MM-DD');
+      let nextMonth = current.add(interval, 'month');
+      
+      if (dayOfMonth) {
+        // Use specific day of month
+        const targetDay = Math.min(dayOfMonth, nextMonth.daysInMonth());
+        nextMonth = nextMonth.date(targetDay);
+      }
+      // If no dayOfMonth specified, keep the same day as original due date
+      
+      return nextMonth.format('YYYY-MM-DD');
       
     case RECURRENCE_PATTERNS.YEARLY:
     case 'yearly':
