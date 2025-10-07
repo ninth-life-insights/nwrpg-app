@@ -47,9 +47,6 @@ const QuestCard = ({
               <Badge variant="difficulty" difficulty={quest.difficulty}>
                 {quest.difficulty}
               </Badge>
-              <Badge variant="default">
-                {getStatusLabel(quest.status)}
-              </Badge>
             </div>
           </div>
           <div className="quest-card-progress">
@@ -103,7 +100,7 @@ const QuestCard = ({
         className="view-full-quest-button"
         onClick={handleViewFullQuest}
       >
-        View Full Quest →
+        View Full Quest <span className="material-icons">double_arrow</span>
       </button>
     </div>
   );

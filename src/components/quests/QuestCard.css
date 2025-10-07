@@ -1,8 +1,8 @@
 /* src/components/quests/QuestCard.css */
 
 .quest-card {
-  background: #dbeafe;
-  border: 2px solid #93c5fd;
+  background: #1e3a8a;
+  border: 2px solid #3b82f6;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--space-xl);
@@ -40,7 +40,7 @@
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: 600;
-  color: var(--color-text-dark);
+  color: white;
   text-align: left;
 }
 
@@ -71,13 +71,13 @@
 
 .circle-bg {
   fill: none;
-  stroke: #e0e0e0;
+  stroke: rgba(255, 255, 255, 0.3);
   stroke-width: 3;
 }
 
 .circle {
   fill: none;
-  stroke: var(--color-success);
+  stroke: #4ade80;
   stroke-width: 3;
   stroke-linecap: round;
   transition: stroke-dasharray 0.3s ease;
@@ -91,7 +91,7 @@
   display: flex;
   align-items: baseline;
   font-weight: 600;
-  color: var(--color-text-dark);
+  color: white;
 }
 
 .progress-number {
@@ -101,26 +101,29 @@
 .progress-divider {
   font-size: var(--font-size-base);
   margin: 0 2px;
-  color: var(--color-text-light);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .progress-total {
   font-size: var(--font-size-base);
-  color: var(--color-text-light);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Next Mission Section */
 .quest-next-mission-section {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .quest-next-mission-label {
+text-align: left;
+text-transform: uppercase !important;
+/* font-style: italic; */
   font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-text-medium);
-  margin-bottom: var(--space-md);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: var(--space-med);
+  text-transform: none;
+  letter-spacing: 1px;
 }
 
 /* Completed Quest Message */
@@ -143,26 +146,35 @@
 
 /* View Full Quest Button */
 .view-full-quest-button {
-  background: none;
-  border: none;
-  padding: 0;
+    font: roboto;
+  background: rgba(255, 255, 255, 0.0);
+  border: 1px solid rgba(255, 255, 255, 0.0);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   font-weight: 600;
-  color: var(--color-primary);
+  color: white;
   cursor: pointer;
-  transition: color var(--transition);
+  transition: all var(--transition);
   text-align: right;
   width: 100%;
   display: block;
 }
 
 .view-full-quest-button:hover {
-  color: var(--color-primary-hover);
-  text-decoration: underline;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .view-full-quest-button:active {
   transform: scale(0.98);
+}
+
+.view-full-quest-button .material-icons {
+  font-size: var(--font-size-lg);
+  font-style: normal;
+  color: #ffffff;
+  vertical-align: middle;
 }
 
 /* Mobile responsiveness */
