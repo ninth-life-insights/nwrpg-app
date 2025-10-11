@@ -73,7 +73,15 @@ const QuestBank = () => {
 
   const handleShowAddQuest = () => {
     setShowAddQuest(true);
-    // TODO: Open create quest modal
+  };
+
+  const handleCloseAddQuest = () => {
+    setShowAddQuest(false);
+  };
+
+  const handleQuestCreated = async (newQuest) => {
+    // Reload quests to show the new one
+    await loadQuests();
   };
 
   const handleToggleCompleted = () => {
@@ -174,12 +182,12 @@ const QuestBank = () => {
         )}
       </div>
 
-      {/* TODO: Add Quest Creation Modal */}
-      {showAddQuest && (
-        <div className="modal-placeholder">
-          {/* Quest creation modal will go here */}
-        </div>
-      )}
+      {/* Quest Creation Modal */}
+      <CreateQuestModal
+        isOpen={showAddQuest}
+        onClose={handleCloseAddQuest}
+        onQuestCreated={handleQuestCreated}
+      />
     </div>
   );
 };

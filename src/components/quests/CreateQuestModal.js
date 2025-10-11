@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import Badge from '../ui/Badge';
 import { createQuest } from '../../services/questService';
-import { QUEST_DIFFICULTY, QUEST_XP_REWARDS } from '../../types/Quest';
+import { QUEST_DIFFICULTY, QUEST_XP_REWARDS } from '../../types/Quests';
 import './CreateQuestModal.css';
 
 const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
