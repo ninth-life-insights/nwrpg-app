@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import QuestCard from '../components/quests/QuestCard';
+import CreateQuestModal from '../components/quests/CreateQuestModal';
 import { 
   getActiveQuests, 
   getCompletedQuests 
