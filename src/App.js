@@ -9,12 +9,12 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LogInPage';
 import SignupPage from './pages/SignupPage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
+
 import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 import MissionBankPage from './pages/MissionBankPage';
+import QuestBank from './pages/QuestBankPage';
 import BasePage from './pages/BasePage';
-
-import QuestCardPreview from './components/quests/QuestCardPreview';
 
 
 function ProtectedRoute({ children }) {
@@ -60,7 +60,7 @@ function AppContent() {
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
         <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
-        <Route path="/quest-card" element={<ProtectedRoute><QuestCardPreview /></ProtectedRoute>} />
+        <Route path="/quest-bank" element={<ProtectedRoute><QuestBank /></ProtectedRoute>} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>
