@@ -41,7 +41,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-sm);
-  color: var(--color-text-light);
+  color: white;
   cursor: grab;
   transition: color var(--transition);
   touch-action: none;

@@ -16,7 +16,7 @@ import {
   reorderQuestMissions
 } from '../../services/questService';
 import { getAllMissions, createMission } from '../../services/missionService';
-import { calculateQuestProgress } from '../../types/Quests';
+import { calculateQuestProgress, QUEST_DIFFICULTY } from '../../types/Quests';
 import './QuestDetailView.css';
 
 const QuestDetailView = () => {
@@ -32,12 +32,25 @@ const QuestDetailView = () => {
   const [showAddMission, setShowAddMission] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  
+  // Inline editing state
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
+  const [editedDifficulty, setEditedDifficulty] = useState(null);
 
   useEffect(() => {
     if (currentUser && questId) {
       loadQuestData();
     }
   }, [currentUser, questId]);
+
+  useEffect(() => {
+    if (quest) {
+      setEditedTitle(quest.title);
+      setEditedDescription(quest.description || '');
+      setEditedDifficulty(quest.difficulty);
+    }
+  }, [quest]);
 
   const loadQuestData = async () => {
     try {
@@ -61,11 +74,30 @@ const QuestDetailView = () => {
   };
 
   const handleBack = () => {
-    navigate('/quest-bank');
+    navigate('/quests');
   };
 
-  const handleToggleEditMode = () => {
-    setIsEditMode(!isEditMode);
+  const handleToggleEditMode = async () => {
+    if (isEditMode) {
+      // Save changes
+      try {
+        const updates = {
+          title: editedTitle.trim(),
+          description: editedDescription.trim(),
+          difficulty: editedDifficulty
+        };
+        
+        await updateQuest(currentUser.uid, questId, updates);
+        await loadQuestData();
+        setIsEditMode(false);
+      } catch (err) {
+        console.error('Error updating quest:', err);
+        alert('Failed to update quest');
+      }
+    } else {
+      // Enter edit mode
+      setIsEditMode(true);
+    }
   };
 
   const handleCompleteQuest = async () => {
@@ -179,16 +211,57 @@ const QuestDetailView = () => {
           </button>
         </div>
 
-        <h1 className="quest-title">{quest.title}</h1>
+        <h1 className="quest-title">
+          {isEditMode ? (
+            <input
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              className="quest-title-input"
+              placeholder="Quest title"
+            />
+          ) : (
+            quest.title
+          )}
+        </h1>
         
-        {quest.description && (
-          <p className="quest-description">{quest.description}</p>
+        {(isEditMode || quest.description) && (
+          <div className="quest-description-section">
+            {isEditMode ? (
+              <textarea
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                className="quest-description-input"
+                placeholder="Description (optional)"
+                rows="2"
+              />
+            ) : (
+              <p className="quest-description">{quest.description}</p>
+            )}
+          </div>
         )}
 
         <div className="quest-meta">
-          <Badge variant="difficulty" difficulty={quest.difficulty}>
-            {quest.difficulty}
-          </Badge>
+          {isEditMode ? (
+            <div className="difficulty-selector-inline">
+              {Object.values(QUEST_DIFFICULTY).map((difficulty) => (
+                <button
+                  key={difficulty}
+                  type="button"
+                  onClick={() => setEditedDifficulty(difficulty)}
+                  className={`difficulty-btn-inline ${editedDifficulty === difficulty ? 'selected' : ''}`}
+                >
+                  <Badge variant="difficulty" difficulty={difficulty}>
+                    {difficulty}
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Badge variant="difficulty" difficulty={quest.difficulty}>
+              {quest.difficulty}
+            </Badge>
+          )}
           <div className="quest-progress-badge">
             {quest.completedMissions}/{quest.totalMissions} missions
           </div>
@@ -264,7 +337,7 @@ const QuestDetailView = () => {
         </div>
       )}
 
-      {/* Add/Edit Mission Modal */}
+      {/* Add Mission Modal */}
       {showAddMission && (
         <AddMissionCard
           onAddMission={handleAddMission}
