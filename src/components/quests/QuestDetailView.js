@@ -60,7 +60,7 @@ const QuestDetailView = () => {
   };
 
   const handleBack = () => {
-    navigate('/quests');
+    navigate('/quest-bank');
   };
 
   const handleToggleEditMode = () => {
