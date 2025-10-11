@@ -1,0 +1,110 @@
+/* src/components/quests/QuestMissionList.css */
+
+.quest-mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.quest-missions-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-light);
+}
+
+.quest-missions-empty p {
+  margin: 0;
+  font-size: var(--font-size-base);
+}
+
+/* Sortable Mission Wrapper */
+.sortable-mission-wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.sortable-mission-wrapper.dragging {
+  z-index: 999;
+}
+
+.mission-card-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  position: relative;
+}
+
+/* Drag Handle */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm);
+  color: var(--color-text-light);
+  cursor: grab;
+  transition: color var(--transition);
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle:hover {
+  color: var(--color-text-dark);
+}
+
+.drag-handle .material-icons {
+  font-size: 24px;
+}
+
+/* Mission Card Content */
+.mission-card-content {
+  flex: 1;
+}
+
+/* Remove Mission Button */
+.remove-mission-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-error);
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.remove-mission-btn:hover {
+  background: #fee;
+  border-color: var(--color-error);
+}
+
+.remove-mission-btn .material-icons {
+  font-size: 18px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .drag-handle {
+    padding: var(--space-xs);
+  }
+
+  .drag-handle .material-icons {
+    font-size: 20px;
+  }
+
+  .remove-mission-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .remove-mission-btn .material-icons {
+    font-size: 16px;
+  }
+}
