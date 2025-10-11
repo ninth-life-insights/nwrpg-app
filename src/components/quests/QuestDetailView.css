@@ -1,0 +1,342 @@
+/* src/components/quests/QuestDetailView.css */
+
+.quest-detail-view {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding-bottom: 120px;
+}
+
+/* Quest Header - Dark Blue */
+.quest-detail-header {
+  background: #1e3a8a;
+  color: white;
+  padding: var(--space-xl);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.back-button .material-icons {
+  font-size: 18px;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.edit-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.edit-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.edit-button.active {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.quest-title {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: white;
+}
+
+.quest-description {
+  margin: 0 0 var(--space-lg) 0;
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+.quest-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.quest-progress-badge {
+  background: rgba(255, 255, 255, 0.15);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: white;
+}
+
+.progress-bar {
+  flex: 1;
+  min-width: 120px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4ade80;
+  transition: width 0.3s ease;
+}
+
+/* Missions Section */
+.quest-missions-section {
+  padding: var(--space-xl);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.add-mission-to-quest-btn {
+  width: 100%;
+  max-width: 600px;
+  margin: var(--space-xl) auto 0;
+  display: block;
+  padding: var(--space-md);
+  background: white;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-medium);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.add-mission-to-quest-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: #eff6ff;
+}
+
+/* Bottom Actions */
+.quest-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-lg);
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.complete-quest-btn {
+  flex: 1;
+  max-width: 300px;
+  padding: var(--space-md);
+  background: var(--color-success);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.complete-quest-btn:hover:not(:disabled) {
+  background: #008606;
+}
+
+.complete-quest-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-quest-btn {
+  flex: 1;
+  max-width: 300px;
+  padding: var(--space-md);
+  background: white;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.delete-quest-btn:hover {
+  background: #fee;
+}
+
+/* Confirmation Modals */
+.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-lg);
+}
+
+.modal-content {
+  background: white;
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content h3 {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--font-size-xl);
+  color: var(--color-text-dark);
+}
+
+.modal-content p {
+  margin: 0 0 var(--space-lg) 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.modal-actions button {
+  flex: 1;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.modal-actions button:first-child {
+  background: white;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-medium);
+}
+
+.modal-actions button:first-child:hover {
+  background: var(--color-bg-main);
+}
+
+.modal-actions .confirm-btn {
+  background: var(--color-success);
+  border: none;
+  color: white;
+}
+
+.modal-actions .confirm-btn:hover {
+  background: #008606;
+}
+
+.modal-actions .confirm-btn.delete {
+  background: var(--color-error);
+}
+
+.modal-actions .confirm-btn.delete:hover {
+  background: #b91c1c;
+}
+
+/* Loading/Error States */
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: var(--font-size-lg);
+}
+
+.loading-state {
+  color: var(--color-text-light);
+}
+
+.error-state {
+  color: var(--color-error);
+  background: #fee;
+  border-radius: var(--radius-lg);
+  margin: var(--space-lg);
+}
+
+/* Modal Placeholder */
+.modal-placeholder {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  color: white;
+  font-size: var(--font-size-lg);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .quest-detail-header {
+    padding: var(--space-md);
+  }
+
+  .quest-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .quest-missions-section {
+    padding: var(--space-md);
+  }
+
+  .quest-actions {
+    flex-direction: column;
+    padding: var(--space-md);
+  }
+
+  .complete-quest-btn,
+  .delete-quest-btn {
+    max-width: none;
+  }
+}
