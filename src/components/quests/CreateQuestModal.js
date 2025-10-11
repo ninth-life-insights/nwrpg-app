@@ -100,14 +100,27 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
     setIsSubmitting(true);
     
     try {
-      // Create the quest
+      // Create all missions first
+      const missionIds = [];
+      for (const mission of missions) {
+        const missionData = createMissionTemplate({
+          title: mission.title,
+          difficulty: mission.difficulty,
+          status: 'active'
+        });
+        
+        const missionId = await createMission(currentUser.uid, missionData);
+        missionIds.push(missionId);
+      }
+      
+      // Create the quest with mission IDs
       const questData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         difficulty: formData.difficulty,
         status: 'active',
-        missionIds: [],
-        missionOrder: [],
+        missionIds: missionIds,
+        missionOrder: missionIds,
         completedMissionIds: [],
         totalMissions: missions.length,
         completedMissions: 0,
@@ -115,18 +128,13 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       
       const newQuest = await createQuest(currentUser.uid, questData);
       
-      // Create missions and add them to the quest
-      const missionIds = [];
-      for (const mission of missions) {
-        const missionData = createMissionTemplate({
-          title: mission.title,
-          difficulty: mission.difficulty,
-          questId: newQuest.id
+      // Update each mission to link it to the quest
+      const { updateMission } = await import('../../services/missionService');
+      for (let i = 0; i < missionIds.length; i++) {
+        await updateMission(currentUser.uid, missionIds[i], {
+          questId: newQuest.id,
+          questOrder: i
         });
-        
-        const missionId = await createMission(currentUser.uid, missionData);
-        await addMissionToQuest(currentUser.uid, newQuest.id, missionId);
-        missionIds.push(missionId);
       }
       
       if (onQuestCreated) {

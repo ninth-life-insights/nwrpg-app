@@ -40,12 +40,15 @@ export const createQuest = async (userId, questData) => {
     updatedAt: serverTimestamp()
   });
 
+  // IMPORTANT: Remove id field before saving to Firestore
+  const { id, ...dataWithoutId } = questTemplate;
+
   const questsRef = getQuestsCollection(userId);
-  const docRef = await addDoc(questsRef, questTemplate);
+  const docRef = await addDoc(questsRef, dataWithoutId); // Save without id field
   
   return {
-    id: docRef.id,
-    ...questTemplate
+    ...dataWithoutId, // Spread the data without id first
+    id: docRef.id     // Then add the real Firestore ID
   };
 };
 
