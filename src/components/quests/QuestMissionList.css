@@ -3,7 +3,7 @@
 .quest-mission-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-xs);
 }
 
 .quest-missions-empty {
@@ -66,27 +66,26 @@
 
 /* Remove Mission Button */
 .remove-mission-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--color-error);
+  color: white;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: white;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  color: var(--color-error);
-  cursor: pointer;
-  transition: all var(--transition);
+  line-height: 1;
   flex-shrink: 0;
 }
 
 .remove-mission-btn:hover {
-  background: #fee;
-  border-color: var(--color-error);
-}
-
-.remove-mission-btn .material-icons {
-  font-size: 18px;
+  background: #b91c1c;
+  transform: scale(1.05);
 }
 
 /* Mobile Responsiveness */

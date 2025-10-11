@@ -2,7 +2,7 @@
 
 .quest-detail-view {
   min-height: 100vh;
-  background-color: #f9fafb;
+  background: #1e3a8a;
   padding-bottom: 120px;
 }
 
@@ -13,23 +13,22 @@
   padding: var(--space-xl);
   position: sticky;
   top: 0;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .back-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.13) !important;
+  border: none;
   color: white;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg) !important;
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -40,20 +39,19 @@
 }
 
 .back-button .material-icons {
-  font-size: 18px;
+  font-size: 20px !important;
+  color: rgba(255, 255, 255, 0.719) !important;
 }
 
 .back-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  opacity: 0.8;
 }
 
 .edit-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.13) !important;
+  border: none;
   color: white;
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg) !important;
   cursor: pointer;
   font-size: var(--font-size-base);
   font-weight: 600;
@@ -61,17 +59,16 @@
 }
 
 .edit-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  opacity: 0.8;
 }
 
 .edit-button.active {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.4);
+  text-decoration: underline;
 }
 
 .quest-title {
-  margin: 0 0 var(--space-md) 0;
+  margin: 0 var(--space-md) 0;
+  padding-top: var(--space-sm);
   font-size: var(--font-size-2xl);
   font-weight: 600;
   color: white;
@@ -128,10 +125,10 @@
   margin: var(--space-xl) auto 0;
   display: block;
   padding: var(--space-md);
-  background: white;
+  background: none;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
-  color: var(--color-text-medium);
+  color: white;
   font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;

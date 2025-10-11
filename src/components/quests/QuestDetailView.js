@@ -252,7 +252,7 @@ const QuestDetailView = () => {
         <div className="confirmation-modal">
           <div className="modal-content">
             <h3>Delete Quest?</h3>
-            <p>This will remove the quest but keep all missions. Are you sure?</p>
+            <p>This will remove the quest (but not delete the missions). Are you sure?</p>
             <div className="modal-actions">
               <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
               <button onClick={deleteQuestConfirmed} className="confirm-btn delete">Delete</button>
