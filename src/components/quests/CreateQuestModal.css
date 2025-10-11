@@ -60,7 +60,6 @@
 /* Description Section */
 .add-quest-description {
   margin-bottom: var(--space-lg);
-  position: relative;
 }
 
 .add-quest-description-input {
@@ -108,25 +107,6 @@
   background: #fee;
   border-color: var(--color-error);
   color: var(--color-error);
-}
-
-/* Ghost Badge */
-.ghost-badge {
-  background: transparent;
-  border: 1px dashed var(--color-border);
-  padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-light);
-  cursor: pointer;
-  transition: all var(--transition);
-  margin-bottom: var(--space-lg);
-}
-
-.ghost-badge:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: rgba(59, 130, 246, 0.05);
 }
 
 /* Difficulty Badges */
@@ -210,6 +190,154 @@
 
 .add-quest-actions button:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Missions Section */
+.quest-missions-section {
+  margin-bottom: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-lg);
+}
+
+.missions-header {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.missions-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: var(--space-md);
+  padding-right: var(--space-xs);
+}
+
+.missions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.missions-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.missions-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.missions-list::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+.mission-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+}
+
+.mission-title {
+  flex: 1;
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+}
+
+.remove-mission-btn-small {
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition);
+}
+
+.remove-mission-btn-small:hover {
+  color: var(--color-error);
+}
+
+.add-mission-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.mission-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  color: var(--color-text-dark);
+}
+
+.mission-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.mission-input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.mission-difficulty-selector {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.mini-difficulty-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all var(--transition);
+}
+
+.mini-difficulty-btn.selected {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.mini-difficulty-btn:hover {
+  opacity: 1;
+}
+
+.add-mission-btn-small {
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  align-self: flex-end;
+}
+
+.add-mission-btn-small:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.add-mission-btn-small:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
