@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from '../missions/MissionCard';
 import MissionDetailView from '../missions/MissionCardFull';
+import AddMissionCard from '../missions/AddMissionCard';
 import {
   completeMissionWithRecurrence,
   uncompleteMission
@@ -80,7 +81,7 @@ const SortableMissionCard = ({
             onClick={() => onRemove(mission.id)}
             title="Remove from quest"
           >
-            <span className="material-icons">close</span>
+            −
           </button>
         )}
       </div>
@@ -98,6 +99,7 @@ const QuestMissionList = ({
 }) => {
   const { currentUser } = useAuth();
   const [selectedMission, setSelectedMission] = useState(null);
+  const [editingMission, setEditingMission] = useState(null);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -156,6 +158,17 @@ const QuestMissionList = ({
 
   const handleViewDetails = (mission) => {
     setSelectedMission(mission);
+  };
+
+  const handleEditMission = (mission) => {
+    setEditingMission(mission);
+  };
+
+  const handleUpdateMission = async (updatedMission) => {
+    if (onMissionUpdate) {
+      await onMissionUpdate();
+    }
+    setEditingMission(null);
   };
 
   const handleDragEnd = (event) => {
@@ -221,6 +234,16 @@ const QuestMissionList = ({
           onClose={() => setSelectedMission(null)} 
           onToggleComplete={handleToggleComplete}
           onUpdateMission={onMissionUpdate}
+          onEditMission={handleEditMission}
+        />
+      )}
+
+      {editingMission && (
+        <AddMissionCard
+          mode="edit"
+          initialMission={editingMission}
+          onUpdateMission={handleUpdateMission}
+          onCancel={() => setEditingMission(null)}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import QuestMissionList from './QuestMissionList';
+import AddMissionCard from '../missions/AddMissionCard';
 import Badge from '../ui/Badge';
 import { 
   getQuest, 
@@ -103,11 +104,13 @@ const QuestDetailView = () => {
 
   const handleAddMission = async (missionData) => {
     try {
+      // Create the mission with questId
       const missionId = await createMission(currentUser.uid, {
         ...missionData,
         questId: questId
       });
       
+      // Add mission to quest
       await addMissionToQuest(currentUser.uid, questId, missionId);
       await loadQuestData();
       setShowAddMission(false);
@@ -252,7 +255,7 @@ const QuestDetailView = () => {
         <div className="confirmation-modal">
           <div className="modal-content">
             <h3>Delete Quest?</h3>
-            <p>This will remove the quest (but not delete the missions). Are you sure?</p>
+            <p>This will remove the quest but keep all missions. Are you sure?</p>
             <div className="modal-actions">
               <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
               <button onClick={deleteQuestConfirmed} className="confirm-btn delete">Delete</button>
@@ -261,11 +264,12 @@ const QuestDetailView = () => {
         </div>
       )}
 
-      {/* TODO: Add Mission Creation Modal */}
+      {/* Add/Edit Mission Modal */}
       {showAddMission && (
-        <div className="modal-placeholder">
-          Mission creation modal will go here
-        </div>
+        <AddMissionCard
+          onAddMission={handleAddMission}
+          onCancel={() => setShowAddMission(false)}
+        />
       )}
     </div>
   );
