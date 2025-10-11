@@ -15,7 +15,7 @@ import {
   reorderQuestMissions
 } from '../../services/questService';
 import { getAllMissions, createMission } from '../../services/missionService';
-import { calculateQuestProgress } from '../../types/Quest';
+import { calculateQuestProgress } from '../../types/Quests';
 import './QuestDetailView.css';
 
 const QuestDetailView = () => {
