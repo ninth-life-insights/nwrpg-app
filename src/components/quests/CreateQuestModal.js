@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import Badge from '../ui/Badge';
 import { createQuest } from '../../services/questService';
-import { QUEST_DIFFICULTY, QUEST_XP_REWARDS } from '../../types/Quests';
+import { QUEST_DIFFICULTY } from '../../types/Quests';
 import './CreateQuestModal.css';
 
 const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
@@ -18,6 +18,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
   if (!isOpen) return null;
 
@@ -28,7 +29,6 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       [name]: value
     }));
     
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -37,7 +37,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
     }
   };
 
-  const handleDifficultyChange = (difficulty) => {
+  const handleDifficultySelect = (difficulty) => {
     setFormData(prev => ({
       ...prev,
       difficulty
@@ -75,7 +75,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
         title: formData.title.trim(),
         description: formData.description.trim(),
         difficulty: formData.difficulty,
-        status: 'active', // Start as active, skip planning mode for now
+        status: 'active',
         missionIds: [],
         missionOrder: [],
         completedMissionIds: [],
@@ -95,6 +95,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
         description: '',
         difficulty: QUEST_DIFFICULTY.EASY,
       });
+      setShowDescription(false);
       
       onClose();
     } catch (error) {
@@ -111,110 +112,99 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
     }
   };
 
-  const xpReward = QUEST_XP_REWARDS[formData.difficulty];
-
   return (
-    <div className="create-quest-modal-overlay" onClick={handleBackdropClick}>
-      <div className="create-quest-modal">
-        <div className="modal-header">
-          <h2>Create New Quest</h2>
-          <button className="close-button" onClick={onClose}>
-            <span className="material-icons">close</span>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="quest-form">
+    <div className="add-quest-overlay" onClick={handleBackdropClick}>
+      <div className="add-quest-card" onClick={(e) => e.stopPropagation()}>
+        <form onSubmit={handleSubmit}>
+          
           {/* Title Input */}
-          <div className="form-group">
-            <label htmlFor="title">
-              Quest Title <span className="required">*</span>
-            </label>
+          <div className="add-quest-title-section">
             <input
               type="text"
-              id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="e.g., Spring Cleaning, Plan Family Vacation"
+              className={`add-quest-title-input ${errors.title ? 'error' : ''}`}
+              placeholder="Quest Name *"
+              disabled={isSubmitting}
               maxLength={100}
-              className={errors.title ? 'error' : ''}
             />
-            {errors.title && (
-              <span className="error-message">{errors.title}</span>
-            )}
-            <span className="char-count">{formData.title.length}/100</span>
+            {errors.title && <span className="error-text">{errors.title}</span>}
           </div>
 
-          {/* Description Input */}
-          <div className="form-group">
-            <label htmlFor="description">Description (Optional)</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="What's this quest about?"
-              rows={3}
-              maxLength={500}
-              className={errors.description ? 'error' : ''}
-            />
-            {errors.description && (
-              <span className="error-message">{errors.description}</span>
-            )}
-            <span className="char-count">{formData.description.length}/500</span>
-          </div>
+          {/* Description (Optional) */}
+          {showDescription || formData.description ? (
+            <div className="add-quest-description">
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                className="add-quest-description-input"
+                placeholder="Description (optional)"
+                rows="2"
+                disabled={isSubmitting}
+                maxLength={500}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, description: '' }));
+                  setShowDescription(false);
+                }}
+                className="remove-field-btn"
+                disabled={isSubmitting}
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowDescription(true)}
+              className="ghost-badge"
+              disabled={isSubmitting}
+            >
+              + Description
+            </button>
+          )}
 
-          {/* Difficulty Selection */}
-          <div className="form-group">
-            <label>Difficulty</label>
+          {/* Difficulty Badge Selector */}
+          <div className="add-quest-badges">
             <div className="difficulty-selector">
-              <button
-                type="button"
-                className={`difficulty-option ${formData.difficulty === QUEST_DIFFICULTY.EASY ? 'selected' : ''}`}
-                onClick={() => handleDifficultyChange(QUEST_DIFFICULTY.EASY)}
-              >
-                <Badge variant="difficulty" difficulty="easy">Easy</Badge>
-                <span className="xp-label">+{QUEST_XP_REWARDS[QUEST_DIFFICULTY.EASY]} XP</span>
-              </button>
-
-              <button
-                type="button"
-                className={`difficulty-option ${formData.difficulty === QUEST_DIFFICULTY.MEDIUM ? 'selected' : ''}`}
-                onClick={() => handleDifficultyChange(QUEST_DIFFICULTY.MEDIUM)}
-              >
-                <Badge variant="difficulty" difficulty="medium">Medium</Badge>
-                <span className="xp-label">+{QUEST_XP_REWARDS[QUEST_DIFFICULTY.MEDIUM]} XP</span>
-              </button>
-
-              <button
-                type="button"
-                className={`difficulty-option ${formData.difficulty === QUEST_DIFFICULTY.HARD ? 'selected' : ''}`}
-                onClick={() => handleDifficultyChange(QUEST_DIFFICULTY.HARD)}
-              >
-                <Badge variant="difficulty" difficulty="hard">Hard</Badge>
-                <span className="xp-label">+{QUEST_XP_REWARDS[QUEST_DIFFICULTY.HARD]} XP</span>
-              </button>
+              {Object.values(QUEST_DIFFICULTY).map((difficulty) => (
+                <button
+                  key={difficulty}
+                  type="button"
+                  onClick={() => handleDifficultySelect(difficulty)}
+                  className={`difficulty-badge-button ${formData.difficulty === difficulty ? 'selected' : 'unselected'}`}
+                  disabled={isSubmitting}
+                >
+                  <Badge variant="difficulty" difficulty={difficulty}>{difficulty}</Badge>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Submit Error */}
           {errors.submit && (
-            <div className="submit-error">{errors.submit}</div>
+            <div className="error-text" style={{ textAlign: 'center', marginTop: '15px' }}>
+              {errors.submit}
+            </div>
           )}
 
           {/* Action Buttons */}
-          <div className="modal-actions">
+          <div className="add-quest-actions">
             <button
               type="button"
               onClick={onClose}
-              className="cancel-button"
+              className="cancel-btn"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="create-button"
+              className="add-btn"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Creating...' : 'Create Quest'}
