@@ -1,0 +1,166 @@
+/* src/pages/QuestBank.css */
+
+.quest-bank-page {
+  min-height: 100vh;
+  padding-bottom: 100px;
+  background-color: #f9fafb;
+}
+
+/* Header */
+.quest-bank-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-lg);
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.top-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.home-button {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.home-button:hover {
+  background-color: var(--color-bg-main);
+  border-color: var(--color-border-yellow);
+}
+
+.quest-bank-header h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.filter-btn-header {
+  background: white;
+  border: 1px solid var(--color-border);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.filter-btn-header:hover {
+  background-color: var(--color-bg-main);
+  border-color: var(--color-border-yellow);
+  color: var(--color-text-dark);
+}
+
+.add-quest-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.add-quest-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Quest List */
+.quest-list {
+  padding: var(--space-lg);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-light);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-light);
+  font-size: var(--font-size-lg);
+}
+
+/* Error State */
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-error);
+  font-size: var(--font-size-lg);
+  background: #fee;
+  border-radius: var(--radius-lg);
+  margin: var(--space-lg);
+}
+
+/* Modal Placeholder */
+.modal-placeholder {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .quest-bank-header {
+    padding: var(--space-md);
+  }
+
+  .top-header {
+    margin-bottom: var(--space-sm);
+  }
+
+  .quest-bank-header h1 {
+    font-size: var(--font-size-xl);
+  }
+
+  .quest-list {
+    padding: var(--space-md);
+  }
+
+  .add-quest-btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+  }
+}
