@@ -3,7 +3,7 @@
 .quest-mission-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-xs);
 }
 
 .quest-missions-empty {
@@ -31,7 +31,7 @@
 .mission-card-container {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   position: relative;
 }
 
@@ -43,7 +43,7 @@
   padding: var(--space-sm);
   color: rgba(255, 255, 255, 50) !important;
   cursor: grab;
-  transition: opacity var(--transition);
+  /* transition: opacity var(--transition); */
   touch-action: none;
 }
 
@@ -76,7 +76,7 @@
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transition);
+  /* transition: var(--transition); */
   display: flex;
   align-items: center;
   justify-content: center;
