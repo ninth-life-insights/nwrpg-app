@@ -74,7 +74,7 @@ const QuestDetailView = () => {
   };
 
   const handleBack = () => {
-    navigate('/quests');
+    navigate('/quest-bank');
   };
 
   const handleToggleEditMode = async () => {
@@ -164,10 +164,20 @@ const QuestDetailView = () => {
 
   const handleReorderMissions = async (newOrder) => {
     try {
+      // Optimistic update - update local state immediately
+      setQuest(prev => ({
+        ...prev,
+        missionOrder: newOrder
+      }));
+      
+      // Save to Firestore in background
       await reorderQuestMissions(currentUser.uid, questId, newOrder);
-      await loadQuestData();
+      
+      // Don't reload - the local state is already updated
     } catch (err) {
       console.error('Error reordering missions:', err);
+      // Only reload on error to revert
+      await loadQuestData();
       alert('Failed to reorder missions');
     }
   };

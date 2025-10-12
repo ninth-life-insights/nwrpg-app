@@ -22,10 +22,12 @@
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
+  /* No transition on transform - conflicts with drag-and-drop */
 }
 
 .sortable-mission-wrapper.dragging {
   z-index: 999;
+  opacity: 0.5;
 }
 
 .mission-card-container {
