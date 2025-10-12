@@ -3,7 +3,7 @@
 .quest-mission-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-md);
 }
 
 .quest-missions-empty {
@@ -41,9 +41,9 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-sm);
-  color: white;
+  color: rgba(255, 255, 255, 50) !important;
   cursor: grab;
-  transition: color var(--transition);
+  transition: opacity var(--transition);
   touch-action: none;
 }
 
@@ -52,11 +52,12 @@
 }
 
 .drag-handle:hover {
-  color: var(--color-text-dark);
+  opacity: 0.7;
 }
 
 .drag-handle .material-icons {
   font-size: 24px;
+  color: rgba(255, 255, 255, 50) !important;
 }
 
 /* Mission Card Content */

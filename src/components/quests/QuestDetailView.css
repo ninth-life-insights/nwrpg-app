@@ -21,14 +21,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .back-button {
-  background: none;
+  background: rgba(255, 255, 255, 0.13) !important;
   border: none;
   color: white;
-  padding: var(--space-sm) 0;
+  padding: var(--space-sm) var(--space-lg) !important;
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -39,7 +39,8 @@
 }
 
 .back-button .material-icons {
-  font-size: 20px;
+  font-size: 20px !important;
+  color: rgba(255, 255, 255, 0.719) !important;
 }
 
 .back-button:hover {
@@ -47,10 +48,10 @@
 }
 
 .edit-button {
-  background: none;
+  background: rgba(255, 255, 255, 0.13) !important;
   border: none;
   color: white;
-  padding: var(--space-sm) var(--space-lg);
+  padding: 10px 25px !important;
   cursor: pointer;
   font-size: var(--font-size-base);
   font-weight: 600;
@@ -63,6 +64,8 @@
 
 .edit-button.active {
   text-decoration: underline;
+  color: white;
+  padding: 10px 25px !important;
 }
 
 .quest-title {
@@ -117,6 +120,7 @@
   resize: vertical;
   min-height: 60px;
   transition: border-color var(--transition);
+  box-sizing: border-box;
 }
 
 .quest-description-input:focus {
@@ -162,7 +166,8 @@
 /* Inline Difficulty Selector */
 .difficulty-selector-inline {
   display: flex;
-  gap: var(--space-xs);
+  gap: var(--space-lg);
+  width: 100%;
 }
 
 .difficulty-btn-inline {
@@ -198,10 +203,10 @@
   margin: var(--space-xl) auto 0;
   display: block;
   padding: var(--space-md);
-  background: white;
+  background: none;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
-  color: var(--color-text-medium);
+  color: white;
   font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;

@@ -258,19 +258,21 @@ const QuestDetailView = () => {
               ))}
             </div>
           ) : (
-            <Badge variant="difficulty" difficulty={quest.difficulty}>
-              {quest.difficulty}
-            </Badge>
+            <>
+              <Badge variant="difficulty" difficulty={quest.difficulty}>
+                {quest.difficulty}
+              </Badge>
+              <div className="quest-progress-badge">
+                {quest.completedMissions}/{quest.totalMissions} missions
+              </div>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </>
           )}
-          <div className="quest-progress-badge">
-            {quest.completedMissions}/{quest.totalMissions} missions
-          </div>
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${progress}%` }}
-            />
-          </div>
         </div>
       </div>
 
