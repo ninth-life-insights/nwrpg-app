@@ -22,6 +22,8 @@ import {
   saveDailyMissionSelection,
 } from '../services/dailyMissionService';
 
+import { getAllQuests } from '../services/questService';
+
 // Date helpers
 import {
   isMissionDueToday,
@@ -53,6 +55,7 @@ const EditDailyMissionsPage = ({
   const navigate = useNavigate();
   
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
+  const [quests, setQuests] = useState([]);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
   const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
@@ -64,6 +67,7 @@ const EditDailyMissionsPage = ({
   // Load existing daily missions configuration
   useEffect(() => {
     loadExistingDailyMissions();
+    loadQuests();
   }, [currentUser]);
 
   const loadExistingDailyMissions = async () => {
@@ -119,6 +123,15 @@ const EditDailyMissionsPage = ({
       setError('Failed to load existing daily missions');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadQuests = async () => {
+    try {
+      const questData = await getAllQuests(currentUser.uid);
+      setQuests(questData);
+    } catch (err) {
+      console.error('Error loading quests:', err);
     }
   };
 
@@ -307,6 +320,7 @@ const handleAddNewMission = async (missionData) => {
               const recurrenceText = getRecurrenceDisplayText(mission);
               const dueDateInfo = getDueDateInfo(mission);
               const missionHasSkill = hasSkill(mission);
+              const quest = mission ? quests.find(q => q.id === mission.questId) : null;
             
             return (
               <div className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}>
@@ -321,6 +335,13 @@ const handleAddNewMission = async (missionData) => {
                       </Badge>
                     )}
 
+                    {/* quest badge */}
+                    {quest && (
+                      <Badge variant="quest">
+                        {quest.title}
+                      </Badge>
+                    )}
+
                     {/* Due date badge */}
                     {dueDateInfo && (
                       <Badge variant={`due-${dueDateInfo.status}`}>
@@ -332,6 +353,14 @@ const handleAddNewMission = async (missionData) => {
                     <Badge variant="difficulty" difficulty={mission.difficulty}>
                       {mission.difficulty.charAt(0).toUpperCase() + mission.difficulty.slice(1)}
                     </Badge>
+
+                    {/* skill badge */}
+                    {missionHasSkill && (
+                      <Badge variant="skill">
+                        {mission.skill}
+                      </Badge>
+                    )}
+                    
                   </div>
                 </div>
                 <button 
