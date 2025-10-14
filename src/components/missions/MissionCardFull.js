@@ -1,6 +1,6 @@
 // src/components/missions/MissionCardFull.js
 import React, { useState } from 'react';
-import DifficultyBadge from './sub-components/DifficultyBadge';
+import { useNavigate } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import AddMissionCard from './AddMissionCard';
 import {
@@ -15,8 +15,16 @@ import {
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardFull.css';
 
-const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, onUpdateMission }) => {
+const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, onUpdateMission, quest = null }) => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+
+  const handleQuestClick = (e) => {
+    e.stopPropagation();
+    if (quest && quest.id) {
+      navigate(`/quests/${quest.id}`);
+    }
+  };
 
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -104,6 +112,12 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
             {mission.isDailyMission && (
               <div className="daily-mission-header">
                 <Badge variant="daily" icon="sunny">Daily</Badge>
+              </div>
+            )}
+            
+            {quest && (
+              <div className="quest-indicator-badge" onClick={handleQuestClick}>
+                <Badge variant="default">Quest: {quest.title}</Badge>
               </div>
             )}
             
