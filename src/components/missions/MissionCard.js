@@ -1,5 +1,6 @@
-// src/components/missions/MissionCard.js - WITH DRAG HANDLE
+// src/components/missions/MissionCard.js - WITH QUEST INDICATOR
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import {
   MISSION_STATUS,
@@ -25,8 +26,11 @@ const MissionCard = ({
   isRecentlyCompleted = false,
   selectionMode = false,
   isCustomOrderMode = false,
-  hideDailyBadge = false
+  hideDailyBadge = false,
+  quest = null,
+  hideQuestIndicator = false
 }) => {
+  const navigate = useNavigate();
   const [showXpBadge, setShowXpBadge] = useState(false);
   
   // Drag and drop setup
@@ -113,19 +117,37 @@ const MissionCard = ({
     }
   };
 
+  const handleQuestClick = (e) => {
+    e.stopPropagation();
+    if (quest && quest.id) {
+      navigate(`/quests/${quest.id}`);
+    }
+  };
+
   return (
   <div 
     ref={setNodeRef} 
     style={style}
-    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''} ${quest && !hideQuestIndicator ? 'has-quest' : ''}`}
   >
+    {/* Quest Indicator Tab */}
+    {quest && !hideQuestIndicator && (
+      <div 
+        className="quest-indicator-tab" 
+        onClick={handleQuestClick}
+        title={`Part of quest: ${quest.title}`}
+      >
+        <span className="quest-indicator-text">{quest.title}</span>
+      </div>
+    )}
+
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (
       <div 
         className="drag-handle"
         {...attributes}
         {...listeners}
-        style={{ touchAction: 'none' }} // Add inline style
+        style={{ touchAction: 'none' }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="9" cy="6" r="1.5"/>
@@ -138,7 +160,7 @@ const MissionCard = ({
       </div>
     )}
 
-    {/* Content area - remove onClick when in custom order mode to prevent conflicts */}
+    {/* Content area */}
     <div className="content-area" onClick={() => onViewDetails(mission)}>
         
         {/* Header with title and badges */}
