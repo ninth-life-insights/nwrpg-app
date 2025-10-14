@@ -111,13 +111,7 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
             {/* Daily Mission Badge */}
             {mission.isDailyMission && (
               <div className="daily-mission-header">
-                <Badge variant="daily" icon="sunny">Daily</Badge>
-              </div>
-            )}
-            
-            {quest && (
-              <div className="quest-indicator-badge" onClick={handleQuestClick}>
-                <Badge variant="quest">Quest: {quest.title}</Badge>
+                <Badge variant="daily-large" icon="sunny">Daily</Badge>
               </div>
             )}
             
@@ -151,6 +145,12 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
                   {dueDateInfo.display}
                 </Badge>
               )}
+
+              {quest && (
+              <div className="quest-indicator-badge" onClick={handleQuestClick}>
+                <Badge variant="quest">Quest: {quest.title}</Badge>
+              </div>
+            )}
 
               <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
               

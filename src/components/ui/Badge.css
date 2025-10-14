@@ -67,6 +67,21 @@
   font-weight: 600;
 }
 
+/* Variant: Daily */
+.badge-daily-large {
+  background-color: #fff6a4;
+  color: rgb(219, 113, 14);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.badge-daily-large .material-icons  {
+  color: rgb(219, 113, 14);
+  font-size: 15px;
+  margin-right: 5px;
+  margin-bottom: 2px;
+}
+
 .badge-quest {
   background-color: #3b82f6;
   color: white;
