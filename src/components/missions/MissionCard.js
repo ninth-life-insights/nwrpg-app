@@ -128,19 +128,8 @@ const MissionCard = ({
   <div 
     ref={setNodeRef} 
     style={style}
-    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''} ${quest && !hideQuestIndicator ? 'has-quest' : ''}`}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
   >
-    {/* Quest Indicator Tab */}
-    {quest && !hideQuestIndicator && (
-      <div 
-        className="quest-indicator-tab" 
-        onClick={handleQuestClick}
-        title={`Part of quest: ${quest.title}`}
-      >
-        <span className="quest-indicator-text">{quest.title}</span>
-      </div>
-    )}
-
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (
       <div 
@@ -199,8 +188,15 @@ const MissionCard = ({
               </Badge>
             )}
 
-            <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>          
-            
+            {/* Quest badge */}
+            {quest && !hideQuestIndicator && (
+              <div onClick={handleQuestClick} style={{ display: 'inline-block' }}>
+                <Badge variant="quest-card" >Quest: {quest.title}</Badge>
+              </div>
+            )}      
+
+            <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>   
+
             {/* Skill badge */}
             {missionHasSkill && (
               <Badge variant="skill">{mission.skill}</Badge>

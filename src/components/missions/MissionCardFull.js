@@ -117,7 +117,7 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
             
             {quest && (
               <div className="quest-indicator-badge" onClick={handleQuestClick}>
-                <Badge variant="default">Quest: {quest.title}</Badge>
+                <Badge variant="quest">Quest: {quest.title}</Badge>
               </div>
             )}
             

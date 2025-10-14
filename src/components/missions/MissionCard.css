@@ -30,6 +30,12 @@
   border-color: #f7b946;
 }
 
+/* Quest Mission Card Styling - subtle blue tint */
+.mission-card.quest-mission-card {
+  background: #eff6ff; /* Light blue background */
+  border-color: #bfdbfe; /* Light blue border */
+}
+
 .mission-card.pinned {
   border-color: #fbbf24;
   box-shadow: var(--shadow-card), 0 0 0 1px rgba(251, 191, 36, 0.2);
@@ -360,51 +366,4 @@
 
 .drag-handle.hidden {
   display: none;
-}
-
-/* Quest Indicator Tab */
-.mission-card.has-quest {
-  position: relative;
-  padding-left: 32px; /* Make room for the tab */
-}
-
-.quest-indicator-tab {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 28px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition);
-  overflow: hidden;
-  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.1);
-}
-
-.quest-indicator-tab:hover {
-  width: 32px;
-  background: linear-gradient(135deg, #7c8bf0 0%, #8b5bb3 100%);
-}
-
-.quest-indicator-text {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-height: 100%;
-  padding: 8px 0;
-}
-
-/* Adjust drag handle position when quest indicator is present */
-.mission-card.has-quest .drag-handle {
-  left: 28px;
 }

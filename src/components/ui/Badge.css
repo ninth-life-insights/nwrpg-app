@@ -13,8 +13,10 @@
 }
 
 .badge-skill,
-.badge-recurrence {
-  text-transform: none; /* Override to use normal casing */
+.badge-recurrence,
+.badge-quest,
+.badge-quest-card {
+  text-transform: none !important; /* Override to use normal casing */
 }
 
 /* Keep uppercase for these (already default, but explicit for clarity) */
@@ -63,6 +65,19 @@
   background-color: #ffffff;
   color: #d97706;
   font-weight: 600;
+}
+
+.badge-quest {
+  background-color: #3b82f6;
+  color: white;
+  font-size: 12px;
+}
+
+.badge-quest-card {
+  background-color: #3b82f6;
+  color: white;
+  font-size: 12px;
+  max-width: 100px;
 }
 
 /* Variant: Recurrence */
