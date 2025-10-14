@@ -19,6 +19,7 @@ import {
 import { 
   addDailyMissionStatus 
 } from '../../services/dailyMissionService';
+import { getAllQuests } from '../../services/questService';
 
 import { addXP, subtractXP } from '../../services/userService';
 import { isRecurringMission } from '../../utils/recurrenceHelpers';
@@ -60,6 +61,7 @@ const MissionList = ({
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
+  const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
@@ -99,6 +101,7 @@ const MissionList = ({
   useEffect(() => {
     if (currentUser) {
       loadMissions();
+      loadQuests();
     }
   }, [currentUser, missionType, memoizedFilters]);
 
@@ -238,6 +241,15 @@ const MissionList = ({
       setLoading(false);
     }
   };
+
+  const loadQuests = async () => {
+  try {
+    const questData = await getAllQuests(currentUser.uid);
+    setQuests(questData);
+  } catch (err) {
+    console.error('Error loading quests:', err);
+  }
+};
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     if (selectionMode) return;
@@ -560,6 +572,7 @@ const MissionList = ({
             {displayMissions.map((mission, index) => {
               const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
               const isRecentlyCompleted = recentlyCompletedMissions.some(completed => completed.id === mission.id);
+              const quest = missions ? quests.find(q => q.id === mission.questId) : null;
               
               return (
                 <div
@@ -632,11 +645,13 @@ const MissionList = ({
                       ✓
                     </div>
                   )}
+                  
                   <MissionCard
                     key={mission.id}
                     mission={mission}
                     onToggleComplete={handleToggleComplete}
                     onViewDetails={handleViewDetails}
+                    quest={quest}
                     selectionMode={selectionMode}
                     isRecentlyCompleted={isRecentlyCompleted}
                     isCustomOrderMode={isCustomOrderMode}
@@ -654,7 +669,8 @@ const MissionList = ({
           onClose={() => setSelectedMission(null)} 
           onToggleComplete={handleToggleComplete} 
           onDeleteMission={handleDeleteMission}
-          onUpdateMission={handleUpdateMission}  // <- Add this line
+          onUpdateMission={handleUpdateMission}
+          quest={quests.find(q => q.id === selectedMission.questId)}
         />
       )}
 
