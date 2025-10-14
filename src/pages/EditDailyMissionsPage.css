@@ -131,7 +131,7 @@
   text-align: left;
 }
 
-/* Mission Badges - Nuclear Option for Inline Alignment */
+/* Mission Badges*/
 .mission-badges {
   display: flex !important;
   flex-direction: row !important;
@@ -141,75 +141,6 @@
   justify-content: flex-start !important;
   margin-top: 8px !important;
   width: 100% !important;
-}
-
-/* Target all elements regardless of class */
-.mission-badges span,
-.mission-badges div,
-.mission-badges > *,
-.difficulty-badge,
-.skill-badge,
-.due-date-badge {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  margin: 0 !important;
-  margin-bottom: 0 !important;
-  margin-top: 0 !important;
-  flex-shrink: 0 !important;
-  float: none !important;
-  clear: none !important;
-  position: relative !important;
-}
-
-/* Specific overrides for skill badges */
-.mission-badges .skill-badge,
-.mission-badges span.skill-badge {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 4px 8px !important;
-  border-radius: 6px !important;
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  background-color: var(--color-skill) !important;
-  color: #7c3aed !important;
-  letter-spacing: 0.5px !important;
-  white-space: nowrap !important;
-}
-
-/* Specific overrides for due date badges */
-.mission-badges .due-date-badge,
-.mission-badges span.due-date-badge {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 4px 8px !important;
-  border-radius: 6px !important;
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  white-space: nowrap !important;
-}
-
-.due-date-badge.upcoming {
-  background-color: #dbeafe;
-  color: #1d4ed8;
-}
-
-.due-date-badge.due-tomorrow {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.due-date-badge.due-today {
-  background-color: #fed7aa;
-  color: #ea580c;
-}
-
-.due-date-badge.overdue {
-  background-color: #fee2e2;
-  color: #dc2626;
-  animation: pulse 2s infinite;
 }
 
 .remove-mission-btn {
@@ -379,7 +310,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: var(--space-lg);
+  padding: var(--space-xs);
 }
 
 .mission-bank-modal {

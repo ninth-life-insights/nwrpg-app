@@ -535,27 +535,6 @@ const MissionList = ({
   return (
     <div className={selectionMode ? 'mission-list-selection-mode' : 'mission-list'}>
 
-      {selectionMode && (
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '20px',
-          padding: '15px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '8px',
-          border: '2px solid #2196f3'
-        }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#1976d2' }}>
-            Assign to Daily Missions
-          </h3>
-          <p style={{ margin: 0, color: '#1976d2', fontSize: '14px' }}>
-            {maxSelections && selectedMissions.length > 0 
-              ? `${selectedMissions.length}/${maxSelections} selected`
-              : 'Click on a mission to add it to your daily missions'
-            }
-          </p>
-        </div>
-      )}
-
       {/* Missions Grid with Drag and Drop */}
       <DndContext
         sensors={sensors}

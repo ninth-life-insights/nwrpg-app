@@ -326,7 +326,7 @@ const handleAddNewMission = async (missionData) => {
               <div className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}>
                 <div className="mission-info">
                   <h3 className={`mission-title ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.title}</h3>
-                  <p className={`mission-description ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.description || 'No description'}</p>
+                  <p className={`mission-description ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.description}</p>
                   <div className="mission-badges">
                     {/* Recurrence badge */}
                     {isRecurring && (
@@ -422,7 +422,10 @@ const handleAddNewMission = async (missionData) => {
           onClick={handleSetDailyMissions}
           disabled={!allSlotsFilled || saving}
         >
-          {saving ? 'Setting Daily Missions...' : 'Set Daily Missions'}
+          {saving 
+            ? (isActiveForToday ? 'Updating Daily Missions...' : 'Setting Daily Missions...') 
+            : (isActiveForToday ? 'Update Daily Missions' : 'Set Daily Missions')
+          }
         </button>
         
         {!allSlotsFilled && (
