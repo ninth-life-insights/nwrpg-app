@@ -9,37 +9,53 @@
 
 /* Page Header */
 .mission-bank-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 2px solid #e9ecef;
 }
 
 .top-header {
-    /* display: flex; */
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 15px;
 }
 
 .home-button {
-  padding: 10px;
+  position: absolute;
+  left: 0;
+  padding: 8px;
   background: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 8px;
   cursor: pointer;
   color: #6c757d;
   transition: all 0.2s ease;
-  /* display: flex;
+  display: flex;
   align-items: center;
-  justify-content: center; */
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.home-button:hover {
+  background: #e9ecef;
+  color: #495057;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.home-button:active {
+  transform: translateY(0);
+}
+
+.home-button .material-icons {
+  font-size: 24px;
 }
 
 .mission-bank-header h1 {
-  /* margin: 0; */
+  margin: 0;
   font-size: 2rem;
   font-weight: 700;
   color: #2c3e50;
@@ -48,6 +64,7 @@
 .header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
 }
 
@@ -220,15 +237,8 @@
     padding: 15px;
   }
   
-  .mission-bank-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 15px;
-  }
-  
   .mission-bank-header h1 {
     font-size: 1.5rem;
-    text-align: center;
   }
   
   .mission-tabs {
@@ -237,7 +247,6 @@
   
   .add-mission-btn {
     width: 100%;
-    justify-self: stretch;
   }
   
   .user-info-content {
@@ -260,5 +269,15 @@
   .add-mission-btn {
     padding: 10px 16px;
     font-size: 14px;
+  }
+  
+  .home-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+  }
+  
+  .home-button .material-icons {
+    font-size: 20px;
   }
 }

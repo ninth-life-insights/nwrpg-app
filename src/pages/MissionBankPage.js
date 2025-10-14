@@ -125,8 +125,8 @@ const MissionBank = () => {
       {/* Page Header */}
       <div className="mission-bank-header">
         <div className="top-header">
-          <button className="home-button" onClick={HomeButtonClick}>
-            Home
+          <button className="home-button" onClick={HomeButtonClick} aria-label="Back to home">
+            <span className="material-icons">arrow_back</span>
           </button>
           <h1>Mission Bank</h1>
         </div>

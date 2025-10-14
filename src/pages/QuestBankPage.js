@@ -131,8 +131,8 @@ const QuestBank = () => {
       {/* Page Header */}
       <div className="quest-bank-header">
         <div className="top-header">
-          <button className="home-button" onClick={handleHomeButtonClick}>
-            Home
+          <button className="home-button" onClick={handleHomeButtonClick} aria-label="Back to home">
+            <span className="material-icons">arrow_back</span>
           </button>
           <h1>Quest Bank</h1>
         </div>
