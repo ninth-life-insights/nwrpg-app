@@ -561,11 +561,11 @@ const MissionList = ({
                     position: 'relative',
                     ...(selectionMode && {
                       cursor: 'pointer',
-                      padding: '4px',
-                      margin: '8px auto',
+                      padding: '0.5px 4px',
+                      margin: '0 4px',
                       maxWidth: '400px',
                       borderRadius: '12px',
-                      border: isSelected ? '3px solid #2196f3' : '3px solid transparent',
+                      border: isSelected ? '3px solid #2196f3' : '',
                       backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
                       transition: 'all 0.2s ease'
                     }),
