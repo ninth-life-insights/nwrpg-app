@@ -43,7 +43,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-sm);
-  color: rgba(255, 255, 255, 50) !important;
+  color: rgba(255, 255, 255, 50);
   cursor: grab;
   /* transition: opacity var(--transition); */
   touch-action: none;

@@ -14,7 +14,7 @@ const MissionBank = () => {
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({
-    sortBy: 'dueDate',
+    sortBy: 'custom',
     sortOrder: 'asc',
     skillFilter: '',
     includeCompleted: false,

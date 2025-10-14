@@ -88,7 +88,7 @@ const MissionList = ({
   );
 
   const memoizedFilters = useMemo(() => ({
-    sortBy: filters.sortBy || 'dueDate',
+    sortBy: filters.sortBy || 'custom',
     sortOrder: filters.sortOrder || 'asc',
     skillFilter: filters.skillFilter || '',
     includeCompleted: filters.includeCompleted || false,
