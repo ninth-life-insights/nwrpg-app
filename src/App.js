@@ -27,6 +27,7 @@ function ProtectedRoute({ children }) {
   
   return children;
 }
+// test deployment vercel
 
 // Component for public routes that should redirect if already logged in
 function PublicRoute({ children }) {
