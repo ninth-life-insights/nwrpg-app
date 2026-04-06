@@ -23,6 +23,7 @@ import { addXP,
 import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModal';
 import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
+import LevelUpModal from '../components/ui/LevelUpModal';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -35,6 +36,7 @@ const HomePage = () => {
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
   const navigate = useNavigate();
   const [selectedMission, setSelectedMission] = useState(null);
+  const [levelUpInfo, setLevelUpInfo] = useState(null);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -189,9 +191,8 @@ const HomePage = () => {
         const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
         
         // Show level up notification if applicable
-        if (result && result.leveledUp) {
-          console.log(`Level up! Now level ${result.newLevel}`);
-          // TODO: Show level up animation/modal
+        if (result?.leveledUp) {
+          setLevelUpInfo({ newLevel: result.newLevel });
         }
       }
       
@@ -391,6 +392,13 @@ const HomePage = () => {
           onToggleComplete={handleToggleComplete}
           onDeleteMission={handleDeleteMission}     
           onUpdateMission={handleUpdateMission}    
+        />
+      )}
+
+      {levelUpInfo && (
+        <LevelUpModal
+          newLevel={levelUpInfo.newLevel}
+          onClose={() => setLevelUpInfo(null)}
         />
       )}
     </div>
