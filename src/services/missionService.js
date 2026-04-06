@@ -154,7 +154,7 @@ export const completeMission = async (userId, missionId) => {
       completedAt: serverTimestamp()
     });
 
-    await addXP(userId, xpAwarded);
+    const xpResult = await addXP(userId, xpAwarded);
 
     // Update quest progress if mission is part of a quest
     if (missionData.questId) {
@@ -167,7 +167,7 @@ export const completeMission = async (userId, missionId) => {
       }
     }
 
-    return { xpAwarded };
+    return { xpAwarded, leveledUp: xpResult?.leveledUp || false, newLevel: xpResult?.newLevel || null };
 
   } catch (error) {
     console.error('Error completing mission:', error);
