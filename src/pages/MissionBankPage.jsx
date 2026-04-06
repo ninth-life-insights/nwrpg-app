@@ -5,6 +5,7 @@ import MissionList from '../components/missions/MissionList';
 import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
 import { getUserProfile } from '../services/userService';
 import { useNavigate } from 'react-router-dom';
+import LevelUpModal from '../components/ui/LevelUpModal';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -13,6 +14,7 @@ const MissionBank = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [filters, setFilters] = useState({
     sortBy: 'custom',
     sortOrder: 'asc',
@@ -53,7 +55,7 @@ const MissionBank = () => {
   };
 
   // Handle mission completion updates
-  const handleMissionCompletion = (completedMission) => {
+  const handleMissionCompletion = (completedMission, levelUpData) => {
     // Add to recently completed missions if not already there
     setRecentlyCompletedMissions(prev => {
       const existingIndex = prev.findIndex(mission => mission.id === completedMission.id);
@@ -64,6 +66,9 @@ const MissionBank = () => {
       // Add to the beginning of the array
       return [completedMission, ...prev];
     });
+      if (levelUpData?.leveledUp) {
+      setLevelUpInfo({ newLevel: levelUpData.newLevel });
+    }
   };
 
   // Handle mission un-completion
@@ -174,6 +179,14 @@ const MissionBank = () => {
         currentFilters={filters}
         onApplyFilters={handleApplyFilters}
       />
+
+      {levelUpInfo && (
+        <LevelUpModal
+          newLevel={levelUpInfo.newLevel}
+          onClose={() => setLevelUpInfo(null)}
+        />
+      )}
+
     </div>
   );
 };
