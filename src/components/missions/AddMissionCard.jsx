@@ -14,7 +14,6 @@ import {
   COMPLETION_TYPES,
   DUE_TYPES,
 } from '../../types/Mission';
-import { validateMissionData } from '../../utils/missionHelpers';
 import './AddMissionCard.css';
 
 const AddMissionCard = ({ 
@@ -183,7 +182,7 @@ const AddMissionCard = ({
 
   const validateForm = () => {
     const missionData = createMissionDataFromForm();
-    const validation = validateMissionData(missionData);
+    const validation = validateMission(missionData);
     
     if (!validation.isValid) {
       const newErrors = {};

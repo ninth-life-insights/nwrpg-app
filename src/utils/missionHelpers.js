@@ -96,13 +96,6 @@ export const getMissionProgressPercentage = (mission) => {
   return isMissionCompleted(mission) ? 100 : 0;
 };
 
-// Validation helper using your existing function
-export const validateMissionData = (mission) => {
-  // Import and use your existing validateMission function
-  const { validateMission } = require('../types/Mission');
-  return validateMission(mission);
-};
-
 // Form validation helpers for AddMissionCard
 export const parseFormNumber = (value, defaultValue = null) => {
   if (!value || value === '') return defaultValue;
