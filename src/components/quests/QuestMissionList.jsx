@@ -95,7 +95,8 @@ const QuestMissionList = ({
   isEditMode,
   onMissionUpdate,
   onRemoveMission,
-  onReorderMissions
+  onReorderMissions,
+  onLevelUp
 }) => {
   const { currentUser } = useAuth();
   const [selectedMission, setSelectedMission] = useState(null);
@@ -145,7 +146,10 @@ const QuestMissionList = ({
       if (isCurrentlyCompleted) {
         await uncompleteMission(currentUser.uid, missionId);
       } else {
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
+        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
+        if (result.leveledUp && onLevelUp) {
+          onLevelUp(result.newLevel);
+        }
       }
       
       if (onMissionUpdate) {

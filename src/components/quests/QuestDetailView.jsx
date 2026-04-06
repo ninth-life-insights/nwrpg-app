@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import QuestMissionList from './QuestMissionList';
 import AddMissionCard from '../missions/AddMissionCard';
 import Badge from '../ui/Badge';
+import LevelUpModal from '../ui/LevelUpModal';
 import { 
   getQuest, 
   updateQuest,
@@ -32,6 +33,7 @@ const QuestDetailView = () => {
   const [showAddMission, setShowAddMission] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [levelUpInfo, setLevelUpInfo] = useState(null);
   
   // Inline editing state
   const [editedTitle, setEditedTitle] = useState('');
@@ -106,6 +108,10 @@ const QuestDetailView = () => {
     } else {
       await completeQuestConfirmed();
     }
+  };
+
+  const handleLevelUp = (newLevel) => {
+    setLevelUpInfo({ newLevel });
   };
 
   const completeQuestConfirmed = async () => {
@@ -295,6 +301,7 @@ const QuestDetailView = () => {
           onMissionUpdate={handleMissionUpdate}
           onRemoveMission={handleRemoveMission}
           onReorderMissions={handleReorderMissions}
+          onLevelUp={handleLevelUp}
         />
 
         <button 
@@ -354,6 +361,13 @@ const QuestDetailView = () => {
         <AddMissionCard
           onAddMission={handleAddMission}
           onCancel={() => setShowAddMission(false)}
+        />
+      )}
+
+      {levelUpInfo && (
+        <LevelUpModal
+          newLevel={levelUpInfo.newLevel}
+          onClose={() => setLevelUpInfo(null)}
         />
       )}
     </div>
