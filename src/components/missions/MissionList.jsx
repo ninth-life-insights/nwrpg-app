@@ -277,7 +277,7 @@ const MissionList = ({
 
         if (completedMission && onMissionCompletion) {
           const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded };
-          onMissionCompletion(updatedMission);
+          onMissionCompletion(updatedMission, { leveledUp: result.leveledUp, newLevel: result.newLevel });
         }
       }
       
