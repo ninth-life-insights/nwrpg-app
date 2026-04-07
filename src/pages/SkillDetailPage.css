@@ -1,0 +1,122 @@
+/* src/pages/SkillDetailPage.css */
+
+.skill-detail-page {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  padding: 0 0 48px;
+  font-family: var(--font-family);
+}
+
+/* Header */
+.skill-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px var(--space-lg);
+  background: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border-yellow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.skill-detail-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.skill-detail-back-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.skill-detail-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.skill-detail-header-spacer {
+  width: 32px;
+}
+
+/* Progress card */
+.skill-detail-progress-card {
+  background: var(--color-bg-white);
+  border: 1px solid #d8b4fe;
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin: var(--space-lg);
+  max-width: var(--max-width-card);
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: var(--shadow-card);
+}
+
+.skill-detail-level-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-sm);
+}
+
+.skill-detail-level-label {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.skill-detail-sp-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+}
+
+.skill-detail-track {
+  height: 8px;
+  background: #ede9fe;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+}
+
+.skill-detail-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #7c3aed);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.skill-detail-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+/* Missions section */
+.skill-detail-missions {
+  padding: 0 var(--space-lg);
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+}
+
+.skill-detail-missions-heading {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: var(--space-xl) 0 var(--space-sm);
+}
+
+.skill-detail-empty {
+  font-size: var(--font-size-base);
+  color: var(--color-text-light);
+  text-align: center;
+  padding: var(--space-xl) 0;
+  margin: 0;
+}
