@@ -24,7 +24,9 @@ import {
 } from '../utils/recurrenceHelpers';
 import { 
   addXP,
-  subtractXP
+  subtractXP,
+  addSP,
+  subtractSP
  } from './userService';
 
 // Get user's missions collection reference
@@ -155,7 +157,11 @@ export const completeMission = async (userId, missionId) => {
     });
 
     const xpResult = await addXP(userId, xpAwarded);
-console.log('xpResult:', xpResult);
+
+    let spResult = null;
+    if (missionData.skill && missionData.spReward) {
+      spResult = await addSP(userId, missionData.skill, missionData.spReward);
+    }
 
     // Update quest progress if mission is part of a quest
     if (missionData.questId) {
@@ -168,7 +174,14 @@ console.log('xpResult:', xpResult);
       }
     }
 
-    return { xpAwarded, leveledUp: xpResult?.leveledUp || false, newLevel: xpResult?.newLevel || null };
+    return { 
+      xpAwarded, 
+      leveledUp: xpResult?.leveledUp || false, 
+      newLevel: xpResult?.newLevel || null,
+      skillLeveledUp: spResult?.leveledUp || false,
+      skillName: spResult?.skillName || null,
+      newSkillLevel: spResult?.newLevel || null
+    };
 
   } catch (error) {
     console.error('Error completing mission:', error);
@@ -251,6 +264,10 @@ export const uncompleteMission = async (userId, missionId) => {
 
     if (xpToRemove > 0) {
       await subtractXP(userId, xpToRemove);
+    }
+
+    if (missionData.skill && missionData.spReward) {
+      await subtractSP(userId, missionData.skill, missionData.spReward);
     }
 
     // Update quest progress if mission is part of a quest
