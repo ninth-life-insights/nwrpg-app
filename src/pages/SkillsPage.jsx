@@ -21,7 +21,6 @@ const SkillsPage = () => {
         const profile = await getUserProfile(currentUser.uid);
         const savedSkills = profile?.skills || {};
 
-        // Build full list from AVAILABLE_SKILLS, merging saved progress
         const merged = AVAILABLE_SKILLS.map((skillName) => {
           const saved = savedSkills[skillName] || { totalSP: 0, level: 1 };
           const progress = getSPProgressInLevel(saved.totalSP);
@@ -33,7 +32,7 @@ const SkillsPage = () => {
           };
         });
 
-        // Sort: skills with SP first (desc), then alphabetically for untouched ones
+        // Skills with SP first (desc), then alphabetically
         merged.sort((a, b) => {
           if (b.totalSP !== a.totalSP) return b.totalSP - a.totalSP;
           return a.name.localeCompare(b.name);
@@ -65,7 +64,6 @@ const SkillsPage = () => {
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="skills-title">Skills</h1>
-        {/* Spacer to balance the back button */}
         <div className="skills-header-spacer" />
       </header>
 
@@ -74,9 +72,10 @@ const SkillsPage = () => {
           const hasProgress = skill.totalSP > 0;
 
           return (
-            <div
+            <button
               key={skill.name}
               className={`skill-card ${hasProgress ? 'skill-card--active' : 'skill-card--inactive'}`}
+              onClick={() => navigate(`/skills/${encodeURIComponent(skill.name)}`)}
             >
               <div className="skill-card-top">
                 <div className="skill-card-name-group">
@@ -96,7 +95,7 @@ const SkillsPage = () => {
                   style={{ width: `${hasProgress ? skill.progress.percentage : 0}%` }}
                 />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

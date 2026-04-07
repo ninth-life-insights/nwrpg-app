@@ -44,7 +44,7 @@
 }
 
 .skills-header-spacer {
-  width: 32px; /* matches back button width */
+  width: 32px;
 }
 
 /* Skills list */
@@ -57,13 +57,26 @@
   margin: 0 auto;
 }
 
-/* Skill card */
+/* Skill card — now a button */
 .skill-card {
+  width: 100%;
   background: var(--color-bg-white);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   box-shadow: var(--shadow-card);
+  cursor: pointer;
+  text-align: left;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.skill-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.skill-card:active {
+  transform: translateY(0);
 }
 
 .skill-card--inactive {
@@ -121,5 +134,4 @@
   background: linear-gradient(90deg, #a855f7, #7c3aed);
   border-radius: 99px;
   transition: width 0.4s ease;
-  min-width: 0;
 }
