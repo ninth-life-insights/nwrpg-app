@@ -8,7 +8,6 @@ import {
   getActiveMissions, 
   getCompletedMissions,
   getExpiredMissions,
-  completeMission, 
   uncompleteMission,
   completeMissionWithRecurrence,
   deleteMission,
@@ -277,7 +276,11 @@ const MissionList = ({
 
         if (completedMission && onMissionCompletion) {
           const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded };
-          onMissionCompletion(updatedMission, { leveledUp: result.leveledUp, newLevel: result.newLevel });
+          onMissionCompletion(
+            updatedMission,
+            { leveledUp: result.leveledUp, newLevel: result.newLevel },
+            { skillLeveledUp: result.skillLeveledUp, skillName: result.skillName, newSkillLevel: result.newSkillLevel }
+          );
         }
       }
       

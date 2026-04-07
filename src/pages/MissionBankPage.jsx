@@ -57,7 +57,7 @@ const MissionBank = () => {
   };
 
   // Handle mission completion updates
-  const handleMissionCompletion = (completedMission, levelUpData, skillLevelUpInfo) => {
+  const handleMissionCompletion = (completedMission, levelUpData, skillLevelUpData) => {
     console.log('levelUpData received:', levelUpData);
     // Add to recently completed missions if not already there
     setRecentlyCompletedMissions(prev => {
@@ -73,9 +73,9 @@ const MissionBank = () => {
       if (levelUpData?.leveledUp) {
       setLevelUpInfo({ newLevel: levelUpData.newLevel });
     }
-    
-      if (result?.skillLeveledUp) {
-      setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+
+      if (skillLevelUpData?.skillLeveledUp) {
+      setSkillLevelUpInfo({ skillName: skillLevelUpData.skillName, newLevel: skillLevelUpData.newSkillLevel });
     }
   };
 
