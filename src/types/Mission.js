@@ -117,6 +117,8 @@ export const MISSION_SCHEMA = {
 // Create a new mission object with default values
 
 export const createMissionTemplate = (overrides = {}) => {
+  console.log('createMissionTemplate called with skill:', overrides.skill, 'difficulty:', overrides.difficulty);
+  console.log('calculateSPReward result:', calculateSPReward(overrides.difficulty || DIFFICULTY_LEVELS.EASY, overrides.skill || null));
   return {
     ...MISSION_SCHEMA,
     ...overrides,

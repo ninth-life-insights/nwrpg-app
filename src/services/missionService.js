@@ -303,7 +303,7 @@ export const completeRecurringMission = async (userId, missionId) => {
     const mission = { id: missionSnap.id, ...missionSnap.data() };
     
     // 2. Complete the current mission (handles XP, status, completion timestamp, and quest progress)
-    const { xpAwarded, leveledUp, newLevel } = await completeMission(userId, missionId);
+    const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
     
     // 3. Check if this is a recurring mission and should create next instance
     if (isRecurringMission(mission)) {
@@ -330,6 +330,9 @@ export const completeRecurringMission = async (userId, missionId) => {
             xpAwarded,
             leveledUp,
             newLevel,
+            skillLeveledUp,
+            skillName,
+            newSkillLevel,
             nextMissionCreated: true,
             nextMissionId: newMissionRef.id,
             nextDueDate: nextDueDate
@@ -343,6 +346,9 @@ export const completeRecurringMission = async (userId, missionId) => {
       xpAwarded,
       leveledUp,
       newLevel,
+      skillLeveledUp,
+      skillName,
+      newSkillLevel,
       nextMissionCreated: false
     };
     
@@ -370,13 +376,16 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       return await completeRecurringMission(userId, missionId);
     } else {
       // Use the regular completion logic
-      const { xpAwarded, leveledUp, newLevel } = await completeMission(userId, missionId);
+      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
 
       return {
         completed: true,
         xpAwarded,
         leveledUp,
         newLevel,
+        skillLeveledUp,
+        skillName,
+        newSkillLevel,
         nextMissionCreated: false
       };
     }
