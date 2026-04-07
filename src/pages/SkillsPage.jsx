@@ -6,7 +6,7 @@ import { getUserProfile, getSPProgressInLevel } from '../services/userService';
 import { AVAILABLE_SKILLS } from '../data/Skills';
 import './SkillsPage.css';
 
-const SP_PER_SKILL_LEVEL = 50;
+const SP_PER_SKILL_LEVEL = 40;
 
 const SkillsPage = () => {
   const { currentUser } = useAuth();

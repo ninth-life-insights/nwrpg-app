@@ -176,7 +176,7 @@ export const updateUserProfile = async (userId, updates) => {
 
 // ─── SP / Skill helpers ───────────────────────────────────────────────────────
 
-const SP_PER_SKILL_LEVEL = 50;
+const SP_PER_SKILL_LEVEL = 40;
 
 export const getSkillLevelFromTotalSP = (totalSP) => {
   return Math.floor(totalSP / SP_PER_SKILL_LEVEL) + 1;
