@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from '../missions/MissionCard';
 import MissionDetailView from '../missions/MissionCardFull';
 import AddMissionCard from '../missions/AddMissionCard';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import {
   completeMissionWithRecurrence,
   uncompleteMission
