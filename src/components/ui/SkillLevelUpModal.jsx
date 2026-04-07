@@ -1,8 +1,11 @@
 // src/components/ui/SkillLevelUpModal.js
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './SkillLevelUpModal.css';
 
 const SkillLevelUpModal = ({ skillName, newLevel, onClose }) => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -10,6 +13,11 @@ const SkillLevelUpModal = ({ skillName, newLevel, onClose }) => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  const handleViewSkills = () => {
+    onClose();
+    navigate('/skills');
+  };
 
   return (
     <div className="skill-level-up-overlay" onClick={onClose}>
@@ -34,9 +42,14 @@ const SkillLevelUpModal = ({ skillName, newLevel, onClose }) => {
           </p>
         </div>
 
-        <button className="skill-level-up-close-btn" onClick={onClose}>
-          Continue
-        </button>
+        <div className="skill-level-up-actions">
+          <button className="skill-level-up-close-btn" onClick={onClose}>
+            Continue
+          </button>
+          <button className="skill-level-up-secondary-btn" onClick={handleViewSkills}>
+            View Skills
+          </button>
+        </div>
 
       </div>
     </div>

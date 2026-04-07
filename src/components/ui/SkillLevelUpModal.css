@@ -34,7 +34,7 @@
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Floating orbs — diamond shape, purple palette */
+/* Floating orbs */
 .skill-level-up-orbs {
   position: absolute;
   inset: 0;
@@ -70,7 +70,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .skill-level-up-eyebrow {
@@ -119,6 +119,13 @@
   line-height: 1.5;
 }
 
+/* Actions — stacked buttons */
+.skill-level-up-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .skill-level-up-close-btn {
   width: 100%;
   padding: 12px;
@@ -135,3 +142,20 @@
 
 .skill-level-up-close-btn:hover  { opacity: 0.9; }
 .skill-level-up-close-btn:active { transform: scale(0.98); }
+
+.skill-level-up-secondary-btn {
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  color: #7c3aed;
+  border: 1.5px solid #d8b4fe;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.skill-level-up-secondary-btn:hover  { background: #f3e8ff; }
+.skill-level-up-secondary-btn:active { transform: scale(0.98); }
