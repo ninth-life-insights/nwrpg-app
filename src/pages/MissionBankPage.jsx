@@ -6,6 +6,7 @@ import MissionFilterModal from '../components/missions/sub-components/MissionFil
 import { getUserProfile } from '../services/userService';
 import { useNavigate } from 'react-router-dom';
 import LevelUpModal from '../components/ui/LevelUpModal';
+import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -14,6 +15,7 @@ const MissionBank = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [filters, setFilters] = useState({
     sortBy: 'custom',
@@ -55,7 +57,7 @@ const MissionBank = () => {
   };
 
   // Handle mission completion updates
-  const handleMissionCompletion = (completedMission, levelUpData) => {
+  const handleMissionCompletion = (completedMission, levelUpData, skillLevelUpInfo) => {
     console.log('levelUpData received:', levelUpData);
     // Add to recently completed missions if not already there
     setRecentlyCompletedMissions(prev => {
@@ -67,8 +69,13 @@ const MissionBank = () => {
       // Add to the beginning of the array
       return [completedMission, ...prev];
     });
+
       if (levelUpData?.leveledUp) {
       setLevelUpInfo({ newLevel: levelUpData.newLevel });
+    }
+    
+      if (result?.skillLeveledUp) {
+      setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
     }
   };
 
@@ -185,6 +192,14 @@ const MissionBank = () => {
         <LevelUpModal
           newLevel={levelUpInfo.newLevel}
           onClose={() => setLevelUpInfo(null)}
+        />
+      )}
+
+      {skillLevelUpInfo && (
+        <SkillLevelUpModal
+          skillName={skillLevelUpInfo.skillName}
+          newLevel={skillLevelUpInfo.newLevel}
+          onClose={() => setSkillLevelUpInfo(null)}
         />
       )}
 

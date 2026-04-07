@@ -24,6 +24,7 @@ import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModa
 import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
 import LevelUpModal from '../components/ui/LevelUpModal';
+import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -37,6 +38,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [selectedMission, setSelectedMission] = useState(null);
   const [levelUpInfo, setLevelUpInfo] = useState(null);
+  const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -193,6 +195,10 @@ const HomePage = () => {
         // Show level up notification if applicable
         if (result?.leveledUp) {
           setLevelUpInfo({ newLevel: result.newLevel });
+        }
+
+        if (result?.skillLeveledUp) {
+          setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
         }
       }
       
@@ -399,6 +405,14 @@ const HomePage = () => {
         <LevelUpModal
           newLevel={levelUpInfo.newLevel}
           onClose={() => setLevelUpInfo(null)}
+        />
+      )}
+
+      {skillLevelUpInfo && (
+        <SkillLevelUpModal
+          skillName={skillLevelUpInfo.skillName}
+          newLevel={skillLevelUpInfo.newLevel}
+          onClose={() => setSkillLevelUpInfo(null)}
         />
       )}
     </div>
