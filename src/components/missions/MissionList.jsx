@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from './MissionCard';
 import MissionDetailView from './MissionCardFull';
 import AddMissionCard from './AddMissionCard';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { 
   getActiveMissions, 
   getCompletedMissions,
@@ -96,6 +97,8 @@ const MissionList = ({
   }), [filters.sortBy, filters.sortOrder, filters.skillFilter, filters.includeCompleted, filters.includeExpired, filters.completedDateRange]);
 
   const isCustomOrderMode = memoizedFilters.sortBy === 'custom';
+
+  const { notifyMissionCompletion } = useNotifications();
 
   useEffect(() => {
     if (currentUser) {
@@ -265,6 +268,8 @@ const MissionList = ({
         
         const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
 
+        notifyMissionCompletion(result);
+
         if (result.nextMissionCreated && onRecurringMissionCreated) {
           onRecurringMissionCreated({
             originalMissionId: missionId,
@@ -276,11 +281,7 @@ const MissionList = ({
 
         if (completedMission && onMissionCompletion) {
           const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded };
-          onMissionCompletion(
-            updatedMission,
-            { leveledUp: result.leveledUp, newLevel: result.newLevel },
-            { skillLeveledUp: result.skillLeveledUp, skillName: result.skillName, newSkillLevel: result.newSkillLevel }
-          );
+          onMissionCompletion(updatedMission);
         }
       }
       

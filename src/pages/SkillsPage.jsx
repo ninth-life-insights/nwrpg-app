@@ -60,7 +60,7 @@ const SkillsPage = () => {
   return (
     <div className="skills-page">
       <header className="skills-header">
-        <button className="skills-back-btn" onClick={() => navigate(-1)}>
+        <button className="skills-back-btn" onClick={() => navigate('/home')}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="skills-title">Skills</h1>

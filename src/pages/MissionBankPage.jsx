@@ -5,8 +5,6 @@ import MissionList from '../components/missions/MissionList';
 import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
 import { getUserProfile } from '../services/userService';
 import { useNavigate } from 'react-router-dom';
-import LevelUpModal from '../components/ui/LevelUpModal';
-import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -15,8 +13,6 @@ const MissionBank = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
-  const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [filters, setFilters] = useState({
     sortBy: 'custom',
     sortOrder: 'asc',
@@ -70,13 +66,6 @@ const MissionBank = () => {
       return [completedMission, ...prev];
     });
 
-      if (levelUpData?.leveledUp) {
-      setLevelUpInfo({ newLevel: levelUpData.newLevel });
-    }
-
-      if (skillLevelUpData?.skillLeveledUp) {
-      setSkillLevelUpInfo({ skillName: skillLevelUpData.skillName, newLevel: skillLevelUpData.newSkillLevel });
-    }
   };
 
   // Handle mission un-completion
@@ -187,21 +176,6 @@ const MissionBank = () => {
         currentFilters={filters}
         onApplyFilters={handleApplyFilters}
       />
-
-      {levelUpInfo && (
-        <LevelUpModal
-          newLevel={levelUpInfo.newLevel}
-          onClose={() => setLevelUpInfo(null)}
-        />
-      )}
-
-      {skillLevelUpInfo && (
-        <SkillLevelUpModal
-          skillName={skillLevelUpInfo.skillName}
-          newLevel={skillLevelUpInfo.newLevel}
-          onClose={() => setSkillLevelUpInfo(null)}
-        />
-      )}
 
     </div>
   );

@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from '../missions/MissionCard';
 import MissionDetailView from '../missions/MissionCardFull';
 import AddMissionCard from '../missions/AddMissionCard';
+import { useNotifications } from '@/contexts/NotificationContext';
 import {
   completeMissionWithRecurrence,
   uncompleteMission
@@ -54,6 +55,8 @@ const SortableMissionCard = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const { notifyMissionCompletion } = useNotifications();
+
   return (
     <div 
       ref={setNodeRef} 
@@ -96,7 +99,6 @@ const QuestMissionList = ({
   onMissionUpdate,
   onRemoveMission,
   onReorderMissions,
-  onLevelUp
 }) => {
   const { currentUser } = useAuth();
   const [selectedMission, setSelectedMission] = useState(null);
@@ -147,9 +149,7 @@ const QuestMissionList = ({
         await uncompleteMission(currentUser.uid, missionId);
       } else {
         const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        if (result.leveledUp && onLevelUp) {
-          onLevelUp(result.newLevel);
-        }
+        notifyMissionCompletion(result);
       }
       
       if (onMissionUpdate) {
