@@ -17,6 +17,7 @@ import QuestBank from './pages/QuestBankPage';
 import QuestDetailView from './components/quests/QuestDetailView';
 import BasePage from './pages/BasePage';
 import SkillsPage from './pages/SkillsPage';
+import SkillDetailPage from './pages/SkillDetailPage';
 
 
 function ProtectedRoute({ children }) {
@@ -66,6 +67,7 @@ function AppContent() {
         <Route path="/quest-bank" element={<ProtectedRoute><QuestBank /></ProtectedRoute>} />
         <Route path="/quests/:questId" element={<ProtectedRoute><QuestDetailView /></ProtectedRoute>} />
         <Route path="/skills" element={<ProtectedRoute><SkillsPage /></ProtectedRoute>} />
+        <Route path="/skills/:skillName" element={<ProtectedRoute><SkillDetailPage /></ProtectedRoute>} />
         {/*<LandingPage/>*/}
         {/*<MissionList/>*/}
       </Routes>
