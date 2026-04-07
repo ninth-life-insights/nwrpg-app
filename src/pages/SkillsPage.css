@@ -1,0 +1,125 @@
+/* src/pages/SkillsPage.css */
+
+.skills-page {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  padding: 0 0 40px;
+  font-family: var(--font-family);
+}
+
+/* Header */
+.skills-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px var(--space-lg);
+  background: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border-yellow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.skills-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.skills-back-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.skills-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.skills-header-spacer {
+  width: 32px; /* matches back button width */
+}
+
+/* Skills list */
+.skills-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+}
+
+/* Skill card */
+.skill-card {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.skill-card--inactive {
+  opacity: 0.55;
+}
+
+.skill-card--active {
+  opacity: 1;
+}
+
+.skill-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.skill-card-name-group {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.skill-card-name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.skill-card-level {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.skill-card-sp {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  white-space: nowrap;
+}
+
+/* Progress bar */
+.skill-progress-track {
+  height: 6px;
+  background: #ede9fe;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.skill-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #7c3aed);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
