@@ -1,6 +1,8 @@
+// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { Navigate } from 'react-router-dom';
 import Login from './components/auth/Login';
 import './App.css';
@@ -29,14 +31,12 @@ function ProtectedRoute({ children }) {
   
   return children;
 }
-// test deployment vercel 2
 
 // Component for public routes that should redirect if already logged in
 function PublicRoute({ children }) {
   const { currentUser } = useAuth();
   
   if (currentUser) {
-    // Redirect authenticated users to the main app
     return <Navigate to="/home" />;
   }
   
@@ -47,15 +47,10 @@ function PublicRoute({ children }) {
 function AppContent() {
   const { currentUser, logout } = useAuth();
   
-  // if (!currentUser) {
-  //   return <LandingPage />;
-  // }
-  
   return (
     <div className="App">
       <button onClick={logout}>Logout</button>
       <Routes>
-        
         <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/log-in" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/sign-up" element={<PublicRoute><SignupPage /></PublicRoute>} />
@@ -68,8 +63,6 @@ function AppContent() {
         <Route path="/quests/:questId" element={<ProtectedRoute><QuestDetailView /></ProtectedRoute>} />
         <Route path="/skills" element={<ProtectedRoute><SkillsPage /></ProtectedRoute>} />
         <Route path="/skills/:skillName" element={<ProtectedRoute><SkillDetailPage /></ProtectedRoute>} />
-        {/*<LandingPage/>*/}
-        {/*<MissionList/>*/}
       </Routes>
     </div>
   );
@@ -79,7 +72,9 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <AppContent /> 
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
       </Router>
     </AuthProvider>
   );
