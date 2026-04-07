@@ -173,3 +173,75 @@ export const updateUserProfile = async (userId, updates) => {
     throw error;
   }
 };
+
+// ─── SP / Skill helpers ───────────────────────────────────────────────────────
+
+const SP_PER_SKILL_LEVEL = 50;
+
+export const getSkillLevelFromTotalSP = (totalSP) => {
+  return Math.floor(totalSP / SP_PER_SKILL_LEVEL) + 1;
+};
+
+// Mirrors getXPProgressInLevel — returns progress within the current skill level
+export const getSPProgressInLevel = (totalSP) => {
+  const level = getSkillLevelFromTotalSP(totalSP);
+  const current = totalSP % SP_PER_SKILL_LEVEL;
+  const required = SP_PER_SKILL_LEVEL;
+  return {
+    current,
+    required,
+    percentage: Math.round((current / required) * 100),
+    level
+  };
+};
+
+// Add SP to a specific skill (call when mission with skill is completed)
+export const addSP = async (userId, skillName, spAmount) => {
+  try {
+    const userRef = doc(db, 'users', userId, 'profile', 'data');
+    const profile = await getUserProfile(userId);
+
+    if (profile) {
+      const skills = profile.skills || {};
+      const existing = skills[skillName] || { totalSP: 0, level: 1 };
+      const newTotalSP = existing.totalSP + spAmount;
+      const newLevel = getSkillLevelFromTotalSP(newTotalSP);
+      const leveledUp = newLevel > existing.level;
+
+      await updateDoc(userRef, {
+        [`skills.${skillName}`]: { totalSP: newTotalSP, level: newLevel },
+        lastActiveDate: serverTimestamp()
+      });
+
+      return { skillName, newLevel, newTotalSP, leveledUp };
+    }
+  } catch (error) {
+    console.error('Error adding SP:', error);
+    throw error;
+  }
+};
+
+// Subtract SP from a specific skill (call when mission with skill is uncompleted)
+export const subtractSP = async (userId, skillName, spAmount) => {
+  try {
+    const userRef = doc(db, 'users', userId, 'profile', 'data');
+    const profile = await getUserProfile(userId);
+
+    if (profile) {
+      const skills = profile.skills || {};
+      const existing = skills[skillName] || { totalSP: 0, level: 1 };
+      const newTotalSP = Math.max(0, existing.totalSP - spAmount);
+      const newLevel = getSkillLevelFromTotalSP(newTotalSP);
+
+      await updateDoc(userRef, {
+        [`skills.${skillName}`]: { totalSP: newTotalSP, level: newLevel },
+        lastActiveDate: serverTimestamp()
+      });
+
+      return { skillName, newLevel, newTotalSP };
+    }
+  } catch (error) {
+    console.error('Error subtracting SP:', error);
+    throw error;
+  }
+};
