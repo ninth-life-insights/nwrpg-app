@@ -28,6 +28,7 @@ import {
   addSP,
   subtractSP
  } from './userService';
+ import { logActivityEvent } from './reviewService';
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {
@@ -174,7 +175,7 @@ export const completeMission = async (userId, missionId) => {
       }
     }
 
-    return { 
+    const completionResult = { 
       xpAwarded, 
       leveledUp: xpResult?.leveledUp || false, 
       newLevel: xpResult?.newLevel || null,
@@ -182,6 +183,11 @@ export const completeMission = async (userId, missionId) => {
       skillName: spResult?.skillName || null,
       newSkillLevel: spResult?.newLevel || null
     };
+
+    // Log to activity log for daily review — fire-and-forget, never blocks completion
+    await logActivityEvent(userId, { id: missionId, ...missionData }, completionResult);
+
+    return completionResult;
 
   } catch (error) {
     console.error('Error completing mission:', error);
