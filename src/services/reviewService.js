@@ -372,10 +372,8 @@ Rules:
   const response = await fetch('/api/anthropic/v1/messages', {
     method: 'POST',
     headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
-    'anthropic-version': '2023-06-01',
-    'anthropic-dangerous-allow-browser': 'true',
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
