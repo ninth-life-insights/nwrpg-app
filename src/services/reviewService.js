@@ -4,6 +4,7 @@ import {
   doc,
   addDoc,
   setDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -12,7 +13,6 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { getUserProfile } from './userService';
-import { getActiveMissions } from './missionService';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -69,6 +69,24 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
     const logRef = collection(db, 'users', userId, 'activityLog');
     const today = getTodayDateString();
 
+    // Look up daily config to determine if this mission is a daily mission.
+    // isDailyMission is computed, not stored on mission documents, so we
+    // check the config directly rather than trusting missionData.isDailyMission.
+    let isDailyMission = false;
+    try {
+      const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
+      const configSnap = await getDoc(configRef);
+      if (configSnap.exists()) {
+        const config = configSnap.data();
+        isDailyMission = config.setForDate === today &&
+          Array.isArray(config.missionIds) &&
+          config.missionIds.includes(missionData.id);
+      }
+    } catch (configError) {
+      // Non-fatal — isDailyMission stays false
+      console.warn('Could not read daily config for activity log:', configError);
+    }
+
     await addDoc(logRef, {
       type: 'mission_completed',
       date: today,
@@ -78,15 +96,15 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
       missionId: missionData.id,
       missionTitle: missionData.title || 'Untitled Mission',
       difficulty: missionData.difficulty || 'easy',
-      isDailyMission: missionData.isDailyMission || false,
-      missionCreatedAt: missionData.createdAt || null, // for task age calculation
+      isDailyMission,
+      missionCreatedAt: missionData.createdAt || null,
       xpEarned: completionResult.xpAwarded || 0,
       spEarned: missionData.spReward || 0,
       skillName: missionData.skill || null,
 
       // Quest context
       questId: missionData.questId || null,
-      questTitle: missionData.questTitle || null, // denormalized if available
+      questTitle: missionData.questTitle || null,
 
       // Level-up events
       leveledUp: completionResult.leveledUp || false,
@@ -145,14 +163,26 @@ export const buildDailySnapshot = async (userId, dateString, displayName) => {
   const xpEarned = events.reduce((sum, e) => sum + (e.xpEarned || 0), 0);
   const spEarned = events.reduce((sum, e) => sum + (e.spEarned || 0), 0);
 
-  // Daily missions: completed today with isDailyMission flag
+  // Daily missions completed today — read from activity log events
   const dailyMissionsCompleted = events.filter(e => e.isDailyMission).length;
 
-  // For dailyMissionsTotal: completed dailies + still-active daily missions right now
-  // (flexible — no penalty if life got in the way)
-  const activeMissions = await getActiveMissions(userId);
-  const activeDaily = activeMissions.filter(m => m.isDailyMission);
-  const dailyMissionsTotal = dailyMissionsCompleted + activeDaily.length;
+  // For dailyMissionsTotal: read the daily config directly.
+  // Total = missions in today's config that were completed today
+  //       + missions in today's config that are still active (not yet done).
+  // This is flexible — no penalty if life got in the way.
+  let dailyMissionsTotal = dailyMissionsCompleted; // fallback: at least as many as completed
+  try {
+    const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
+    const configSnap = await getDoc(configRef);
+    if (configSnap.exists()) {
+      const config = configSnap.data();
+      if (config.setForDate === date && Array.isArray(config.missionIds)) {
+        dailyMissionsTotal = config.missionIds.length;
+      }
+    }
+  } catch (configError) {
+    console.warn('Could not read daily config for snapshot:', configError);
+  }
 
   // Skills used today
   const skillMap = {};
@@ -339,7 +369,7 @@ Rules:
 - If nothing dramatic happened, say something true about what ordinary days are actually for
 - Under 120 words`;
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('/api/anthropic/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
