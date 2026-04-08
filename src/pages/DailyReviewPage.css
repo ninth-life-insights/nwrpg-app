@@ -126,36 +126,60 @@
 }
 
 .stat-card {
-  background: linear-gradient(145deg, #ffffff, #faf5ff);
-  border: 1px solid #ddd6fe;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   padding: var(--space-lg) var(--space-md);
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.08), var(--shadow-card);
+  box-shadow: var(--shadow-card);
   position: relative;
   overflow: hidden;
 }
 
-.stat-card::before {
+/* Accent bar + number color per stat */
+
+/* Missions Complete — blue (app primary) */
+.stat-card:nth-child(1)::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #a855f7, #7c3aed);
+  background: var(--color-primary);
+}
+.stat-card:nth-child(1) .stat-number {
+  color: var(--color-primary);
+}
+
+/* XP Earned — green (matches XP bar) */
+.stat-card:nth-child(2)::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: #10b981;
+}
+.stat-card:nth-child(2) .stat-number {
+  color: #10b981;
+}
+
+/* Daily Missions — amber (matches daily badge color) */
+.stat-card:nth-child(3)::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--color-warning);
+}
+.stat-card:nth-child(3) .stat-number {
+  color: var(--color-warning);
 }
 
 .stat-number {
   font-size: var(--font-size-2xl);
   font-weight: 800;
-  background: linear-gradient(135deg, #a855f7, #7c3aed);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   line-height: 1.1;
 }
 
@@ -268,18 +292,19 @@
 .skill-row-name,
 .quest-row-title {
   font-size: var(--font-size-base);
-  font-weight: 500;
+  font-weight: 300;
   color: var(--color-text-dark);
 }
 
 .skill-row-sp {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   font-weight: 700;
   color: #7c3aed;
   background: #ede9fe;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 99px;
   letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .quest-row-count {
@@ -300,22 +325,23 @@
   letter-spacing: -0.3px;
 }
 
-/* Done button */
+/* Done button — secondary action style, matches action-button.secondary */
 .daily-review-done-btn {
-  background: var(--color-bg-white);
-  color: var(--color-text-medium);
-  border: 1px solid var(--color-border-yellow);
+  background: var(--color-text-light);
+  color: #ffffff;
+  border: none;
   border-radius: var(--radius-md);
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   font-size: var(--font-size-base);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   width: 100%;
-  box-shadow: var(--shadow-card);
-  transition: box-shadow var(--transition), transform var(--transition);
+  min-height: 40px;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 
 .daily-review-done-btn:hover {
-  box-shadow: var(--shadow-hover);
+  background: var(--color-text-medium);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
 }
