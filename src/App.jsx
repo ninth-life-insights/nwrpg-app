@@ -17,9 +17,10 @@ import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 import MissionBankPage from './pages/MissionBankPage';
 import QuestBank from './pages/QuestBankPage';
 import QuestDetailView from './components/quests/QuestDetailView';
-import BasePage from './pages/BasePage';
 import SkillsPage from './pages/SkillsPage';
 import SkillDetailPage from './pages/SkillDetailPage';
+import BasePage from './pages/BasePage';
+
 
 
 function ProtectedRoute({ children }) {
