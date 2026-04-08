@@ -261,7 +261,7 @@ export const buildDailySnapshot = async (userId, dateString, displayName) => {
 // ─── AI Story Generation ──────────────────────────────────────────────────────
 
 /**
- * Calls the Anthropic API to generate a 3-4 sentence daily log entry.
+ * Calls the Anthropic API to generate a daily chronicle entry.
  * Takes the aggregated snapshot data and returns a story string.
  *
  * @param {object} data - Aggregated day data
@@ -280,7 +280,7 @@ export const generateDailyStory = async (data) => {
     questsAdvanced,
   } = data;
 
-  // Build mission list for prompt
+  // Build mission list for prompt — task age is the key signal for the AI
   const missionLines = completedMissions.map(m => {
     const parts = [
       `"${m.title}"`,
@@ -294,7 +294,7 @@ export const generateDailyStory = async (data) => {
     return parts.join('');
   });
 
-  // Build special events for prompt
+  // Notable events — level ups, skill ups, all dailies done
   const events = [];
   if (levelUps.length > 0) {
     events.push(`Reached level ${levelUps[levelUps.length - 1].newLevel}.`);
@@ -313,28 +313,31 @@ export const generateDailyStory = async (data) => {
   const hardCount = difficultyBreakdown.hard || 0;
 
   const userPrompt = `
-Here's what ${displayName} accomplished today:
+Here is the raw data for today's chronicle entry:
 
-Missions completed (${completedMissions.length} total):
+Missions completed (${completedMissions.length} total, ${hardCount} hard):
 ${missionLines.join('\n')}
 
 Daily missions: ${dailyMissionsCompleted} of ${dailyMissionsTotal} completed
-XP earned today: ${xpEarned}
-Hard missions completed: ${hardCount} of ${completedMissions.length}
-${events.length > 0 ? `\nNotable events:\n${events.join('\n')}` : ''}
+${events.length > 0 ? `\nNotable:\n${events.join('\n')}` : ''}
 
-Write her daily log entry.`.trim();
+Write the entry.`.trim();
 
-  const systemPrompt = `You write brief daily log entries for a mom using a productivity app where tasks are "missions" and projects are "quests." 
+  const systemPrompt = `You write the daily chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her day for posterity — not informing her of what happened, because she was there.
 
-Write 3–4 sentences. Be specific — name what she actually did, not just that she did things. Use a warm, grounded tone with a light touch of RPG flavor. Notice interesting patterns when they're there: an unusually hard day, an old task finally crossed off, a skill being developed. Don't manufacture drama if the day was quiet — a productive ordinary day is worth honoring too.
+Your job is to find what was actually interesting about today and say something true about it. One or two things, not everything. Let the rest stay implied. Use language and metaphor to do the heavy lifting — a good image is worth three explanatory sentences.
+
+Write in a voice inspired by Terry Pratchett: warm, a little wry, takes mundane things completely seriously, finds the human truth in small moments. Whimsy is welcome. Embellishment is welcome. If a line is clever but not true, cut it.
+
+Vary how you open — sometimes lead with the task itself, sometimes the feeling around it, sometimes an observation about time or habit or what things cost.
 
 Rules:
-- Never use exclamation points
-- Never use the word "adventurer" 
-- Never say "today you..." — write in third person ("She...") or second person ("You...") but pick one and stick to it
-- The RPG flavor is a light seasoning, not the main dish — don't overdo it
-- Keep it under 80 words`;
+- 3–5 sentences
+- Second person ("You...")
+- No exclamation points
+- Never use the word "adventurer"
+- If nothing dramatic happened, say something true about what ordinary days are actually for
+- Under 120 words`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
