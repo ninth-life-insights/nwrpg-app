@@ -13,6 +13,7 @@ const DailyReviewPage = () => {
   const [loading, setLoading] = useState(false);
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState(null);
+  const [storyExpanded, setStoryExpanded] = useState(false);
 
   const handleGenerateReview = async () => {
     if (!currentUser) return;
@@ -68,12 +69,6 @@ const DailyReviewPage = () => {
 
         {snapshot && !loading && (
           <div className="daily-review-results">
-            {/* AI Story */}
-            {snapshot.aiStory && (
-              <div className="daily-review-story">
-                <p>{snapshot.aiStory}</p>
-              </div>
-            )}
 
             {/* Stats Grid */}
             <div className="daily-review-stats">
@@ -93,11 +88,39 @@ const DailyReviewPage = () => {
               </div>
             </div>
 
+            {/* AI Story — collapsed by default */}
+            {snapshot.aiStory && (
+              <div className="daily-review-story">
+                <div className={`daily-review-story-body ${storyExpanded ? 'daily-review-story-body--expanded' : ''}`}>
+                  <p>{snapshot.aiStory}</p>
+                </div>
+                {!storyExpanded && <div className="daily-review-story-fade" />}
+                <button
+                  className="daily-review-story-toggle"
+                  onClick={() => setStoryExpanded(prev => !prev)}
+                >
+                  {storyExpanded ? 'Show less' : 'See more'}
+                  <span className="material-icons">
+                    {storyExpanded ? 'expand_less' : 'expand_more'}
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* Level ups */}
+            {snapshot.levelUps?.length > 0 && (
+              <div className="daily-review-section daily-review-section--highlight">
+                <p className="level-up-callout">
+                  Reached Level {snapshot.levelUps[snapshot.levelUps.length - 1].newLevel}
+                </p>
+              </div>
+            )}
+
             {/* Skills Used */}
             {snapshot.skillsUsed?.length > 0 && (
               <div className="daily-review-section">
                 <h3 className="daily-review-section-title">Skills Practiced</h3>
-                <div className="skills-list">
+                <div className="skills-practiced-list">
                   {snapshot.skillsUsed.map(skill => (
                     <div key={skill.name} className="skill-row">
                       <span className="skill-row-name">{skill.name}</span>
@@ -122,15 +145,6 @@ const DailyReviewPage = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Level ups */}
-            {snapshot.levelUps?.length > 0 && (
-              <div className="daily-review-section daily-review-section--highlight">
-                <p className="level-up-callout">
-                  Reached Level {snapshot.levelUps[snapshot.levelUps.length - 1].newLevel}
-                </p>
               </div>
             )}
 
