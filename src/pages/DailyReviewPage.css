@@ -1,0 +1,225 @@
+/* src/pages/DailyReviewPage.css */
+
+.daily-review-page {
+  min-height: 100vh;
+  background-color: var(--color-background, #fafafa);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.daily-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md, 12px) var(--space-lg, 16px);
+  background-color: var(--color-surface, #ffffff);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.daily-review-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium, #6b7280);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+
+.daily-review-title {
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: 700;
+  color: var(--color-text-dark, #111827);
+  margin: 0;
+}
+
+.daily-review-header-spacer {
+  width: 32px;
+}
+
+/* ── Content ─────────────────────────────────────────────────── */
+
+.daily-review-content {
+  flex: 1;
+  padding: var(--space-xl, 24px) var(--space-lg, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl, 24px);
+}
+
+/* ── Pre-generate prompt ─────────────────────────────────────── */
+
+.daily-review-prompt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg, 16px);
+  text-align: center;
+  padding: var(--space-2xl, 40px) 0;
+}
+
+.daily-review-prompt-text {
+  font-size: var(--font-size-lg, 1.125rem);
+  color: var(--color-text-medium, #6b7280);
+  margin: 0;
+}
+
+.daily-review-generate-btn {
+  background-color: var(--color-primary, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-md, 12px) var(--space-xl, 24px);
+  font-size: var(--font-size-base, 1rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.daily-review-error {
+  color: var(--color-error, #dc2626);
+  font-size: var(--font-size-sm, 0.875rem);
+  margin: 0;
+}
+
+/* ── Loading ─────────────────────────────────────────────────── */
+
+.daily-review-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-medium, #6b7280);
+  font-size: var(--font-size-lg, 1.125rem);
+}
+
+/* ── Results ─────────────────────────────────────────────────── */
+
+.daily-review-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl, 24px);
+}
+
+/* AI Story */
+.daily-review-story {
+  background-color: var(--color-surface, #ffffff);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-xl, 24px);
+  border-left: 4px solid var(--color-primary, #7c3aed);
+}
+
+.daily-review-story p {
+  font-size: var(--font-size-lg, 1.125rem);
+  color: var(--color-text-dark, #111827);
+  line-height: 1.6;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Stats Grid */
+.daily-review-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md, 12px);
+}
+
+.stat-card {
+  background-color: var(--color-surface, #ffffff);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-lg, 16px) var(--space-md, 12px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 4px);
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.stat-number {
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: 700;
+  color: var(--color-primary, #7c3aed);
+}
+
+.stat-label {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-light, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* Sections */
+.daily-review-section {
+  background-color: var(--color-surface, #ffffff);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-lg, 16px);
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.daily-review-section--highlight {
+  background-color: var(--color-primary-light, #ede9fe);
+  border-color: var(--color-primary, #7c3aed);
+  text-align: center;
+}
+
+.daily-review-section-title {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--color-text-light, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 var(--space-md, 12px) 0;
+}
+
+/* Skills */
+.skills-list,
+.quests-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+}
+
+.skill-row,
+.quest-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skill-row-name,
+.quest-row-title {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-dark, #111827);
+}
+
+.skill-row-sp,
+.quest-row-count {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-medium, #6b7280);
+  font-weight: 500;
+}
+
+/* Level up callout */
+.level-up-callout {
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: 700;
+  color: var(--color-primary, #7c3aed);
+  margin: 0;
+}
+
+/* Done button */
+.daily-review-done-btn {
+  background-color: var(--color-surface, #ffffff);
+  color: var(--color-text-medium, #6b7280);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-md, 12px);
+  font-size: var(--font-size-base, 1rem);
+  cursor: pointer;
+  width: 100%;
+  margin-top: var(--space-md, 12px);
+}
