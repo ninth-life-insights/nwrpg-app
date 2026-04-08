@@ -126,21 +126,37 @@
 }
 
 .stat-card {
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border-yellow);
+  background: linear-gradient(145deg, #ffffff, #faf5ff);
+  border: 1px solid #ddd6fe;
   border-radius: var(--radius-lg);
   padding: var(--space-lg) var(--space-md);
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.08), var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #a855f7, #7c3aed);
 }
 
 .stat-number {
   font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: #7c3aed;
+  font-weight: 800;
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
 }
 
 .stat-label {
@@ -148,7 +164,7 @@
   color: var(--color-text-light);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* AI Story */
@@ -177,7 +193,7 @@
   color: var(--color-text-dark);
   line-height: 1.6;
   margin: 0;
-  font-style: italic;
+  text-align: left;
 }
 
 .daily-review-story-fade {
@@ -219,9 +235,10 @@
 }
 
 .daily-review-section--highlight {
-  background: #ede9fe;
-  border-color: #7c3aed;
+  background: linear-gradient(135deg, #ede9fe, #faf5ff);
+  border-color: #a855f7;
   text-align: center;
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.15);
 }
 
 .daily-review-section-title {
@@ -251,10 +268,20 @@
 .skill-row-name,
 .quest-row-title {
   font-size: var(--font-size-base);
+  font-weight: 500;
   color: var(--color-text-dark);
 }
 
-.skill-row-sp,
+.skill-row-sp {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 2px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.3px;
+}
+
 .quest-row-count {
   font-size: var(--font-size-sm);
   color: var(--color-text-medium);
@@ -263,10 +290,14 @@
 
 /* Level up callout */
 .level-up-callout {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: #7c3aed;
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 /* Done button */
