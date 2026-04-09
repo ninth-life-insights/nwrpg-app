@@ -144,9 +144,7 @@ const DailyReviewPage = () => {
             {(displayStory !== null || snapshot.missionsCompleted > 0) && (
               <div className="daily-review-story">
                 <div className="daily-review-story-header">
-                  <span className="daily-review-story-label">
-                    {snapshot.userEditedStory ? 'Your Notes' : "Today's Chronicle"}
-                  </span>
+                  <span className="daily-review-story-label">The Story of Today</span>
                   {!isEditingStory && (
                     <button className="daily-review-story-edit-btn" onClick={handleEditStart}>
                       <span className="material-icons">edit</span>

@@ -382,6 +382,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0 0 var(--space-md) 0;
+  text-align: left;
 }
 
 /* Skills practiced list */
