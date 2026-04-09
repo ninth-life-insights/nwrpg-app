@@ -140,6 +140,7 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
       // Mission context
       missionId: missionData.id,
       missionTitle: missionData.title || 'Untitled Mission',
+      missionDescription: missionData.description || null,
       difficulty: missionData.difficulty || 'easy',
       isDailyMission,
       missionCreatedAt: missionData.createdAt || null,
@@ -194,6 +195,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
   const completedMissions = events.map(event => ({
     missionId: event.missionId,
     title: event.missionTitle,
+    description: event.missionDescription || null,
     difficulty: event.difficulty,
     isDailyMission: event.isDailyMission,
     skillName: event.skillName || null,
@@ -379,7 +381,8 @@ export const generateDailyStory = async (data) => {
   const missionLines = completedMissions.map(m => {
     const parts = [
       `"${m.title}"`,
-      `(${m.difficulty}`,
+      m.description ? ` — ${m.description}` : '',
+      ` (${m.difficulty}`,
       m.isDailyMission ? ', daily mission' : '',
       m.skillName ? `, ${m.skillName} skill` : '',
       m.questTitle ? `, part of "${m.questTitle}"` : '',
