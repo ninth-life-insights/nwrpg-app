@@ -5,6 +5,7 @@ import {
   addDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   getDoc,
   getDocs,
   query,
@@ -34,6 +35,44 @@ const getTaskAgeLabel = (createdAt) => {
   if (diffDays < 30) return `created ${Math.floor(diffDays / 7)} weeks ago`;
   if (diffDays < 60) return 'created about a month ago';
   return `created ${Math.floor(diffDays / 30)} months ago`;
+};
+
+// ─── Encounters ──────────────────────────────────────────────────────────────
+
+/**
+ * Fetches all encounters for a given date.
+ * @returns {Array} Array of encounter objects with id
+ */
+export const getEncountersForDate = async (userId, date) => {
+  const ref = collection(db, 'users', userId, 'encounters');
+  const q = query(ref, where('date', '==', date), orderBy('createdAt', 'asc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Adds an encounter to the encounters subcollection.
+ * @param {string} userId
+ * @param {{ title: string, notes: string, date: string }} encounterData
+ * @returns {string} The new document ID
+ */
+export const addEncounter = async (userId, encounterData) => {
+  const ref = collection(db, 'users', userId, 'encounters');
+  const docRef = await addDoc(ref, {
+    title: encounterData.title,
+    notes: encounterData.notes || '',
+    date: encounterData.date,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+/**
+ * Deletes an encounter by document ID.
+ */
+export const removeEncounter = async (userId, encounterId) => {
+  const ref = doc(db, 'users', userId, 'encounters', encounterId);
+  await deleteDoc(ref);
 };
 
 // ─── Snapshot Read / Write Helpers ───────────────────────────────────────────
@@ -130,7 +169,7 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
 /**
  * Builds (or rebuilds) the daily snapshot for a given date.
  * Queries the activity log, aggregates stats, fetches current profile,
- * generates the AI story, and writes the snapshot document.
+ * fetches encounters, generates the AI story, and writes the snapshot document.
  *
  * @param {string} userId
  * @param {string} dateString - 'YYYY-MM-DD', defaults to today
@@ -240,7 +279,13 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
     }
   } catch { /* non-fatal */ }
 
-  // 5. Generate the AI story (after checking for existing user edits)
+  // 6. Fetch encounters for this date
+  let encounters = [];
+  try {
+    encounters = await getEncountersForDate(userId, date);
+  } catch { /* non-fatal — story still generates without encounters */ }
+
+  // 7. Generate the AI story
   const storyData = {
     displayName: displayName || profile?.displayName || 'You',
     completedMissions,
@@ -252,6 +297,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
     skillLevelUps,
     skillsUsed,
     questsAdvanced,
+    encounters,
   };
 
   let aiStory = null;
@@ -326,6 +372,7 @@ export const generateDailyStory = async (data) => {
     levelUps,
     skillLevelUps,
     questsAdvanced,
+    encounters = [],
   } = data;
 
   // Build mission list for prompt — task age is the key signal for the AI
@@ -360,6 +407,10 @@ export const generateDailyStory = async (data) => {
   }, {});
   const hardCount = difficultyBreakdown.hard || 0;
 
+  const encounterLines = encounters.map(e =>
+    e.notes ? `- "${e.title}" — ${e.notes}` : `- "${e.title}"`
+  );
+
   const userPrompt = `
 Here is the raw data for today's chronicle entry:
 
@@ -368,6 +419,7 @@ ${missionLines.join('\n')}
 
 Daily missions: ${dailyMissionsCompleted} of ${dailyMissionsTotal} completed
 ${events.length > 0 ? `\nNotable:\n${events.join('\n')}` : ''}
+${encounterLines.length > 0 ? `\nUnexpected encounters:\n${encounterLines.join('\n')}` : ''}
 
 Write the entry.`.trim();
 
@@ -378,6 +430,8 @@ Your job is to find what was actually interesting about today and say something 
 Write in a voice inspired by Terry Pratchett: warm, a little wry, takes mundane things completely seriously, finds the human truth in small moments. Whimsy is welcome. Embellishment is welcome. If a line is clever but not true, cut it.
 
 Vary how you open — sometimes lead with the task itself, sometimes the feeling around it, sometimes an observation about time or habit or what things cost.
+
+If there were unexpected encounters, weave them in naturally — they are the texture of the day, not a footnote. An interruption that swallowed an afternoon is more interesting than a mission that went smoothly.
 
 Rules:
 - 3–5 sentences
