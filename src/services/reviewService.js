@@ -4,6 +4,7 @@ import {
   doc,
   addDoc,
   setDoc,
+  updateDoc,
   getDoc,
   getDocs,
   query,
@@ -51,6 +52,29 @@ const getTaskAgeLabel = (createdAt) => {
   if (diffDays < 30) return `created ${Math.floor(diffDays / 7)} weeks ago`;
   if (diffDays < 60) return 'created about a month ago';
   return `created ${Math.floor(diffDays / 30)} months ago`;
+};
+
+// ─── Snapshot Read / Write Helpers ───────────────────────────────────────────
+
+/**
+ * Returns the saved snapshot for a given date, or null if none exists.
+ */
+export const getDailySnapshot = async (userId, dateString) => {
+  const ref = doc(db, 'users', userId, 'dailySnapshots', dateString);
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : null;
+};
+
+/**
+ * Saves the user's edited story text back to the snapshot doc.
+ * Sets userEditedStory so buildDailySnapshot can preserve it on rebuild.
+ */
+export const updateSnapshotStory = async (userId, dateString, storyText) => {
+  const ref = doc(db, 'users', userId, 'dailySnapshots', dateString);
+  await updateDoc(ref, {
+    userEditedStory: storyText,
+    userEditedStoryAt: serverTimestamp(),
+  });
 };
 
 // ─── Activity Log ─────────────────────────────────────────────────────────────
@@ -225,7 +249,16 @@ export const buildDailySnapshot = async (userId, dateString, displayName) => {
   // 4. Current profile state (snapshot at time of review)
   const profile = await getUserProfile(userId);
 
-  // 5. Generate the AI story
+  // 5. Check for existing user-edited story — preserve it on rebuild
+  let existingUserStory = null;
+  try {
+    const existingSnap = await getDoc(doc(db, 'users', userId, 'dailySnapshots', date));
+    if (existingSnap.exists()) {
+      existingUserStory = existingSnap.data().userEditedStory ?? null;
+    }
+  } catch { /* non-fatal */ }
+
+  // 5. Generate the AI story (after checking for existing user edits)
   const storyData = {
     displayName: displayName || profile?.displayName || 'You',
     completedMissions,
@@ -252,7 +285,7 @@ export const buildDailySnapshot = async (userId, dateString, displayName) => {
     }
   }
 
-  // 6. Build and write the snapshot document
+  // 7. Build and write the snapshot document
   const snapshotData = {
     date,
     generatedAt: serverTimestamp(),
@@ -280,6 +313,9 @@ export const buildDailySnapshot = async (userId, dateString, displayName) => {
     aiStoryGenerated: aiStory !== null,
     aiStory,
     aiStoryGeneratedAt,
+
+    // Preserve user's edited story text across rebuilds
+    userEditedStory: existingUserStory ?? null,
   };
 
   const snapshotRef = doc(db, 'users', userId, 'dailySnapshots', date);

@@ -1,38 +1,96 @@
 // src/pages/DailyReviewPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserProfile } from '../services/userService';
-import { buildDailySnapshot, getTodayDateString } from '../services/reviewService';
+import {
+  getDailySnapshot,
+  buildDailySnapshot,
+  updateSnapshotStory,
+  getTodayDateString,
+} from '../services/reviewService';
 import './DailyReviewPage.css';
 
 const DailyReviewPage = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState(null);
   const [storyExpanded, setStoryExpanded] = useState(false);
 
-  const handleGenerateReview = async () => {
+  // Editing state
+  const [isEditingStory, setIsEditingStory] = useState(false);
+  const [storyDraft, setStoryDraft] = useState('');
+  const [savingStory, setSavingStory] = useState(false);
+  const textareaRef = useRef(null);
+
+  const today = getTodayDateString();
+
+  // Auto-load on mount: check for saved snapshot, build if missing
+  useEffect(() => {
     if (!currentUser) return;
-    setLoading(true);
-    setError(null);
 
-    try {
-      const profile = await getUserProfile(currentUser.uid);
-      const displayName = profile?.displayName || 'You';
-      const today = getTodayDateString();
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        let saved = await getDailySnapshot(currentUser.uid, today);
 
-      const result = await buildDailySnapshot(currentUser.uid, today, displayName);
-      setSnapshot(result);
-    } catch (err) {
-      console.error('Error generating daily review:', err);
-      setError('Something went wrong generating your review. Please try again.');
-    } finally {
-      setLoading(false);
+        if (!saved) {
+          const profile = await getUserProfile(currentUser.uid);
+          const displayName = profile?.displayName || 'You';
+          saved = await buildDailySnapshot(currentUser.uid, today, displayName);
+        }
+
+        setSnapshot(saved);
+      } catch (err) {
+        console.error('Error loading daily review:', err);
+        setError('Something went wrong loading your review. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [currentUser]);
+
+  // Focus textarea when editing starts
+  useEffect(() => {
+    if (isEditingStory && textareaRef.current) {
+      textareaRef.current.focus();
+      // Place cursor at end
+      const len = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(len, len);
     }
+  }, [isEditingStory]);
+
+  const displayStory = snapshot?.userEditedStory ?? snapshot?.aiStory ?? null;
+
+  const handleEditStart = () => {
+    setStoryDraft(displayStory || '');
+    setIsEditingStory(true);
+    setStoryExpanded(true);
+  };
+
+  const handleSaveStory = async () => {
+    if (!currentUser || savingStory) return;
+    setSavingStory(true);
+    try {
+      await updateSnapshotStory(currentUser.uid, today, storyDraft);
+      setSnapshot(prev => ({ ...prev, userEditedStory: storyDraft }));
+      setIsEditingStory(false);
+    } catch (err) {
+      console.error('Error saving story:', err);
+    } finally {
+      setSavingStory(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingStory(false);
+    setStoryDraft('');
   };
 
   return (
@@ -46,24 +104,18 @@ const DailyReviewPage = () => {
       </header>
 
       <div className="daily-review-content">
-        {!snapshot && !loading && (
-          <div className="daily-review-prompt">
-            <p className="daily-review-prompt-text">
-              Ready to see how today went?
-            </p>
-            <button
-              className="daily-review-generate-btn"
-              onClick={handleGenerateReview}
-            >
-              Generate Today's Review
-            </button>
-            {error && <p className="daily-review-error">{error}</p>}
-          </div>
-        )}
-
         {loading && (
           <div className="daily-review-loading">
             <p>Writing up your day...</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="daily-review-prompt">
+            <p className="daily-review-error">{error}</p>
+            <button className="daily-review-generate-btn" onClick={() => window.location.reload()}>
+              Try Again
+            </button>
           </div>
         )}
 
@@ -88,22 +140,68 @@ const DailyReviewPage = () => {
               </div>
             </div>
 
-            {/* AI Story — collapsed by default */}
-            {snapshot.aiStory && (
+            {/* AI / User Story */}
+            {(displayStory !== null || snapshot.missionsCompleted > 0) && (
               <div className="daily-review-story">
-                <div className={`daily-review-story-body ${storyExpanded ? 'daily-review-story-body--expanded' : ''}`}>
-                  <p>{snapshot.aiStory}</p>
-                </div>
-                {!storyExpanded && <div className="daily-review-story-fade" />}
-                <button
-                  className="daily-review-story-toggle"
-                  onClick={() => setStoryExpanded(prev => !prev)}
-                >
-                  {storyExpanded ? 'Show less' : 'See more'}
-                  <span className="material-icons">
-                    {storyExpanded ? 'expand_less' : 'expand_more'}
+                <div className="daily-review-story-header">
+                  <span className="daily-review-story-label">
+                    {snapshot.userEditedStory ? 'Your Notes' : "Today's Chronicle"}
                   </span>
-                </button>
+                  {!isEditingStory && (
+                    <button className="daily-review-story-edit-btn" onClick={handleEditStart}>
+                      <span className="material-icons">edit</span>
+                    </button>
+                  )}
+                </div>
+
+                {isEditingStory ? (
+                  <div className="daily-review-story-editor">
+                    <textarea
+                      ref={textareaRef}
+                      className="daily-review-story-textarea"
+                      value={storyDraft}
+                      onChange={e => setStoryDraft(e.target.value)}
+                      placeholder="Write your own notes or memory for today..."
+                      rows={6}
+                    />
+                    <div className="daily-review-story-actions">
+                      <button
+                        className="story-action-btn story-action-btn--save"
+                        onClick={handleSaveStory}
+                        disabled={savingStory}
+                      >
+                        {savingStory ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        className="story-action-btn story-action-btn--cancel"
+                        onClick={handleCancelEdit}
+                        disabled={savingStory}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : displayStory ? (
+                  <>
+                    <div className={`daily-review-story-body ${storyExpanded ? 'daily-review-story-body--expanded' : ''}`}>
+                      <p>{displayStory}</p>
+                    </div>
+                    {!storyExpanded && <div className="daily-review-story-fade" />}
+                    <button
+                      className="daily-review-story-toggle"
+                      onClick={() => setStoryExpanded(prev => !prev)}
+                    >
+                      {storyExpanded ? 'Show less' : 'See more'}
+                      <span className="material-icons">
+                        {storyExpanded ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+                  </>
+                ) : (
+                  <p className="daily-review-story-empty">
+                    No chronicle generated yet. Add your own notes.
+                  </p>
+                )}
               </div>
             )}
 
