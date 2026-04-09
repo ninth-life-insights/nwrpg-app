@@ -14,27 +14,9 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { getUserProfile } from './userService';
+import { toDateString } from '../utils/dateHelpers';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-// Returns today's date as 'YYYY-MM-DD' in the user's local timezone
-export const getTodayDateString = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-// Converts a Firestore timestamp or Date to 'YYYY-MM-DD'
-const toDateString = (timestamp) => {
-  if (!timestamp) return null;
-  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 // Returns a human-readable task age string for the AI prompt
 // e.g. "created today", "created 3 days ago", "created 2 weeks ago"
@@ -67,7 +49,7 @@ export const getDailySnapshot = async (userId, dateString) => {
 
 /**
  * Saves the user's edited story text back to the snapshot doc.
- * Sets userEditedStory so buildDailySnapshot can preserve it on rebuild.
+ * Sets userEditedStory so generateDailySnapshot can preserve it on rebuild.
  */
 export const updateSnapshotStory = async (userId, dateString, storyText) => {
   const ref = doc(db, 'users', userId, 'dailySnapshots', dateString);
@@ -91,7 +73,7 @@ export const updateSnapshotStory = async (userId, dateString, storyText) => {
 export const logActivityEvent = async (userId, missionData, completionResult) => {
   try {
     const logRef = collection(db, 'users', userId, 'activityLog');
-    const today = getTodayDateString();
+    const today = toDateString(new Date());
 
     // Look up daily config to determine if this mission is a daily mission.
     // isDailyMission is computed, not stored on mission documents, so we
@@ -155,8 +137,8 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
  * @param {string} displayName - Used in the AI story prompt
  * @returns {object} The snapshot data that was written
  */
-export const buildDailySnapshot = async (userId, dateString, displayName) => {
-  const date = dateString || getTodayDateString();
+export const generateDailySnapshot = async (userId, dateString, displayName) => {
+  const date = dateString || toDateString(new Date());
 
   // 1. Fetch all activity log events for this date
   const logRef = collection(db, 'users', userId, 'activityLog');

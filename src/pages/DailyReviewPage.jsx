@@ -5,10 +5,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { getUserProfile } from '../services/userService';
 import {
   getDailySnapshot,
-  buildDailySnapshot,
+  generateDailySnapshot,
   updateSnapshotStory,
-  getTodayDateString,
 } from '../services/reviewService';
+import { toDateString } from '../utils/dateHelpers';
 import './DailyReviewPage.css';
 
 const DailyReviewPage = () => {
@@ -26,7 +26,7 @@ const DailyReviewPage = () => {
   const [savingStory, setSavingStory] = useState(false);
   const textareaRef = useRef(null);
 
-  const today = getTodayDateString();
+  const today = toDateString(new Date());
 
   // Auto-load on mount: check for saved snapshot, build if missing
   useEffect(() => {
@@ -41,7 +41,7 @@ const DailyReviewPage = () => {
         if (!saved) {
           const profile = await getUserProfile(currentUser.uid);
           const displayName = profile?.displayName || 'You';
-          saved = await buildDailySnapshot(currentUser.uid, today, displayName);
+          saved = await generateDailySnapshot(currentUser.uid, today, displayName);
         }
 
         setSnapshot(saved);
