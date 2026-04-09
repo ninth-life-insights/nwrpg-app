@@ -1,5 +1,5 @@
 // src/components/review/DailyMissionsStep.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import MissionCard from '../missions/MissionCard';
 import EditDailyMissionsModal from '../missions/EditDailyMissionsModal';
 
@@ -51,7 +51,7 @@ const DailyMissionsStep = ({
           className="review-edit-missions-link"
           onClick={() => setShowEditModal(true)}
         >
-          Today had other ideas — adjust your missions
+          It's never too late to pivot — edit your priorities?
         </button>
       </div>
 

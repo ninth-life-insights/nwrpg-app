@@ -1,5 +1,5 @@
 // src/components/review/ReviewSummary.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const ReviewSummary = ({
   snapshot,
@@ -154,9 +154,9 @@ const ReviewSummary = ({
             <h3 className="daily-review-section-title">Encounters</h3>
             <div className="skills-practiced-list">
               {snapshot.encounters.map(e => (
-                <div key={e.id} className="quest-row">
-                  <span className="quest-row-title">{e.title}</span>
-                  {e.notes && <span className="quest-row-count">{e.notes}</span>}
+                <div key={e.id} className="encounter-summary-row">
+                  <span className="encounter-summary-title">{e.title}</span>
+                  {e.notes && <span className="encounter-summary-notes">{e.notes}</span>}
                 </div>
               ))}
             </div>

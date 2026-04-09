@@ -1,11 +1,11 @@
 // src/components/review/OtherMissionsStep.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getActiveMissions, createMission, completeMissionWithRecurrence } from '../../services/missionService';
+import { getActiveMissions, completeMissionWithRecurrence } from '../../services/missionService';
 import { getDailyMissionsConfig } from '../../services/dailyMissionService';
 import { toDateString } from '../../utils/dateHelpers';
-import { DIFFICULTY_LEVELS } from '../../types/Mission';
 import MissionCard from '../missions/MissionCard';
+import AddMissionCard from '../missions/AddMissionCard';
 
 const FILTERS = ['All', 'Quests', 'Due Today', 'General'];
 
@@ -21,12 +21,7 @@ const OtherMissionsStep = ({
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
-
-  // Inline new mission form
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDifficulty, setNewDifficulty] = useState(DIFFICULTY_LEVELS.EASY);
-  const [addingMission, setAddingMission] = useState(false);
+  const [showAddMission, setShowAddMission] = useState(false);
 
   const today = toDateString(new Date());
 
@@ -39,8 +34,6 @@ const OtherMissionsStep = ({
           getActiveMissions(currentUser.uid),
           getDailyMissionsConfig(currentUser.uid),
         ]);
-
-        // Exclude missions already in the daily set for today
         const dailyIds = new Set(
           config?.setForDate === today ? (config?.missionIds ?? []) : []
         );
@@ -59,8 +52,6 @@ const OtherMissionsStep = ({
       const result = await onToggleComplete(missionId, isCurrentlyCompleted, xpReward);
       if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
       if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-
-      // Update local list to reflect new status
       setMissions(prev => prev.map(m =>
         m.id === missionId
           ? { ...m, status: isCurrentlyCompleted ? 'active' : 'completed' }
@@ -71,38 +62,18 @@ const OtherMissionsStep = ({
     }
   };
 
-  const handleAddMission = async () => {
-    if (!newTitle.trim() || addingMission) return;
-    setAddingMission(true);
+  // Called by AddMissionCard after it creates the mission
+  const handleMissionAdded = async (newMission) => {
+    setShowAddMission(false);
+    // Immediately complete it and give credit
     try {
-      const missionId = await createMission(currentUser.uid, {
-        title: newTitle.trim(),
-        difficulty: newDifficulty,
-        description: '',
-        skill: null,
-      });
-      // Immediately complete it
-      const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
+      const result = await completeMissionWithRecurrence(currentUser.uid, newMission.id);
       if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
       if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-
-      // Add to local list as completed so it's visible
-      setMissions(prev => [...prev, {
-        id: missionId,
-        title: newTitle.trim(),
-        difficulty: newDifficulty,
-        status: 'completed',
-        skill: null,
-        questId: null,
-        dueDate: '',
-      }]);
-      setNewTitle('');
-      setNewDifficulty(DIFFICULTY_LEVELS.EASY);
-      setShowAddForm(false);
+      setMissions(prev => [...prev, { ...newMission, status: 'completed' }]);
     } catch (err) {
-      console.error('Error creating and completing mission:', err);
-    } finally {
-      setAddingMission(false);
+      console.error('Error completing new mission:', err);
+      setMissions(prev => [...prev, newMission]);
     }
   };
 
@@ -134,75 +105,51 @@ const OtherMissionsStep = ({
           ))}
         </div>
 
-        {loading ? (
-          <p className="review-step-loading">Loading missions...</p>
-        ) : filteredMissions.length === 0 && !showAddForm ? (
-          <p className="review-step-empty">
-            {missions.length === 0
-              ? 'Looks like everything\'s been logged — nice work.'
-              : 'No missions match this filter.'}
-          </p>
-        ) : (
-          <div className="review-missions-list">
-            {filteredMissions.map(mission => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                onToggleComplete={handleToggle}
-                onViewDetails={() => {}}
-                hideDailyBadge={true}
-              />
-            ))}
-          </div>
-        )}
-
-        {showAddForm ? (
-          <div className="review-add-mission-form">
-            <input
-              className="review-add-mission-input"
-              type="text"
-              placeholder="What did you do?"
-              value={newTitle}
-              onChange={e => setNewTitle(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddMission()}
-              autoFocus
-            />
-            <div className="review-add-mission-difficulty">
-              {Object.values(DIFFICULTY_LEVELS).map(d => (
-                <button
-                  key={d}
-                  className={`review-difficulty-btn ${newDifficulty === d ? 'review-difficulty-btn--active' : ''}`}
-                  onClick={() => setNewDifficulty(d)}
-                >
-                  {d.charAt(0).toUpperCase() + d.slice(1)}
-                </button>
-              ))}
-            </div>
-            <div className="review-add-mission-actions">
-              <button
-                className="story-action-btn story-action-btn--save"
-                onClick={handleAddMission}
-                disabled={!newTitle.trim() || addingMission}
-              >
-                {addingMission ? 'Logging...' : 'Log it'}
-              </button>
-              <button
-                className="story-action-btn story-action-btn--cancel"
-                onClick={() => { setShowAddForm(false); setNewTitle(''); }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
+        {/* Log button always visible above the list */}
+        {!showAddMission && (
           <button
             className="review-add-mission-link"
-            onClick={() => setShowAddForm(true)}
+            onClick={() => setShowAddMission(true)}
           >
             + Log a mission not in the system
           </button>
         )}
+
+        {/* Scrollable mission list */}
+        {loading ? (
+          <p className="review-step-loading">Loading missions...</p>
+        ) : (
+          <div className="review-missions-scroll">
+            {filteredMissions.length === 0 ? (
+              <p className="review-step-empty">
+                {missions.length === 0
+                  ? "Looks like everything's been logged — nice work."
+                  : 'No missions match this filter.'}
+              </p>
+            ) : (
+              <div className="review-missions-list">
+                {filteredMissions.map(mission => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    onToggleComplete={handleToggle}
+                    onViewDetails={() => {}}
+                    hideDailyBadge={true}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* AddMissionCard uses its own overlay — render outside step-body */}
+      {showAddMission && (
+        <AddMissionCard
+          onAddMission={handleMissionAdded}
+          onCancel={() => setShowAddMission(false)}
+        />
+      )}
 
       <div className="review-step-footer">
         <button className="review-next-btn" onClick={onNext}>

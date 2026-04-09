@@ -126,14 +126,27 @@
   text-align: center;
 }
 
-/* ── Step footer (Next/Skip) ─────────────────────────────────── */
+/* ── Step footer (Next/Skip) — sticky overlay ────────────────── */
 
 .review-step-footer {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--max-width-card);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-sm);
-  padding-top: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--color-bg-main) 80%, transparent);
+  z-index: 20;
+}
+
+/* Compensate content for fixed footer height */
+.review-step {
+  padding-bottom: 120px;
 }
 
 .review-next-btn {
@@ -179,6 +192,24 @@
   gap: var(--space-xs);
 }
 
+/* Force cards to fill the container uniformly */
+.review-missions-list .mission-card {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Scrollable mission list for step 2 */
+.review-missions-scroll {
+  max-height: 42vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-md);
+  /* Subtle inset shadow to hint scrollability */
+  box-shadow: inset 0 -8px 8px -8px rgba(0, 0, 0, 0.06);
+}
+
 .review-mission-count {
   font-size: var(--font-size-sm);
   color: var(--color-text-medium);
@@ -187,19 +218,23 @@
 }
 
 .review-edit-missions-link {
-  background: none;
-  border: none;
+  background: var(--color-bg-white);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  color: var(--color-text-light);
+  color: var(--color-text-medium);
   font-size: var(--font-size-sm);
-  font-style: italic;
-  padding: 0;
-  text-align: left;
-  transition: color var(--transition);
+  font-weight: 500;
+  padding: var(--space-sm) var(--space-md);
+  text-align: center;
+  width: 100%;
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
 }
 
 .review-edit-missions-link:hover {
-  color: var(--color-text-medium);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: #eff6ff;
 }
 
 /* ── Filter tabs (step 2) ────────────────────────────────────── */
@@ -208,6 +243,7 @@
   display: flex;
   gap: var(--space-xs);
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .review-filter-tab {
@@ -345,7 +381,7 @@
   text-overflow: ellipsis;
 }
 
-.encounter-card-delete {
+.encounter-card-action {
   background: none;
   border: none;
   cursor: pointer;
@@ -358,12 +394,24 @@
   transition: color var(--transition);
 }
 
-.encounter-card-delete:hover {
+.encounter-card-action:hover {
+  color: var(--color-text-medium);
+}
+
+.encounter-card-action--delete:hover {
   color: #dc2626;
 }
 
-.encounter-card-delete .material-icons {
+.encounter-card-action .material-icons {
   font-size: 16px;
+}
+
+/* Inline edit form inside an encounter card */
+.encounter-edit-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
 }
 
 .encounter-form {
@@ -814,6 +862,27 @@
   background-clip: text;
   margin: 0;
   letter-spacing: -0.3px;
+}
+
+/* Encounter rows in summary (step 4) */
+.encounter-summary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.encounter-summary-title {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-text-dark);
+  text-align: left;
+}
+
+.encounter-summary-notes {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+  text-align: left;
 }
 
 /* Done button — secondary action style, matches action-button.secondary */
