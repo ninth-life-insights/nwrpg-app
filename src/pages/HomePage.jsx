@@ -257,7 +257,7 @@ const HomePage = () => {
           Daily Planning
         </button>
         
-        <button className="header-button">
+        <button className="header-button" onClick={() => navigate('/daily-review')}>
           <span className="material-icons">{"check_circle"}</span>
           Daily Review
         </button>

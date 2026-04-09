@@ -14,6 +14,10 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Pass Anthropic API calls straight through — don't cache or intercept
+  if (event.request.url.includes('/api/anthropic')) {
+    return;
+  }
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
