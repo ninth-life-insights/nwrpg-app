@@ -1,258 +1,197 @@
-// src/pages/DailyReviewPage.js
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/DailyReviewPage.jsx
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserProfile } from '../services/userService';
 import {
-  getDailySnapshot,
   generateDailySnapshot,
   updateSnapshotStory,
+  getEncountersForDate,
 } from '../services/reviewService';
+import {
+  getTodaysDailyMissions,
+} from '../services/dailyMissionService';
+import {
+  completeMissionWithRecurrence,
+  uncompleteMission,
+} from '../services/missionService';
+import LevelUpModal from '../components/ui/LevelUpModal';
+import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
+import DailyMissionsStep from '../components/review/DailyMissionsStep';
+import OtherMissionsStep from '../components/review/OtherMissionsStep';
+import EncountersStep from '../components/review/EncountersStep';
+import ReviewSummary from '../components/review/ReviewSummary';
 import { toDateString } from '../utils/dateHelpers';
 import './DailyReviewPage.css';
+
+const TOTAL_STEPS = 4;
 
 const DailyReviewPage = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState(1);
+  const [dailyMissions, setDailyMissions] = useState([]);
+  const [encounters, setEncounters] = useState([]);
   const [snapshot, setSnapshot] = useState(null);
-  const [error, setError] = useState(null);
-  const [storyExpanded, setStoryExpanded] = useState(false);
-
-  // Editing state
-  const [isEditingStory, setIsEditingStory] = useState(false);
-  const [storyDraft, setStoryDraft] = useState('');
-  const [savingStory, setSavingStory] = useState(false);
-  const textareaRef = useRef(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [levelUpInfo, setLevelUpInfo] = useState(null);
+  const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
 
   const today = toDateString(new Date());
 
-  // Auto-load on mount: check for saved snapshot, build if missing
+  // Load daily missions and any existing encounters on mount
   useEffect(() => {
     if (!currentUser) return;
-
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        let saved = await getDailySnapshot(currentUser.uid, today);
-
-        if (!saved) {
-          const profile = await getUserProfile(currentUser.uid);
-          const displayName = profile?.displayName || 'You';
-          saved = await generateDailySnapshot(currentUser.uid, today, displayName);
-        }
-
-        setSnapshot(saved);
-      } catch (err) {
-        console.error('Error loading daily review:', err);
-        setError('Something went wrong loading your review. Please try again.');
-      } finally {
-        setLoading(false);
-      }
+    const init = async () => {
+      const [missions, existingEncounters] = await Promise.all([
+        getTodaysDailyMissions(currentUser.uid),
+        getEncountersForDate(currentUser.uid, today),
+      ]);
+      setDailyMissions(missions);
+      setEncounters(existingEncounters);
     };
-
-    load();
+    init().catch(err => console.error('Error initializing daily review:', err));
   }, [currentUser]);
 
-  // Focus textarea when editing starts
-  useEffect(() => {
-    if (isEditingStory && textareaRef.current) {
-      textareaRef.current.focus();
-      // Place cursor at end
-      const len = textareaRef.current.value.length;
-      textareaRef.current.setSelectionRange(len, len);
-    }
-  }, [isEditingStory]);
-
-  const displayStory = snapshot?.userEditedStory ?? snapshot?.aiStory ?? null;
-
-  const handleEditStart = () => {
-    setStoryDraft(displayStory || '');
-    setIsEditingStory(true);
-    setStoryExpanded(true);
+  const refreshDailyMissions = async () => {
+    const missions = await getTodaysDailyMissions(currentUser.uid);
+    setDailyMissions(missions);
   };
 
-  const handleSaveStory = async () => {
-    if (!currentUser || savingStory) return;
-    setSavingStory(true);
+  const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     try {
-      await updateSnapshotStory(currentUser.uid, today, storyDraft);
-      setSnapshot(prev => ({ ...prev, userEditedStory: storyDraft }));
-      setIsEditingStory(false);
+      let result;
+      if (isCurrentlyCompleted) {
+        result = await uncompleteMission(currentUser.uid, missionId);
+      } else {
+        result = await completeMissionWithRecurrence(currentUser.uid, missionId);
+        if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
+        if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+      }
+      // Refresh the daily mission list so status reflects in step 1
+      await refreshDailyMissions();
+      return result;
     } catch (err) {
-      console.error('Error saving story:', err);
-    } finally {
-      setSavingStory(false);
+      console.error('Error toggling mission:', err);
     }
   };
 
-  const handleCancelEdit = () => {
-    setIsEditingStory(false);
-    setStoryDraft('');
+  const goToSummary = async () => {
+    setStep(4);
+    setSummaryLoading(true);
+    try {
+      const profile = await getUserProfile(currentUser.uid);
+      const displayName = profile?.displayName || 'You';
+      const result = await generateDailySnapshot(currentUser.uid, today, displayName);
+      // Attach encounters to snapshot for display (they're stored separately in Firestore)
+      setSnapshot({ ...result, encounters });
+    } catch (err) {
+      console.error('Error generating snapshot:', err);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (step < TOTAL_STEPS - 1) {
+      setStep(s => s + 1);
+    } else {
+      // Step 3 → Step 4: generate summary
+      await goToSummary();
+    }
+  };
+
+  const handleBack = () => {
+    if (step === 1) {
+      navigate('/home');
+    } else {
+      setStep(s => s - 1);
+    }
+  };
+
+  const handleUpdateStory = async (text) => {
+    await updateSnapshotStory(currentUser.uid, today, text);
+    setSnapshot(prev => ({ ...prev, userEditedStory: text }));
   };
 
   return (
     <div className="daily-review-page">
       <header className="daily-review-header">
-        <button className="daily-review-back-btn" onClick={() => navigate('/home')}>
+        <button className="daily-review-back-btn" onClick={handleBack}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="daily-review-title">Daily Review</h1>
         <div className="daily-review-header-spacer" />
       </header>
 
+      {/* Progress bar */}
+      <div className="review-progress-bar">
+        {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+          <div
+            key={i}
+            className={`review-progress-segment ${i < step ? 'review-progress-segment--filled' : ''}`}
+          />
+        ))}
+      </div>
+
       <div className="daily-review-content">
-        {loading && (
-          <div className="daily-review-loading">
-            <p>Writing up your day...</p>
-          </div>
+        {step === 1 && (
+          <DailyMissionsStep
+            dailyMissions={dailyMissions}
+            onToggleComplete={handleToggleComplete}
+            onMissionsUpdated={refreshDailyMissions}
+            onNext={handleNext}
+            onSkipToSummary={goToSummary}
+          />
         )}
 
-        {error && !loading && (
-          <div className="daily-review-prompt">
-            <p className="daily-review-error">{error}</p>
-            <button className="daily-review-generate-btn" onClick={() => window.location.reload()}>
-              Try Again
-            </button>
-          </div>
+        {step === 2 && (
+          <OtherMissionsStep
+            onToggleComplete={handleToggleComplete}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSkipToSummary={goToSummary}
+            setLevelUpInfo={setLevelUpInfo}
+            setSkillLevelUpInfo={setSkillLevelUpInfo}
+          />
         )}
 
-        {snapshot && !loading && (
-          <div className="daily-review-results">
+        {step === 3 && (
+          <EncountersStep
+            userId={currentUser.uid}
+            encounters={encounters}
+            setEncounters={setEncounters}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSkipToSummary={goToSummary}
+          />
+        )}
 
-            {/* Stats Grid */}
-            <div className="daily-review-stats">
-              <div className="stat-card">
-                <span className="stat-number">{snapshot.missionsCompleted}</span>
-                <span className="stat-label">Missions Complete</span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-number">+{snapshot.xpEarned}</span>
-                <span className="stat-label">XP Earned</span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-number">
-                  {snapshot.dailyMissionsCompleted}/{snapshot.dailyMissionsTotal}
-                </span>
-                <span className="stat-label">Daily Missions</span>
-              </div>
-            </div>
-
-            {/* AI / User Story */}
-            {(displayStory !== null || snapshot.missionsCompleted > 0) && (
-              <div className="daily-review-story">
-                <div className="daily-review-story-header">
-                  <span className="daily-review-story-label">The Story of Today</span>
-                  {!isEditingStory && (
-                    <button className="daily-review-story-edit-btn" onClick={handleEditStart}>
-                      <span className="material-icons">edit</span>
-                    </button>
-                  )}
-                </div>
-
-                {isEditingStory ? (
-                  <div className="daily-review-story-editor">
-                    <textarea
-                      ref={textareaRef}
-                      className="daily-review-story-textarea"
-                      value={storyDraft}
-                      onChange={e => setStoryDraft(e.target.value)}
-                      placeholder="Write your own notes or memory for today..."
-                      rows={6}
-                    />
-                    <div className="daily-review-story-actions">
-                      <button
-                        className="story-action-btn story-action-btn--save"
-                        onClick={handleSaveStory}
-                        disabled={savingStory}
-                      >
-                        {savingStory ? 'Saving...' : 'Save'}
-                      </button>
-                      <button
-                        className="story-action-btn story-action-btn--cancel"
-                        onClick={handleCancelEdit}
-                        disabled={savingStory}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : displayStory ? (
-                  <>
-                    <div className={`daily-review-story-body ${storyExpanded ? 'daily-review-story-body--expanded' : ''}`}>
-                      <p>{displayStory}</p>
-                    </div>
-                    {!storyExpanded && <div className="daily-review-story-fade" />}
-                    <button
-                      className="daily-review-story-toggle"
-                      onClick={() => setStoryExpanded(prev => !prev)}
-                    >
-                      {storyExpanded ? 'Show less' : 'See more'}
-                      <span className="material-icons">
-                        {storyExpanded ? 'expand_less' : 'expand_more'}
-                      </span>
-                    </button>
-                  </>
-                ) : (
-                  <p className="daily-review-story-empty">
-                    No chronicle generated yet. Add your own notes.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Level ups */}
-            {snapshot.levelUps?.length > 0 && (
-              <div className="daily-review-section daily-review-section--highlight">
-                <p className="level-up-callout">
-                  Reached Level {snapshot.levelUps[snapshot.levelUps.length - 1].newLevel}
-                </p>
-              </div>
-            )}
-
-            {/* Skills Used */}
-            {snapshot.skillsUsed?.length > 0 && (
-              <div className="daily-review-section">
-                <h3 className="daily-review-section-title">Skills Practiced</h3>
-                <div className="skills-practiced-list">
-                  {snapshot.skillsUsed.map(skill => (
-                    <div key={skill.name} className="skill-row">
-                      <span className="skill-row-name">{skill.name}</span>
-                      <span className="skill-row-sp">+{skill.spEarned} SP</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Quests Advanced */}
-            {snapshot.questsAdvanced?.length > 0 && (
-              <div className="daily-review-section">
-                <h3 className="daily-review-section-title">Quests Advanced</h3>
-                <div className="quests-list">
-                  {snapshot.questsAdvanced.map(quest => (
-                    <div key={quest.questId} className="quest-row">
-                      <span className="quest-row-title">{quest.questTitle}</span>
-                      <span className="quest-row-count">
-                        {quest.missionsCompleted} mission{quest.missionsCompleted !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <button
-              className="daily-review-done-btn"
-              onClick={() => navigate('/home')}
-            >
-              Done
-            </button>
-          </div>
+        {step === 4 && (
+          <ReviewSummary
+            snapshot={snapshot}
+            loading={summaryLoading}
+            onDone={() => navigate('/home')}
+            onUpdateStory={handleUpdateStory}
+          />
         )}
       </div>
+
+      {levelUpInfo && (
+        <LevelUpModal
+          newLevel={levelUpInfo.newLevel}
+          onClose={() => setLevelUpInfo(null)}
+        />
+      )}
+
+      {skillLevelUpInfo && (
+        <SkillLevelUpModal
+          skillName={skillLevelUpInfo.skillName}
+          newLevel={skillLevelUpInfo.newLevel}
+          onClose={() => setSkillLevelUpInfo(null)}
+        />
+      )}
     </div>
   );
 };
