@@ -135,9 +135,10 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: var(--max-width-card);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--space-sm);
   padding: var(--space-md) 24px calc(var(--space-lg) + env(safe-area-inset-bottom));
   background: linear-gradient(to top, var(--color-bg-main) 80%, transparent);
@@ -179,6 +180,7 @@
   font-size: var(--font-size-sm);
   font-weight: 500;
   padding: var(--space-xs) 0;
+  text-align: center;
   transition: color var(--transition);
 }
 
