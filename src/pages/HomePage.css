@@ -100,7 +100,7 @@
 
 .character-avatar {
   width: 120px;
-  height: 120px;
+  height: 130px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -115,9 +115,9 @@
 
 .character-avatar-image {
   width: 120px;
-  height: 120px;
+  height: 130px;
   border-radius: var(--radius-md);
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
