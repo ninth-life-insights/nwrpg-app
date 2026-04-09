@@ -12,7 +12,6 @@ const FILTERS = ['All', 'Quests', 'Due Today', 'General'];
 const OtherMissionsStep = ({
   onToggleComplete,
   onNext,
-  onBack,
   onSkipToSummary,
   setLevelUpInfo,
   setSkillLevelUpInfo,
@@ -70,7 +69,7 @@ const OtherMissionsStep = ({
       const result = await completeMissionWithRecurrence(currentUser.uid, newMission.id);
       if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
       if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-      setMissions(prev => [...prev, { ...newMission, status: 'completed' }]);
+      setMissions(prev => [{ ...newMission, status: 'completed' }, ...prev]);
     } catch (err) {
       console.error('Error completing new mission:', err);
       setMissions(prev => [...prev, newMission]);
