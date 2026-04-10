@@ -5,6 +5,7 @@
   background: var(--color-bg-main);
   padding: 0 0 48px;
   font-family: var(--font-family);
+  margin: 10px;
 }
 
 /* Header */
@@ -101,7 +102,7 @@
 
 /* Missions section */
 .skill-detail-missions {
-  padding: 0 var(--space-lg);
+  padding: 0 ;
   max-width: var(--max-width-card);
   margin: 0 auto;
 }
