@@ -16,11 +16,12 @@ import {
   MISSION_STATUS,
   calculateTotalMissionXP
  } from '../types/Mission';
-import { 
-  calculateNextDueDate, 
-  shouldCreateNextOccurrence, 
+import {
+  calculateNextDueDate,
+  shouldCreateNextOccurrence,
   createNextMissionInstance,
-  isRecurringMission
+  isRecurringMission,
+  isEvergreenMission
 } from '../utils/recurrenceHelpers';
 import { 
   addXP,
@@ -377,6 +378,22 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
     
     const mission = { id: missionSnap.id, ...missionSnap.data() };
     
+    // If it's an evergreen mission, award XP and re-activate it in place
+    if (isEvergreenMission(mission)) {
+      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
+      await updateDoc(missionRef, { status: MISSION_STATUS.ACTIVE, completedAt: null });
+      return {
+        completed: true,
+        xpAwarded,
+        leveledUp,
+        newLevel,
+        skillLeveledUp,
+        skillName,
+        newSkillLevel,
+        nextMissionCreated: false
+      };
+    }
+
     // If it's a recurring mission, use the recurring logic
     if (isRecurringMission(mission)) {
       return await completeRecurringMission(userId, missionId);
