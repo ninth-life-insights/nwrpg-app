@@ -215,9 +215,9 @@ export const validateMission = (mission) => {
   
   // UPDATED: Recurrence validation using dueType
   if (mission.dueType === DUE_TYPES.RECURRING) {
-    // if (!mission.dueDate || mission.dueDate === '') {
-    //   errors.push('Recurring missions must have a due date');
-    // }
+    if (!mission.dueDate || mission.dueDate === '') {
+      errors.push('Recurring missions must have a due date');
+    }
     
     if (mission.recurrence && mission.recurrence.pattern === 'weekly' && mission.recurrence.weekdays.length === 0) {
       errors.push('Weekly recurring missions must have at least one weekday selected');
