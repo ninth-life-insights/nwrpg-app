@@ -8,6 +8,11 @@ export const isRecurringMission = (mission) => {
   return mission.dueType === DUE_TYPES.RECURRING;
 };
 
+// Check if mission is evergreen
+export const isEvergreenMission = (mission) => {
+  return mission.dueType === DUE_TYPES.EVERGREEN;
+};
+
 // Get display text for recurrence pattern
 export const getRecurrenceDisplayText = (mission) => {
   if (!isRecurringMission(mission)) return null;
