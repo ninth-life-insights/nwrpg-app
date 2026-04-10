@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission, updateMission } from '../../services/missionService';
 import Badge from '../ui/Badge';
-import CompletionTypeSelector from './sub-components/CompletionTypeSelector';
+// import CompletionTypeSelector from './sub-components/CompletionTypeSelector'; // not yet fully implemented
 import RecurrenceSelector, { RECURRENCE_PATTERNS } from './sub-components/recurrenceSelector';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import { toDateString, fromDateString } from '../../utils/dateHelpers';
@@ -127,14 +127,14 @@ const AddMissionCard = ({
     }));
   };
 
-  const handleCompletionTypeSelect = (completionType) => {
-    setFormData(prev => ({
-      ...prev,
-      completionType: completionType,
-      timerDurationMinutes: completionType === COMPLETION_TYPES.TIMER ? prev.timerDurationMinutes : null,
-      targetCount: completionType === COMPLETION_TYPES.COUNT ? prev.targetCount : null,
-    }));
-  };
+  // const handleCompletionTypeSelect = (completionType) => { // not yet fully implemented
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     completionType: completionType,
+  //     timerDurationMinutes: completionType === COMPLETION_TYPES.TIMER ? prev.timerDurationMinutes : null,
+  //     targetCount: completionType === COMPLETION_TYPES.COUNT ? prev.targetCount : null,
+  //   }));
+  // };
 
   const handleSkillSelect = (skill) => {
     setFormData(prev => ({
@@ -150,6 +150,29 @@ const AddMissionCard = ({
       recurrence: newRecurrence,
       dueType: newRecurrence.pattern !== RECURRENCE_PATTERNS.NONE ? DUE_TYPES.RECURRING : DUE_TYPES.UNIQUE
     }));
+  };
+
+  const handleDueTypeSelect = (dueType) => {
+    if (dueType === DUE_TYPES.RECURRING) {
+      setFormData(prev => ({ ...prev, dueType }));
+      setShowDueDateField(true);
+    } else {
+      // UNIQUE or EVERGREEN: clear due date and recurrence
+      setFormData(prev => ({
+        ...prev,
+        dueType,
+        dueDate: '',
+        recurrence: {
+          pattern: RECURRENCE_PATTERNS.NONE,
+          interval: 1,
+          weekdays: [],
+          dayOfMonth: null,
+          endDate: null,
+          maxOccurrences: null
+        }
+      }));
+      setShowDueDateField(false);
+    }
   };
 
   const handleRemoveExpiryDate = () => {
@@ -339,8 +362,8 @@ const AddMissionCard = ({
             </div>
           </div>
 
-          {/* Completion Type Selector */}
-          <CompletionTypeSelector
+          {/* Completion Type Selector — not yet fully implemented */}
+          {/* <CompletionTypeSelector
             completionType={formData.completionType}
             onCompletionTypeChange={handleCompletionTypeSelect}
             timerDurationMinutes={formData.timerDurationMinutes ? parseInt(formData.timerDurationMinutes) : null}
@@ -349,11 +372,35 @@ const AddMissionCard = ({
             onTargetCountChange={(count) => setFormData(prev => ({ ...prev, targetCount: count }))}
             disabled={isSubmitting}
             errors={errors}
-          />
+          /> */}
+
+          {/* Due Type Selector */}
+          <div className="due-type-section">
+            <label className="section-label">Mission Type</label>
+            <div className="due-type-selector" data-selected={formData.dueType}>
+              {[
+                { label: 'Standard', value: DUE_TYPES.UNIQUE },
+                { label: 'Recurring', value: DUE_TYPES.RECURRING },
+                { label: 'Evergreen', value: DUE_TYPES.EVERGREEN },
+              ].map(({ label, value }) => (
+                <label key={value} className="due-type-option">
+                  <input
+                    type="radio"
+                    name="dueType"
+                    value={value}
+                    checked={formData.dueType === value}
+                    onChange={() => handleDueTypeSelect(value)}
+                    disabled={isSubmitting}
+                  />
+                  <span className="due-type-label">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           {/* Optional Field Ghost Badges */}
           <div className="ghost-badges">
-            {!showDueDateField && !formData.dueDate && (
+            {formData.dueType === DUE_TYPES.UNIQUE && !showDueDateField && !formData.dueDate && (
               <button
                 type="button"
                 onClick={() => setShowDueDateField(true)}
@@ -401,10 +448,10 @@ const AddMissionCard = ({
             )}
           </div>
 
-          {/* Due Date Field */}
-          {(showDueDateField || formData.dueDate) && (
+          {/* Due Date Field — hidden for Evergreen, required for Recurring */}
+          {formData.dueType !== DUE_TYPES.EVERGREEN && (showDueDateField || formData.dueDate) && (
             <div className="optional-field-inline">
-              <label>Due Date</label>
+              <label>Due Date{formData.dueType === DUE_TYPES.RECURRING ? ' *' : ''}</label>
               <div className="field-with-remove">
                 <input
                   type="date"
@@ -414,29 +461,30 @@ const AddMissionCard = ({
                   className={`optional-input ${errors.dueDate ? 'error' : ''}`}
                   disabled={isSubmitting}
                 />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      dueDate: '',
-                      recurrence: {
-                        pattern: RECURRENCE_PATTERNS.NONE,
-                        interval: 1,
-                        weekdays: [],
-                        dayOfMonth: null,
-                        endDate: null,
-                        maxOccurrences: null
-                      },
-                      dueType: DUE_TYPES.UNIQUE
-                    }));
-                    setShowDueDateField(false);
-                  }}
-                  className="remove-field-btn"
-                  disabled={isSubmitting}
-                >
-                  ×
-                </button>
+                {formData.dueType === DUE_TYPES.UNIQUE && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        dueDate: '',
+                        recurrence: {
+                          pattern: RECURRENCE_PATTERNS.NONE,
+                          interval: 1,
+                          weekdays: [],
+                          dayOfMonth: null,
+                          endDate: null,
+                          maxOccurrences: null
+                        }
+                      }));
+                      setShowDueDateField(false);
+                    }}
+                    className="remove-field-btn"
+                    disabled={isSubmitting}
+                  >
+                    ×
+                  </button>
+                )}
               </div>
               {errors.dueDate && <span className="error-text">{errors.dueDate}</span>}
             </div>
