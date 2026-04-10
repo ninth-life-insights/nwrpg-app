@@ -14,6 +14,11 @@ const Badge = ({
   if (!icon && variant === 'recurrence') {
     defaultIcon = 'refresh';
   }
+
+  // Handle evergreen icon
+  if (!icon && variant === 'evergreen') {
+    defaultIcon = 'all_inclusive';
+  }
   
   // Handle difficulty stars
   if (!icon && variant === 'difficulty' && difficulty) {

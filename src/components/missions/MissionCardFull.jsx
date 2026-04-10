@@ -12,7 +12,7 @@ import {
   isMissionOverdue,
   formatForUser
 } from '../../utils/dateHelpers';
-import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, onUpdateMission, quest = null }) => {
@@ -65,6 +65,7 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
   const expiryDisplay = formatExpiryDate(mission.expiryDate);
   const createdDisplay = formatCreatedDate(mission.createdAt);
   const isRecurring = isRecurringMission(mission);
+  const isEvergreen = isEvergreenMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const isActive = mission.status === MISSION_STATUS.ACTIVE;
@@ -138,6 +139,10 @@ const MissionCardFull = ({ mission, onClose, onToggleComplete, onDeleteMission, 
             <div className="mission-badges">
               {isRecurring && (
                 <Badge variant="recurrence">{recurrenceText}</Badge>
+              )}
+
+              {isEvergreen && (
+                <Badge variant="evergreen">Evergreen</Badge>
               )}
               
               {dueDateInfo && (

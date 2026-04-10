@@ -14,7 +14,7 @@ import {
   isMissionOverdue,
   isMissionDueTomorrow
  } from '../../utils/dateHelpers';
-import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import './MissionCard.css';
@@ -54,6 +54,7 @@ const MissionCard = ({
   const missionHasSkill = hasSkill(mission);
   const canComplete = canCompleteMission(mission);
   const isRecurring = isRecurringMission(mission);
+  const isEvergreen = isEvergreenMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
 
   // Handle XP badge display
@@ -179,6 +180,11 @@ const MissionCard = ({
               <Badge variant="recurrence">
                 {recurrenceText}
               </Badge>
+            )}
+
+            {/* Evergreen badge */}
+            {isEvergreen && (
+              <Badge variant="evergreen">Evergreen</Badge>
             )}
 
             {/* Due date badge */}

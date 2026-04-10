@@ -102,6 +102,13 @@
   border: 1px solid #93c5fd;
 }
 
+/* Variant: Evergreen */
+.badge-evergreen {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
 /* Variant: Due Date statuses */
 .badge-due-upcoming {
   background-color: #dbeafe;
