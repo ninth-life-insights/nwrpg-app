@@ -378,10 +378,18 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
     
     const mission = { id: missionSnap.id, ...missionSnap.data() };
     
-    // If it's an evergreen mission, award XP and re-activate it in place
+    // If it's an evergreen mission, complete and create a fresh instance (no due date)
     if (isEvergreenMission(mission)) {
       const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
-      await updateDoc(missionRef, { status: MISSION_STATUS.ACTIVE, completedAt: null });
+
+      const nextMissionData = createNextMissionInstance(mission, null);
+      const missionsRef = getUserMissionsRef(userId);
+      const newMissionRef = await addDoc(missionsRef, {
+        ...nextMissionData,
+        dueDate: null,
+        createdAt: serverTimestamp()
+      });
+
       return {
         completed: true,
         xpAwarded,
@@ -390,7 +398,8 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
         skillLeveledUp,
         skillName,
         newSkillLevel,
-        nextMissionCreated: false
+        nextMissionCreated: true,
+        nextMissionId: newMissionRef.id
       };
     }
 
