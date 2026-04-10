@@ -79,6 +79,13 @@
   color: #4c4b50;
 }
 
+.material-icons-light {
+  font-family: 'Material Icons Outlined';
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 100;
+}
+
 /* Profile Section */
 .profile-section {
   background: var(--color-bg-white);
@@ -388,8 +395,8 @@
 }
 
 .action-button.skills-link {
-  background: none;
-  color: var(--color-text-light);
+  background: var(--color-primary);
+  color: var(--color-bg-white);
   border: 1px solid var(--color-border);
   font-size: var(--font-size-sm);
   padding: var(--space-sm) var(--space-lg);
