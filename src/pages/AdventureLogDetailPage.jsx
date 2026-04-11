@@ -62,10 +62,8 @@ const AdventureLogDetailPage = () => {
         >
           <span className="material-icons">arrow_back</span>
         </button>
-        <div className="adventure-log-detail-header-text">
-          <span className="adventure-log-detail-eyebrow">Adventure Log</span>
-          {date && <h1 className="adventure-log-detail-date">{formatDate(date)}</h1>}
-        </div>
+        {date && <h1 className="adventure-log-detail-title">{formatDate(date)}</h1>}
+        <div className="adventure-log-detail-header-spacer" />
       </header>
 
       {loading ? (
@@ -78,16 +76,16 @@ const AdventureLogDetailPage = () => {
           <p>No entry found for this date.</p>
         </div>
       ) : (
-        <ReviewSummary
-          snapshot={snapshot}
-          loading={false}
-          onDone={() => navigate('/adventure-log')}
-          onUpdateStory={handleUpdateStory}
-          onRegenerateStory={handleRegenerateStory}
-          userId={currentUser.uid}
-          date={date}
-          doneLabel="Back to Log"
-        />
+        <div className="adventure-log-detail-content">
+          <ReviewSummary
+            snapshot={snapshot}
+            loading={false}
+            onUpdateStory={handleUpdateStory}
+            onRegenerateStory={handleRegenerateStory}
+            userId={currentUser.uid}
+            date={date}
+          />
+        </div>
       )}
     </div>
   );

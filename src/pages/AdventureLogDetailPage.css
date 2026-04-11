@@ -13,8 +13,8 @@
 .adventure-log-detail-header {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-lg);
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
   background: var(--color-bg-main);
   position: sticky;
   top: 0;
@@ -33,6 +33,7 @@
   align-items: center;
   transition: var(--transition);
   flex-shrink: 0;
+  width: 32px;
 }
 
 .adventure-log-detail-back-btn:hover {
@@ -44,25 +45,22 @@
   font-size: 22px;
 }
 
-.adventure-log-detail-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.adventure-log-detail-eyebrow {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-light);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.adventure-log-detail-date {
+.adventure-log-detail-title {
+  flex: 1;
+  text-align: center;
   font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-dark);
   margin: 0;
+}
+
+.adventure-log-detail-header-spacer {
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.adventure-log-detail-content {
+  padding: var(--space-lg);
 }
 
 .adventure-log-detail-loading,
