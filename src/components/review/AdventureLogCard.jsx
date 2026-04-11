@@ -13,8 +13,6 @@ const formatDate = (dateString) => {
 const FullCard = ({ snapshot }) => {
   const navigate = useNavigate();
   const story = snapshot.userEditedStory ?? snapshot.aiStory ?? null;
-  const isReconstructed = !snapshot.userEditedStory && snapshot.aiStoryGenerated &&
-    snapshot.generatedAt && snapshot.date < new Date().toISOString().slice(0, 10);
 
   const hasLevelUp = snapshot.levelUps?.length > 0;
   const hasSkillLevelUp = snapshot.skillLevelUps?.length > 0;
@@ -42,9 +40,6 @@ const FullCard = ({ snapshot }) => {
             <span className="alc-badge alc-badge--quest" title="Quest completed">
               <span className="material-icons">flag</span>
             </span>
-          )}
-          {isReconstructed && (
-            <span className="alc-badge alc-badge--reconstructed">reconstructed</span>
           )}
         </div>
       </div>

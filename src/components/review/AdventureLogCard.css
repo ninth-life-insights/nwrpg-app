@@ -87,13 +87,6 @@
   background: #dbeafe;
 }
 
-.alc-badge--reconstructed {
-  color: var(--color-text-light);
-  background: #f3f4f6;
-  font-style: italic;
-  padding: 2px 6px;
-}
-
 /* Story excerpt */
 .alc-story {
   font-size: var(--font-size-base);
