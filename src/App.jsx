@@ -15,6 +15,8 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 import DailyReviewPage from './pages/DailyReviewPage';
+import AdventureLogPage from './pages/AdventureLogPage';
+import AdventureLogDetailPage from './pages/AdventureLogDetailPage';
 import MissionBankPage from './pages/MissionBankPage';
 import QuestBank from './pages/QuestBankPage';
 import QuestDetailView from './components/quests/QuestDetailView';
@@ -66,6 +68,8 @@ function AppContent() {
         <Route path="/quests/:questId" element={<ProtectedRoute><QuestDetailView /></ProtectedRoute>} />
         <Route path="/skills" element={<ProtectedRoute><SkillsPage /></ProtectedRoute>} />
         <Route path="/skills/:skillName" element={<ProtectedRoute><SkillDetailPage /></ProtectedRoute>} />
+        <Route path="/adventure-log" element={<ProtectedRoute><AdventureLogPage /></ProtectedRoute>} />
+        <Route path="/adventure-log/:date" element={<ProtectedRoute><AdventureLogDetailPage /></ProtectedRoute>} />
       </Routes>
     </div>
   );

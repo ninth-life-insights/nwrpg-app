@@ -262,6 +262,10 @@ const HomePage = () => {
           Daily Review
         </button>
         
+        <button className="header-button adventure-log-button" onClick={() => navigate('/adventure-log')}>
+          <span className="material-icons-outlined">{"auto_stories"}</span>
+        </button>
+
         <button className="header-button settings-button">
           <span className="material-icons-outlined">{"settings"}</span>
         </button>
