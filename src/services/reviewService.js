@@ -75,6 +75,48 @@ export const removeEncounter = async (userId, encounterId) => {
   await deleteDoc(ref);
 };
 
+// ─── Adventure Log ────────────────────────────────────────────────────────────
+
+/**
+ * Returns all daily snapshots for the user, ordered by date descending.
+ * @returns {Array} Array of snapshot objects with date as key
+ */
+export const getAllDailySnapshots = async (userId) => {
+  const ref = collection(db, 'users', userId, 'dailySnapshots');
+  const q = query(ref, orderBy('date', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Returns dates that have activity log entries but no daily snapshot.
+ * Used to show placeholder cards in the Adventure Log.
+ * @returns {Array} Array of { date, missionCount } objects, sorted by date desc
+ */
+export const getDatesWithActivity = async (userId) => {
+  const logRef = collection(db, 'users', userId, 'activityLog');
+  const q = query(logRef, where('type', '==', 'mission_completed'));
+  const snap = await getDocs(q);
+
+  // Aggregate mission counts per date
+  const dateCounts = {};
+  snap.docs.forEach(d => {
+    const { date } = d.data();
+    if (date) dateCounts[date] = (dateCounts[date] || 0) + 1;
+  });
+
+  // Fetch existing snapshots to exclude those dates
+  const snapshotRef = collection(db, 'users', userId, 'dailySnapshots');
+  const snapshotSnap = await getDocs(snapshotRef);
+  const snapshotDates = new Set(snapshotSnap.docs.map(d => d.id));
+
+  // Return only dates without snapshots, sorted descending
+  return Object.entries(dateCounts)
+    .filter(([date]) => !snapshotDates.has(date))
+    .map(([date, missionCount]) => ({ date, missionCount }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+};
+
 // ─── Snapshot Read / Write Helpers ───────────────────────────────────────────
 
 /**
