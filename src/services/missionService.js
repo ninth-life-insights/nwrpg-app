@@ -150,7 +150,7 @@ export const completeMission = async (userId, missionId) => {
     
     const missionData = missionDoc.data();
     
-    const xpAwarded = calculateTotalMissionXP(missionData);
+    const xpAwarded = await calculateTotalMissionXP(userId, missionData);
 
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
