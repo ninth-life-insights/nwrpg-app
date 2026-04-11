@@ -161,6 +161,10 @@
   left: 19px;
 }
 
+.checkbox-label {
+  text-align: left;
+}
+
 /* Footer */
 .al-filter-footer {
   display: flex;
