@@ -1,16 +1,24 @@
 // src/components/review/ReviewSummary.jsx
 import { useState, useEffect, useRef } from 'react';
+import { generateDailySnapshot } from '../../services/reviewService';
+import { getUserProfile } from '../../services/userService';
 
 const ReviewSummary = ({
   snapshot,
   loading,
   onDone,
   onUpdateStory,
+  onRegenerateStory, // optional: called with new story text after regeneration
+  userId,            // required when onRegenerateStory is provided
+  date,              // required when onRegenerateStory is provided
+  doneLabel = 'Done',
 }) => {
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [isEditingStory, setIsEditingStory] = useState(false);
   const [storyDraft, setStoryDraft] = useState('');
   const [savingStory, setSavingStory] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -54,6 +62,22 @@ const ReviewSummary = ({
     }
   };
 
+  const handleRegenerate = async () => {
+    if (regenerating) return;
+    setRegenerating(true);
+    setShowRegenerateConfirm(false);
+    try {
+      const profile = await getUserProfile(userId);
+      const displayName = profile?.displayName || 'You';
+      const newSnapshot = await generateDailySnapshot(userId, date, displayName);
+      onRegenerateStory(newSnapshot.aiStory);
+    } catch (err) {
+      console.error('Error regenerating story:', err);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   return (
     <div className="review-step">
       <div className="review-step-body">
@@ -82,11 +106,45 @@ const ReviewSummary = ({
             <div className="daily-review-story-header">
               <span className="daily-review-story-label">The Story of Today</span>
               {!isEditingStory && (
-                <button className="daily-review-story-edit-btn" onClick={handleEditStart}>
-                  <span className="material-icons">edit</span>
-                </button>
+                <div className="daily-review-story-actions-row">
+                  {onRegenerateStory && !snapshot.userEditedStory && (
+                    <button
+                      className="daily-review-story-edit-btn"
+                      onClick={() => setShowRegenerateConfirm(true)}
+                      disabled={regenerating}
+                      title="Regenerate story"
+                    >
+                      <span className="material-icons">
+                        {regenerating ? 'hourglass_empty' : 'refresh'}
+                      </span>
+                    </button>
+                  )}
+                  <button className="daily-review-story-edit-btn" onClick={handleEditStart}>
+                    <span className="material-icons">edit</span>
+                  </button>
+                </div>
               )}
             </div>
+
+            {showRegenerateConfirm && (
+              <div className="daily-review-story-confirm">
+                <p>Regenerate the AI story for this day? Your current story will be replaced.</p>
+                <div className="daily-review-story-actions">
+                  <button
+                    className="story-action-btn story-action-btn--save"
+                    onClick={handleRegenerate}
+                  >
+                    Regenerate
+                  </button>
+                  <button
+                    className="story-action-btn story-action-btn--cancel"
+                    onClick={() => setShowRegenerateConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
 
             {isEditingStory ? (
               <div className="daily-review-story-editor">
@@ -199,7 +257,7 @@ const ReviewSummary = ({
 
       <div className="review-step-footer">
         <button className="daily-review-done-btn" onClick={onDone}>
-          Done
+          {doneLabel}
         </button>
       </div>
     </div>
