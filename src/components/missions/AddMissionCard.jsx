@@ -154,7 +154,16 @@ const AddMissionCard = ({
 
   const handleDueTypeSelect = (dueType) => {
     if (dueType === DUE_TYPES.RECURRING) {
-      setFormData(prev => ({ ...prev, dueType }));
+      setFormData(prev => ({
+        ...prev,
+        dueType,
+        recurrence: {
+          ...prev.recurrence,
+          pattern: prev.recurrence.pattern === RECURRENCE_PATTERNS.NONE
+            ? RECURRENCE_PATTERNS.DAILY
+            : prev.recurrence.pattern
+        }
+      }));
       setShowDueDateField(true);
     } else {
       // UNIQUE or EVERGREEN: clear due date and recurrence
@@ -491,7 +500,7 @@ const AddMissionCard = ({
           )}
 
           {/* Recurrence Selector */}
-          {formData.dueDate && (
+          {(formData.dueDate || formData.dueType === DUE_TYPES.RECURRING) && (
             <div className="recurrence-section">
               <RecurrenceSelector
                 recurrence={formData.recurrence}

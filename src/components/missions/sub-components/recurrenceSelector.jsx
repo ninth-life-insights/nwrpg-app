@@ -126,7 +126,6 @@ const showIntervalPicker = recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (r
           className="recurrence-select"
           disabled={disabled}
         >
-          <option value={RECURRENCE_PATTERNS.NONE}>Does not repeat</option>
           <option value={RECURRENCE_PATTERNS.DAILY}>Daily</option>
           <option value={RECURRENCE_PATTERNS.WEEKLY}>Weekly</option>
           <option value={RECURRENCE_PATTERNS.MONTHLY}>Monthly</option>
