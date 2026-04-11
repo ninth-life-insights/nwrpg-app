@@ -15,6 +15,7 @@ const OtherMissionsStep = ({
   onSkipToSummary,
   setLevelUpInfo,
   setSkillLevelUpInfo,
+  onAchievementsUnlocked,
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
@@ -51,6 +52,7 @@ const OtherMissionsStep = ({
       const result = await onToggleComplete(missionId, isCurrentlyCompleted, xpReward);
       if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
       if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+      if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
       setMissions(prev => prev.map(m =>
         m.id === missionId
           ? { ...m, status: isCurrentlyCompleted ? 'active' : 'completed' }
@@ -69,6 +71,7 @@ const OtherMissionsStep = ({
       const result = await completeMissionWithRecurrence(currentUser.uid, newMission.id);
       if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
       if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+      if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
       setMissions(prev => [{ ...newMission, status: 'completed' }, ...prev]);
     } catch (err) {
       console.error('Error completing new mission:', err);

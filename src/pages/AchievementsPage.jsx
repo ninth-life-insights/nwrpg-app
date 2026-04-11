@@ -30,9 +30,8 @@ const AchievementsPage = () => {
     fetchLibrary();
   }, [fetchLibrary]);
 
-  const handleCustomCreated = (newAchievement) => {
+  const handleCustomCreated = () => {
     setShowCreateModal(false);
-    // Refetch to include the new custom achievement
     fetchLibrary();
   };
 
@@ -57,15 +56,10 @@ const AchievementsPage = () => {
       </header>
 
       <div className="achievements-content">
-        <div className="achievements-progress-row">
-          <span className="achievements-count-pill">
-            {awardedBuiltInCount} / {totalBuiltIn} Unlocked
-          </span>
-        </div>
 
-        {/* Built-in achievement list */}
+        {/* Built-in achievement grid */}
         <section className="achievements-section">
-          <div className="achievements-list">
+          <div className="achievements-grid">
             {builtIn.map(achievement => (
               <AchievementCard key={achievement.id} achievement={achievement} />
             ))}
@@ -74,30 +68,39 @@ const AchievementsPage = () => {
 
         {/* Your Wins — custom achievements */}
         <section className="achievements-section achievements-section--custom">
-          <div className="achievements-section-header">
-            <h2 className="achievements-section-title">Your Wins</h2>
-            <button
-              className="achievements-record-btn"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <span className="material-icons">add</span>
-              Record a Win
-            </button>
-          </div>
+          <h2 className="achievements-section-title">Your Wins</h2>
 
           {custom.length === 0 ? (
             <p className="achievements-empty">
               Life happens off-script. Record a personal win — big or small.
             </p>
           ) : (
-            <div className="achievements-list">
+            <div className="achievements-grid">
               {custom.map(achievement => (
                 <AchievementCard key={achievement.id} achievement={achievement} />
               ))}
             </div>
           )}
         </section>
+
+        {/* Bottom count pill — spacer so FAB doesn't overlap it */}
+        <div className="achievements-bottom-bar">
+          <span className="achievements-count-pill">
+            {awardedBuiltInCount} / {totalBuiltIn} Unlocked
+          </span>
+        </div>
+
       </div>
+
+      {/* Sticky FAB */}
+      <button
+        className="achievements-fab"
+        onClick={() => setShowCreateModal(true)}
+        aria-label="Record a Win"
+      >
+        <span className="material-icons">add</span>
+        Record a Win
+      </button>
 
       {showCreateModal && (
         <CreateCustomAchievementModal

@@ -1,5 +1,5 @@
 // src/components/achievements/AchievementToast.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import AchievementBadge from './AchievementBadge';
 import './AchievementToast.css';
 
@@ -11,11 +11,15 @@ const AUTO_DISMISS_MS = 4000;
  * onDismiss: called when all toasts have been dismissed (or auto-dismissed)
  */
 const AchievementToast = ({ achievements, onDismiss }) => {
+  // Keep a stable ref so re-renders from parent data fetches don't reset the timer
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; });
+
   useEffect(() => {
     if (!achievements || achievements.length === 0) return;
-    const timer = setTimeout(onDismiss, AUTO_DISMISS_MS);
+    const timer = setTimeout(() => onDismissRef.current(), AUTO_DISMISS_MS);
     return () => clearTimeout(timer);
-  }, [achievements, onDismiss]);
+  }, [achievements]); // Only re-arm when achievements array itself changes
 
   if (!achievements || achievements.length === 0) return null;
 

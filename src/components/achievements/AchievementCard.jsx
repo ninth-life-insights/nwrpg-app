@@ -1,6 +1,7 @@
 // src/components/achievements/AchievementCard.jsx
 import React from 'react';
 import AchievementBadge from './AchievementBadge';
+import { BADGE_COLORS } from '../../data/achievementDefinitions';
 import './AchievementCard.css';
 
 /**
@@ -9,9 +10,14 @@ import './AchievementCard.css';
  */
 const AchievementCard = ({ achievement }) => {
   const { name, description, badgeColor, badgeIcon, isAwarded, awardedDate, isCustom } = achievement;
+  const palette = BADGE_COLORS[badgeColor] || BADGE_COLORS.amber;
 
   return (
-    <div className={`achievement-card${isAwarded ? ' achievement-card--awarded' : ' achievement-card--locked'}`}>
+    <div
+      className={`achievement-card${isAwarded ? ' achievement-card--awarded' : ' achievement-card--locked'}`}
+      style={isAwarded ? { '--card-accent': palette.cardAccent, '--card-accent-bg': palette.bg } : {}}
+    >
+      {isAwarded && <div className="achievement-card__accent-bar" />}
       <div className="achievement-card__badge">
         <AchievementBadge color={badgeColor} icon={badgeIcon} size="md" locked={!isAwarded} />
       </div>

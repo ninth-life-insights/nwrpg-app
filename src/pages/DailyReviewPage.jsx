@@ -70,6 +70,10 @@ const DailyReviewPage = () => {
         result = await completeMissionWithRecurrence(currentUser.uid, missionId);
         if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
         if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+        // Collect achievements unlocked during mission completions throughout the session
+        if (result?.newlyAwardedAchievements?.length > 0) {
+          setSessionAchievements(prev => [...prev, ...result.newlyAwardedAchievements]);
+        }
       }
       // Refresh the daily mission list so status reflects in step 1
       await refreshDailyMissions();
@@ -85,14 +89,6 @@ const DailyReviewPage = () => {
     try {
       const profile = await getUserProfile(currentUser.uid);
       const displayName = profile?.displayName || 'You';
-
-      // Check for achievements earned today — fire-and-forget, never blocks snapshot generation
-      import('../services/achievementService').then(({ checkAndAwardAchievements }) =>
-        checkAndAwardAchievements(currentUser.uid, { date: today, streak: profile?.streak ?? 0 })
-      ).then(({ newlyAwarded }) => {
-        if (newlyAwarded.length > 0) setSessionAchievements(newlyAwarded);
-      }).catch(e => console.error('Achievement check failed (non-blocking):', e));
-
       const result = await generateDailySnapshot(currentUser.uid, today, displayName);
       // Attach encounters to snapshot for display (they're stored separately in Firestore)
       setSnapshot({ ...result, encounters });
@@ -164,6 +160,7 @@ const DailyReviewPage = () => {
             onSkipToSummary={goToSummary}
             setLevelUpInfo={setLevelUpInfo}
             setSkillLevelUpInfo={setSkillLevelUpInfo}
+            onAchievementsUnlocked={(achieved) => setSessionAchievements(prev => [...prev, ...achieved])}
           />
         )}
 

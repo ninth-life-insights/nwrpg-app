@@ -12,13 +12,13 @@ export const ACHIEVEMENT_CATEGORIES = {
 };
 
 export const BADGE_COLORS = {
-  amber: { bg: '#fef3c7', icon: '#b45309' },
-  green: { bg: '#d1fae5', icon: '#065f46' },
-  blue: { bg: '#dbeafe', icon: '#1d4ed8' },
-  purple: { bg: '#ede9fe', icon: '#6d28d9' },
-  pink: { bg: '#fce7f3', icon: '#be185d' },
-  red: { bg: '#fee2e2', icon: '#b91c1c' },
-  slate: { bg: '#f1f5f9', icon: '#334155' },
+  amber:  { bg: '#fde68a', icon: '#92400e', cardAccent: '#f59e0b' },
+  green:  { bg: '#6ee7b7', icon: '#064e3b', cardAccent: '#10b981' },
+  blue:   { bg: '#93c5fd', icon: '#1e3a8a', cardAccent: '#3b82f6' },
+  purple: { bg: '#c4b5fd', icon: '#4c1d95', cardAccent: '#7c3aed' },
+  pink:   { bg: '#f9a8d4', icon: '#831843', cardAccent: '#ec4899' },
+  red:    { bg: '#fca5a5', icon: '#7f1d1d', cardAccent: '#ef4444' },
+  slate:  { bg: '#cbd5e1', icon: '#1e293b', cardAccent: '#64748b' },
 };
 
 export const BADGE_ICONS = [
