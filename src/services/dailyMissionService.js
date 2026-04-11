@@ -135,9 +135,12 @@ export const getTodaysDailyMissions = async (userId) => {
     const config = await getDailyMissionsConfig(userId);
     const today = toDateString(new Date());
     
-    
-    if (!config || config.setForDate !== today) {
-      console.log('❌ No config or wrong date');
+    if (!config) {
+      console.log('No config');
+      return [];
+    } 
+    else if (config.setForDate !== today) {
+      console.log('Wrong date');
       return [];
     }
     
