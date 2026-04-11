@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { generateDailySnapshot } from '../../services/reviewService';
 import { getUserProfile } from '../../services/userService';
+import AchievementBadge from '../achievements/AchievementBadge';
 
 const ReviewSummary = ({
   snapshot,
@@ -12,6 +13,7 @@ const ReviewSummary = ({
   userId,            // required when onRegenerateStory is provided
   date,              // required when onRegenerateStory is provided
   doneLabel = 'Done',
+  newAchievements = [],
 }) => {
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [isEditingStory, setIsEditingStory] = useState(false);
@@ -81,6 +83,21 @@ const ReviewSummary = ({
   return (
     <div className="review-step">
       <div className="review-step-body">
+
+        {/* Achievements Unlocked */}
+        {newAchievements.length > 0 && (
+          <div className="daily-review-section daily-review-section--highlight">
+            <h3 className="daily-review-section-title">Achievements Unlocked</h3>
+            <div className="review-achievements-row">
+              {newAchievements.map(a => (
+                <div key={a.id} className="review-achievement-item">
+                  <AchievementBadge color={a.badgeColor} icon={a.badgeIcon} size="md" />
+                  <span className="review-achievement-name">{a.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="daily-review-stats">

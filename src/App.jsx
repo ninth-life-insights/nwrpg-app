@@ -23,6 +23,7 @@ import QuestDetailView from './components/quests/QuestDetailView';
 import SkillsPage from './pages/SkillsPage';
 import SkillDetailPage from './pages/SkillDetailPage';
 import BasePage from './pages/BasePage';
+import AchievementsPage from './pages/AchievementsPage';
 
 
 
@@ -70,6 +71,7 @@ function AppContent() {
         <Route path="/skills/:skillName" element={<ProtectedRoute><SkillDetailPage /></ProtectedRoute>} />
         <Route path="/adventure-log" element={<ProtectedRoute><AdventureLogPage /></ProtectedRoute>} />
         <Route path="/adventure-log/:date" element={<ProtectedRoute><AdventureLogDetailPage /></ProtectedRoute>} />
+        <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
       </Routes>
     </div>
   );

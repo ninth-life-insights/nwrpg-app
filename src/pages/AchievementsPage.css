@@ -1,0 +1,135 @@
+/* AchievementsPage.css */
+
+.achievements-page {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  padding: 0 0 40px;
+  font-family: var(--font-family);
+}
+
+/* Header */
+.achievements-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px var(--space-lg);
+  background: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border-yellow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.achievements-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.achievements-back-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.achievements-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.achievements-header-spacer {
+  width: 32px;
+}
+
+/* Content */
+.achievements-content {
+  padding: var(--space-lg);
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+}
+
+.achievements-progress-row {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-md) 0 var(--space-lg);
+}
+
+.achievements-count-pill {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  padding: 4px 12px;
+}
+
+/* Sections */
+.achievements-section {
+  margin-bottom: var(--space-xl);
+}
+
+.achievements-section--custom {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-border-yellow);
+}
+
+.achievements-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.achievements-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.achievements-record-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.achievements-record-btn .material-icons {
+  font-size: 16px;
+}
+
+.achievements-record-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+/* List */
+.achievements-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.achievements-empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-lg) 0;
+  margin: 0;
+}

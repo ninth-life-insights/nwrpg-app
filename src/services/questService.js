@@ -280,16 +280,24 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
   };
   
   // Auto-complete quest if all missions are done
-  if (updatedCompletedIds.length === quest.totalMissions && 
+  if (updatedCompletedIds.length === quest.totalMissions &&
       quest.status === QUEST_STATUS.ACTIVE) {
     updates.status = QUEST_STATUS.COMPLETED;
     updates.completedAt = serverTimestamp();
-    
+
     // Award XP if not already awarded
     if (!quest.xpAwarded) {
       const { addXP } = await import('./userService');
       await addXP(userId, quest.xpReward);
       updates.xpAwarded = quest.xpReward;
+    }
+
+    // Check for quest-related achievements — fire-and-forget, never blocks
+    try {
+      const { checkAndAwardAchievements } = await import('./achievementService');
+      checkAndAwardAchievements(userId, { questCompleted: true });
+    } catch (achievementError) {
+      console.error('Achievement check failed (non-blocking):', achievementError);
     }
   }
   

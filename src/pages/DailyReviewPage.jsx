@@ -17,6 +17,7 @@ import {
 } from '../services/missionService';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
+import AchievementToast from '../components/achievements/AchievementToast';
 import DailyMissionsStep from '../components/review/DailyMissionsStep';
 import OtherMissionsStep from '../components/review/OtherMissionsStep';
 import EncountersStep from '../components/review/EncountersStep';
@@ -37,6 +38,7 @@ const DailyReviewPage = () => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
+  const [sessionAchievements, setSessionAchievements] = useState([]);
 
   const today = toDateString(new Date());
 
@@ -83,6 +85,14 @@ const DailyReviewPage = () => {
     try {
       const profile = await getUserProfile(currentUser.uid);
       const displayName = profile?.displayName || 'You';
+
+      // Check for achievements earned today — fire-and-forget, never blocks snapshot generation
+      import('../services/achievementService').then(({ checkAndAwardAchievements }) =>
+        checkAndAwardAchievements(currentUser.uid, { date: today, streak: profile?.streak ?? 0 })
+      ).then(({ newlyAwarded }) => {
+        if (newlyAwarded.length > 0) setSessionAchievements(newlyAwarded);
+      }).catch(e => console.error('Achievement check failed (non-blocking):', e));
+
       const result = await generateDailySnapshot(currentUser.uid, today, displayName);
       // Attach encounters to snapshot for display (they're stored separately in Firestore)
       setSnapshot({ ...result, encounters });
@@ -174,6 +184,7 @@ const DailyReviewPage = () => {
             loading={summaryLoading}
             onDone={() => navigate('/home')}
             onUpdateStory={handleUpdateStory}
+            newAchievements={sessionAchievements}
           />
         )}
       </div>
@@ -192,6 +203,11 @@ const DailyReviewPage = () => {
           onClose={() => setSkillLevelUpInfo(null)}
         />
       )}
+
+      <AchievementToast
+        achievements={sessionAchievements}
+        onDismiss={() => setSessionAchievements([])}
+      />
     </div>
   );
 };

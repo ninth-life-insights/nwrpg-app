@@ -1,0 +1,22 @@
+/* AchievementBadge.css */
+
+.achievement-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  flex-shrink: 0;
+  transition: filter var(--transition);
+}
+
+.achievement-badge__icon {
+  font-size: var(--icon-size, 26px);
+  color: var(--icon-color, #b45309);
+  line-height: 1;
+  user-select: none;
+}
+
+.achievement-badge--locked {
+  filter: grayscale(0.85) opacity(0.45);
+}

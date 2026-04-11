@@ -846,6 +846,31 @@
   text-align: left;
 }
 
+/* Achievements unlocked row */
+.review-achievements-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  justify-content: center;
+  margin-top: var(--space-sm);
+}
+
+.review-achievement-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 72px;
+}
+
+.review-achievement-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6d28d9;
+  text-align: center;
+  line-height: 1.3;
+}
+
 /* Skills practiced list */
 .skills-practiced-list,
 .quests-list {
