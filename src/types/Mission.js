@@ -117,8 +117,6 @@ export const MISSION_SCHEMA = {
 // Create a new mission object with default values
 
 export const createMissionTemplate = (overrides = {}) => {
-  console.log('createMissionTemplate called with skill:', overrides.skill, 'difficulty:', overrides.difficulty);
-  console.log('calculateSPReward result:', calculateSPReward(overrides.difficulty || DIFFICULTY_LEVELS.EASY, overrides.skill || null));
   return {
     ...MISSION_SCHEMA,
     ...overrides,
@@ -151,18 +149,16 @@ export const calculateSPReward = (difficulty, skill) => {
     return null;
 }
 
-export const calculateTotalMissionXP = (mission) => {
+export const calculateTotalMissionXP = async (userId, mission) => {
   let totalXP = mission.xpReward; // Base XP from difficulty
 
-  const isDailyMission = checkIsDailyMission(mission);
-  
+  const isDailyMission = await checkIsDailyMission(userId, mission.id);
+
   // Add daily mission bonus
   if (isDailyMission) {
     totalXP += 5;
   }
 
-  console.log('totalXP:', totalXP);
-  
   return totalXP;
 };
 
