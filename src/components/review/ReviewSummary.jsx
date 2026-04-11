@@ -128,7 +128,7 @@ const ReviewSummary = ({
 
             {showRegenerateConfirm && (
               <div className="daily-review-story-confirm">
-                <p>Regenerate the AI story for this day? Your current story will be replaced.</p>
+                <p>Rewrite your story? This will overwrite today's review entry.</p>
                 <div className="daily-review-story-actions">
                   <button
                     className="story-action-btn story-action-btn--save"
@@ -255,11 +255,13 @@ const ReviewSummary = ({
 
       </div>
 
-      <div className="review-step-footer">
-        <button className="daily-review-done-btn" onClick={onDone}>
-          {doneLabel}
-        </button>
-      </div>
+      {onDone && (
+        <div className="review-step-footer">
+          <button className="daily-review-done-btn" onClick={onDone}>
+            {doneLabel}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
