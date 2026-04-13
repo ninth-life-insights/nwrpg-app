@@ -54,7 +54,7 @@ export const getMergedAchievementLibrary = async (userId) => {
 
   const custom = [];
   awardedMap.forEach(doc => {
-    if (doc.isCustom) custom.push(doc);
+    if (doc.isCustom) custom.push({ ...doc, isAwarded: true });
   });
   custom.sort((a, b) => (b.awardedDate || '').localeCompare(a.awardedDate || ''));
 
