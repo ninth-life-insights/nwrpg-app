@@ -15,6 +15,7 @@ import {
   completeMissionWithRecurrence,
   uncompleteMission,
 } from '../services/missionService';
+import { getAchievementsAwardedOnDate } from '../services/achievementService';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
@@ -39,6 +40,7 @@ const DailyReviewPage = () => {
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [sessionAchievements, setSessionAchievements] = useState([]);
+  const [todayAchievements, setTodayAchievements] = useState([]);
 
   const today = toDateString(new Date());
 
@@ -87,11 +89,15 @@ const DailyReviewPage = () => {
     setStep(4);
     setSummaryLoading(true);
     try {
-      const profile = await getUserProfile(currentUser.uid);
+      const [profile, earnedToday] = await Promise.all([
+        getUserProfile(currentUser.uid),
+        getAchievementsAwardedOnDate(currentUser.uid, today),
+      ]);
       const displayName = profile?.displayName || 'You';
       const result = await generateDailySnapshot(currentUser.uid, today, displayName);
       // Attach encounters to snapshot for display (they're stored separately in Firestore)
       setSnapshot({ ...result, encounters });
+      setTodayAchievements(earnedToday);
     } catch (err) {
       console.error('Error generating snapshot:', err);
     } finally {
@@ -181,7 +187,7 @@ const DailyReviewPage = () => {
             loading={summaryLoading}
             onDone={() => navigate('/home')}
             onUpdateStory={handleUpdateStory}
-            newAchievements={sessionAchievements}
+            newAchievements={todayAchievements}
           />
         )}
       </div>

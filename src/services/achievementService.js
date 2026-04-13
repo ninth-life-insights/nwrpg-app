@@ -31,6 +31,24 @@ export const getAwardedAchievements = async (userId) => {
 };
 
 /**
+ * Returns all achievements (built-in and custom) awarded on a specific date.
+ * Merges Firestore award docs with static definitions to include display data.
+ */
+export const getAchievementsAwardedOnDate = async (userId, date) => {
+  const ref = getAchievementsRef(userId);
+  const snap = await getDocs(query(ref, where('awardedDate', '==', date)));
+  return snap.docs.map(d => {
+    const data = d.data();
+    if (data.isCustom) {
+      return { id: d.id, ...data, isAwarded: true };
+    }
+    const def = ACHIEVEMENT_MAP[d.id];
+    if (!def) return null;
+    return { ...def, awardedDate: data.awardedDate, isAwarded: true };
+  }).filter(Boolean);
+};
+
+/**
  * Returns the merged library: built-in achievements with awarded status, plus custom ones.
  * Built-in: awarded first (full color), then locked.
  * Custom: all awarded, in a separate array.
