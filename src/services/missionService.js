@@ -31,6 +31,7 @@ import {
   getUserProfile
  } from './userService';
  import { logActivityEvent } from './reviewService';
+import { checkAndAwardAchievements } from './achievementService';
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {
@@ -423,10 +424,9 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       };
     }
 
-    // Check for newly unlocked achievements — fire-and-forget, never blocks completion
+    // Check for newly unlocked achievements
     let newlyAwardedAchievements = [];
     try {
-      const { checkAndAwardAchievements } = await import('./achievementService');
       const profile = await getUserProfile(userId);
       const achievementResult = await checkAndAwardAchievements(userId, {
         difficulty: mission.difficulty,
@@ -434,9 +434,8 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       });
       newlyAwardedAchievements = achievementResult.newlyAwarded || [];
     } catch (achievementError) {
-      console.error('Achievement check failed (non-blocking):', achievementError);
+      console.error('Achievement check failed:', achievementError);
     }
-
     return { ...completionResult, newlyAwardedAchievements };
 
   } catch (error) {

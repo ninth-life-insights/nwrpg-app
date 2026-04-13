@@ -193,7 +193,7 @@ const HomePage = () => {
       } else {
         // UPDATED: Complete with recurrence support
         const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        
+
         // Show level up notification if applicable
         if (result?.leveledUp) {
           setLevelUpInfo({ newLevel: result.newLevel });

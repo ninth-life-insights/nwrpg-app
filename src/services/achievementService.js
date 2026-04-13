@@ -246,7 +246,7 @@ export const checkAndAwardAchievements = async (userId, context = {}) => {
 
     return { newlyAwarded };
   } catch (error) {
-    console.error('Achievement check failed:', error);
+    console.error('[achievements] checkAndAwardAchievements threw:', error);
     return { newlyAwarded: [] };
   }
 };

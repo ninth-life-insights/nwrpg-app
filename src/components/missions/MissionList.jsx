@@ -21,11 +21,7 @@ import {
 } from '../../services/dailyMissionService';
 import { getAllQuests } from '../../services/questService';
 
-import { addXP, subtractXP } from '../../services/userService';
-import { isRecurringMission } from '../../utils/recurrenceHelpers';
-
 import { isWithinCompletedDateRange } from './sub-components/MissionFilterModal';
-import { calculateTotalMissionXP } from '../../types/Mission';
 
 // Drag and drop imports
 import {
@@ -57,7 +53,8 @@ const MissionList = ({
   recentlyCompletedMissions = [],
   onMissionCompletion = null,
   onMissionUncompletion = null,
-  onRecurringMissionCreated = null
+  onRecurringMissionCreated = null,
+  onAchievementsUnlocked = null
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
@@ -282,6 +279,10 @@ const MissionList = ({
         if (completedMission && onMissionCompletion) {
           const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded };
           onMissionCompletion(updatedMission);
+        }
+
+        if (result?.newlyAwardedAchievements?.length > 0 && onAchievementsUnlocked) {
+          onAchievementsUnlocked(result.newlyAwardedAchievements);
         }
       }
       
