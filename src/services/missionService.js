@@ -23,13 +23,15 @@ import {
   isRecurringMission,
   isEvergreenMission
 } from '../utils/recurrenceHelpers';
-import { 
+import {
   addXP,
   subtractXP,
   addSP,
-  subtractSP
+  subtractSP,
+  getUserProfile
  } from './userService';
  import { logActivityEvent } from './reviewService';
+import { checkAndAwardAchievements } from './achievementService';
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {
@@ -373,13 +375,15 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
     // Get the mission to check if it's recurring
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     const missionSnap = await getDoc(missionRef);
-    
+
     if (!missionSnap.exists()) {
       throw new Error('Mission not found');
     }
-    
+
     const mission = { id: missionSnap.id, ...missionSnap.data() };
-    
+
+    let completionResult;
+
     // If it's an evergreen mission, complete and create a fresh instance (no due date)
     if (isEvergreenMission(mission)) {
       const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
@@ -392,7 +396,7 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
         createdAt: serverTimestamp()
       });
 
-      return {
+      completionResult = {
         completed: true,
         xpAwarded,
         leveledUp,
@@ -403,16 +407,14 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
         nextMissionCreated: true,
         nextMissionId: newMissionRef.id
       };
-    }
-
-    // If it's a recurring mission, use the recurring logic
-    if (isRecurringMission(mission)) {
-      return await completeRecurringMission(userId, missionId);
+    } else if (isRecurringMission(mission)) {
+      // If it's a recurring mission, use the recurring logic
+      completionResult = await completeRecurringMission(userId, missionId);
     } else {
       // Use the regular completion logic
       const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
 
-      return {
+      completionResult = {
         completed: true,
         xpAwarded,
         leveledUp,
@@ -423,6 +425,22 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
         nextMissionCreated: false
       };
     }
+
+    // Check for newly unlocked achievements
+    let newlyAwardedAchievements = [];
+    try {
+      const profile = await getUserProfile(userId);
+      const achievementResult = await checkAndAwardAchievements(userId, {
+        difficulty: mission.difficulty,
+        streak: profile?.streak ?? 0,
+        skills: profile?.skills || {},
+      });
+      newlyAwardedAchievements = achievementResult.newlyAwarded || [];
+    } catch (achievementError) {
+      console.error('Achievement check failed:', achievementError);
+    }
+    return { ...completionResult, newlyAwardedAchievements };
+
   } catch (error) {
     console.error('Error completing mission with recurrence:', error);
     throw error;

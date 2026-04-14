@@ -5,6 +5,7 @@ import MissionList from '../components/missions/MissionList';
 import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
 import { getUserProfile } from '../services/userService';
 import { useNavigate } from 'react-router-dom';
+import AchievementToast from '../components/achievements/AchievementToast';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -24,6 +25,7 @@ const MissionBank = () => {
 
   // State to track recently completed missions
   const [recentlyCompletedMissions, setRecentlyCompletedMissions] = useState([]);
+  const [newAchievements, setNewAchievements] = useState([]);
 
   const navigate = useNavigate();
 
@@ -166,6 +168,7 @@ const MissionBank = () => {
         recentlyCompletedMissions={recentlyCompletedMissions}
         onMissionCompletion={handleMissionCompletion}
         onMissionUncompletion={handleMissionUncompletion}
+        onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
         // Note: Daily mission badges will be computed automatically by addDailyMissionStatus
       />
 
@@ -177,6 +180,10 @@ const MissionBank = () => {
         onApplyFilters={handleApplyFilters}
       />
 
+      <AchievementToast
+        achievements={newAchievements}
+        onDismiss={() => setNewAchievements([])}
+      />
     </div>
   );
 };

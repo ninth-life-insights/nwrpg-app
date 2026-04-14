@@ -7,6 +7,7 @@ import { getActiveMissions, getCompletedMissions } from '../services/missionServ
 import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
 import { completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
+import AchievementToast from '../components/achievements/AchievementToast';
 import './SkillDetailPage.css';
 
 const SP_PER_SKILL_LEVEL = 50;
@@ -21,6 +22,7 @@ const SkillDetailPage = () => {
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMission, setSelectedMission] = useState(null);
+  const [newAchievements, setNewAchievements] = useState([]);
 
   const fetchData = async () => {
     if (!currentUser) return;
@@ -67,6 +69,9 @@ const SkillDetailPage = () => {
         }
         if (result?.skillLeveledUp) {
           setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+        }
+        if (result?.newlyAwardedAchievements?.length > 0) {
+          setNewAchievements(result.newlyAwardedAchievements);
         }
       }
       // Refresh everything
@@ -167,6 +172,10 @@ const SkillDetailPage = () => {
         />
       )}
 
+      <AchievementToast
+        achievements={newAchievements}
+        onDismiss={() => setNewAchievements([])}
+      />
     </div>
   );
 };

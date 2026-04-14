@@ -25,6 +25,7 @@ import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
+import AchievementToast from '../components/achievements/AchievementToast';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -39,6 +40,7 @@ const HomePage = () => {
   const [selectedMission, setSelectedMission] = useState(null);
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
+  const [newAchievements, setNewAchievements] = useState([]);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -191,7 +193,7 @@ const HomePage = () => {
       } else {
         // UPDATED: Complete with recurrence support
         const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        
+
         // Show level up notification if applicable
         if (result?.leveledUp) {
           setLevelUpInfo({ newLevel: result.newLevel });
@@ -199,6 +201,10 @@ const HomePage = () => {
 
         if (result?.skillLeveledUp) {
           setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+        }
+
+        if (result?.newlyAwardedAchievements?.length > 0) {
+          setNewAchievements(result.newlyAwardedAchievements);
         }
       }
       
@@ -384,14 +390,18 @@ const HomePage = () => {
         
       </section>
 
-      <section >
+      <section>
         <div className="skills-shortcut">
-            <button className="action-button skills-link" onClick={() => navigate('/skills')}>
-              <span className="material-icons-light">brush</span>
-              Skills
-            </button>
-          </div>
-        </section>
+          <button className="action-button skills-link" onClick={() => navigate('/skills')}>
+            <span className="material-icons-light">brush</span>
+            Skills
+          </button>
+          <button className="action-button skills-link" onClick={() => navigate('/achievements')}>
+            <span className="material-icons-light">military_tech</span>
+            Achievements
+          </button>
+        </div>
+      </section>
 
       {showEditDailyMissions && (
         <EditDailyMissionsModal 
@@ -425,6 +435,11 @@ const HomePage = () => {
           onClose={() => setSkillLevelUpInfo(null)}
         />
       )}
+
+      <AchievementToast
+        achievements={newAchievements}
+        onDismiss={() => setNewAchievements([])}
+      />
     </div>
   );
 };

@@ -18,6 +18,7 @@ import {
 } from '../../services/questService';
 import { getAllMissions, createMission } from '../../services/missionService';
 import { calculateQuestProgress, QUEST_DIFFICULTY } from '../../types/Quests';
+import AchievementToast from '../achievements/AchievementToast';
 import './QuestDetailView.css';
 
 const QuestDetailView = () => {
@@ -28,6 +29,7 @@ const QuestDetailView = () => {
   const [quest, setQuest] = useState(null);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newAchievements, setNewAchievements] = useState([]);
   const [error, setError] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showAddMission, setShowAddMission] = useState(false);
@@ -297,6 +299,7 @@ const QuestDetailView = () => {
           onMissionUpdate={handleMissionUpdate}
           onRemoveMission={handleRemoveMission}
           onReorderMissions={handleReorderMissions}
+          onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
         />
 
         <button 
@@ -359,6 +362,10 @@ const QuestDetailView = () => {
         />
       )}
 
+      <AchievementToast
+        achievements={newAchievements}
+        onDismiss={() => setNewAchievements([])}
+      />
     </div>
   );
 };

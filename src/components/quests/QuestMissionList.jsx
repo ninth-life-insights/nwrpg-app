@@ -92,13 +92,14 @@ const SortableMissionCard = ({
   );
 };
 
-const QuestMissionList = ({ 
+const QuestMissionList = ({
   missions,
   questMissionOrder,
   isEditMode,
   onMissionUpdate,
   onRemoveMission,
   onReorderMissions,
+  onAchievementsUnlocked,
 }) => {
   const { currentUser } = useAuth();
   const [selectedMission, setSelectedMission] = useState(null);
@@ -150,6 +151,9 @@ const QuestMissionList = ({
       } else {
         const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
         notifyMissionCompletion(result);
+        if (result?.newlyAwardedAchievements?.length > 0 && onAchievementsUnlocked) {
+          onAchievementsUnlocked(result.newlyAwardedAchievements);
+        }
       }
       
       if (onMissionUpdate) {

@@ -6,6 +6,7 @@
       "Bash(git -C /c/Users/Lenovo/nwrpg-app show 93b9f45 --stat)",
       "Bash(git -C /c/Users/Lenovo/nwrpg-app show 93b9f45)",
       "Bash(grep -E \"\\\\.\\(js|json\\)$\")"
+      "Bash(grep -E \"\\\\.\\(js|jsx\\)$\")"
     ]
   }
 }

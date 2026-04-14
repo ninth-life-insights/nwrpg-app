@@ -15,8 +15,10 @@ import {
   completeMissionWithRecurrence,
   uncompleteMission,
 } from '../services/missionService';
+import { getAchievementsAwardedOnDate } from '../services/achievementService';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
+import AchievementToast from '../components/achievements/AchievementToast';
 import DailyMissionsStep from '../components/review/DailyMissionsStep';
 import OtherMissionsStep from '../components/review/OtherMissionsStep';
 import EncountersStep from '../components/review/EncountersStep';
@@ -37,6 +39,8 @@ const DailyReviewPage = () => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
+  const [sessionAchievements, setSessionAchievements] = useState([]);
+  const [todayAchievements, setTodayAchievements] = useState([]);
 
   const today = toDateString(new Date());
 
@@ -68,6 +72,10 @@ const DailyReviewPage = () => {
         result = await completeMissionWithRecurrence(currentUser.uid, missionId);
         if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
         if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+        // Collect achievements unlocked during mission completions throughout the session
+        if (result?.newlyAwardedAchievements?.length > 0) {
+          setSessionAchievements(prev => [...prev, ...result.newlyAwardedAchievements]);
+        }
       }
       // Refresh the daily mission list so status reflects in step 1
       await refreshDailyMissions();
@@ -81,11 +89,15 @@ const DailyReviewPage = () => {
     setStep(4);
     setSummaryLoading(true);
     try {
-      const profile = await getUserProfile(currentUser.uid);
+      const [profile, earnedToday] = await Promise.all([
+        getUserProfile(currentUser.uid),
+        getAchievementsAwardedOnDate(currentUser.uid, today),
+      ]);
       const displayName = profile?.displayName || 'You';
       const result = await generateDailySnapshot(currentUser.uid, today, displayName);
       // Attach encounters to snapshot for display (they're stored separately in Firestore)
       setSnapshot({ ...result, encounters });
+      setTodayAchievements(earnedToday);
     } catch (err) {
       console.error('Error generating snapshot:', err);
     } finally {
@@ -154,6 +166,7 @@ const DailyReviewPage = () => {
             onSkipToSummary={goToSummary}
             setLevelUpInfo={setLevelUpInfo}
             setSkillLevelUpInfo={setSkillLevelUpInfo}
+            onAchievementsUnlocked={(achieved) => setSessionAchievements(prev => [...prev, ...achieved])}
           />
         )}
 
@@ -174,6 +187,7 @@ const DailyReviewPage = () => {
             loading={summaryLoading}
             onDone={() => navigate('/home')}
             onUpdateStory={handleUpdateStory}
+            newAchievements={todayAchievements}
           />
         )}
       </div>
@@ -192,6 +206,11 @@ const DailyReviewPage = () => {
           onClose={() => setSkillLevelUpInfo(null)}
         />
       )}
+
+      <AchievementToast
+        achievements={sessionAchievements}
+        onDismiss={() => setSessionAchievements([])}
+      />
     </div>
   );
 };

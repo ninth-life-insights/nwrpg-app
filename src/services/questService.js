@@ -15,6 +15,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase/config';
+import { checkAndAwardAchievements } from './achievementService';
 import { 
   QUEST_STATUS, 
   createQuestTemplate,
@@ -280,17 +281,22 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
   };
   
   // Auto-complete quest if all missions are done
-  if (updatedCompletedIds.length === quest.totalMissions && 
+  if (updatedCompletedIds.length === quest.totalMissions &&
       quest.status === QUEST_STATUS.ACTIVE) {
     updates.status = QUEST_STATUS.COMPLETED;
     updates.completedAt = serverTimestamp();
-    
+
     // Award XP if not already awarded
     if (!quest.xpAwarded) {
       const { addXP } = await import('./userService');
       await addXP(userId, quest.xpReward);
       updates.xpAwarded = quest.xpReward;
     }
+
+    // Check for quest-related achievements
+    checkAndAwardAchievements(userId, { questCompleted: true }).catch(e =>
+      console.error('Achievement check failed:', e)
+    );
   }
   
   // Reopen quest if it was auto-completed but now has incomplete missions
