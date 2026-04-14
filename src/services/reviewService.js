@@ -344,15 +344,19 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
     encounters,
   };
 
+  console.log('storyData: ', storyData);
+
   let aiStory = null;
   let aiStoryGeneratedAt = null;
 
   if (missionsCompleted > 0) {
     try {
       aiStory = await generateDailyStory(storyData);
+      console.log('aiStory: ', aiStory);
       aiStoryGeneratedAt = new Date().toISOString();
     } catch (error) {
       console.error('Error generating daily story:', error);
+      console.log('Error generating daily story');
       // Snapshot still saves without story — user can retry
     }
   }
@@ -474,7 +478,7 @@ Your job is to find what was actually interesting about today and say something 
 
 Write in a voice inspired by Terry Pratchett: warm, a little wry, takes mundane things completely seriously, finds the human truth in small moments. Whimsy is welcome. Embellishment is welcome. If a line is clever but not true, cut it.
 
-Vary how you open — sometimes lead with the task itself, sometimes the feeling around it, sometimes an observation about time or habit or what things cost.
+Vary how you open — sometimes lead with the task itself, sometimes the feeling around it, sometimes an observation about time or habit or what things cost. On the other hand, identify real triumphs and give those the weight they deserve.
 
 If there were unexpected encounters, weave them in naturally — they are the texture of the day, not a footnote. An interruption that swallowed an afternoon is more interesting than a mission that went smoothly.
 
@@ -485,6 +489,8 @@ Rules:
 - Never use the word "adventurer"
 - If nothing dramatic happened, say something true about what ordinary days are actually for
 - Under 120 words`;
+
+console.log('System prompt: ', systemPrompt);
 
   const response = await fetch('/api/anthropic/v1/messages', {
     method: 'POST',
@@ -501,6 +507,8 @@ Rules:
       ],
     }),
   });
+
+  console.log('Response: ', response);
 
   if (!response.ok) {
     throw new Error(`Anthropic API error: ${response.status}`);
