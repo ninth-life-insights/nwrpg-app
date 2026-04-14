@@ -17,6 +17,20 @@
   user-select: none;
 }
 
+.achievement-badge--img {
+  border: none;
+  background: none;
+  overflow: hidden;
+}
+
+.achievement-badge__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+}
+
 .achievement-badge--locked {
   filter: grayscale(0.85) opacity(0.45);
 }

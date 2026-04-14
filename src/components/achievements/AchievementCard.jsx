@@ -9,7 +9,7 @@ import './AchievementCard.css';
  * Works for both built-in (with isAwarded) and custom achievements.
  */
 const AchievementCard = ({ achievement }) => {
-  const { name, description, badgeColor, badgeIcon, isAwarded, awardedDate, isCustom } = achievement;
+  const { name, description, badgeColor, badgeIcon, badgeImage, isAwarded, awardedDate, isCustom } = achievement;
   const palette = BADGE_COLORS[badgeColor] || BADGE_COLORS.amber;
 
   return (
@@ -19,7 +19,7 @@ const AchievementCard = ({ achievement }) => {
     >
       {isAwarded && <div className="achievement-card__accent-bar" />}
       <div className="achievement-card__badge">
-        <AchievementBadge color={badgeColor} icon={badgeIcon} size="md" locked={!isAwarded} />
+        <AchievementBadge color={badgeColor} icon={badgeIcon} badgeImage={badgeImage} size="md" locked={!isAwarded} />
       </div>
       <div className="achievement-card__body">
         <p className="achievement-card__name">{name}</p>

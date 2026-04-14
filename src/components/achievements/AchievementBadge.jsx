@@ -16,13 +16,31 @@ const ICON_SIZES = {
 };
 
 /**
- * Renders a circular badge with a colored background and a Material Icon.
- * Pass `locked` to render greyed-out state for unawarded achievements.
+ * Renders an achievement badge. When `badgeImage` is provided, displays the PNG.
+ * Otherwise falls back to a colored circle with a Material Icon.
+ * Pass `locked` to render the greyed-out state for unawarded achievements.
  */
-const AchievementBadge = ({ color = 'amber', icon = 'star', size = 'md', locked = false }) => {
+const AchievementBadge = ({ color = 'amber', icon = 'star', badgeImage, size = 'md', locked = false }) => {
   const palette = BADGE_COLORS[color] || BADGE_COLORS.amber;
   const px = SIZES[size] || SIZES.md;
   const iconSize = ICON_SIZES[size] || ICON_SIZES.md;
+
+  if (badgeImage) {
+    return (
+      <div
+        className={`achievement-badge achievement-badge--img achievement-badge--${size}${locked ? ' achievement-badge--locked' : ''}`}
+        style={{ width: px, height: px }}
+        aria-hidden="true"
+      >
+        <img
+          src={badgeImage}
+          alt=""
+          className="achievement-badge__img"
+          draggable={false}
+        />
+      </div>
+    );
+  }
 
   const style = {
     width: px,
