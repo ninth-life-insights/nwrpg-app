@@ -16,7 +16,7 @@ import {
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
-import { getAllMissions, createMission } from '../../services/missionService';
+import { getAllMissions, updateMission } from '../../services/missionService';
 import { calculateQuestProgress, QUEST_DIFFICULTY } from '../../types/Quests';
 import AchievementToast from '../achievements/AchievementToast';
 import './QuestDetailView.css';
@@ -140,13 +140,8 @@ const QuestDetailView = () => {
 
   const handleAddMission = async (missionData) => {
     try {
-      // Create the mission with questId
-      const missionId = await createMission(currentUser.uid, {
-        ...missionData,
-        questId: questId
-      });
-      
-      // Add mission to quest
+      const { id: missionId } = missionData;
+      await updateMission(currentUser.uid, missionId, { questId });
       await addMissionToQuest(currentUser.uid, questId, missionId);
       await loadQuestData();
       setShowAddMission(false);
