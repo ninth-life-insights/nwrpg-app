@@ -431,6 +431,7 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       const achievementResult = await checkAndAwardAchievements(userId, {
         difficulty: mission.difficulty,
         streak: profile?.streak ?? 0,
+        skills: profile?.skills || {},
       });
       newlyAwardedAchievements = achievementResult.newlyAwarded || [];
     } catch (achievementError) {

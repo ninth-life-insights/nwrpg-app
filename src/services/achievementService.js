@@ -162,6 +162,9 @@ const countEarlyMissions = (activityDocs) =>
     return ts.getHours() < 7;
   }).length;
 
+const countSkillsAtLevel = (skills, minLevel) =>
+  Object.values(skills).filter(s => (s.level || 1) >= minLevel).length;
+
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 /**
@@ -250,6 +253,16 @@ export const checkAndAwardAchievements = async (userId, context = {}) => {
         case 'early_missions': {
           const docs = await getActivityDocs();
           passed = countEarlyMissions(docs) >= def.threshold;
+          break;
+        }
+        case 'skill_level_5': {
+          const skills = context.skills || {};
+          passed = countSkillsAtLevel(skills, def.threshold) >= 1;
+          break;
+        }
+        case 'skill_3_at_5': {
+          const skills = context.skills || {};
+          passed = countSkillsAtLevel(skills, def.threshold) >= 3;
           break;
         }
         default:
