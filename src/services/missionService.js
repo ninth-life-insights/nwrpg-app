@@ -12,10 +12,21 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase/config';
-import { 
-  MISSION_STATUS,
-  calculateTotalMissionXP
- } from '../types/Mission';
+import { MISSION_STATUS } from '../types/Mission';
+
+const calculateTotalMissionXP = async (userId, mission) => {
+  let totalXP = mission.xpReward;
+
+  try {
+    const { checkIsDailyMission } = await import('./dailyMissionService');
+    const isDailyMission = await checkIsDailyMission(userId, mission.id);
+    if (isDailyMission) totalXP += 5;
+  } catch (e) {
+    // daily bonus is best-effort; don't block completion
+  }
+
+  return totalXP;
+};
 import {
   calculateNextDueDate,
   shouldCreateNextOccurrence,
@@ -140,17 +151,18 @@ export const getAllMissions = async (userId) => {
   }
 };
 
-// USE WRAPPER FUNCTION NOT THIS
-export const completeMission = async (userId, missionId) => {
+const completeMission = async (userId, missionId, prefetchedData = null) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
-    const missionDoc = await getDoc(missionRef);
-    
-    if (!missionDoc.exists()) {
-      throw new Error('Mission not found');
+
+    let missionData;
+    if (prefetchedData) {
+      missionData = prefetchedData;
+    } else {
+      const missionDoc = await getDoc(missionRef);
+      if (!missionDoc.exists()) throw new Error('Mission not found');
+      missionData = { ...missionDoc.data(), id: missionId };
     }
-    
-    const missionData = { ...missionDoc.data(), id: missionId };
 
     const xpAwarded = await calculateTotalMissionXP(userId, missionData);
 
@@ -300,21 +312,20 @@ export const uncompleteMission = async (userId, missionId) => {
   }
 };
 
-// USE WRAPPER FUNCTION NOT THIS (Complete a recurring mission and create next instance if needed)
-export const completeRecurringMission = async (userId, missionId) => {
+const completeRecurringMission = async (userId, missionId, prefetchedData = null) => {
   try {
-    // 1. Get the mission to check if it's recurring
-    const missionRef = doc(db, 'users', userId, 'missions', missionId);
-    const missionSnap = await getDoc(missionRef);
-    
-    if (!missionSnap.exists()) {
-      throw new Error('Mission not found');
+    let mission;
+    if (prefetchedData) {
+      mission = prefetchedData;
+    } else {
+      const missionRef = doc(db, 'users', userId, 'missions', missionId);
+      const missionSnap = await getDoc(missionRef);
+      if (!missionSnap.exists()) throw new Error('Mission not found');
+      mission = { id: missionSnap.id, ...missionSnap.data() };
     }
-    
-    const mission = { id: missionSnap.id, ...missionSnap.data() };
-    
-    // 2. Complete the current mission (handles XP, status, completion timestamp, and quest progress)
-    const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
+
+    // Complete the current mission (handles XP, status, completion timestamp, and quest progress)
+    const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, mission);
     
     // 3. Check if this is a recurring mission and should create next instance
     if (isRecurringMission(mission)) {
@@ -337,7 +348,6 @@ export const completeRecurringMission = async (userId, missionId) => {
           console.log(`Created next recurring mission instance: ${newMissionRef.id}`);
           
           return {
-            completed: true,
             xpAwarded,
             leveledUp,
             newLevel,
@@ -353,7 +363,6 @@ export const completeRecurringMission = async (userId, missionId) => {
     }
     
     return {
-      completed: true,
       xpAwarded,
       leveledUp,
       newLevel,
@@ -362,7 +371,7 @@ export const completeRecurringMission = async (userId, missionId) => {
       newSkillLevel,
       nextMissionCreated: false
     };
-    
+
   } catch (error) {
     console.error('Error completing recurring mission:', error);
     throw error;
@@ -386,7 +395,7 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
 
     // If it's an evergreen mission, complete and create a fresh instance (no due date)
     if (isEvergreenMission(mission)) {
-      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
+      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, mission);
 
       const nextMissionData = createNextMissionInstance(mission, null);
       const missionsRef = getUserMissionsRef(userId);
@@ -397,7 +406,6 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       });
 
       completionResult = {
-        completed: true,
         xpAwarded,
         leveledUp,
         newLevel,
@@ -409,13 +417,12 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       };
     } else if (isRecurringMission(mission)) {
       // If it's a recurring mission, use the recurring logic
-      completionResult = await completeRecurringMission(userId, missionId);
+      completionResult = await completeRecurringMission(userId, missionId, mission);
     } else {
       // Use the regular completion logic
-      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId);
+      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, mission);
 
       completionResult = {
-        completed: true,
         xpAwarded,
         leveledUp,
         newLevel,

@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { toDateString } from '../utils/dateHelpers';
-import { getActiveMissions, getCompletedMissions, completeMission } from './missionService';
+import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from './missionService';
 
 // SIMPLIFIED CONFIG STRUCTURE
 // users/{userId}/dailyMissions/config
@@ -180,7 +180,7 @@ export const getTodaysDailyMissions = async (userId) => {
 export const completeDailyMission = async (userId, missionId) => {
   try {
     // Complete the actual mission
-    await completeMission(userId, missionId);
+    await completeMissionWithRecurrence(userId, missionId);
     
     // Save to daily history
     const today = toDateString(new Date());
