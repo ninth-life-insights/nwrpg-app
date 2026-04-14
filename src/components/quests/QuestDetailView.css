@@ -7,7 +7,7 @@
 }
 
 .quest-detail-view.completed {
-  background: #14532d;
+  background: #253552;
 }
 
 /* Quest Header - Dark Blue */
@@ -22,7 +22,7 @@
 }
 
 .quest-detail-header.completed {
-  background: #14532d;
+  background: #253552;
 }
 
 .header-top {
@@ -179,6 +179,7 @@
   font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.55);
   margin-top: calc(var(--space-xs) * -1);
+  text-align: left;
 }
 
 .progress-bar {
@@ -468,6 +469,7 @@
   }
 
   .complete-quest-btn,
+  .reopen-quest-btn,
   .delete-quest-btn {
     max-width: none;
   }
