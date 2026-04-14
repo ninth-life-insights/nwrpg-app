@@ -492,7 +492,7 @@ Rules:
 
 console.log('System prompt: ', systemPrompt);
 
-  const response = await fetch('/api/anthropic/v1/messages', {
+  const response = await fetch('/api/anthropic', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

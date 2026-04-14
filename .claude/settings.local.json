@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(git -C /c/Users/Lenovo/nwrpg-app log --oneline --all --grep=\"anthropic\\\\|API\\\\|story\\\\|chrome\\\\|proxy\" -i)",
+      "Bash(git -C /c/Users/Lenovo/nwrpg-app show 93b9f45 --stat)",
+      "Bash(git -C /c/Users/Lenovo/nwrpg-app show 93b9f45)"
+    ]
+  }
+}
