@@ -224,8 +224,6 @@ const handleAddNewMission = async (missionData) => {
       const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
       setCurrentConfig(updatedConfig);
       
-      alert('Daily missions set successfully! Your 3 daily missions are now active.');
-      
       if (isModal && onComplete) {
         // Modal mode - call completion callback and let parent handle closing
         onComplete();
