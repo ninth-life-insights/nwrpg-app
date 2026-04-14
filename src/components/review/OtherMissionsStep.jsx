@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getActiveMissions, completeMissionWithRecurrence } from '../../services/missionService';
 import { getDailyMissionsConfig } from '../../services/dailyMissionService';
+import { getAllQuests } from '../../services/questService';
 import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
@@ -19,6 +20,7 @@ const OtherMissionsStep = ({
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
+  const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
   const [showAddMission, setShowAddMission] = useState(false);
@@ -30,14 +32,16 @@ const OtherMissionsStep = ({
       if (!currentUser) return;
       setLoading(true);
       try {
-        const [allActive, config] = await Promise.all([
+        const [allActive, config, questData] = await Promise.all([
           getActiveMissions(currentUser.uid),
           getDailyMissionsConfig(currentUser.uid),
+          getAllQuests(currentUser.uid),
         ]);
         const dailyIds = new Set(
           config?.setForDate === today ? (config?.missionIds ?? []) : []
         );
         setMissions(allActive.filter(m => !dailyIds.has(m.id)));
+        setQuests(questData);
       } catch (err) {
         console.error('Error loading other missions:', err);
       } finally {
@@ -137,6 +141,7 @@ const OtherMissionsStep = ({
                     onToggleComplete={handleToggle}
                     onViewDetails={() => {}}
                     hideDailyBadge={true}
+                    quest={quests.find(q => q.id === mission.questId) ?? null}
                   />
                 ))}
               </div>
