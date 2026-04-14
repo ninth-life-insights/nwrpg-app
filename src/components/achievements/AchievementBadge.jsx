@@ -4,15 +4,15 @@ import { BADGE_COLORS } from '../../data/achievementDefinitions';
 import './AchievementBadge.css';
 
 const SIZES = {
-  sm: 36,
-  md: 52,
-  lg: 72,
+  sm: 56,
+  md: 80,
+  lg: 110,
 };
 
 const ICON_SIZES = {
-  sm: '18px',
-  md: '26px',
-  lg: '36px',
+  sm: '28px',
+  md: '40px',
+  lg: '56px',
 };
 
 /**
