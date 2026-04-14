@@ -6,6 +6,10 @@
   padding-bottom: 120px;
 }
 
+.quest-detail-view.completed {
+  background: #14532d;
+}
+
 /* Quest Header - Dark Blue */
 .quest-detail-header {
   background: #1e3a8a;
@@ -15,6 +19,10 @@
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.quest-detail-header.completed {
+  background: #14532d;
 }
 
 .header-top {
@@ -73,6 +81,11 @@
   font-size: var(--font-size-2xl);
   font-weight: 600;
   color: white;
+}
+
+.quest-title.completed {
+  text-decoration: line-through;
+  opacity: 0.7;
 }
 
 .quest-title-input {
@@ -146,6 +159,26 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: white;
+}
+
+.quest-complete-badge {
+  background: rgba(74, 222, 128, 0.25);
+  border: 1px solid #4ade80;
+  color: #4ade80;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.quest-completed-at {
+  width: 100%;
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: calc(var(--space-xs) * -1);
 }
 
 .progress-bar {
@@ -233,6 +266,30 @@
   justify-content: center;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
   z-index: 10;
+}
+
+.quest-actions.completed {
+  background: #f0fdf4;
+  border-top-color: #bbf7d0;
+}
+
+.reopen-quest-btn {
+  flex: 1;
+  max-width: 300px;
+  padding: var(--space-md);
+  background: white;
+  color: var(--color-text-medium);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.reopen-quest-btn:hover {
+  background: var(--color-bg-main);
+  border-color: var(--color-text-medium);
 }
 
 .complete-quest-btn {

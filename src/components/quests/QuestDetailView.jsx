@@ -7,17 +7,19 @@ import QuestMissionList from './QuestMissionList';
 import AddMissionCard from '../missions/AddMissionCard';
 import Badge from '../ui/Badge';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { 
-  getQuest, 
+import {
+  getQuest,
   updateQuest,
   deleteQuest,
   completeQuest,
+  updateQuestStatus,
   addMissionToQuest,
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
 import { getAllMissions, updateMission } from '../../services/missionService';
-import { calculateQuestProgress, QUEST_DIFFICULTY } from '../../types/Quests';
+import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
+import { formatForUserLong } from '../../utils/dateHelpers';
 import AchievementToast from '../achievements/AchievementToast';
 import './QuestDetailView.css';
 
@@ -181,6 +183,16 @@ const QuestDetailView = () => {
     }
   };
 
+  const handleUncompleteQuest = async () => {
+    try {
+      await updateQuestStatus(currentUser.uid, questId, QUEST_STATUS.ACTIVE);
+      await loadQuestData();
+    } catch (err) {
+      console.error('Error reopening quest:', err);
+      alert('Failed to reopen quest');
+    }
+  };
+
   const handleMissionUpdate = async () => {
     await loadQuestData();
   };
@@ -203,10 +215,12 @@ const QuestDetailView = () => {
 
   const progress = calculateQuestProgress(quest);
 
+  const isCompleted = quest.status === 'completed';
+
   return (
-    <div className="quest-detail-view">
+    <div className={`quest-detail-view ${isCompleted ? 'completed' : ''}`}>
       {/* Quest Header */}
-      <div className="quest-detail-header">
+      <div className={`quest-detail-header ${isCompleted ? 'completed' : ''}`}>
         <div className="header-top">
           <button className="back-button" onClick={handleBack}>
             <span className="material-icons">arrow_back</span>
@@ -220,7 +234,7 @@ const QuestDetailView = () => {
           </button>
         </div>
 
-        <h1 className="quest-title">
+        <h1 className={`quest-title ${isCompleted ? 'completed' : ''}`}>
           {isEditMode ? (
             <input
               type="text"
@@ -271,16 +285,30 @@ const QuestDetailView = () => {
               <Badge variant="difficulty" difficulty={quest.difficulty}>
                 {quest.difficulty}
               </Badge>
-              <div className="quest-progress-badge">
-                {quest.completedMissions}/{quest.totalMissions} missions
-              </div>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+              {isCompleted ? (
+                <div className="quest-complete-badge">
+                  <span className="material-icons" style={{ fontSize: '16px' }}>check_circle</span>
+                  Quest Complete
+                </div>
+              ) : (
+                <>
+                  <div className="quest-progress-badge">
+                    {quest.completedMissions}/{quest.totalMissions} missions
+                  </div>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </>
+              )}
             </>
+          )}
+          {isCompleted && quest.completedAt && (
+            <div className="quest-completed-at">
+              Completed {formatForUserLong(quest.completedAt)}
+            </div>
           )}
         </div>
       </div>
@@ -297,24 +325,34 @@ const QuestDetailView = () => {
           onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
         />
 
-        <button 
-          className="add-mission-to-quest-btn"
-          onClick={() => setShowAddMission(true)}
-        >
-          + Add Mission to Quest
-        </button>
+        {!isCompleted && (
+          <button
+            className="add-mission-to-quest-btn"
+            onClick={() => setShowAddMission(true)}
+          >
+            + Add Mission to Quest
+          </button>
+        )}
       </div>
 
       {/* Bottom Actions */}
-      <div className="quest-actions">
-        <button 
-          className="complete-quest-btn"
-          onClick={handleCompleteQuest}
-          disabled={quest.status === 'completed'}
-        >
-          {quest.status === 'completed' ? 'Quest Complete ✓' : 'Complete Quest'}
-        </button>
-        <button 
+      <div className={`quest-actions ${isCompleted ? 'completed' : ''}`}>
+        {isCompleted ? (
+          <button
+            className="reopen-quest-btn"
+            onClick={handleUncompleteQuest}
+          >
+            Reopen Quest
+          </button>
+        ) : (
+          <button
+            className="complete-quest-btn"
+            onClick={handleCompleteQuest}
+          >
+            Complete Quest
+          </button>
+        )}
+        <button
           className="delete-quest-btn"
           onClick={handleDeleteQuest}
         >
