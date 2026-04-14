@@ -102,6 +102,7 @@ const QuestMissionList = ({
   onAchievementsUnlocked,
 }) => {
   const { currentUser } = useAuth();
+  const { notifyMissionCompletion } = useNotifications();
   const [selectedMission, setSelectedMission] = useState(null);
   const [editingMission, setEditingMission] = useState(null);
 
