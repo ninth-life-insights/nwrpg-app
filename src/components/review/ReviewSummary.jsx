@@ -107,7 +107,7 @@ const ReviewSummary = ({
               <span className="daily-review-story-label">The Story of Today</span>
               {!isEditingStory && (
                 <div className="daily-review-story-actions-row">
-                  {onRegenerateStory && !snapshot.userEditedStory && (
+                  {onRegenerateStory && (
                     <button
                       className="daily-review-story-edit-btn"
                       onClick={() => setShowRegenerateConfirm(true)}
