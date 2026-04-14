@@ -148,9 +148,11 @@ export const completeMission = async (userId, missionId) => {
       throw new Error('Mission not found');
     }
     
-    const missionData = missionDoc.data();
-    
+    const missionData = { ...missionDoc.data(), id: missionId };
+
     const xpAwarded = await calculateTotalMissionXP(userId, missionData);
+
+    console.log("xp awarded: ", xpAwarded);
 
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,

@@ -152,12 +152,18 @@ export const calculateSPReward = (difficulty, skill) => {
 export const calculateTotalMissionXP = async (userId, mission) => {
   let totalXP = mission.xpReward; // Base XP from difficulty
 
+  console.log("total XP: ", totalXP);
+
   const isDailyMission = await checkIsDailyMission(userId, mission.id);
+
+  console.log("is daily mission: ", isDailyMission);
 
   // Add daily mission bonus
   if (isDailyMission) {
     totalXP += 5;
   }
+
+  console.log("totalXP plus daily: ", totalXP);
 
   return totalXP;
 };

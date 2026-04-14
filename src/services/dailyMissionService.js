@@ -43,6 +43,8 @@ export const getDailyMissionsConfig = async (userId) => {
   try {
     const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
     const configSnap = await getDoc(configRef);
+
+    console.log("config: ", configSnap);
     
     if (configSnap.exists()) {
       return configSnap.data();
@@ -101,6 +103,8 @@ export const checkIsDailyMission = async (userId, missionId) => {
   try {
     const config = await getDailyMissionsConfig(userId);
     const today = toDateString(new Date());
+
+    console.log("today's date: ", today);
     
     return config?.setForDate === today && 
            config?.missionIds?.includes(missionId);
