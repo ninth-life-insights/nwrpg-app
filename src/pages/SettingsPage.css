@@ -1,0 +1,235 @@
+/* src/pages/SettingsPage.css */
+
+.settings-container {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  padding: var(--space-lg);
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.settings-loading {
+  text-align: center;
+  color: var(--color-text-medium);
+  margin-top: var(--space-xl);
+}
+
+/* Header */
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.settings-back-button {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.settings-back-button:hover {
+  background: #f9fafb;
+  box-shadow: var(--shadow-hover);
+}
+
+.settings-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+/* Section card */
+.settings-section {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-card);
+}
+
+.settings-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+/* Permission denied banner */
+.settings-permission-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.settings-permission-banner .material-icons-outlined {
+  font-size: 20px;
+  color: var(--color-warning);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.settings-permission-banner p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Row layout */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  gap: var(--space-md);
+}
+
+.settings-label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  font-weight: 500;
+}
+
+.settings-row-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+}
+
+.settings-row-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* Sub-section (indented rows under master toggle) */
+.settings-sub-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Time input */
+.settings-time-input {
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-bg-white);
+  width: 90px;
+  cursor: pointer;
+}
+
+.settings-time-input:disabled {
+  color: var(--color-text-placeholder);
+  cursor: default;
+}
+
+/* CSS-only toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border);
+  border-radius: 999px;
+  transition: background var(--transition);
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 3px;
+  left: 3px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition);
+}
+
+.toggle-switch input:checked + .toggle-track {
+  background: var(--color-success);
+}
+
+.toggle-switch input:checked + .toggle-track::after {
+  transform: translateX(18px);
+}
+
+.toggle-switch input:disabled + .toggle-track {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Save button row */
+.settings-save-row {
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--color-border);
+}
+
+.settings-save-button {
+  width: 100%;
+  padding: var(--space-md);
+  background: var(--color-text-dark);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.settings-save-button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.settings-save-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

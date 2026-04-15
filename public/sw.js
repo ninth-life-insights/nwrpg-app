@@ -29,3 +29,21 @@ self.addEventListener('fetch', (event) => {
     )
   );
 });
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/home';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if ('focus' in client) {
+            client.focus();
+            if ('navigate' in client) return client.navigate(targetUrl);
+          }
+        }
+        if (clients.openWindow) return clients.openWindow(targetUrl);
+      })
+  );
+});

@@ -272,7 +272,7 @@ const HomePage = () => {
           <span className="material-icons-outlined">{"auto_stories"}</span>
         </button>
 
-        <button className="header-button settings-button">
+        <button className="header-button settings-button" onClick={() => navigate('/settings')}>
           <span className="material-icons-outlined">{"settings"}</span>
         </button>
       </header>
