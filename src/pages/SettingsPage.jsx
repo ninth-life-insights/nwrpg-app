@@ -180,7 +180,7 @@ const SettingsPage = () => {
               </label>
             </div>
 
-            <div className="settings-row">
+            {/* <div className="settings-row">
               <div className="settings-row-label-group">
                 <span className="settings-label">Overdue alerts</span>
                 <span className="settings-hint">Alert at 9 AM if missions are overdue</span>
@@ -193,7 +193,7 @@ const SettingsPage = () => {
                 />
                 <span className="toggle-track" />
               </label>
-            </div>
+            </div> */}
           </div>
         )}
 

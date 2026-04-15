@@ -9,7 +9,7 @@ import {
   showNotification,
   msUntil,
   checkAndFireDueTodayAlert,
-  checkAndFireOverdueAlert,
+  // checkAndFireOverdueAlert,
 } from '../services/notificationService';
 
 const NotificationContext = createContext(null);
@@ -71,13 +71,13 @@ export const NotificationProvider = ({ children }) => {
       scheduledTimerIds.current.push(id);
     }
 
-    if (prefs.overdueAlerts?.enabled && currentUser) {
-      const id = setTimeout(
-        () => checkAndFireOverdueAlert(currentUser.uid),
-        msUntil(9, 0)
-      );
-      scheduledTimerIds.current.push(id);
-    }
+    // if (prefs.overdueAlerts?.enabled && currentUser) {
+    //   const id = setTimeout(
+    //     () => checkAndFireOverdueAlert(currentUser.uid),
+    //     msUntil(9, 0)
+    //   );
+    //   scheduledTimerIds.current.push(id);
+    // }
   }, [currentUser]);
 
   // Load prefs and kick off scheduling whenever the logged-in user changes
