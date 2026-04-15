@@ -67,6 +67,7 @@
   font-weight: 600;
   color: var(--color-text-dark);
   margin: 0 0 var(--space-xs) 0;
+  text-align: left;
 }
 
 /* Permission denied banner */
@@ -107,6 +108,7 @@
   font-size: var(--font-size-base);
   color: var(--color-text-dark);
   font-weight: 500;
+  text-align: left;
 }
 
 .settings-row-label-group {
@@ -115,11 +117,13 @@
   gap: 2px;
   flex: 1;
   min-width: 0;
+  text-align: left;
 }
 
 .settings-hint {
   font-size: var(--font-size-sm);
   color: var(--color-text-light);
+  text-align: left;
 }
 
 .settings-row-controls {
