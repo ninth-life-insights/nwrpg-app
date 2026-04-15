@@ -138,34 +138,33 @@ export const getTodaysDailyMissions = async (userId) => {
   try {
     const config = await getDailyMissionsConfig(userId);
     const today = toDateString(new Date());
-    
-    if (!config) {
-      console.log('No config');
-      return [];
-    } 
-    else if (config.setForDate !== today) {
-      console.log('Wrong date');
-      return [];
+
+    let missionIds = null;
+
+    if (config?.setForDate === today && config?.missionIds?.length > 0) {
+      missionIds = config.missionIds;
+    } else {
+      // Check for a pre-planned selection in history and auto-promote to config
+      const history = await getDailyMissionsForDate(userId, today);
+      if (history?.selectedMissionIds?.length > 0) {
+        missionIds = history.selectedMissionIds;
+        await setDailyMissions(userId, missionIds);
+      }
     }
-    
+
+    if (!missionIds) return [];
+
     // Get all missions and filter for the daily ones
     const [activeMissions, completedMissions] = await Promise.all([
       getActiveMissions(userId),
       getCompletedMissions(userId)
     ]);
-    
+
     const allMissions = [...activeMissions, ...completedMissions];
-    
-    const dailyMissions = allMissions.filter(mission => {
-      const isDaily = config.missionIds.includes(mission.id);
-      return isDaily;
-    });
-    
-    // Add the computed isDailyMission flag
-    return dailyMissions.map(mission => ({
-      ...mission,
-      isDailyMission: true
-    }));
+
+    return allMissions
+      .filter(mission => missionIds.includes(mission.id))
+      .map(mission => ({ ...mission, isDailyMission: true }));
   } catch (error) {
     console.error('Error getting today\'s daily missions:', error);
     throw error;
@@ -239,6 +238,22 @@ export const saveDailyMissionSelection = async (userId, missionIds) => {
     return { success: true };
   } catch (error) {
     console.error('Error saving daily mission selection:', error);
+    throw error;
+  }
+};
+
+// Plan daily missions for a future date (writes only to history, never touches config)
+export const planDailyMissionsForDate = async (userId, missionIds, dateString) => {
+  try {
+    const historyRef = doc(db, 'users', userId, 'dailyHistory', dateString);
+    await setDoc(historyRef, {
+      date: dateString,
+      selectedMissionIds: missionIds,
+      setAt: serverTimestamp()
+    }, { merge: true });
+    return { success: true };
+  } catch (error) {
+    console.error('Error planning daily missions for date:', error);
     throw error;
   }
 };
@@ -381,9 +396,12 @@ export const hasDailyMissionsForToday = async (userId) => {
   try {
     const config = await getDailyMissionsConfig(userId);
     const today = toDateString(new Date());
-    
-    return config?.setForDate === today && 
-           config?.missionIds?.length > 0;
+
+    if (config?.setForDate === today && config?.missionIds?.length > 0) return true;
+
+    // Fallback: check for a pre-planned selection in history
+    const history = await getDailyMissionsForDate(userId, today);
+    return (history?.selectedMissionIds?.length ?? 0) > 0;
   } catch (error) {
     console.error('Error checking if daily missions exist for today:', error);
     return false;

@@ -450,6 +450,168 @@
   }
 }
 
+/* ============================================================
+   DATE SELECTOR
+   ============================================================ */
+
+.date-selector-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-bg-white);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: var(--space-sm);
+}
+
+.date-selector-pill:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.date-selector-pill.future {
+  background: #fefce8;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.date-selector-pill.future:hover {
+  background: #fef3c7;
+}
+
+.date-selector-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.date-selector-caret {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* Future date mode — subtle header tint */
+.future-date-mode .daily-missions-header {
+  background: #fffbeb;
+  border: 2px solid #fde68a;
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.future-status {
+  background-color: #fefce8 !important;
+  border-color: #fde68a !important;
+}
+
+.future-status .status-text {
+  color: #92400e !important;
+}
+
+/* Date picker bottom sheet */
+.date-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  z-index: 1100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.date-picker-sheet {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 500px;
+  animation: slideUp 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.date-picker-heading {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-xs) 0;
+  text-align: center;
+}
+
+.date-picker-option {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-main);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-text-dark);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+}
+
+.date-picker-option:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.date-picker-option.active {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.date-picker-custom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.date-picker-custom-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-medium);
+}
+
+.date-picker-input {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-main);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.date-picker-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.date-picker-cancel {
+  width: 100%;
+  padding: var(--space-md);
+  background: none;
+  border: none;
+  font-size: var(--font-size-base);
+  color: var(--color-text-light);
+  cursor: pointer;
+  margin-top: var(--space-xs);
+}
+
 /* Add these styles to your existing EditDailyMissionsPage.css */
 
 /* Completed mission styling - mirrors MissionCard */

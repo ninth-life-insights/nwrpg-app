@@ -9,17 +9,19 @@ import MissionList from '../components/missions/MissionList';
 import Badge from '../components/ui/Badge';
 
 // Service imports - UPDATED for simplified system
-import { 
+import {
   getActiveMissions,
   getCompletedMissions,
   createMission
 } from '../services/missionService';
 
 // UPDATED: Import from separate daily mission service
-import { 
+import {
   getDailyMissionsConfig,
   updateDailyMissionsConfig,
   saveDailyMissionSelection,
+  getDailyMissionsForDate,
+  planDailyMissionsForDate,
 } from '../services/dailyMissionService';
 
 import { getAllQuests } from '../services/questService';
@@ -30,30 +32,36 @@ import {
   isMissionDueTomorrow,
   isMissionOverdue,
   toDateString,
-  formatForUser
+  formatForUser,
+  fromDateString,
 } from '../utils/dateHelpers';
 
-import { isRecurringMission, 
-  getRecurrenceDisplayText 
+import { isRecurringMission,
+  getRecurrenceDisplayText
 } from '../utils/recurrenceHelpers';
 
 import { hasSkill } from '../types/Mission';
 
 // Mission helpers
-import { 
-  isMissionCompleted 
+import {
+  isMissionCompleted
 } from '../utils/missionHelpers';
 
 import './EditDailyMissionsPage.css';
 
-const EditDailyMissionsPage = ({ 
-  isModal = false, 
-  onComplete = null, 
-  showNavigation = true 
+const EditDailyMissionsPage = ({
+  isModal = false,
+  onComplete = null,
+  showNavigation = true
 }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  
+
+  const today = toDateString(new Date());
+  const tomorrow = toDateString(new Date(Date.now() + 86400000));
+
+  const [targetDate, setTargetDate] = useState(today);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
   const [quests, setQuests] = useState([]);
   const [showAddMission, setShowAddMission] = useState(false);
@@ -64,60 +72,62 @@ const EditDailyMissionsPage = ({
   const [error, setError] = useState('');
   const [currentConfig, setCurrentConfig] = useState(null);
 
-  // Load existing daily missions configuration
+  // Reload whenever the target date changes
   useEffect(() => {
     loadExistingDailyMissions();
     loadQuests();
-  }, [currentUser]);
+  }, [currentUser, targetDate]);
 
   const loadExistingDailyMissions = async () => {
     if (!currentUser) return;
-    
+
     try {
       setLoading(true);
       setError('');
-      
-      // Get current config using simplified structure
-      const config = await getDailyMissionsConfig(currentUser.uid);
-      const today = toDateString(new Date());
+      setDailyMissions([null, null, null]);
 
-      setCurrentConfig(config);
-      
-      // UPDATED: Check if config is for today using new structure
-      if (config && config.setForDate === today && config.missionIds?.length > 0) {
-        
-        // FIXED: Load both active AND completed missions to find all daily missions
+      let missionIds = null;
+
+      if (targetDate === today) {
+        // Today: use config as the source of truth (existing logic)
+        const config = await getDailyMissionsConfig(currentUser.uid);
+        setCurrentConfig(config);
+
+        if (config && config.setForDate === today && config.missionIds?.length > 0) {
+          missionIds = config.missionIds;
+        }
+      } else {
+        // Future date: load from dailyHistory
+        setCurrentConfig(null);
+        const history = await getDailyMissionsForDate(currentUser.uid, targetDate);
+        if (history?.selectedMissionIds?.length > 0) {
+          missionIds = history.selectedMissionIds;
+        }
+      }
+
+      if (missionIds) {
         const [activeMissions, completedMissions] = await Promise.all([
           getActiveMissions(currentUser.uid),
           getCompletedMissions ? getCompletedMissions(currentUser.uid) : Promise.resolve([])
         ]);
-        
+
         const allMissions = [...activeMissions, ...completedMissions];
-           
-        // UPDATED: Find missions using new missionIds field from all missions
-        const selectedMissions = config.missionIds
+
+        const selectedMissions = missionIds
           .map(missionId => {
             const mission = allMissions.find(m => m.id === missionId);
-            if (!mission) {
-              console.warn('Mission not found for ID:', missionId);
-            }
+            if (!mission) console.warn('Mission not found for ID:', missionId);
             return mission;
           })
-          .filter(mission => mission != null); // Remove null missions
-        
-        // Fill slots with selected missions
+          .filter(mission => mission != null);
+
         const newDailyMissions = [null, null, null];
         selectedMissions.forEach((mission, index) => {
-          if (index < 3) {
-            newDailyMissions[index] = mission;
-          }
+          if (index < 3) newDailyMissions[index] = mission;
         });
         setDailyMissions(newDailyMissions);
-        
-      } else {
-        setDailyMissions([null, null, null]);
       }
-      
+
     } catch (err) {
       console.error('Error loading existing daily missions:', err);
       setError('Failed to load existing daily missions');
@@ -137,14 +147,14 @@ const EditDailyMissionsPage = ({
 
   // Handle creating new mission
 const handleAddNewMission = async (missionData) => {
-  
+
   try {
     setSaving(true);
     setError('');
 
     handleMissionSelect(missionData, currentSlotIndex);
-    
-    
+
+
   } catch (err) {
     setError('Failed to add mission. Please try again.');
   } finally {
@@ -154,7 +164,7 @@ const handleAddNewMission = async (missionData) => {
 
   // Handle selecting a mission for a slot
  const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
-  
+
   const newDailyMissions = [...dailyMissions];
   newDailyMissions[slotIndex] = mission;
   setDailyMissions(newDailyMissions);
@@ -193,16 +203,15 @@ const handleAddNewMission = async (missionData) => {
     }
   };
 
-  // UPDATED: Use simplified daily mission setting
   const handleSetDailyMissions = async () => {
-  
+
   if (!currentUser) {
     setError('You must be logged in to set daily missions');
     return;
   }
 
   const validMissions = dailyMissions.filter(mission => mission !== null);
-    
+
     if (validMissions.length !== 3) {
       setError('Please select exactly 3 missions for your daily missions.');
       return;
@@ -211,27 +220,27 @@ const handleAddNewMission = async (missionData) => {
     try {
       setSaving(true);
       setError('');
-      
+
       const selectedMissionIds = validMissions.map(mission => mission.id);
-      
-      // UPDATED: Use simplified service function
-      await updateDailyMissionsConfig(currentUser.uid, selectedMissionIds);
-      
-      // Save selection to history for tracking
-      await saveDailyMissionSelection(currentUser.uid, selectedMissionIds);
-      
-      // Update local state
-      const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
-      setCurrentConfig(updatedConfig);
-      
+
+      if (targetDate === today) {
+        // Today: write to config + history (existing flow)
+        await updateDailyMissionsConfig(currentUser.uid, selectedMissionIds);
+        await saveDailyMissionSelection(currentUser.uid, selectedMissionIds);
+
+        const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
+        setCurrentConfig(updatedConfig);
+      } else {
+        // Future date: write only to history, never touch config
+        await planDailyMissionsForDate(currentUser.uid, selectedMissionIds, targetDate);
+      }
+
       if (isModal && onComplete) {
-        // Modal mode - call completion callback and let parent handle closing
         onComplete();
       } else {
-        // Full page mode - navigate to home
         navigate('/home');
       }
-      
+
     } catch (err) {
       console.error('Error setting daily missions:', err);
       setError('Failed to set daily missions. Please try again.');
@@ -240,7 +249,10 @@ const handleAddNewMission = async (missionData) => {
     }
   };
 
-  
+  const handleDateSelect = (date) => {
+    setTargetDate(date);
+    setShowDatePicker(false);
+  };
 
   // Check if all slots are filled
   const allSlotsFilled = dailyMissions.every(mission => mission !== null);
@@ -256,30 +268,63 @@ const handleAddNewMission = async (missionData) => {
     );
   }
 
-  // UPDATED: Simplified current status display
-  const today = toDateString(new Date());
-  const isActiveForToday = currentConfig && 
-                          currentConfig.setForDate === today && 
-                          currentConfig.missionIds?.length > 0;
+  const isTargetToday = targetDate === today;
+  const isActiveForDate = isTargetToday
+    ? (currentConfig && currentConfig.setForDate === today && currentConfig.missionIds?.length > 0)
+    : dailyMissions.some(m => m !== null);
+
+  // Human-readable date for the header pill
+  const targetDateDisplay = isTargetToday
+    ? `Today — ${fromDateString(targetDate).format('ddd, MMM D')}`
+    : targetDate === tomorrow
+      ? `Tomorrow — ${fromDateString(targetDate).format('ddd, MMM D')}`
+      : fromDateString(targetDate).format('ddd, MMM D');
+
+  // Confirm button label
+  const confirmLabel = (() => {
+    if (saving) {
+      return isActiveForDate ? 'Updating...' : 'Saving...';
+    }
+    if (isTargetToday) {
+      return isActiveForDate ? 'Update Daily Missions' : 'Set Daily Missions';
+    }
+    const dayLabel = fromDateString(targetDate).format('ddd, MMM D');
+    return isActiveForDate ? `Update Plan for ${dayLabel}` : `Plan for ${dayLabel}`;
+  })();
 
   return (
-    <div className={`daily-missions-container ${isModal ? 'modal-mode' : ''}`}>
+    <div className={`daily-missions-container ${!isTargetToday ? 'future-date-mode' : ''} ${isModal ? 'modal-mode' : ''}`}>
       <div className="daily-missions-header">
         {!isModal && <h1 className="page-title">Set Daily Missions</h1>}
         {!isModal && <p className="page-subtitle">
           What are your three most important priorities for the day?
         </p>}
-        
-        {/* UPDATED: Simplified status display */}
-        <div className="current-status">
-          {isActiveForToday ? (
-            <p className="status-text">
-              ✅ Daily missions are currently active for today. You can update them below.
-            </p>
+
+        {/* Date selector pill */}
+        <button
+          className={`date-selector-pill ${!isTargetToday ? 'future' : ''}`}
+          onClick={() => setShowDatePicker(true)}
+          aria-label="Change planning date"
+        >
+          <span className="date-selector-icon">📅</span>
+          <span className="date-selector-label">{targetDateDisplay}</span>
+          <span className="date-selector-caret">▾</span>
+        </button>
+
+        {/* Status */}
+        <div className={`current-status ${!isTargetToday ? 'future-status' : ''}`}>
+          {isTargetToday ? (
+            isActiveForDate ? (
+              <p className="status-text">✅ Daily missions are active for today. You can update them below.</p>
+            ) : (
+              <p className="status-text">No daily missions set for today.</p>
+            )
           ) : (
-            <p className="status-text">
-              No daily missions are currently set for today.
-            </p>
+            isActiveForDate ? (
+              <p className="status-text">✅ Missions planned for {fromDateString(targetDate).format('ddd, MMM D')}. You can update them below.</p>
+            ) : (
+              <p className="status-text">No missions planned for {fromDateString(targetDate).format('ddd, MMM D')} yet.</p>
+            )
           )}
         </div>
       </div>
@@ -291,8 +336,6 @@ const handleAddNewMission = async (missionData) => {
         </div>
       )}
 
-      
-
       {/* Mission Slots */}
       <div className="mission-slots">
         {dailyMissions.map((mission, index) => (
@@ -302,12 +345,12 @@ const handleAddNewMission = async (missionData) => {
               // Helper to get due date info
               const getDueDateInfo = () => {
                   if (!mission.dueDate) return null;
-                  
+
                   // Remove "due-" prefix from status since we add it in the Badge variant
                   if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
                   if (isMissionDueToday(mission)) return { status: 'today', display: 'Today' };
                   if (isMissionDueTomorrow(mission)) return { status: 'tomorrow', display: 'Tomorrow' };
-                  
+
                   return {
                     status: 'upcoming',
                     display: formatForUser(mission.dueDate)
@@ -319,7 +362,7 @@ const handleAddNewMission = async (missionData) => {
               const dueDateInfo = getDueDateInfo(mission);
               const missionHasSkill = hasSkill(mission);
               const quest = mission ? quests.find(q => q.id === mission.questId) : null;
-            
+
             return (
               <div className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}>
                 <div className="mission-info">
@@ -358,10 +401,10 @@ const handleAddNewMission = async (missionData) => {
                         {mission.skill}
                       </Badge>
                     )}
-                    
+
                   </div>
                 </div>
-                <button 
+                <button
                   className="remove-mission-btn"
                   onClick={() => handleRemoveMission(index)}
                   title="Remove mission"
@@ -374,7 +417,7 @@ const handleAddNewMission = async (missionData) => {
           })()
         ) : (
               // Empty slot
-              <div 
+              <div
                 className="mission-slot-empty clickable"
                 onClick={() => handleEmptySlotClick(index)}
                 role="button"
@@ -396,15 +439,15 @@ const handleAddNewMission = async (missionData) => {
 
       {/* Action Buttons */}
       <div className="action-buttons">
-        <button 
+        <button
           className="action-btn secondary"
           onClick={handleAddNewMissionClick}
           disabled={allSlotsFilled || saving}
         >
           + Add New Mission
         </button>
-        
-        <button 
+
+        <button
           className="action-btn secondary"
           onClick={handleChooseFromBank}
           disabled={allSlotsFilled || saving}
@@ -415,17 +458,14 @@ const handleAddNewMission = async (missionData) => {
 
       {/* Set Daily Missions Button */}
       <div className="set-missions-section">
-        <button 
+        <button
           className={`set-missions-btn ${allSlotsFilled ? 'enabled' : 'disabled'}`}
           onClick={handleSetDailyMissions}
           disabled={!allSlotsFilled || saving}
         >
-          {saving 
-            ? (isActiveForToday ? 'Updating Daily Missions...' : 'Setting Daily Missions...') 
-            : (isActiveForToday ? 'Update Daily Missions' : 'Set Daily Missions')
-          }
+          {confirmLabel}
         </button>
-        
+
         {!allSlotsFilled && (
           <p className="requirements-text">
             Fill all 3 slots to set your daily missions
@@ -446,19 +486,54 @@ const handleAddNewMission = async (missionData) => {
           <div className="mission-bank-modal">
             <div className="modal-header">
               <h2>Choose from Mission Bank</h2>
-              <button 
+              <button
                 className="close-btn"
                 onClick={() => setShowMissionBank(false)}
               >
                 ×
               </button>
             </div>
-            <MissionList 
+            <MissionList
               selectionMode={true}
               onMissionSelect={(mission) => handleMissionSelect(mission)}
               selectedMissions={dailyMissions.filter(m => m !== null)}
               maxSelections={3}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Date Picker Sheet */}
+      {showDatePicker && (
+        <div className="date-picker-overlay" onClick={() => setShowDatePicker(false)}>
+          <div className="date-picker-sheet" onClick={e => e.stopPropagation()}>
+            <p className="date-picker-heading">Plan for...</p>
+            <button
+              className={`date-picker-option ${targetDate === today ? 'active' : ''}`}
+              onClick={() => handleDateSelect(today)}
+            >
+              Today — {fromDateString(today).format('ddd, MMM D')}
+            </button>
+            <button
+              className={`date-picker-option ${targetDate === tomorrow ? 'active' : ''}`}
+              onClick={() => handleDateSelect(tomorrow)}
+            >
+              Tomorrow — {fromDateString(tomorrow).format('ddd, MMM D')}
+            </button>
+            <div className="date-picker-custom">
+              <label className="date-picker-custom-label" htmlFor="custom-date-input">Choose a date</label>
+              <input
+                id="custom-date-input"
+                type="date"
+                className="date-picker-input"
+                min={today}
+                defaultValue={targetDate !== today && targetDate !== tomorrow ? targetDate : ''}
+                onChange={e => { if (e.target.value) handleDateSelect(e.target.value); }}
+              />
+            </div>
+            <button className="date-picker-cancel" onClick={() => setShowDatePicker(false)}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
