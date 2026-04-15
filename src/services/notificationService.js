@@ -59,7 +59,7 @@ export const checkAndFireDueTodayAlert = async (userId) => {
     if (dueToday.length === 0) return;
 
     const count = dueToday.length;
-    await showNotification('Missions due today', {
+    await showNotification('Missions on deck', {
       body: count === 1
         ? '1 mission is due today'
         : `${count} missions are due today`,

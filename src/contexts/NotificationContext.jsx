@@ -42,8 +42,8 @@ export const NotificationProvider = ({ children }) => {
 
     if (prefs.planYourDay?.enabled) {
       const id = setTimeout(
-        () => showNotification('Plan your day', {
-          body: "Time to pick today's missions",
+        () => showNotification('Ready to plan your day?', {
+          body: "Your next mission awaits",
           url: '/edit-daily-missions',
         }),
         msUntil(prefs.planYourDay.hour, prefs.planYourDay.minute)
@@ -53,8 +53,8 @@ export const NotificationProvider = ({ children }) => {
 
     if (prefs.reviewYourDay?.enabled) {
       const id = setTimeout(
-        () => showNotification('Review your day', {
-          body: 'How did your missions go today?',
+        () => showNotification('Today&apos;s tale is ready', {
+          body: 'Read how your adventure unfolded',
           url: '/daily-review',
         }),
         msUntil(prefs.reviewYourDay.hour, prefs.reviewYourDay.minute)
