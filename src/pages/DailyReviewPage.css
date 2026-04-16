@@ -830,10 +830,7 @@
 }
 
 .daily-review-section--highlight {
-  background: linear-gradient(135deg, #ede9fe, #faf5ff);
-  border-color: #a855f7;
   text-align: center;
-  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.15);
 }
 
 .daily-review-section-title {
@@ -866,7 +863,7 @@
 .review-achievement-name {
   font-size: 11px;
   font-weight: 600;
-  color: #6d28d9;
+  color: var(--color-text-light);
   text-align: center;
   line-height: 1.3;
 }

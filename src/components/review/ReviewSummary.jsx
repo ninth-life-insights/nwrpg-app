@@ -84,21 +84,6 @@ const ReviewSummary = ({
     <div className="review-step">
       <div className="review-step-body">
 
-        {/* Achievements Unlocked */}
-        {newAchievements.length > 0 && (
-          <div className="daily-review-section daily-review-section--highlight">
-            <h3 className="daily-review-section-title">Achievements Unlocked</h3>
-            <div className="review-achievements-row">
-              {newAchievements.map(a => (
-                <div key={a.id} className="review-achievement-item">
-                  <AchievementBadge color={a.badgeColor} icon={a.badgeIcon} badgeImage={a.badgeImage} size="md" />
-                  <span className="review-achievement-name">{a.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Stats Grid */}
         <div className="daily-review-stats">
           <div className="stat-card">
@@ -264,6 +249,21 @@ const ReviewSummary = ({
                   <span className="quest-row-count">
                     {quest.missionsCompleted} mission{quest.missionsCompleted !== 1 ? 's' : ''}
                   </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Achievements Unlocked */}
+        {newAchievements.length > 0 && (
+          <div className="daily-review-section">
+            <h3 className="daily-review-section-title">Achievements Unlocked</h3>
+            <div className="review-achievements-row">
+              {newAchievements.map(a => (
+                <div key={a.id} className="review-achievement-item">
+                  <AchievementBadge color={a.badgeColor} icon={a.badgeIcon} badgeImage={a.badgeImage} size="md" />
+                  <span className="review-achievement-name">{a.name}</span>
                 </div>
               ))}
             </div>
