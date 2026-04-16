@@ -9,11 +9,10 @@ const EditDailyMissionsModal = ({
   onSave 
 }) => {
   const handleComplete = async () => {
-    // Call the parent's onSave callback to refresh data
     if (onSave) {
       await onSave();
     }
-    // Modal will close automatically via onSave callback
+    onClose();
   };
 
   const handleBackdropClick = (e) => {
