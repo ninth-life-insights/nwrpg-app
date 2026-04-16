@@ -45,10 +45,15 @@ const getTaskAgeLabel = (createdAt) => {
  * @returns {Array} Array of encounter objects with id
  */
 export const getEncountersForDate = async (userId, date) => {
-  const ref = collection(db, 'users', userId, 'encounters');
-  const q = query(ref, where('date', '==', date), orderBy('createdAt', 'asc'));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const ref = collection(db, 'users', userId, 'encounters');
+    const q = query(ref, where('date', '==', date), orderBy('createdAt', 'asc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error fetching encounters:', error);
+    throw error;
+  }
 };
 
 /**
@@ -58,22 +63,32 @@ export const getEncountersForDate = async (userId, date) => {
  * @returns {string} The new document ID
  */
 export const addEncounter = async (userId, encounterData) => {
-  const ref = collection(db, 'users', userId, 'encounters');
-  const docRef = await addDoc(ref, {
-    title: encounterData.title,
-    notes: encounterData.notes || '',
-    date: encounterData.date,
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const ref = collection(db, 'users', userId, 'encounters');
+    const docRef = await addDoc(ref, {
+      title: encounterData.title,
+      notes: encounterData.notes || '',
+      date: encounterData.date,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding encounter:', error);
+    throw error;
+  }
 };
 
 /**
  * Deletes an encounter by document ID.
  */
 export const removeEncounter = async (userId, encounterId) => {
-  const ref = doc(db, 'users', userId, 'encounters', encounterId);
-  await deleteDoc(ref);
+  try {
+    const ref = doc(db, 'users', userId, 'encounters', encounterId);
+    await deleteDoc(ref);
+  } catch (error) {
+    console.error('Error removing encounter:', error);
+    throw error;
+  }
 };
 
 // ─── Adventure Log ────────────────────────────────────────────────────────────
@@ -83,10 +98,15 @@ export const removeEncounter = async (userId, encounterId) => {
  * @returns {Array} Array of snapshot objects with date as key
  */
 export const getAllDailySnapshots = async (userId) => {
-  const ref = collection(db, 'users', userId, 'dailySnapshots');
-  const q = query(ref, orderBy('date', 'desc'));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const ref = collection(db, 'users', userId, 'dailySnapshots');
+    const q = query(ref, orderBy('date', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error fetching daily snapshots:', error);
+    throw error;
+  }
 };
 
 /**
@@ -94,16 +114,21 @@ export const getAllDailySnapshots = async (userId) => {
  * Used to compute rolling averages for the AI prompt baseline.
  */
 export const getRecentSnapshots = async (userId, beforeDate, days = 30) => {
-  const startDate = dayjs(beforeDate).subtract(days, 'day').format('YYYY-MM-DD');
-  const ref = collection(db, 'users', userId, 'dailySnapshots');
-  const q = query(
-    ref,
-    where('date', '>=', startDate),
-    where('date', '<', beforeDate),
-    orderBy('date', 'desc')
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const startDate = dayjs(beforeDate).subtract(days, 'day').format('YYYY-MM-DD');
+    const ref = collection(db, 'users', userId, 'dailySnapshots');
+    const q = query(
+      ref,
+      where('date', '>=', startDate),
+      where('date', '<', beforeDate),
+      orderBy('date', 'desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error fetching recent snapshots:', error);
+    throw error;
+  }
 };
 
 const computeRollingAverages = (snapshots) => {
@@ -149,27 +174,32 @@ const computeRollingAverages = (snapshots) => {
  * @returns {Array} Array of { date, missionCount } objects, sorted by date desc
  */
 export const getDatesWithActivity = async (userId) => {
-  const logRef = collection(db, 'users', userId, 'activityLog');
-  const q = query(logRef, where('type', '==', 'mission_completed'));
-  const snap = await getDocs(q);
+  try {
+    const logRef = collection(db, 'users', userId, 'activityLog');
+    const q = query(logRef, where('type', '==', 'mission_completed'));
+    const snap = await getDocs(q);
 
-  // Aggregate mission counts per date
-  const dateCounts = {};
-  snap.docs.forEach(d => {
-    const { date } = d.data();
-    if (date) dateCounts[date] = (dateCounts[date] || 0) + 1;
-  });
+    // Aggregate mission counts per date
+    const dateCounts = {};
+    snap.docs.forEach(d => {
+      const { date } = d.data();
+      if (date) dateCounts[date] = (dateCounts[date] || 0) + 1;
+    });
 
-  // Fetch existing snapshots to exclude those dates
-  const snapshotRef = collection(db, 'users', userId, 'dailySnapshots');
-  const snapshotSnap = await getDocs(snapshotRef);
-  const snapshotDates = new Set(snapshotSnap.docs.map(d => d.id));
+    // Fetch existing snapshots to exclude those dates
+    const snapshotRef = collection(db, 'users', userId, 'dailySnapshots');
+    const snapshotSnap = await getDocs(snapshotRef);
+    const snapshotDates = new Set(snapshotSnap.docs.map(d => d.id));
 
-  // Return only dates without snapshots, sorted descending
-  return Object.entries(dateCounts)
-    .filter(([date]) => !snapshotDates.has(date))
-    .map(([date, missionCount]) => ({ date, missionCount }))
-    .sort((a, b) => b.date.localeCompare(a.date));
+    // Return only dates without snapshots, sorted descending
+    return Object.entries(dateCounts)
+      .filter(([date]) => !snapshotDates.has(date))
+      .map(([date, missionCount]) => ({ date, missionCount }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  } catch (error) {
+    console.error('Error fetching dates with activity:', error);
+    throw error;
+  }
 };
 
 // ─── Snapshot Read / Write Helpers ───────────────────────────────────────────
@@ -178,9 +208,14 @@ export const getDatesWithActivity = async (userId) => {
  * Returns the saved snapshot for a given date, or null if none exists.
  */
 export const getDailySnapshot = async (userId, dateString) => {
-  const ref = doc(db, 'users', userId, 'dailySnapshots', dateString);
-  const snap = await getDoc(ref);
-  return snap.exists() ? snap.data() : null;
+  try {
+    const ref = doc(db, 'users', userId, 'dailySnapshots', dateString);
+    const snap = await getDoc(ref);
+    return snap.exists() ? snap.data() : null;
+  } catch (error) {
+    console.error('Error fetching daily snapshot:', error);
+    throw error;
+  }
 };
 
 /**
@@ -188,11 +223,16 @@ export const getDailySnapshot = async (userId, dateString) => {
  * Sets userEditedStory so generateDailySnapshot can preserve it on rebuild.
  */
 export const updateSnapshotStory = async (userId, dateString, storyText) => {
-  const ref = doc(db, 'users', userId, 'dailySnapshots', dateString);
-  await updateDoc(ref, {
-    userEditedStory: storyText,
-    userEditedStoryAt: serverTimestamp(),
-  });
+  try {
+    const ref = doc(db, 'users', userId, 'dailySnapshots', dateString);
+    await updateDoc(ref, {
+      userEditedStory: storyText,
+      userEditedStoryAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error updating snapshot story:', error);
+    throw error;
+  }
 };
 
 // ─── Activity Log ─────────────────────────────────────────────────────────────
@@ -286,6 +326,7 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
  * @returns {object} The snapshot data that was written
  */
 export const generateDailySnapshot = async (userId, dateString, displayName) => {
+  try {
   const date = dateString || toDateString(new Date());
 
   // 1. Fetch all activity log events for this date
@@ -474,6 +515,10 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
   await setDoc(snapshotRef, snapshotData);
 
   return snapshotData;
+  } catch (error) {
+    console.error('Error generating daily snapshot:', error);
+    throw error;
+  }
 };
 
 // ─── AI Story Generation ──────────────────────────────────────────────────────
@@ -486,6 +531,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
  * @returns {string} The generated story text
  */
 export const generateDailyStory = async (data) => {
+  try {
   const {
     displayName,
     completedMissions,
@@ -612,4 +658,8 @@ console.log('System prompt: ', systemPrompt);
   if (!textBlock) throw new Error('No text in API response');
 
   return textBlock.text.trim();
+  } catch (error) {
+    console.error('Error generating daily story:', error);
+    throw error;
+  }
 };

@@ -1,0 +1,42 @@
+/* src/components/ui/ErrorMessage.css */
+
+.error-message-block {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+}
+
+.error-message-icon {
+  flex-shrink: 0;
+  font-size: var(--font-size-base);
+}
+
+.error-message-text {
+  flex: 1;
+}
+
+.error-message-retry {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 3px var(--space-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.error-message-retry:hover {
+  background-color: var(--color-error);
+  color: #fff;
+}
