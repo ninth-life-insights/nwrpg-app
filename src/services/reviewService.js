@@ -174,6 +174,17 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
       console.warn('Could not read daily config for activity log:', configError);
     }
 
+    let questTitle = null;
+    if (missionData.questId) {
+      try {
+        const { getQuest } = await import('./questService');
+        const quest = await getQuest(userId, missionData.questId);
+        questTitle = quest?.title || null;
+      } catch (questError) {
+        console.warn('Could not read quest title for activity log:', questError);
+      }
+    }
+
     await addDoc(logRef, {
       type: 'mission_completed',
       date: today,
@@ -192,7 +203,7 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
 
       // Quest context
       questId: missionData.questId || null,
-      questTitle: missionData.questTitle || null,
+      questTitle: questTitle,
 
       // Level-up events
       leveledUp: completionResult.leveledUp || false,
