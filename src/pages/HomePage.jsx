@@ -135,7 +135,7 @@ const HomePage = () => {
       } catch (error) {
         console.error('Error fetching user data:', error);
         setDailyMissions([]);
-        setLoadError("Couldn't load your missions.");
+        setLoadError("Your missions didn't load.");
       } finally {
         setLoading(false);
       }
@@ -222,7 +222,7 @@ const HomePage = () => {
       
     } catch (err) {
       console.error('Error toggling mission completion:', err);
-      setActionError(isCurrentlyCompleted ? "Couldn't undo that. Try again." : "Couldn't mark that done. Try again.");
+      setActionError(isCurrentlyCompleted ? "That undo didn't go through. Try again." : "That mission didn't complete. Try again.");
     }
   };
 
@@ -241,7 +241,7 @@ const HomePage = () => {
       
     } catch (error) {
       console.error('Failed to delete mission:', error);
-      setActionError("Couldn't delete that mission. Try again.");
+      setActionError("That mission didn't delete. Try again.");
     }
   };
 

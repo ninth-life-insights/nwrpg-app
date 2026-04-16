@@ -35,7 +35,7 @@ const BasePage = () => {
       
     } catch (error) {
       console.error('Error fetching rooms:', error);
-      setLoadError("Couldn't load your rooms.");
+      setLoadError("Your rooms didn't load.");
     } finally {
       setLoading(false);
     }

@@ -133,7 +133,7 @@ const CharacterCreationPage = () => {
       
     } catch (error) {
       console.error('Error creating character:', error);
-      setError("Couldn't create your character. Your choices are saved — try again.");
+      setError("Your character didn't save. Your choices are still here — try again.");
     } finally {
       setLoading(false);
     }

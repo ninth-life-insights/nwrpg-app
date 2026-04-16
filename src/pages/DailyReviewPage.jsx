@@ -60,7 +60,7 @@ const DailyReviewPage = () => {
         setEncounters(existingEncounters);
       } catch (err) {
         console.error('Error initializing daily review:', err);
-        setLoadError("Couldn't load your review. Try again.");
+        setLoadError("Your review didn't load.");
       }
     };
     init();

@@ -136,7 +136,7 @@ const EditDailyMissionsPage = ({
 
     } catch (err) {
       console.error('Error loading existing daily missions:', err);
-      setError("Couldn't load your existing daily missions.");
+      setError("Your daily plan didn't load.");
     } finally {
       setLoading(false);
     }

@@ -71,7 +71,7 @@ const SettingsPage = () => {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      setSaveError("Settings couldn't be saved. Try again.");
+      setSaveError("Your settings didn't save. Try again.");
     } finally {
       setSaving(false);
     }

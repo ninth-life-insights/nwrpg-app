@@ -48,7 +48,7 @@ const MissionBank = () => {
       setUserProfile(profile);
     } catch (err) {
       console.error('Error loading user profile:', err);
-      setLoadError("Couldn't load your missions.");
+      setLoadError("Your missions didn't load.");
     }
   };
 
