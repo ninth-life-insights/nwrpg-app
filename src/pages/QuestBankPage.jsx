@@ -12,6 +12,8 @@ import {
 import { getAllMissions } from '../services/missionService';
 import { getNextMission } from '../types/Quests';
 import { completeMissionWithRecurrence } from '../services/missionService';
+import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './QuestBankPage.css';
 
 const QuestBank = () => {
@@ -21,7 +23,9 @@ const QuestBank = () => {
   const [quests, setQuests] = useState([]);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [showAddQuest, setShowAddQuest] = useState(false);
   const [includeCompleted, setIncludeCompleted] = useState(false);
 
@@ -30,31 +34,39 @@ const QuestBank = () => {
       loadQuests();
       loadMissions();
     }
-  }, [currentUser, includeCompleted]);
+  }, [currentUser, includeCompleted, reloadTrigger]);
 
   const loadQuests = async () => {
+    if (isDefinitelyOffline()) {
+      setLoadError("Your quests didn't load. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadError(null);
+    setIsLoadingSlow(false);
+    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      setLoading(true);
-      setError(null);
-      
       let questData = [];
-      
       if (includeCompleted) {
-        const [active, completed] = await Promise.all([
-          getActiveQuests(currentUser.uid),
-          getCompletedQuests(currentUser.uid)
-        ]);
+        const [active, completed] = await withTimeout(
+          Promise.all([
+            getActiveQuests(currentUser.uid),
+            getCompletedQuests(currentUser.uid)
+          ])
+        );
         questData = [...active, ...completed];
       } else {
-        questData = await getActiveQuests(currentUser.uid);
+        questData = await withTimeout(getActiveQuests(currentUser.uid));
       }
-      
       setQuests(questData);
     } catch (err) {
       console.error('Error loading quests:', err);
-      setError('Failed to load quests');
+      setLoadError(getLoadErrorMessage(err, 'quests'));
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
+      setIsLoadingSlow(false);
     }
   };
 
@@ -113,21 +125,23 @@ const QuestBank = () => {
   if (loading) {
     return (
       <div className="quest-bank-page">
-        <div className="loading-state">Loading quests...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="quest-bank-page">
-        <div className="error-state">{error}</div>
+        <div className="loading-state">
+          Loading quests...
+          {isLoadingSlow && <p className="loading-slow-hint">Still searching the realm...</p>}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="quest-bank-page">
+      {loadError && (
+        <ErrorMessage
+          message={loadError}
+          onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }}
+        />
+      )}
+
       {/* Page Header */}
       <div className="quest-bank-header">
         <div className="top-header">

@@ -11,3 +11,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Shown after 3s of loading to hint at a slow connection */
+.loading-slow-hint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-style: italic;
+}

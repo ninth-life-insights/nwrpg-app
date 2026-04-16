@@ -16,6 +16,7 @@ import {
 import { db } from './firebase/config';
 import { getUserProfile } from './userService';
 import { toDateString } from '../utils/dateHelpers';
+import { withTimeout, AI_TIMEOUT_MS } from '../utils/fetchWithTimeout';
 import dayjs from 'dayjs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -468,7 +469,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
 
   if (missionsCompleted > 0) {
     try {
-      aiStory = await generateDailyStory(storyData);
+      aiStory = await withTimeout(generateDailyStory(storyData), AI_TIMEOUT_MS);
       console.log('aiStory: ', aiStory);
       aiStoryGeneratedAt = new Date().toISOString();
     } catch (error) {

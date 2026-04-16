@@ -24,6 +24,7 @@ import OtherMissionsStep from '../components/review/OtherMissionsStep';
 import EncountersStep from '../components/review/EncountersStep';
 import ReviewSummary from '../components/review/ReviewSummary';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import { toDateString } from '../utils/dateHelpers';
 import './DailyReviewPage.css';
 
@@ -44,6 +45,7 @@ const DailyReviewPage = () => {
   const [todayAchievements, setTodayAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   const today = toDateString(new Date());
 
@@ -51,20 +53,26 @@ const DailyReviewPage = () => {
   useEffect(() => {
     if (!currentUser) return;
     const init = async () => {
+      if (isDefinitelyOffline()) {
+        setLoadError("Your review didn't load. Check your connection and try again.");
+        return;
+      }
       try {
-        const [missions, existingEncounters] = await Promise.all([
-          getTodaysDailyMissions(currentUser.uid),
-          getEncountersForDate(currentUser.uid, today),
-        ]);
+        const [missions, existingEncounters] = await withTimeout(
+          Promise.all([
+            getTodaysDailyMissions(currentUser.uid),
+            getEncountersForDate(currentUser.uid, today),
+          ])
+        );
         setDailyMissions(missions);
         setEncounters(existingEncounters);
       } catch (err) {
         console.error('Error initializing daily review:', err);
-        setLoadError("Your review didn't load.");
+        setLoadError(getLoadErrorMessage(err, 'review'));
       }
     };
     init();
-  }, [currentUser]);
+  }, [currentUser, reloadTrigger]);
 
   const refreshDailyMissions = async () => {
     const missions = await getTodaysDailyMissions(currentUser.uid);
@@ -98,10 +106,12 @@ const DailyReviewPage = () => {
     setSummaryLoading(true);
     setSubmitError(null);
     try {
-      const [profile, earnedToday] = await Promise.all([
-        getUserProfile(currentUser.uid),
-        getAchievementsAwardedOnDate(currentUser.uid, today),
-      ]);
+      const [profile, earnedToday] = await withTimeout(
+        Promise.all([
+          getUserProfile(currentUser.uid),
+          getAchievementsAwardedOnDate(currentUser.uid, today),
+        ])
+      );
       const displayName = profile?.displayName || 'You';
       const result = await generateDailySnapshot(currentUser.uid, today, displayName);
       // Attach encounters to snapshot for display (they're stored separately in Firestore)
@@ -161,7 +171,7 @@ const DailyReviewPage = () => {
         {loadError && (
           <ErrorMessage
             message={loadError}
-            onRetry={() => { setLoadError(null); }}
+            onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }}
             className="daily-review-load-error"
           />
         )}

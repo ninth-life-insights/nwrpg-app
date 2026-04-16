@@ -8,6 +8,8 @@ import {
   getEncountersForDate,
 } from '../services/reviewService';
 import ReviewSummary from '../components/review/ReviewSummary';
+import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './AdventureLogDetailPage.css';
 
 // Format "2026-04-09" → "Wednesday, Apr 9, 2026"
@@ -24,25 +26,40 @@ const AdventureLogDetailPage = () => {
 
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useEffect(() => {
     if (!currentUser || !date) return;
     const load = async () => {
+      if (isDefinitelyOffline()) {
+        setLoadError("This entry didn't load. Check your connection and try again.");
+        setLoading(false);
+        return;
+      }
       setLoading(true);
+      setIsLoadingSlow(false);
+      const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
-        const [snap, encounters] = await Promise.all([
-          getDailySnapshot(currentUser.uid, date),
-          getEncountersForDate(currentUser.uid, date),
-        ]);
+        const [snap, encounters] = await withTimeout(
+          Promise.all([
+            getDailySnapshot(currentUser.uid, date),
+            getEncountersForDate(currentUser.uid, date),
+          ])
+        );
         if (snap) setSnapshot({ ...snap, encounters });
       } catch (err) {
         console.error('Error loading snapshot:', err);
+        setLoadError(getLoadErrorMessage(err, 'this entry'));
       } finally {
+        clearTimeout(slowTimer);
         setLoading(false);
+        setIsLoadingSlow(false);
       }
     };
     load();
-  }, [currentUser, date]);
+  }, [currentUser, date, reloadTrigger]);
 
   const handleUpdateStory = async (text) => {
     await updateSnapshotStory(currentUser.uid, date, text);
@@ -66,11 +83,21 @@ const AdventureLogDetailPage = () => {
         <div className="adventure-log-detail-header-spacer" />
       </header>
 
+      {loadError && (
+        <ErrorMessage
+          message={loadError}
+          onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }}
+        />
+      )}
+
       {loading ? (
         <div className="adventure-log-detail-loading">
-          <p>Loading entry...</p>
+          <p>
+            Loading entry...
+            {isLoadingSlow && <span className="loading-slow-hint"> Still searching the realm...</span>}
+          </p>
         </div>
-      ) : !snapshot ? (
+      ) : loadError ? null : !snapshot ? (
         <div className="adventure-log-detail-empty">
           <span className="material-icons">search_off</span>
           <p>No entry found for this date.</p>

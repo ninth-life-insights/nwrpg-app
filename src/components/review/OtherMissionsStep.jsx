@@ -8,6 +8,7 @@ import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 
 const FILTERS = ['All', 'Quests', 'Due Today', 'General'];
 
@@ -34,13 +35,20 @@ const OtherMissionsStep = ({
     const load = async () => {
       if (!currentUser) return;
       setLoading(true);
+      if (isDefinitelyOffline()) {
+        setLoadError("Your missions didn't load. Check your connection and try again.");
+        setLoading(false);
+        return;
+      }
       try {
-        const [allActive, allCompleted, config, questData] = await Promise.all([
-          getActiveMissions(currentUser.uid),
-          getCompletedMissions(currentUser.uid),
-          getDailyMissionsConfig(currentUser.uid),
-          getAllQuests(currentUser.uid),
-        ]);
+        const [allActive, allCompleted, config, questData] = await withTimeout(
+          Promise.all([
+            getActiveMissions(currentUser.uid),
+            getCompletedMissions(currentUser.uid),
+            getDailyMissionsConfig(currentUser.uid),
+            getAllQuests(currentUser.uid),
+          ])
+        );
         const dailyIds = new Set(
           config?.setForDate === today ? (config?.missionIds ?? []) : []
         );
@@ -53,7 +61,7 @@ const OtherMissionsStep = ({
         setQuests(questData);
       } catch (err) {
         console.error('Error loading other missions:', err);
-        setLoadError("Your missions didn't load.");
+        setLoadError(getLoadErrorMessage(err, 'missions'));
       } finally {
         setLoading(false);
       }

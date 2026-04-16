@@ -6,6 +6,7 @@ import { getMergedAchievementLibrary } from '../services/achievementService';
 import AchievementCard from '../components/achievements/AchievementCard';
 import CreateCustomAchievementModal from '../components/achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './AchievementsPage.css';
 
 const AchievementsPage = () => {
@@ -13,20 +14,31 @@ const AchievementsPage = () => {
   const navigate = useNavigate();
   const [library, setLibrary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchLibrary = useCallback(async () => {
     if (!currentUser) return;
+    if (isDefinitelyOffline()) {
+      setLoadError("Your achievements didn't load. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     setLoadError(null);
+    setIsLoadingSlow(false);
+    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const data = await getMergedAchievementLibrary(currentUser.uid);
+      const data = await withTimeout(getMergedAchievementLibrary(currentUser.uid));
       setLibrary(data);
     } catch (error) {
       console.error('Error fetching achievements:', error);
-      setLoadError("Your achievements didn't load.");
+      setLoadError(getLoadErrorMessage(error, 'achievements'));
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
+      setIsLoadingSlow(false);
     }
   }, [currentUser]);
 
@@ -42,7 +54,10 @@ const AchievementsPage = () => {
   if (loading) {
     return (
       <div className="achievements-page">
-        <div className="loading">Loading achievements...</div>
+        <div className="loading">
+          Loading achievements...
+          {isLoadingSlow && <p className="loading-slow-hint">The quest board is being restocked...</p>}
+        </div>
       </div>
     );
   }

@@ -10,6 +10,8 @@ import {
 } from '../services/reviewService';
 import AdventureLogCard from '../components/review/AdventureLogCard';
 import AdventureLogFilterModal, { DEFAULT_FILTERS } from '../components/review/AdventureLogFilterModal';
+import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './AdventureLogPage.css';
 
 // Format "2026-04" → "April 2026"
@@ -64,30 +66,45 @@ const AdventureLogPage = () => {
   const [snapshots, setSnapshots] = useState([]);
   const [placeholders, setPlaceholders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [generatingDate, setGeneratingDate] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   const loadData = async () => {
     if (!currentUser) return;
+    if (isDefinitelyOffline()) {
+      setLoadError("Your adventure log didn't load. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setIsLoadingSlow(false);
+    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [snaps, holes] = await Promise.all([
-        getAllDailySnapshots(currentUser.uid),
-        getDatesWithActivity(currentUser.uid),
-      ]);
+      const [snaps, holes] = await withTimeout(
+        Promise.all([
+          getAllDailySnapshots(currentUser.uid),
+          getDatesWithActivity(currentUser.uid),
+        ])
+      );
       setSnapshots(snaps);
       setPlaceholders(holes);
     } catch (err) {
       console.error('Error loading adventure log:', err);
+      setLoadError(getLoadErrorMessage(err, 'adventure log'));
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
+      setIsLoadingSlow(false);
     }
   };
 
   useEffect(() => {
     loadData();
-  }, [currentUser]);
+  }, [currentUser, reloadTrigger]);
 
   const handleGenerate = async (date) => {
     if (generatingDate) return;
@@ -158,10 +175,20 @@ const AdventureLogPage = () => {
         </button>
       </header>
 
+      {loadError && (
+        <ErrorMessage
+          message={loadError}
+          onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }}
+        />
+      )}
+
       <div className="adventure-log-content">
         {loading ? (
-          <p className="adventure-log-loading">Loading your chronicle...</p>
-        ) : grouped.length === 0 ? (
+          <p className="adventure-log-loading">
+            Loading your chronicle...
+            {isLoadingSlow && <span className="loading-slow-hint"> The quest board is being restocked...</span>}
+          </p>
+        ) : loadError ? null : grouped.length === 0 ? (
           <div className="adventure-log-empty">
             <span className="material-icons">auto_stories</span>
             <p>No entries yet. Complete some missions and do your first daily review to start your log.</p>

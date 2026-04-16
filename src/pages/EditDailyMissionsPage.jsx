@@ -47,6 +47,7 @@ import {
   isMissionCompleted
 } from '../utils/missionHelpers';
 
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './EditDailyMissionsPage.css';
 
 const EditDailyMissionsPage = ({
@@ -68,6 +69,7 @@ const EditDailyMissionsPage = ({
   const [showMissionBank, setShowMissionBank] = useState(false);
   const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [currentConfig, setCurrentConfig] = useState(null);
@@ -82,63 +84,72 @@ const EditDailyMissionsPage = ({
 
   const loadExistingDailyMissions = async () => {
     if (!currentUser) return;
+    if (isDefinitelyOffline()) {
+      setError("Your daily plan didn't load. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setDailyMissions([null, null, null]);
+    setHasSavedPlan(false);
+    setIsLoadingSlow(false);
+    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
 
     try {
-      setLoading(true);
-      setError('');
-      setDailyMissions([null, null, null]);
-      setHasSavedPlan(false);
+      await withTimeout((async () => {
+        let missionIds = null;
 
-      let missionIds = null;
+        if (targetDate === today) {
+          // Today: use config as the source of truth (existing logic)
+          const config = await getDailyMissionsConfig(currentUser.uid);
+          setCurrentConfig(config);
 
-      if (targetDate === today) {
-        // Today: use config as the source of truth (existing logic)
-        const config = await getDailyMissionsConfig(currentUser.uid);
-        setCurrentConfig(config);
-
-        if (config && config.setForDate === today && config.missionIds?.length > 0) {
-          missionIds = config.missionIds;
+          if (config && config.setForDate === today && config.missionIds?.length > 0) {
+            missionIds = config.missionIds;
+          }
+        } else {
+          // Future date: load from dailyHistory
+          setCurrentConfig(null);
+          const history = await getDailyMissionsForDate(currentUser.uid, targetDate);
+          if (history?.selectedMissionIds?.length > 0) {
+            missionIds = history.selectedMissionIds;
+          }
         }
-      } else {
-        // Future date: load from dailyHistory
-        setCurrentConfig(null);
-        const history = await getDailyMissionsForDate(currentUser.uid, targetDate);
-        if (history?.selectedMissionIds?.length > 0) {
-          missionIds = history.selectedMissionIds;
+
+        // Track whether a saved plan exists for this date (used for "Set" vs "Update" label)
+        setHasSavedPlan(missionIds != null);
+
+        if (missionIds) {
+          const [activeMissions, completedMissions] = await Promise.all([
+            getActiveMissions(currentUser.uid),
+            getCompletedMissions ? getCompletedMissions(currentUser.uid) : Promise.resolve([])
+          ]);
+
+          const allMissions = [...activeMissions, ...completedMissions];
+
+          const selectedMissions = missionIds
+            .map(missionId => {
+              const mission = allMissions.find(m => m.id === missionId);
+              if (!mission) console.warn('Mission not found for ID:', missionId);
+              return mission;
+            })
+            .filter(mission => mission != null);
+
+          const newDailyMissions = [null, null, null];
+          selectedMissions.forEach((mission, index) => {
+            if (index < 3) newDailyMissions[index] = mission;
+          });
+          setDailyMissions(newDailyMissions);
         }
-      }
-
-      // Track whether a saved plan exists for this date (used for "Set" vs "Update" label)
-      setHasSavedPlan(missionIds != null);
-
-      if (missionIds) {
-        const [activeMissions, completedMissions] = await Promise.all([
-          getActiveMissions(currentUser.uid),
-          getCompletedMissions ? getCompletedMissions(currentUser.uid) : Promise.resolve([])
-        ]);
-
-        const allMissions = [...activeMissions, ...completedMissions];
-
-        const selectedMissions = missionIds
-          .map(missionId => {
-            const mission = allMissions.find(m => m.id === missionId);
-            if (!mission) console.warn('Mission not found for ID:', missionId);
-            return mission;
-          })
-          .filter(mission => mission != null);
-
-        const newDailyMissions = [null, null, null];
-        selectedMissions.forEach((mission, index) => {
-          if (index < 3) newDailyMissions[index] = mission;
-        });
-        setDailyMissions(newDailyMissions);
-      }
-
+      })());
     } catch (err) {
       console.error('Error loading existing daily missions:', err);
-      setError("Your daily plan didn't load.");
+      setError(getLoadErrorMessage(err, 'daily plan'));
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
+      setIsLoadingSlow(false);
     }
   };
 
@@ -269,6 +280,7 @@ const handleAddNewMission = async (missionData) => {
       <div className="daily-missions-container">
         <div className="loading-message">
           Loading daily missions...
+          {isLoadingSlow && <p className="loading-slow-hint">The dungeon is loading slowly. Try not to get eaten.</p>}
         </div>
       </div>
     );

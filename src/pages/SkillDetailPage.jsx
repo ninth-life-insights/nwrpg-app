@@ -9,6 +9,7 @@ import MissionDetailView from '../components/missions/MissionCardFull';
 import { completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './SkillDetailPage.css';
 
 const SP_PER_SKILL_LEVEL = 50;
@@ -22,6 +23,7 @@ const SkillDetailPage = () => {
   const [skillData, setSkillData] = useState(null);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [selectedMission, setSelectedMission] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
@@ -29,12 +31,22 @@ const SkillDetailPage = () => {
 
   const fetchData = async () => {
     if (!currentUser) return;
+    if (isDefinitelyOffline()) {
+      setLoadError("Your skill details didn't load. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setIsLoadingSlow(false);
+    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [profile, activeMissions, completedMissions] = await Promise.all([
-        getUserProfile(currentUser.uid),
-        getActiveMissions(currentUser.uid),
-        getCompletedMissions(currentUser.uid),
-      ]);
+      const [profile, activeMissions, completedMissions] = await withTimeout(
+        Promise.all([
+          getUserProfile(currentUser.uid),
+          getActiveMissions(currentUser.uid),
+          getCompletedMissions(currentUser.uid),
+        ])
+      );
 
       // Skill progress
       const saved = profile?.skills?.[decodedSkillName] || { totalSP: 0, level: 1 };
@@ -52,9 +64,11 @@ const SkillDetailPage = () => {
       setMissions(filtered);
     } catch (error) {
       console.error('Error fetching skill detail data:', error);
-      setLoadError("Your skill details didn't load.");
+      setLoadError(getLoadErrorMessage(error, 'skill details'));
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
+      setIsLoadingSlow(false);
     }
   };
 
@@ -113,7 +127,10 @@ const SkillDetailPage = () => {
   if (loading) {
     return (
       <div className="skill-detail-page">
-        <div className="loading">Loading...</div>
+        <div className="loading">
+          Loading...
+          {isLoadingSlow && <p className="loading-slow-hint">Still searching the realm...</p>}
+        </div>
       </div>
     );
   }

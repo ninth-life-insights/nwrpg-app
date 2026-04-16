@@ -7,6 +7,7 @@ import { getAllMissions } from '../services/missionService';
 import RoomCard from '../components/base/RoomCard';
 import AddRoomModal from '../components/base/AddRoomModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './BasePage.css';
 
 const BasePage = () => {
@@ -15,29 +16,32 @@ const BasePage = () => {
   const [rooms, setRooms] = useState([]);
   const [roomStats, setRoomStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
 
   const fetchRoomsAndStats = async () => {
     if (!currentUser) return;
-
+    if (isDefinitelyOffline()) {
+      setLoadError("Your rooms didn't load. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setIsLoadingSlow(false);
+    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      setLoading(true);
-      
-      // Get all missions for stats calculation
-      const missions = await getAllMissions(currentUser.uid);
-      
-      // Get rooms with stats
-      const roomsWithStats = await getAllRoomStats(currentUser.uid, missions);
-      
+      const missions = await withTimeout(getAllMissions(currentUser.uid));
+      const roomsWithStats = await withTimeout(getAllRoomStats(currentUser.uid, missions));
       setRoomStats(roomsWithStats);
       setRooms(roomsWithStats);
-      
     } catch (error) {
       console.error('Error fetching rooms:', error);
-      setLoadError("Your rooms didn't load.");
+      setLoadError(getLoadErrorMessage(error, 'rooms'));
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
+      setIsLoadingSlow(false);
     }
   };
 
@@ -61,7 +65,10 @@ const BasePage = () => {
   if (loading) {
     return (
       <div className="base-page-container">
-        <div className="loading">Loading your base...</div>
+        <div className="loading">
+          Loading your base...
+          {isLoadingSlow && <p className="loading-slow-hint">Your messenger raven is taking the scenic route...</p>}
+        </div>
       </div>
     );
   }

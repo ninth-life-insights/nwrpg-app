@@ -27,6 +27,7 @@ import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -36,6 +37,7 @@ const HomePage = () => {
   const [dailyMissions, setDailyMissions] = useState([]);
   const [dailyMissionStatus, setDailyMissionStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
   const navigate = useNavigate();
   const [selectedMission, setSelectedMission] = useState(null);
@@ -114,30 +116,34 @@ const HomePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!currentUser) return;
-      
+      if (isDefinitelyOffline()) {
+        setLoadError("Your missions didn't load. Check your connection and try again.");
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setIsLoadingSlow(false);
+      const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
-        setLoading(true);
-
-        // Fetch character data (for avatar/name)
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const [userDoc, profile] = await withTimeout(
+          Promise.all([
+            getDoc(doc(db, 'users', currentUser.uid)),
+            getUserProfile(currentUser.uid),
+          ])
+        );
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setCharacter(userData.character);
+          setCharacter(userDoc.data().character);
         }
-
-        // NEW: Fetch user profile (for XP/level)
-        const profile = await getUserProfile(currentUser.uid);
         setUserProfile(profile);
-
-        // Fetch daily missions
         await fetchDailyMissions();
-        
       } catch (error) {
         console.error('Error fetching user data:', error);
         setDailyMissions([]);
-        setLoadError("Your missions didn't load.");
+        setLoadError(getLoadErrorMessage(error, 'missions'));
       } finally {
+        clearTimeout(slowTimer);
         setLoading(false);
+        setIsLoadingSlow(false);
       }
     };
 
@@ -183,7 +189,10 @@ const HomePage = () => {
   if (loading) {
     return (
       <div className="homepage-container">
-        <div className="loading">Loading your adventure...</div>
+        <div className="loading">
+          Loading your adventure...
+          {isLoadingSlow && <p className="loading-slow-hint">Your messenger raven is taking the scenic route...</p>}
+        </div>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import { getUserProfile } from '../services/userService';
 import { useNavigate } from 'react-router-dom';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -43,12 +44,16 @@ const MissionBank = () => {
   }, [currentUser]);
 
   const loadUserProfile = async () => {
+    if (isDefinitelyOffline()) {
+      setLoadError("Your missions didn't load. Check your connection and try again.");
+      return;
+    }
     try {
-      const profile = await getUserProfile(currentUser.uid);
+      const profile = await withTimeout(getUserProfile(currentUser.uid));
       setUserProfile(profile);
     } catch (err) {
       console.error('Error loading user profile:', err);
-      setLoadError("Your missions didn't load.");
+      setLoadError(getLoadErrorMessage(err, 'missions'));
     }
   };
 
