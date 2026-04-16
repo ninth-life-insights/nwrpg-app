@@ -71,6 +71,8 @@ const EditDailyMissionsPage = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [currentConfig, setCurrentConfig] = useState(null);
+  // True only when a previously-saved plan was found for targetDate on load
+  const [hasSavedPlan, setHasSavedPlan] = useState(false);
 
   // Reload whenever the target date changes
   useEffect(() => {
@@ -85,6 +87,7 @@ const EditDailyMissionsPage = ({
       setLoading(true);
       setError('');
       setDailyMissions([null, null, null]);
+      setHasSavedPlan(false);
 
       let missionIds = null;
 
@@ -104,6 +107,9 @@ const EditDailyMissionsPage = ({
           missionIds = history.selectedMissionIds;
         }
       }
+
+      // Track whether a saved plan exists for this date (used for "Set" vs "Update" label)
+      setHasSavedPlan(missionIds != null);
 
       if (missionIds) {
         const [activeMissions, completedMissions] = await Promise.all([
@@ -271,7 +277,7 @@ const handleAddNewMission = async (missionData) => {
   const isTargetToday = targetDate === today;
   const isActiveForDate = isTargetToday
     ? (currentConfig && currentConfig.setForDate === today && currentConfig.missionIds?.length > 0)
-    : dailyMissions.some(m => m !== null);
+    : hasSavedPlan;
 
   // Human-readable date for the header pill
   const targetDateDisplay = isTargetToday

@@ -476,13 +476,15 @@
 }
 
 .date-selector-pill.future {
-  background: #fefce8;
-  border-color: #f59e0b;
-  color: #92400e;
+  background: #f59e0b;
+  border-color: #d97706;
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.35);
 }
 
 .date-selector-pill.future:hover {
-  background: #fef3c7;
+  background: #d97706;
+  border-color: #b45309;
 }
 
 .date-selector-icon {
@@ -492,16 +494,12 @@
 
 .date-selector-caret {
   font-size: 10px;
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
-/* Future date mode — subtle header tint */
-.future-date-mode .daily-missions-header {
-  background: #fffbeb;
-  border: 2px solid #fde68a;
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  margin-bottom: var(--space-xl);
+/* Future date mode — top accent bar, no layout change */
+.future-date-mode {
+  border-top: 4px solid #f59e0b;
 }
 
 .future-status {
