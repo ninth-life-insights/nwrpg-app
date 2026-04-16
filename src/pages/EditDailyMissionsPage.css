@@ -9,19 +9,54 @@
   margin: 0 auto;
 }
 
+/* Sticky page header (back button row) */
+.dm-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px var(--space-xl);
+  background: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border-yellow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* Break out of container's padding so header spans full width */
+  margin: calc(-1 * var(--space-xl)) calc(-1 * var(--space-xl)) var(--space-xl);
+}
+
+.dm-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.dm-back-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.dm-page-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.dm-header-spacer {
+  width: 32px; /* matches back button width to keep title centered */
+}
+
 /* Header */
 .daily-missions-header {
   text-align: center;
   margin-bottom: var(--space-xl);
 }
 
-.page-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-dark);
-  margin: 0 0 var(--space-sm) 0;
-  line-height: 1.2;
-}
 
 .page-subtitle {
   font-size: var(--font-size-base);

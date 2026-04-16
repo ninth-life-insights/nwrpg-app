@@ -300,8 +300,17 @@ const handleAddNewMission = async (missionData) => {
 
   return (
     <div className={`daily-missions-container ${!isTargetToday ? 'future-date-mode' : ''} ${isModal ? 'modal-mode' : ''}`}>
+      {!isModal && (
+        <header className="dm-page-header">
+          <button className="dm-back-btn" onClick={() => navigate('/home')} aria-label="Back to home">
+            <span className="material-icons">arrow_back</span>
+          </button>
+          <h1 className="dm-page-title">Daily Missions</h1>
+          <div className="dm-header-spacer" />
+        </header>
+      )}
+
       <div className="daily-missions-header">
-        {!isModal && <h1 className="page-title">Set Daily Missions</h1>}
         {!isModal && <p className="page-subtitle">
           What are your three most important priorities for the day?
         </p>}
