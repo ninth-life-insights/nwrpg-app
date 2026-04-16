@@ -14,17 +14,9 @@ import {
 import { db } from './firebase/config';
 import { MISSION_STATUS } from '../types/Mission';
 
-const calculateTotalMissionXP = async (userId, mission) => {
+const calculateTotalMissionXP = (mission) => {
   let totalXP = mission.xpReward;
-
-  try {
-    const { checkIsDailyMission } = await import('./dailyMissionService');
-    const isDailyMission = await checkIsDailyMission(userId, mission.id);
-    if (isDailyMission) totalXP += 5;
-  } catch (e) {
-    // daily bonus is best-effort; don't block completion
-  }
-
+  if (mission.isDailyMission) totalXP += 5;
   return totalXP;
 };
 import {
@@ -164,7 +156,7 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
       missionData = { ...missionDoc.data(), id: missionId };
     }
 
-    const xpAwarded = await calculateTotalMissionXP(userId, missionData);
+    const xpAwarded = calculateTotalMissionXP(missionData);
 
     console.log("xp awarded: ", xpAwarded);
 
@@ -391,11 +383,22 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
 
     const mission = { id: missionSnap.id, ...missionSnap.data() };
 
+    // Resolve daily mission status once using the unambiguous missionId parameter,
+    // then attach it so all three completion paths get the same consistent flag.
+    let isDailyMission = false;
+    try {
+      const { checkIsDailyMission } = await import('./dailyMissionService');
+      isDailyMission = await checkIsDailyMission(userId, missionId);
+    } catch (e) {
+      // best-effort; don't block completion
+    }
+    const missionWithDaily = { ...mission, id: missionId, isDailyMission };
+
     let completionResult;
 
     // If it's an evergreen mission, complete and create a fresh instance (no due date)
     if (isEvergreenMission(mission)) {
-      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, mission);
+      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, missionWithDaily);
 
       const nextMissionData = createNextMissionInstance(mission, null);
       const missionsRef = getUserMissionsRef(userId);
@@ -417,10 +420,10 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       };
     } else if (isRecurringMission(mission)) {
       // If it's a recurring mission, use the recurring logic
-      completionResult = await completeRecurringMission(userId, missionId, mission);
+      completionResult = await completeRecurringMission(userId, missionId, missionWithDaily);
     } else {
       // Use the regular completion logic
-      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, mission);
+      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, missionWithDaily);
 
       completionResult = {
         xpAwarded,
