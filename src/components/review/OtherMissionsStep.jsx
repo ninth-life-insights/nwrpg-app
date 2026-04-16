@@ -1,7 +1,7 @@
 // src/components/review/OtherMissionsStep.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getActiveMissions, completeMissionWithRecurrence } from '../../services/missionService';
+import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from '../../services/missionService';
 import { getDailyMissionsConfig } from '../../services/dailyMissionService';
 import { getAllQuests } from '../../services/questService';
 import { toDateString } from '../../utils/dateHelpers';
@@ -32,15 +32,21 @@ const OtherMissionsStep = ({
       if (!currentUser) return;
       setLoading(true);
       try {
-        const [allActive, config, questData] = await Promise.all([
+        const [allActive, allCompleted, config, questData] = await Promise.all([
           getActiveMissions(currentUser.uid),
+          getCompletedMissions(currentUser.uid),
           getDailyMissionsConfig(currentUser.uid),
           getAllQuests(currentUser.uid),
         ]);
         const dailyIds = new Set(
           config?.setForDate === today ? (config?.missionIds ?? []) : []
         );
-        setMissions(allActive.filter(m => !dailyIds.has(m.id)));
+        const activeMissions = allActive.filter(m => !dailyIds.has(m.id));
+        const completedToday = allCompleted.filter(m => {
+          if (!m.completedAt?.toDate) return false;
+          return toDateString(m.completedAt.toDate()) === today;
+        });
+        setMissions([...completedToday, ...activeMissions]);
         setQuests(questData);
       } catch (err) {
         console.error('Error loading other missions:', err);
