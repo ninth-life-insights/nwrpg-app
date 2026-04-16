@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getMergedAchievementLibrary } from '../services/achievementService';
 import AchievementCard from '../components/achievements/AchievementCard';
 import CreateCustomAchievementModal from '../components/achievements/CreateCustomAchievementModal';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './AchievementsPage.css';
 
 const AchievementsPage = () => {
@@ -12,15 +13,18 @@ const AchievementsPage = () => {
   const navigate = useNavigate();
   const [library, setLibrary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchLibrary = useCallback(async () => {
     if (!currentUser) return;
+    setLoadError(null);
     try {
       const data = await getMergedAchievementLibrary(currentUser.uid);
       setLibrary(data);
     } catch (error) {
       console.error('Error fetching achievements:', error);
+      setLoadError("Your achievements didn't load.");
     } finally {
       setLoading(false);
     }
@@ -54,6 +58,8 @@ const AchievementsPage = () => {
         <h1 className="achievements-title">Achievements</h1>
         <div className="achievements-header-spacer" />
       </header>
+
+      {loadError && <ErrorMessage message={loadError} onRetry={fetchLibrary} />}
 
       <div className="achievements-content">
 

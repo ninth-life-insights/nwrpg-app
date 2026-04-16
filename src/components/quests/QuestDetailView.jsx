@@ -21,6 +21,7 @@ import { getAllMissions, updateMission } from '../../services/missionService';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
 import { formatForUserLong } from '../../utils/dateHelpers';
 import AchievementToast from '../achievements/AchievementToast';
+import ErrorMessage from '../ui/ErrorMessage';
 import './QuestDetailView.css';
 
 const QuestDetailView = () => {
@@ -33,6 +34,7 @@ const QuestDetailView = () => {
   const [loading, setLoading] = useState(true);
   const [newAchievements, setNewAchievements] = useState([]);
   const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -73,7 +75,7 @@ const QuestDetailView = () => {
       setMissions(questMissions);
     } catch (err) {
       console.error('Error loading quest:', err);
-      setError('Failed to load quest');
+      setError("Your quest didn't load.");
     } finally {
       setLoading(false);
     }
@@ -86,19 +88,20 @@ const QuestDetailView = () => {
   const handleToggleEditMode = async () => {
     if (isEditMode) {
       // Save changes
+      setActionError(null);
       try {
         const updates = {
           title: editedTitle.trim(),
           description: editedDescription.trim(),
           difficulty: editedDifficulty
         };
-        
+
         await updateQuest(currentUser.uid, questId, updates);
         await loadQuestData();
         setIsEditMode(false);
       } catch (err) {
         console.error('Error updating quest:', err);
-        alert('Failed to update quest');
+        setActionError("Your quest didn't save. Try again.");
       }
     } else {
       // Enter edit mode
@@ -115,13 +118,15 @@ const QuestDetailView = () => {
   };
 
   const completeQuestConfirmed = async () => {
+    setActionError(null);
     try {
       await completeQuest(currentUser.uid, questId);
       setShowCompleteConfirm(false);
       await loadQuestData();
     } catch (err) {
       console.error('Error completing quest:', err);
-      alert('Failed to complete quest');
+      setShowCompleteConfirm(false);
+      setActionError("That quest didn't complete. Try again.");
     }
   };
 
@@ -130,17 +135,20 @@ const QuestDetailView = () => {
   };
 
   const deleteQuestConfirmed = async () => {
+    setActionError(null);
     try {
       await deleteQuest(currentUser.uid, questId);
       setShowDeleteConfirm(false);
       navigate('/quests');
     } catch (err) {
       console.error('Error deleting quest:', err);
-      alert('Failed to delete quest');
+      setShowDeleteConfirm(false);
+      setActionError("That quest didn't delete. Try again.");
     }
   };
 
   const handleAddMission = async (missionData) => {
+    setActionError(null);
     try {
       const { id: missionId } = missionData;
       await updateMission(currentUser.uid, missionId, { questId });
@@ -149,17 +157,18 @@ const QuestDetailView = () => {
       setShowAddMission(false);
     } catch (err) {
       console.error('Error adding mission:', err);
-      alert('Failed to add mission');
+      setActionError("That mission didn't add. Try again.");
     }
   };
 
   const handleRemoveMission = async (missionId) => {
+    setActionError(null);
     try {
       await removeMissionFromQuest(currentUser.uid, questId, missionId);
       await loadQuestData();
     } catch (err) {
       console.error('Error removing mission:', err);
-      alert('Failed to remove mission');
+      setActionError("That mission didn't remove. Try again.");
     }
   };
 
@@ -170,26 +179,27 @@ const QuestDetailView = () => {
         ...prev,
         missionOrder: newOrder
       }));
-      
+
       // Save to Firestore in background
       await reorderQuestMissions(currentUser.uid, questId, newOrder);
-      
+
       // Don't reload - the local state is already updated
     } catch (err) {
       console.error('Error reordering missions:', err);
-      // Only reload on error to revert
+      // Revert optimistic update
       await loadQuestData();
-      alert('Failed to reorder missions');
+      setActionError("That reorder didn't save. Try again.");
     }
   };
 
   const handleUncompleteQuest = async () => {
+    setActionError(null);
     try {
       await updateQuestStatus(currentUser.uid, questId, QUEST_STATUS.ACTIVE);
       await loadQuestData();
     } catch (err) {
       console.error('Error reopening quest:', err);
-      alert('Failed to reopen quest');
+      setActionError("That quest didn't reopen. Try again.");
     }
   };
 
@@ -208,7 +218,11 @@ const QuestDetailView = () => {
   if (error || !quest) {
     return (
       <div className="quest-detail-view">
-        <div className="error-state">{error || 'Quest not found'}</div>
+        <ErrorMessage
+          message={error || 'Quest not found.'}
+          onRetry={error ? loadQuestData : undefined}
+          className="quest-load-error"
+        />
       </div>
     );
   }
@@ -334,6 +348,8 @@ const QuestDetailView = () => {
           </button>
         )}
       </div>
+
+      {actionError && <ErrorMessage message={actionError} className="quest-action-error" />}
 
       {/* Bottom Actions */}
       <div className={`quest-actions ${isCompleted ? 'completed' : ''}`}>

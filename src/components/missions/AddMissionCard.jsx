@@ -14,6 +14,7 @@ import {
   COMPLETION_TYPES,
   DUE_TYPES,
 } from '../../types/Mission';
+import ErrorMessage from '../ui/ErrorMessage';
 import './AddMissionCard.css';
 
 const AddMissionCard = ({ 
@@ -616,18 +617,10 @@ const AddMissionCard = ({
           )}
 
           {/* General Error Display */}
-          {errors.general && (
-            <div className="error-text" style={{ textAlign: 'center', marginBottom: '15px' }}>
-              {errors.general}
-            </div>
-          )}
+          {errors.general && <ErrorMessage message={errors.general} />}
 
           {/* Submit Error Display */}
-          {errors.submit && (
-            <div className="error-text" style={{ textAlign: 'center', marginBottom: '15px' }}>
-              {errors.submit}
-            </div>
-          )}
+          {errors.submit && <ErrorMessage message={errors.submit} />}
 
           {/* Action Buttons */}
           <div className="add-mission-actions">

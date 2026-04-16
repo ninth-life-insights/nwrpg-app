@@ -7,6 +7,7 @@ import { getAllQuests } from '../../services/questService';
 import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
+import ErrorMessage from '../ui/ErrorMessage';
 
 const FILTERS = ['All', 'Quests', 'Due Today', 'General'];
 
@@ -22,6 +23,8 @@ const OtherMissionsStep = ({
   const [missions, setMissions] = useState([]);
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [activeFilter, setActiveFilter] = useState('All');
   const [showAddMission, setShowAddMission] = useState(false);
 
@@ -50,12 +53,13 @@ const OtherMissionsStep = ({
         setQuests(questData);
       } catch (err) {
         console.error('Error loading other missions:', err);
+        setLoadError("Your missions didn't load.");
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [currentUser]);
+  }, [currentUser, reloadTrigger]);
 
   const handleToggle = async (missionId, isCurrentlyCompleted, xpReward) => {
     try {
@@ -128,7 +132,9 @@ const OtherMissionsStep = ({
         )}
 
         {/* Scrollable mission list */}
-        {loading ? (
+        {loadError ? (
+          <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }} />
+        ) : loading ? (
           <p className="review-step-loading">Loading missions...</p>
         ) : (
           <div className="review-missions-scroll">

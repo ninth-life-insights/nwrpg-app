@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserProfile, getSPProgressInLevel } from '../services/userService';
 import { AVAILABLE_SKILLS } from '../data/Skills';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './SkillsPage.css';
 
 const SP_PER_SKILL_LEVEL = 40;
@@ -13,6 +14,8 @@ const SkillsPage = () => {
   const navigate = useNavigate();
   const [skillsData, setSkillsData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -41,13 +44,14 @@ const SkillsPage = () => {
         setSkillsData(merged);
       } catch (error) {
         console.error('Error fetching skills:', error);
+        setLoadError("Your skills didn't load.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchSkills();
-  }, [currentUser]);
+  }, [currentUser, reloadTrigger]);
 
   if (loading) {
     return (
@@ -66,6 +70,13 @@ const SkillsPage = () => {
         <h1 className="skills-title">Skills</h1>
         <div className="skills-header-spacer" />
       </header>
+
+      {loadError && (
+        <ErrorMessage
+          message={loadError}
+          onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }}
+        />
+      )}
 
       <div className="skills-list">
         {skillsData.map((skill) => {

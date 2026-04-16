@@ -8,6 +8,7 @@ import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
 import { completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
 import AchievementToast from '../components/achievements/AchievementToast';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './SkillDetailPage.css';
 
 const SP_PER_SKILL_LEVEL = 50;
@@ -23,6 +24,8 @@ const SkillDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMission, setSelectedMission] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
+  const [loadError, setLoadError] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   const fetchData = async () => {
     if (!currentUser) return;
@@ -49,6 +52,7 @@ const SkillDetailPage = () => {
       setMissions(filtered);
     } catch (error) {
       console.error('Error fetching skill detail data:', error);
+      setLoadError("Your skill details didn't load.");
     } finally {
       setLoading(false);
     }
@@ -59,6 +63,7 @@ const SkillDetailPage = () => {
   }, [currentUser, decodedSkillName]);
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
+    setActionError(null);
     try {
       if (isCurrentlyCompleted) {
         await uncompleteMission(currentUser.uid, missionId);
@@ -79,10 +84,12 @@ const SkillDetailPage = () => {
       setSelectedMission(null);
     } catch (error) {
       console.error('Error toggling mission completion:', error);
+      setActionError(isCurrentlyCompleted ? "That undo didn't go through. Try again." : "That mission didn't complete. Try again.");
     }
   };
 
   const handleDeleteMission = async (missionId) => {
+    setActionError(null);
     try {
       const { deleteMission } = await import('../services/missionService');
       await deleteMission(currentUser.uid, missionId);
@@ -90,6 +97,7 @@ const SkillDetailPage = () => {
       await fetchData();
     } catch (error) {
       console.error('Error deleting mission:', error);
+      setActionError("That mission didn't delete. Try again.");
     }
   };
 
@@ -123,6 +131,11 @@ const SkillDetailPage = () => {
         <h1 className="skill-detail-title">{decodedSkillName}</h1>
         <div className="skill-detail-header-spacer" />
       </header>
+
+      {loadError && (
+        <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); fetchData(); }} />
+      )}
+      {actionError && <ErrorMessage message={actionError} />}
 
       {/* Skill progress card */}
       <div className="skill-detail-progress-card">
