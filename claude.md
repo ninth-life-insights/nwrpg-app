@@ -41,6 +41,65 @@ Currently in personal-use MVP prototype phase, but with eventual plans to publis
 
 **`src/components/ui/Badge.jsx`** — Generic badge for difficulty, skill, daily, status, dates. Use before creating any new badge/tag element.
 
+**`src/components/ui/ErrorMessage.jsx`** — Inline persistent error display. Props: `message` (string, required), `onRetry` (function, optional — renders "Try again" button), `className` (string, optional). Import and use this before writing any custom error div.
+
+**`src/utils/authErrors.js`** — `getAuthErrorMessage(error, mode)` maps Firebase auth error codes to user-facing strings. `mode` is `'login'` or `'signup'`. Use in any auth flow instead of hardcoding error text.
+
+## Error Handling Patterns
+
+### Principle
+Errors are **inline and persistent** — they appear near their source and stay until the user retries or navigates away. No toasts, no global error context. Each component owns its error state.
+
+### State variables by error type
+
+| State var | Purpose | Example |
+|---|---|---|
+| `loadError` | Data failed to fetch on mount | Page can't load its content |
+| `actionError` | A user-triggered mutation failed | Complete/delete/reorder failed |
+| `saveError` / `submitError` | A form save or multi-step flow submission failed | Settings save, review submit |
+
+### Retry patterns
+
+**When fetch lives inside `useCallback`** (can be passed as `onRetry` directly):
+```jsx
+const fetchData = useCallback(async () => {
+  setLoadError(null);
+  try { ... } catch { setLoadError('...') }
+}, [deps]);
+// In JSX:
+<ErrorMessage message={loadError} onRetry={fetchData} />
+```
+
+**When fetch lives inside `useEffect`** (use a `reloadTrigger` counter):
+```jsx
+const [reloadTrigger, setReloadTrigger] = useState(0);
+useEffect(() => { fetchData(); }, [currentUser, reloadTrigger]);
+// Retry:
+<ErrorMessage message={loadError} onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }} />
+```
+
+### Placement
+- **Load errors**: render after the page `<header>`, before the content it replaces (or alongside it with a Retry)
+- **Action errors**: render inline above the list or section where the action originates; clear on the next action attempt
+- **Save/submit errors**: render immediately above or below the submit button
+
+### Microcopy guidelines
+
+Use natural, non-blaming language. Avoid passive "couldn't" constructions.
+
+**Load / save failures** — subject is the thing that failed:
+> "Your [noun] didn't [verb]." + Retry button
+> Examples: "Your missions didn't load." · "Your settings didn't save." · "Your quest wasn't saved."
+
+**Action failures** — subject is the specific item acted on:
+> "That [noun] didn't [verb]."
+> Examples: "That mission didn't complete." · "That undo didn't go through." · "That quest didn't delete."
+
+**Critical / data-loss risk** — be explicit about what to do:
+> "Your review wasn't saved. Stay on this page and retry."
+
+**Auth errors** — handled by `getAuthErrorMessage()`. Firebase v12 cannot distinguish wrong password from unknown email (intentional security behavior) — use the consolidated message "Incorrect email or password. Try again."
+
 ## Firestore Data Model
 
 ```
