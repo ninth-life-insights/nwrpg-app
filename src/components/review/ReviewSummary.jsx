@@ -91,7 +91,7 @@ const ReviewSummary = ({
             <div className="review-achievements-row">
               {newAchievements.map(a => (
                 <div key={a.id} className="review-achievement-item">
-                  <AchievementBadge color={a.badgeColor} icon={a.badgeIcon} size="md" />
+                  <AchievementBadge color={a.badgeColor} icon={a.badgeIcon} badgeImage={a.badgeImage} size="md" />
                   <span className="review-achievement-name">{a.name}</span>
                 </div>
               ))}

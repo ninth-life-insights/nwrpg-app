@@ -35,7 +35,7 @@ const AchievementToast = ({ achievements, onDismiss }) => {
     <div className="achievement-toast-stack" role="status" aria-live="polite">
       {achievements.map((a) => (
         <div key={a.id} className="achievement-toast" onClick={handleToastClick} role="button" style={{ cursor: 'pointer' }}>
-          <AchievementBadge color={a.badgeColor} icon={a.badgeIcon} size="sm" />
+          <AchievementBadge color={a.badgeColor} icon={a.badgeIcon} badgeImage={a.badgeImage} size="sm" />
           <div className="achievement-toast__text">
             <span className="achievement-toast__label">Achievement Unlocked</span>
             <span className="achievement-toast__name">{a.name}</span>
