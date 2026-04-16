@@ -16,6 +16,7 @@ import {
 import { db } from './firebase/config';
 import { getUserProfile } from './userService';
 import { toDateString } from '../utils/dateHelpers';
+import dayjs from 'dayjs';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,60 @@ export const getAllDailySnapshots = async (userId) => {
   const q = query(ref, orderBy('date', 'desc'));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Returns up to `days` daily snapshots strictly before `beforeDate`.
+ * Used to compute rolling averages for the AI prompt baseline.
+ */
+export const getRecentSnapshots = async (userId, beforeDate, days = 30) => {
+  const startDate = dayjs(beforeDate).subtract(days, 'day').format('YYYY-MM-DD');
+  const ref = collection(db, 'users', userId, 'dailySnapshots');
+  const q = query(
+    ref,
+    where('date', '>=', startDate),
+    where('date', '<', beforeDate),
+    orderBy('date', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+const computeRollingAverages = (snapshots) => {
+  if (!snapshots || snapshots.length < 3) return null;
+
+  const count = snapshots.length;
+  const avgMissions = Math.round((snapshots.reduce((s, d) => s + (d.missionsCompleted || 0), 0) / count) * 10) / 10;
+  const avgXP = Math.round(snapshots.reduce((s, d) => s + (d.xpEarned || 0), 0) / count);
+
+  // Aggregate totals to avoid days with no daily missions pulling the rate down
+  const daysWithDailies = snapshots.filter(d => (d.dailyMissionsTotal || 0) > 0);
+  let dailyMissionRate = null;
+  if (daysWithDailies.length > 0) {
+    const totalCompleted = daysWithDailies.reduce((s, d) => s + (d.dailyMissionsCompleted || 0), 0);
+    const totalAssigned = daysWithDailies.reduce((s, d) => s + (d.dailyMissionsTotal || 0), 0);
+    dailyMissionRate = Math.round((totalCompleted / totalAssigned) * 100);
+  }
+
+  // Count how many days each skill appears (Set per day avoids one busy day dominating)
+  const skillDayCount = {};
+  snapshots.forEach(d => {
+    if (Array.isArray(d.skillsUsed)) {
+      const seen = new Set();
+      d.skillsUsed.forEach(skill => {
+        if (skill.name && !seen.has(skill.name)) {
+          skillDayCount[skill.name] = (skillDayCount[skill.name] || 0) + 1;
+          seen.add(skill.name);
+        }
+      });
+    }
+  });
+  const topSkills = Object.entries(skillDayCount)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([name]) => name);
+
+  return { count, avgMissions, avgXP, dailyMissionRate, topSkills };
 };
 
 /**
@@ -340,6 +395,15 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
     encounters = await getEncountersForDate(userId, date);
   } catch { /* non-fatal — story still generates without encounters */ }
 
+  // 6a. Fetch rolling averages from prior 30 snapshots (non-fatal)
+  let rollingAverages = null;
+  try {
+    const recentSnapshots = await getRecentSnapshots(userId, date, 30);
+    rollingAverages = computeRollingAverages(recentSnapshots);
+  } catch (err) {
+    console.warn('Could not fetch rolling averages:', err);
+  }
+
   // 7. Generate the AI story
   const storyData = {
     displayName: displayName || profile?.displayName || 'You',
@@ -353,6 +417,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
     skillsUsed,
     questsAdvanced,
     encounters,
+    rollingAverages,
   };
 
   console.log('storyData: ', storyData);
@@ -432,6 +497,7 @@ export const generateDailyStory = async (data) => {
     skillLevelUps,
     questsAdvanced,
     encounters = [],
+    rollingAverages = null,
   } = data;
 
   // Build mission list for prompt — task age is the key signal for the AI
@@ -471,6 +537,21 @@ export const generateDailyStory = async (data) => {
     e.notes ? `- "${e.title}" — ${e.notes}` : `- "${e.title}"`
   );
 
+  let baselineBlock = '';
+  if (rollingAverages) {
+    const { count, avgMissions, avgXP, dailyMissionRate, topSkills } = rollingAverages;
+    const lines = [
+      `- Typical day: ${avgMissions} missions (today: ${completedMissions.length}), ${avgXP} XP (today: ${xpEarned})`,
+    ];
+    if (dailyMissionRate !== null) {
+      lines.push(`- Daily mission completion rate (last ${count} days): ${dailyMissionRate}%`);
+    }
+    if (topSkills.length > 0) {
+      lines.push(`- Most practiced skill areas: ${topSkills.join(', ')}`);
+    }
+    baselineBlock = `Baseline context (last ${count} days of data):\n${lines.join('\n')}`;
+  }
+
   const userPrompt = `
 Here is the raw data for today's chronicle entry:
 
@@ -480,6 +561,7 @@ ${missionLines.join('\n')}
 Daily missions: ${dailyMissionsCompleted} of ${dailyMissionsTotal} completed
 ${events.length > 0 ? `\nNotable:\n${events.join('\n')}` : ''}
 ${encounterLines.length > 0 ? `\nUnexpected encounters:\n${encounterLines.join('\n')}` : ''}
+${baselineBlock ? `\n${baselineBlock}` : ''}
 
 Write the entry.`.trim();
 
