@@ -6,6 +6,7 @@ import { getRooms, getAllRoomStats } from '../services/roomService';
 import { getAllMissions } from '../services/missionService';
 import RoomCard from '../components/base/RoomCard';
 import AddRoomModal from '../components/base/AddRoomModal';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './BasePage.css';
 
 const BasePage = () => {
@@ -14,6 +15,7 @@ const BasePage = () => {
   const [rooms, setRooms] = useState([]);
   const [roomStats, setRoomStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
 
   const fetchRoomsAndStats = async () => {
@@ -33,6 +35,7 @@ const BasePage = () => {
       
     } catch (error) {
       console.error('Error fetching rooms:', error);
+      setLoadError("Couldn't load your rooms.");
     } finally {
       setLoading(false);
     }
@@ -75,6 +78,14 @@ const BasePage = () => {
         <h1 className="page-title">Your Base</h1>
         <div className="header-spacer" />
       </header>
+
+      {loadError && (
+        <ErrorMessage
+          message={loadError}
+          onRetry={() => { setLoadError(null); fetchRoomsAndStats(); }}
+          className="base-load-error"
+        />
+      )}
 
       {/* Rooms Grid */}
       <div className="rooms-grid">

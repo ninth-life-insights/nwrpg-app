@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './SettingsPage.css';
 
 const formatTime = (hour, minute) =>
@@ -26,6 +27,7 @@ const SettingsPage = () => {
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -62,11 +64,14 @@ const SettingsPage = () => {
   const handleSave = async () => {
     if (!currentUser || !prefs) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await saveNotificationPrefs(currentUser.uid, prefs);
       await refreshSchedule();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaveError("Settings couldn't be saved. Try again.");
     } finally {
       setSaving(false);
     }
@@ -198,6 +203,7 @@ const SettingsPage = () => {
         )}
 
         <div className="settings-save-row">
+          {saveError && <ErrorMessage message={saveError} />}
           <button
             className="settings-save-button"
             onClick={handleSave}

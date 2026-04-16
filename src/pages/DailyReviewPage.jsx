@@ -23,6 +23,7 @@ import DailyMissionsStep from '../components/review/DailyMissionsStep';
 import OtherMissionsStep from '../components/review/OtherMissionsStep';
 import EncountersStep from '../components/review/EncountersStep';
 import ReviewSummary from '../components/review/ReviewSummary';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import { toDateString } from '../utils/dateHelpers';
 import './DailyReviewPage.css';
 
@@ -41,6 +42,8 @@ const DailyReviewPage = () => {
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [sessionAchievements, setSessionAchievements] = useState([]);
   const [todayAchievements, setTodayAchievements] = useState([]);
+  const [loadError, setLoadError] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
   const today = toDateString(new Date());
 
@@ -48,14 +51,19 @@ const DailyReviewPage = () => {
   useEffect(() => {
     if (!currentUser) return;
     const init = async () => {
-      const [missions, existingEncounters] = await Promise.all([
-        getTodaysDailyMissions(currentUser.uid),
-        getEncountersForDate(currentUser.uid, today),
-      ]);
-      setDailyMissions(missions);
-      setEncounters(existingEncounters);
+      try {
+        const [missions, existingEncounters] = await Promise.all([
+          getTodaysDailyMissions(currentUser.uid),
+          getEncountersForDate(currentUser.uid, today),
+        ]);
+        setDailyMissions(missions);
+        setEncounters(existingEncounters);
+      } catch (err) {
+        console.error('Error initializing daily review:', err);
+        setLoadError("Couldn't load your review. Try again.");
+      }
     };
-    init().catch(err => console.error('Error initializing daily review:', err));
+    init();
   }, [currentUser]);
 
   const refreshDailyMissions = async () => {
@@ -88,6 +96,7 @@ const DailyReviewPage = () => {
   const goToSummary = async () => {
     setStep(4);
     setSummaryLoading(true);
+    setSubmitError(null);
     try {
       const [profile, earnedToday] = await Promise.all([
         getUserProfile(currentUser.uid),
@@ -100,6 +109,7 @@ const DailyReviewPage = () => {
       setTodayAchievements(earnedToday);
     } catch (err) {
       console.error('Error generating snapshot:', err);
+      setSubmitError("Your review wasn't saved. Stay on this page and retry.");
     } finally {
       setSummaryLoading(false);
     }
@@ -148,7 +158,15 @@ const DailyReviewPage = () => {
       </div>
 
       <div className="daily-review-content">
-        {step === 1 && (
+        {loadError && (
+          <ErrorMessage
+            message={loadError}
+            onRetry={() => { setLoadError(null); }}
+            className="daily-review-load-error"
+          />
+        )}
+
+        {!loadError && step === 1 && (
           <DailyMissionsStep
             dailyMissions={dailyMissions}
             onToggleComplete={handleToggleComplete}
@@ -158,7 +176,7 @@ const DailyReviewPage = () => {
           />
         )}
 
-        {step === 2 && (
+        {!loadError && step === 2 && (
           <OtherMissionsStep
             onToggleComplete={handleToggleComplete}
             onNext={handleNext}
@@ -170,7 +188,7 @@ const DailyReviewPage = () => {
           />
         )}
 
-        {step === 3 && (
+        {!loadError && step === 3 && (
           <EncountersStep
             userId={currentUser.uid}
             encounters={encounters}
@@ -181,14 +199,23 @@ const DailyReviewPage = () => {
           />
         )}
 
-        {step === 4 && (
-          <ReviewSummary
-            snapshot={snapshot}
-            loading={summaryLoading}
-            onDone={() => navigate('/home')}
-            onUpdateStory={handleUpdateStory}
-            newAchievements={todayAchievements}
-          />
+        {!loadError && step === 4 && (
+          <>
+            {submitError && (
+              <ErrorMessage
+                message={submitError}
+                onRetry={goToSummary}
+                className="daily-review-submit-error"
+              />
+            )}
+            <ReviewSummary
+              snapshot={snapshot}
+              loading={summaryLoading}
+              onDone={() => navigate('/home')}
+              onUpdateStory={handleUpdateStory}
+              newAchievements={todayAchievements}
+            />
+          </>
         )}
       </div>
 

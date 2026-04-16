@@ -136,7 +136,7 @@ const EditDailyMissionsPage = ({
 
     } catch (err) {
       console.error('Error loading existing daily missions:', err);
-      setError('Failed to load existing daily missions');
+      setError("Couldn't load your existing daily missions.");
     } finally {
       setLoading(false);
     }
@@ -249,7 +249,7 @@ const handleAddNewMission = async (missionData) => {
 
     } catch (err) {
       console.error('Error setting daily missions:', err);
-      setError('Failed to set daily missions. Please try again.');
+      setError("Your daily missions weren't saved. Try again.");
     } finally {
       setSaving(false);
     }

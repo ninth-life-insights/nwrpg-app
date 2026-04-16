@@ -7,6 +7,7 @@ import { createQuest, addMissionToQuest } from '../../services/questService';
 import { createMission } from '../../services/missionService';
 import { QUEST_DIFFICULTY } from '../../types/Quests';
 import { DIFFICULTY_LEVELS, createMissionTemplate } from '../../types/Mission';
+import ErrorMessage from '../ui/ErrorMessage';
 import './CreateQuestModal.css';
 
 const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
@@ -158,7 +159,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       onClose();
     } catch (error) {
       console.error('Error creating quest:', error);
-      setErrors({ submit: 'Failed to create quest. Please try again.' });
+      setErrors({ submit: "Your quest wasn't saved. Try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -285,11 +286,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           </div>
 
           {/* Submit Error */}
-          {errors.submit && (
-            <div className="error-text" style={{ textAlign: 'center', marginTop: '15px' }}>
-              {errors.submit}
-            </div>
-          )}
+          {errors.submit && <ErrorMessage message={errors.submit} />}
 
           {/* Action Buttons */}
           <div className="add-quest-actions">

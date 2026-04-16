@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Badge from '../ui/Badge';
 import { updateQuest } from '../../services/questService';
 import { QUEST_DIFFICULTY } from '../../types/Quests';
+import ErrorMessage from '../ui/ErrorMessage';
 import './CreateQuestModal.css'; // Reuse the same styles
 
 const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
@@ -88,7 +89,7 @@ const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
       onClose();
     } catch (error) {
       console.error('Error updating quest:', error);
-      setErrors({ submit: 'Failed to update quest. Please try again.' });
+      setErrors({ submit: "Your quest wasn't updated. Try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -152,11 +153,7 @@ const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
           </div>
 
           {/* Submit Error */}
-          {errors.submit && (
-            <div className="error-text" style={{ textAlign: 'center', marginTop: '15px' }}>
-              {errors.submit}
-            </div>
-          )}
+          {errors.submit && <ErrorMessage message={errors.submit} />}
 
           {/* Action Buttons */}
           <div className="add-quest-actions">

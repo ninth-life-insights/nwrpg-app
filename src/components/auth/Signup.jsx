@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getAuthErrorMessage } from '../../utils/authErrors';
 import './Auth.css';
 
 export default function Signup() {
@@ -34,7 +35,7 @@ export default function Signup() {
       await signup(email, password);
       navigate('/character-creation');
     } catch (error) {
-      setError('Failed to create account. Please try again.');
+      setError(getAuthErrorMessage(error, 'signup'));
       console.error('Signup error:', error);
     }
     

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getAuthErrorMessage } from '../../utils/authErrors';
 import './Auth.css';
 
 export default function Login() {
@@ -26,7 +27,7 @@ export default function Login() {
       await login(email, password);
       navigate('/home');
     } catch (error) {
-      setError('Invalid email or password. Please try again.');
+      setError(getAuthErrorMessage(error, 'login'));
       console.error('Login error:', error);
     }
     

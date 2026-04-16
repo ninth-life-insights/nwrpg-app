@@ -6,6 +6,7 @@ import MissionFilterModal from '../components/missions/sub-components/MissionFil
 import { getUserProfile } from '../services/userService';
 import { useNavigate } from 'react-router-dom';
 import AchievementToast from '../components/achievements/AchievementToast';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -26,6 +27,7 @@ const MissionBank = () => {
   // State to track recently completed missions
   const [recentlyCompletedMissions, setRecentlyCompletedMissions] = useState([]);
   const [newAchievements, setNewAchievements] = useState([]);
+  const [loadError, setLoadError] = useState(null);
 
   const navigate = useNavigate();
 
@@ -46,6 +48,7 @@ const MissionBank = () => {
       setUserProfile(profile);
     } catch (err) {
       console.error('Error loading user profile:', err);
+      setLoadError("Couldn't load your missions.");
     }
   };
 
@@ -156,6 +159,8 @@ const MissionBank = () => {
           </button>
         </div>
       </div>
+
+      {loadError && <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); loadUserProfile(); }} className="mission-bank-load-error" />}
 
       {/* UPDATED: MissionList component now automatically computes daily mission badges */}
       <MissionList 

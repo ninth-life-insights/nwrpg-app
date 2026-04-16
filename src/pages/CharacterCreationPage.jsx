@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
 
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './CharacterCreationPage.css';
 
 import { updateThemeColor } from '../utils/themeUtils';
@@ -132,7 +133,7 @@ const CharacterCreationPage = () => {
       
     } catch (error) {
       console.error('Error creating character:', error);
-      setError('Failed to create character. Please try again.');
+      setError("Couldn't create your character. Your choices are saved — try again.");
     } finally {
       setLoading(false);
     }
@@ -145,11 +146,7 @@ const CharacterCreationPage = () => {
         <p className="character-subtitle">Every adventuring party needs a leader, and you're just the mom for the job!</p>
       </header>
 
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       <div className="character-form">
         {/* Name Field */}

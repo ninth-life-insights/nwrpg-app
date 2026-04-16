@@ -26,6 +26,7 @@ import MissionDetailView from '../components/missions/MissionCardFull';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
+import ErrorMessage from '../components/ui/ErrorMessage';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -41,6 +42,8 @@ const HomePage = () => {
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
+  const [loadError, setLoadError] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -132,6 +135,7 @@ const HomePage = () => {
       } catch (error) {
         console.error('Error fetching user data:', error);
         setDailyMissions([]);
+        setLoadError("Couldn't load your missions.");
       } finally {
         setLoading(false);
       }
@@ -186,6 +190,7 @@ const HomePage = () => {
 
   // SIMPLIFIED: Function to toggle completion status with XP handling
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+    setActionError(null);
     try {
       if (isCurrentlyCompleted) {
         // Uncomplete the mission
@@ -217,12 +222,14 @@ const HomePage = () => {
       
     } catch (err) {
       console.error('Error toggling mission completion:', err);
+      setActionError(isCurrentlyCompleted ? "Couldn't undo that. Try again." : "Couldn't mark that done. Try again.");
     }
   };
 
   // Add after handleToggleComplete function (around line 164)
 
   const handleDeleteMission = async (missionId) => {
+    setActionError(null);
     try {
       await deleteMission(currentUser.uid, missionId);
       setSelectedMission(null);
@@ -234,6 +241,7 @@ const HomePage = () => {
       
     } catch (error) {
       console.error('Failed to delete mission:', error);
+      setActionError("Couldn't delete that mission. Try again.");
     }
   };
 
@@ -334,6 +342,16 @@ const HomePage = () => {
 
       {/* Daily Missions Section */}
       <section className="daily-missions-section">
+        {loadError && (
+          <ErrorMessage
+            message={loadError}
+            onRetry={() => { setLoadError(null); fetchDailyMissions(); }}
+            className="homepage-load-error"
+          />
+        )}
+        {actionError && (
+          <ErrorMessage message={actionError} className="homepage-action-error" />
+        )}
         <div className="section-header">
           <h3 className="section-title">
             Daily Missions
