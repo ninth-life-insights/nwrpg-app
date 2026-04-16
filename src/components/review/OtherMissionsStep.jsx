@@ -24,6 +24,7 @@ const OtherMissionsStep = ({
   const [missions, setMissions] = useState([]);
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [activeFilter, setActiveFilter] = useState('All');
@@ -35,11 +36,13 @@ const OtherMissionsStep = ({
     const load = async () => {
       if (!currentUser) return;
       setLoading(true);
+      setIsLoadingSlow(false);
       if (isDefinitelyOffline()) {
         setLoadError("Your missions didn't load. Check your connection and try again.");
         setLoading(false);
         return;
       }
+      const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
         const [allActive, allCompleted, config, questData] = await withTimeout(
           Promise.all([
@@ -63,7 +66,9 @@ const OtherMissionsStep = ({
         console.error('Error loading other missions:', err);
         setLoadError(getLoadErrorMessage(err, 'missions'));
       } finally {
+        clearTimeout(slowTimer);
         setLoading(false);
+        setIsLoadingSlow(false);
       }
     };
     load();
@@ -143,7 +148,10 @@ const OtherMissionsStep = ({
         {loadError ? (
           <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }} />
         ) : loading ? (
-          <p className="review-step-loading">Loading missions...</p>
+          <p className="review-step-loading">
+            Loading missions...
+            {isLoadingSlow && <span className="loading-slow-hint"> Still searching the realm...</span>}
+          </p>
         ) : (
           <div className="review-missions-scroll">
             {filteredMissions.length === 0 ? (
