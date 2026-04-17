@@ -1,5 +1,5 @@
 // src/components/missions/MissionCardFull.js
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import AddMissionCard from './AddMissionCard';
@@ -10,7 +10,8 @@ import {
   isMissionDueToday,
   isMissionDueTomorrow,
   isMissionOverdue,
-  formatForUser
+  formatForUser,
+  formatForUserLong
 } from '../../utils/dateHelpers';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardFull.css';
@@ -28,6 +29,23 @@ const MissionCardFull = ({
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [showExpiryNote, setShowExpiryNote] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!showActionsMenu) return;
+    const handleClickOutside = (e) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target)) {
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showActionsMenu]);
 
   const handleQuestClick = (e) => {
     e.stopPropagation();
@@ -38,42 +56,35 @@ const MissionCardFull = ({
 
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
-        
-    if (isMissionOverdue(mission)) return { status: 'overdue', display: 'Overdue' };
+
+    if (isMissionOverdue(mission)) return { status: 'overdue', display: `Overdue · ${formatForUser(mission.dueDate)}` };
     if (isMissionDueToday(mission)) return { status: 'today', display: 'Due Today' };
     if (isMissionDueTomorrow(mission)) return { status: 'tomorrow', display: 'Due Tomorrow' };
-    
+
     return {
       status: 'upcoming',
       display: formatForUser(mission.dueDate)
     };
   };
 
-  const formatExpiryDate = (expiryDate) => {
-    if (!expiryDate) return null;
-    
-    const date = expiryDate.toDate ? expiryDate.toDate() : new Date(expiryDate);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return null;
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return formatForUserLong(date);
   };
 
-  const formatCreatedDate = (createdAt) => {
-    if (!createdAt) return null;
-    
-    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  const wasEdited = () => {
+    if (!mission.updatedAt || !mission.createdAt) return false;
+    const created = mission.createdAt.toDate ? mission.createdAt.toDate() : new Date(mission.createdAt);
+    const updated = mission.updatedAt.toDate ? mission.updatedAt.toDate() : new Date(mission.updatedAt);
+    return Math.abs(updated - created) > 5 * 60 * 1000; // more than 5 minutes apart
   };
 
   const dueDateInfo = getDueDateInfo();
-  const expiryDisplay = formatExpiryDate(mission.expiryDate);
-  const createdDisplay = formatCreatedDate(mission.createdAt);
+  const createdDisplay = formatTimestamp(mission.createdAt);
+  const editedDisplay = wasEdited() ? formatTimestamp(mission.updatedAt) : null;
+  const expiryDisplay = mission.expiryDate ? formatForUserLong(mission.expiryDate) : null;
+  const completedDisplay = formatTimestamp(mission.completedAt);
   const isRecurring = isRecurringMission(mission);
   const isEvergreen = isEvergreenMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
@@ -109,12 +120,39 @@ const MissionCardFull = ({
           
           {/* Header */}
           <div className="mission-detail-header">
-            <button className="close-button" onClick={onClose}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+            <button className="back-button" onClick={onClose} aria-label="Close">
+              <span className="material-icons">arrow_back</span>
             </button>
+
+            {!isExpired && (
+              <div className="actions-menu-wrapper" ref={actionsMenuRef}>
+                <button
+                  className="more-button"
+                  onClick={(e) => { e.stopPropagation(); setShowActionsMenu(v => !v); }}
+                  aria-label="More options"
+                >
+                  <span className="material-icons">more_vert</span>
+                </button>
+                {showActionsMenu && (
+                  <div className="actions-dropdown">
+                    <button
+                      className="dropdown-item archive-item"
+                      onClick={() => { setShowActionsMenu(false); onArchiveMission && onArchiveMission(mission.id); }}
+                    >
+                      <span className="material-icons">archive</span>
+                      Archive
+                    </button>
+                    <button
+                      className="dropdown-item delete-item"
+                      onClick={() => { setShowActionsMenu(false); handleDeleteMission(); }}
+                    >
+                      <span className="material-icons">delete</span>
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Mission Content */}
@@ -141,8 +179,8 @@ const MissionCardFull = ({
               </div>
               
               {/* Description */}
-              <div className="mission-description">
-                <p>{mission.description || 'No description provided'}</p>
+              <div className={`mission-description${mission.description ? '' : ' empty'}`}>
+                <p>{mission.description || 'No description'}</p>
               </div>
             </div>
 
@@ -175,39 +213,35 @@ const MissionCardFull = ({
               )}
             </div>
 
-            {/* Mission Details */}
-            <div className="mission-details">
-              {createdDisplay && (
-                <div className="detail-item">
-                  <h4>Created</h4>
-                  <p>{createdDisplay}</p>
-                </div>
-              )}
-              
-              {expiryDisplay && (
-                <div className="detail-item">
-                  <h4>
-                    Expires{' '}
-                    <span
-                      className="info-icon"
-                      title="Missions are never archived without your permission. After the expiry date, this mission will be surfaced during your weekly review."
-                      aria-label="About expiry"
-                      onClick={() => setShowExpiryNote(v => !v)}
-                    >
-                      ⓘ
-                    </span>
-                  </h4>
-                  <p>{expiryDisplay}</p>
-                  {showExpiryNote && (
-                    <p className="expiry-note">Missions are never archived without your permission. After the expiry date, this mission will be surfaced during your weekly review.</p>
+            {/* Mission Metadata */}
+            <div className="mission-metadata">
+              {(createdDisplay || editedDisplay) && (
+                <div className="metadata-row">
+                  {createdDisplay && <span>Created {createdDisplay}</span>}
+                  {editedDisplay && (
+                    <>
+                      {createdDisplay && <span className="metadata-sep">·</span>}
+                      <span>Edited {editedDisplay}</span>
+                    </>
                   )}
                 </div>
               )}
-
-              {isCompleted && mission.completedAt && (
-                <div className="detail-item">
-                  <h4>Completed</h4>
-                  <p>{formatCreatedDate(mission.completedAt)}</p>
+              {isCompleted && completedDisplay && (
+                <div className="metadata-row">
+                  <span>Completed {completedDisplay}</span>
+                </div>
+              )}
+              {expiryDisplay && (
+                <div className="metadata-row expiry-row">
+                  <span>Expires {expiryDisplay}</span>
+                  <span
+                    className="info-icon"
+                    aria-label="About expiry"
+                    onClick={() => setShowExpiryNote(v => !v)}
+                  >ⓘ</span>
+                  {showExpiryNote && (
+                    <p className="expiry-note">Missions are never archived without your permission. After the expiry date, this mission will be surfaced during your weekly review.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -222,34 +256,12 @@ const MissionCardFull = ({
                   Restore Mission
                 </button>
               ) : (
-                <>
-                  <button
-                    onClick={handleDeleteMission}
-                    className="action-button delete-button"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3,6 5,6 21,6"></polyline>
-                      <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                      <line x1="10" y1="11" x2="10" y2="17"></line>
-                      <line x1="14" y1="11" x2="14" y2="17"></line>
-                    </svg>
-                    Delete Mission
-                  </button>
-
-                  <button
-                    onClick={() => onArchiveMission && onArchiveMission(mission.id)}
-                    className="action-button archive-button"
-                  >
-                    Archive Mission
-                  </button>
-
-                  <button
-                    onClick={() => onToggleComplete(mission.id, isCompleted, mission.xpReward)}
-                    className={`action-button ${isCompleted ? 'mark-incomplete' : 'mark-complete'}`}
-                  >
-                    {isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
-                  </button>
-                </>
+                <button
+                  onClick={() => onToggleComplete(mission.id, isCompleted, mission.xpReward)}
+                  className={`action-button ${isCompleted ? 'mark-incomplete' : 'mark-complete'}`}
+                >
+                  {isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+                </button>
               )}
             </div>
           </div>
