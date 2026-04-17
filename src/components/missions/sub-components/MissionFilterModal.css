@@ -117,7 +117,7 @@
 
 .checkbox-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   cursor: pointer;
   font-size: 14px;
   color: #495057;
@@ -159,6 +159,19 @@
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+
+.filter-sublabel {
+  display: block;
+  font-size: 12px;
+  color: #868e96;
+  margin-top: 2px;
+}
+
+.filter-divider {
+  border: none;
+  border-top: 1px solid #e9ecef;
+  margin: 4px 0;
 }
 
 /* Footer */

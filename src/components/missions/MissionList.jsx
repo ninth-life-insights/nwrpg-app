@@ -5,13 +5,15 @@ import MissionCard from './MissionCard';
 import MissionDetailView from './MissionCardFull';
 import AddMissionCard from './AddMissionCard';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { 
-  getActiveMissions, 
+import {
+  getActiveMissions,
   getCompletedMissions,
   getExpiredMissions,
   uncompleteMission,
   completeMissionWithRecurrence,
   deleteMission,
+  archiveMission,
+  restoreMission,
   updateMissionCustomOrder,
   batchUpdateMissionOrders
 } from '../../services/missionService';
@@ -89,9 +91,9 @@ const MissionList = ({
     sortOrder: filters.sortOrder || 'asc',
     skillFilter: filters.skillFilter || '',
     includeCompleted: filters.includeCompleted || false,
-    includeExpired: filters.includeExpired || false,
+    showArchive: filters.showArchive || false,
     completedDateRange: filters.completedDateRange || 'last7days'
-  }), [filters.sortBy, filters.sortOrder, filters.skillFilter, filters.includeCompleted, filters.includeExpired, filters.completedDateRange]);
+  }), [filters.sortBy, filters.sortOrder, filters.skillFilter, filters.includeCompleted, filters.showArchive, filters.completedDateRange]);
 
   const isCustomOrderMode = memoizedFilters.sortBy === 'custom';
 
@@ -221,6 +223,12 @@ const MissionList = ({
         missionData = await getActiveMissions(currentUser.uid);
       } else if (missionType === 'completed') {
         missionData = await getCompletedMissions(currentUser.uid);
+      } else if (missionType === 'active_completed') {
+        const [activeData, completedData] = await Promise.all([
+          getActiveMissions(currentUser.uid),
+          getCompletedMissions(currentUser.uid)
+        ]);
+        missionData = [...activeData, ...completedData];
       } else if (missionType === 'expired') {
         try {
           missionData = await getExpiredMissions(currentUser.uid);
@@ -361,6 +369,28 @@ const MissionList = ({
       }
     } catch (error) {
       console.error('Failed to delete mission:', error);
+    }
+  };
+
+  const handleArchiveMission = async (missionId) => {
+    try {
+      await archiveMission(currentUser.uid, missionId);
+      setSelectedMission(null);
+      await loadMissions();
+      if (onMissionUpdate) onMissionUpdate();
+    } catch (error) {
+      console.error('Failed to archive mission:', error);
+    }
+  };
+
+  const handleRestoreMission = async (missionId) => {
+    try {
+      await restoreMission(currentUser.uid, missionId);
+      setSelectedMission(null);
+      await loadMissions();
+      if (onMissionUpdate) onMissionUpdate();
+    } catch (error) {
+      console.error('Failed to restore mission:', error);
     }
   };
 
@@ -648,11 +678,13 @@ const MissionList = ({
       </DndContext>
 
       {!selectionMode && selectedMission && (
-        <MissionDetailView 
-          mission={selectedMission} 
-          onClose={() => setSelectedMission(null)} 
-          onToggleComplete={handleToggleComplete} 
+        <MissionDetailView
+          mission={selectedMission}
+          onClose={() => setSelectedMission(null)}
+          onToggleComplete={handleToggleComplete}
           onDeleteMission={handleDeleteMission}
+          onArchiveMission={handleArchiveMission}
+          onRestoreMission={handleRestoreMission}
           onUpdateMission={handleUpdateMission}
           quest={quests.find(q => q.id === selectedMission.questId)}
         />

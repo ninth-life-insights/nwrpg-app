@@ -12,7 +12,6 @@ import './MissionBankPage.css';
 
 const MissionBank = () => {
   const { currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('active');
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -21,8 +20,8 @@ const MissionBank = () => {
     sortOrder: 'asc',
     skillFilter: '',
     includeCompleted: false,
-    includeExpired: false,
-    completedDateRange: 'last7days' // Added new filter field
+    showArchive: false,
+    completedDateRange: 'last7days'
   });
 
   // State to track recently completed missions
@@ -105,31 +104,15 @@ const MissionBank = () => {
   const handleApplyFilters = (newFilters) => {
     // Clear recently completed missions when filters change
     setRecentlyCompletedMissions([]);
-    
+
     setFilters(newFilters);
-    
-    // Update activeTab based on include options
-    if (newFilters.includeCompleted && newFilters.includeExpired) {
-      setActiveTab('all');
-    } else if (newFilters.includeCompleted) {
-      setActiveTab('completed');
-    } else if (newFilters.includeExpired) {
-      setActiveTab('expired');
-    } else {
-      setActiveTab('active');
-    }
+
   };
 
   const getMissionType = () => {
-    if (filters.includeCompleted && filters.includeExpired) {
-      return 'all';
-    } else if (filters.includeCompleted) {
-      return 'completed';
-    } else if (filters.includeExpired) {
-      return 'expired';
-    } else {
-      return activeTab;
-    }
+    if (filters.showArchive) return 'expired';
+    if (filters.includeCompleted) return 'active_completed';
+    return 'active';
   };
 
   return (

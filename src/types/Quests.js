@@ -52,6 +52,7 @@ export const QUEST_SCHEMA = {
   createdAt: null,                    // Timestamp - when quest was created
   updatedAt: null,                    // Timestamp - last modification
   completedAt: null,                  // Timestamp | null - when completed
+  archivedAt: null,                   // Timestamp | null - when archived
   
   // Future features
   achievement: null,                  // string | null - achievement ID when implemented

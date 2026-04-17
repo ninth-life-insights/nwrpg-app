@@ -506,6 +506,26 @@ export const updateMissionCustomOrder = async (userId, missionId, customSortOrde
   }
 };
 
+// Archive a mission (manually expire it — expired = archived)
+export const archiveMission = async (userId, missionId) => {
+  return expireMission(userId, missionId);
+};
+
+// Restore an archived/expired mission back to active
+export const restoreMission = async (userId, missionId) => {
+  try {
+    const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    await updateDoc(missionRef, {
+      status: MISSION_STATUS.ACTIVE,
+      expiredAt: null,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error restoring mission:', error);
+    throw error;
+  }
+};
+
 // Batch update multiple missions' custom sort orders
 export const batchUpdateMissionOrders = async (userId, updates) => {
   try {

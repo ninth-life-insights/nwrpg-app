@@ -177,6 +177,38 @@ text-transform: uppercase !important;
   vertical-align: middle;
 }
 
+.quest-card-actions {
+  display: flex;
+  align-items: center;
+}
+
+.quest-card-actions.has-restore {
+  gap: var(--space-sm);
+}
+
+.quest-card-actions.has-restore .view-full-quest-button {
+  flex: 1;
+  text-align: left;
+}
+
+.restore-quest-button {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.restore-quest-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 480px) {
   .quest-card {

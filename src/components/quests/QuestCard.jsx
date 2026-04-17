@@ -7,11 +7,12 @@ import Badge from '../ui/Badge';
 import { calculateQuestProgress } from '../../types/Quests';
 import './QuestCard.css';
 
-const QuestCard = ({ 
-  quest, 
-  nextMission, 
+const QuestCard = ({
+  quest,
+  nextMission,
   onMissionToggleComplete,
-  onMissionViewDetails 
+  onMissionViewDetails,
+  onRestore
 }) => {
   const navigate = useNavigate();
   const progress = calculateQuestProgress(quest);
@@ -95,13 +96,23 @@ const QuestCard = ({
         </div>
       )}
 
-      {/* View Full Quest Button */}
-      <button 
-        className="view-full-quest-button"
-        onClick={handleViewFullQuest}
-      >
-        View Full Quest <span className="material-icons">double_arrow</span>
-      </button>
+      {/* Quest Actions */}
+      <div className={`quest-card-actions ${onRestore ? 'has-restore' : ''}`}>
+        <button
+          className="view-full-quest-button"
+          onClick={handleViewFullQuest}
+        >
+          View Full Quest <span className="material-icons">double_arrow</span>
+        </button>
+        {onRestore && (
+          <button
+            className="restore-quest-button"
+            onClick={() => onRestore(quest.id)}
+          >
+            Restore
+          </button>
+        )}
+      </div>
     </div>
   );
 };

@@ -129,11 +129,15 @@ export const updateQuest = async (userId, questId, updates) => {
 // Update quest status
 export const updateQuestStatus = async (userId, questId, newStatus) => {
   const updates = { status: newStatus };
-  
+
   if (newStatus === QUEST_STATUS.COMPLETED) {
     updates.completedAt = serverTimestamp();
   }
-  
+
+  if (newStatus === QUEST_STATUS.ARCHIVED) {
+    updates.archivedAt = serverTimestamp();
+  }
+
   return updateQuest(userId, questId, updates);
 };
 
@@ -172,6 +176,19 @@ export const completeQuest = async (userId, questId) => {
 // Archive a quest
 export const archiveQuest = async (userId, questId) => {
   return updateQuestStatus(userId, questId, QUEST_STATUS.ARCHIVED);
+};
+
+// Get archived quests
+export const getArchivedQuests = async (userId) => {
+  return getQuestsByStatus(userId, QUEST_STATUS.ARCHIVED);
+};
+
+// Restore an archived quest back to active
+export const restoreQuest = async (userId, questId) => {
+  return updateQuest(userId, questId, {
+    status: QUEST_STATUS.ACTIVE,
+    archivedAt: null
+  });
 };
 
 // Delete a quest

@@ -61,8 +61,8 @@ const MissionFilterModal = ({
     sortOrder: 'asc',
     skillFilter: '',
     includeCompleted: false,
-    includeExpired: false,
-    completedDateRange: 'last7days', // New field for completion date range
+    showArchive: false,
+    completedDateRange: 'last7days',
     ...currentFilters
   });
 
@@ -73,17 +73,20 @@ const MissionFilterModal = ({
       sortOrder: 'asc',
       skillFilter: '',
       includeCompleted: false,
-      includeExpired: false,
+      showArchive: false,
       completedDateRange: 'last7days',
       ...currentFilters
     });
   }, [currentFilters]);
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setFilters(prev => {
+      const next = { ...prev, [key]: value };
+      // Archive view and include-completed are mutually exclusive
+      if (key === 'showArchive' && value) next.includeCompleted = false;
+      if (key === 'includeCompleted' && value) next.showArchive = false;
+      return next;
+    });
   };
 
   const handleApply = () => {
@@ -97,7 +100,7 @@ const MissionFilterModal = ({
       sortOrder: 'asc',
       skillFilter: '',
       includeCompleted: false,
-      includeExpired: false,
+      showArchive: false,
       completedDateRange: 'last7days'
     };
     setFilters(defaultFilters);
@@ -167,9 +170,9 @@ const MissionFilterModal = ({
             </select>
           </div>
 
-          {/* Include Options */}
+          {/* Status Options */}
           <div className="filter-section">
-            <h4>Include</h4>
+            <h4>Status</h4>
             <div className="checkbox-options">
               <label className="checkbox-label">
                 <input
@@ -178,14 +181,17 @@ const MissionFilterModal = ({
                   onChange={(e) => handleFilterChange('includeCompleted', e.target.checked)}
                 />
                 <span className="checkmark"></span>
-                Include Completed Missions
+                <span>
+                  Include completed missions
+                  <span className="filter-sublabel">Shows active and completed missions together</span>
+                </span>
               </label>
-              
+
               {/* Completion Date Range - Only show when includeCompleted is checked */}
               {filters.includeCompleted && (
                 <div className="date-range-section">
                   <label className="date-range-label">Completed within:</label>
-                  <select 
+                  <select
                     value={filters.completedDateRange}
                     onChange={(e) => handleFilterChange('completedDateRange', e.target.value)}
                     className="filter-select date-range-select"
@@ -197,15 +203,20 @@ const MissionFilterModal = ({
                   </select>
                 </div>
               )}
-              
+
+              <div className="filter-divider" />
+
               <label className="checkbox-label">
                 <input
                   type="checkbox"
-                  checked={filters.includeExpired}
-                  onChange={(e) => handleFilterChange('includeExpired', e.target.checked)}
+                  checked={filters.showArchive}
+                  onChange={(e) => handleFilterChange('showArchive', e.target.checked)}
                 />
                 <span className="checkmark"></span>
-                Include Expired Missions
+                <span>
+                  View archive
+                  <span className="filter-sublabel">Shows expired and manually archived missions only</span>
+                </span>
               </label>
             </div>
           </div>

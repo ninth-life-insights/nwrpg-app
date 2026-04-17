@@ -180,7 +180,8 @@
 
 .mission-actions {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-sm);
   padding-top: var(--space-lg);
   border-top: 1px solid var(--color-border);
 }
@@ -213,6 +214,56 @@
 
 .action-button.mark-incomplete:hover {
   background-color: var(--color-text-medium);
+}
+
+.action-button.delete-button {
+  background-color: transparent;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.action-button.delete-button:hover {
+  background-color: rgba(220, 38, 38, 0.08);
+  transform: translateY(-1px);
+}
+
+.action-button.archive-button {
+  background-color: transparent;
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
+}
+
+.action-button.archive-button:hover {
+  background-color: rgba(245, 158, 11, 0.08);
+  transform: translateY(-1px);
+}
+
+.action-button.restore-button {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.info-icon {
+  font-size: 0.8em;
+  color: var(--color-text-light);
+  cursor: pointer;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.info-icon:hover {
+  color: var(--color-text-medium);
+}
+
+.expiry-note {
+  font-size: var(--font-size-sm) !important;
+  color: var(--color-text-light) !important;
+  margin-top: var(--space-xs) !important;
+  font-style: italic;
 }
 
 .due-date-badge {

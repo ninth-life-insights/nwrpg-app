@@ -5,9 +5,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import QuestCard from '../components/quests/QuestCard';
 import CreateQuestModal from '../components/quests/CreateQuestModal';
-import { 
-  getActiveQuests, 
-  getCompletedQuests 
+import {
+  getActiveQuests,
+  getCompletedQuests,
+  getArchivedQuests,
+  restoreQuest
 } from '../services/questService';
 import { getAllMissions } from '../services/missionService';
 import { getNextMission } from '../types/Quests';
@@ -28,13 +30,14 @@ const QuestBank = () => {
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [showAddQuest, setShowAddQuest] = useState(false);
   const [includeCompleted, setIncludeCompleted] = useState(false);
+  const [includeArchived, setIncludeArchived] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
       loadQuests();
       loadMissions();
     }
-  }, [currentUser, includeCompleted, reloadTrigger]);
+  }, [currentUser, includeCompleted, includeArchived, reloadTrigger]);
 
   const loadQuests = async () => {
     if (isDefinitelyOffline()) {
@@ -48,7 +51,9 @@ const QuestBank = () => {
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       let questData = [];
-      if (includeCompleted) {
+      if (includeArchived) {
+        questData = await withTimeout(getArchivedQuests(currentUser.uid));
+      } else if (includeCompleted) {
         const [active, completed] = await withTimeout(
           Promise.all([
             getActiveQuests(currentUser.uid),
@@ -98,6 +103,21 @@ const QuestBank = () => {
 
   const handleToggleCompleted = () => {
     setIncludeCompleted(!includeCompleted);
+    if (!includeCompleted) setIncludeArchived(false);
+  };
+
+  const handleToggleArchived = () => {
+    setIncludeArchived(!includeArchived);
+    if (!includeArchived) setIncludeCompleted(false);
+  };
+
+  const handleRestoreQuest = async (questId) => {
+    try {
+      await restoreQuest(currentUser.uid, questId);
+      setQuests(prev => prev.filter(q => q.id !== questId));
+    } catch (err) {
+      console.error('Error restoring quest:', err);
+    }
   };
 
   const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
@@ -152,24 +172,41 @@ const QuestBank = () => {
         </div>
         
         <div className="header-actions">
-          {/* Toggle Completed Filter */}
+          {/* Toggle Archive Filter */}
           <button
-            onClick={handleToggleCompleted}
-            className="filter-btn-header"
-            title={includeCompleted ? "Hide Completed" : "Show Completed"}
+            onClick={handleToggleArchived}
+            className={`filter-btn-header ${includeArchived ? 'active' : ''}`}
+            title={includeArchived ? "Hide Archive" : "View Archive"}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+              <polyline points="21 8 21 21 3 21 3 8"></polyline>
+              <rect x="1" y="3" width="22" height="5"></rect>
+              <line x1="10" y1="12" x2="14" y2="12"></line>
             </svg>
           </button>
-          
+
+          {/* Toggle Completed Filter */}
+          {!includeArchived && (
+            <button
+              onClick={handleToggleCompleted}
+              className="filter-btn-header"
+              title={includeCompleted ? "Hide Completed" : "Show Completed"}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+              </svg>
+            </button>
+          )}
+
           {/* Add Quest Button */}
-          <button
-            onClick={handleShowAddQuest}
-            className="add-quest-btn"
-          >
-            + Add Quest
-          </button>
+          {!includeArchived && (
+            <button
+              onClick={handleShowAddQuest}
+              className="add-quest-btn"
+            >
+              + Add Quest
+            </button>
+          )}
         </div>
       </div>
 
@@ -177,12 +214,16 @@ const QuestBank = () => {
       <div className="quest-list">
         {quests.length === 0 ? (
           <div className="empty-state">
-            <p>No active quests. Create your first quest to get started!</p>
+            <p>
+              {includeArchived
+                ? 'No archived quests.'
+                : 'No active quests. Create your first quest to get started!'}
+            </p>
           </div>
         ) : (
           quests.map(quest => {
             const nextMission = getNextMission(quest, missions);
-            
+
             return (
               <QuestCard
                 key={quest.id}
@@ -190,6 +231,7 @@ const QuestBank = () => {
                 nextMission={nextMission}
                 onMissionToggleComplete={handleMissionToggleComplete}
                 onMissionViewDetails={handleMissionViewDetails}
+                onRestore={includeArchived ? handleRestoreQuest : undefined}
               />
             );
           })

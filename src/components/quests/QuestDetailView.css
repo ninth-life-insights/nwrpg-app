@@ -261,17 +261,40 @@
   right: 0;
   background: white;
   border-top: 1px solid var(--color-border);
-  padding: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
   display: flex;
-  gap: var(--space-md);
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-sm);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
   z-index: 10;
+}
+
+.quest-actions-primary {
+  display: flex;
+  justify-content: center;
+}
+
+.quest-actions-secondary {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
 }
 
 .quest-actions.completed {
   background: #f0fdf4;
   border-top-color: #bbf7d0;
+}
+
+.quest-actions-primary .complete-quest-btn,
+.quest-actions-primary .reopen-quest-btn {
+  width: 100%;
+  max-width: 400px;
+}
+
+.quest-actions-secondary .archive-quest-btn,
+.quest-actions-secondary .delete-quest-btn {
+  flex: 1;
+  max-width: 200px;
 }
 
 .reopen-quest-btn {
@@ -314,6 +337,24 @@
 .complete-quest-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.archive-quest-btn {
+  flex: 1;
+  max-width: 300px;
+  padding: var(--space-md);
+  background: white;
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.archive-quest-btn:hover {
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .delete-quest-btn {

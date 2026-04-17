@@ -12,12 +12,14 @@ import {
   updateQuest,
   deleteQuest,
   completeQuest,
+  archiveQuest,
   updateQuestStatus,
   addMissionToQuest,
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
 import { getAllMissions, updateMission } from '../../services/missionService';
+import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
 import { formatForUserLong } from '../../utils/dateHelpers';
 import AchievementToast from '../achievements/AchievementToast';
@@ -39,6 +41,7 @@ const QuestDetailView = () => {
   const [showAddMission, setShowAddMission] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const { notifyMissionCompletion } = useNotifications();
   
   // Inline editing state
@@ -68,8 +71,10 @@ const QuestDetailView = () => {
       const questData = await getQuest(currentUser.uid, questId);
       const allMissions = await getAllMissions(currentUser.uid);
       
-      // Filter missions that belong to this quest
-      const questMissions = allMissions.filter(m => m.questId === questId);
+      // Filter missions that belong to this quest, excluding archived (expired) ones
+      const questMissions = allMissions.filter(
+        m => m.questId === questId && m.status !== MISSION_STATUS.EXPIRED
+      );
       
       setQuest(questData);
       setMissions(questMissions);
@@ -144,6 +149,23 @@ const QuestDetailView = () => {
       console.error('Error deleting quest:', err);
       setShowDeleteConfirm(false);
       setActionError("That quest didn't delete. Try again.");
+    }
+  };
+
+  const handleArchiveQuest = () => {
+    setShowArchiveConfirm(true);
+  };
+
+  const archiveQuestConfirmed = async () => {
+    setActionError(null);
+    try {
+      await archiveQuest(currentUser.uid, questId);
+      setShowArchiveConfirm(false);
+      navigate('/quest-bank');
+    } catch (err) {
+      console.error('Error archiving quest:', err);
+      setShowArchiveConfirm(false);
+      setActionError("That quest didn't archive. Try again.");
     }
   };
 
@@ -353,27 +375,39 @@ const QuestDetailView = () => {
 
       {/* Bottom Actions */}
       <div className={`quest-actions ${isCompleted ? 'completed' : ''}`}>
-        {isCompleted ? (
+        <div className="quest-actions-primary">
+          {isCompleted ? (
+            <button
+              className="reopen-quest-btn"
+              onClick={handleUncompleteQuest}
+            >
+              Reopen Quest
+            </button>
+          ) : (
+            <button
+              className="complete-quest-btn"
+              onClick={handleCompleteQuest}
+            >
+              Complete Quest
+            </button>
+          )}
+        </div>
+        <div className="quest-actions-secondary">
+          {quest.status !== QUEST_STATUS.ARCHIVED && (
+            <button
+              className="archive-quest-btn"
+              onClick={handleArchiveQuest}
+            >
+              Archive Quest
+            </button>
+          )}
           <button
-            className="reopen-quest-btn"
-            onClick={handleUncompleteQuest}
+            className="delete-quest-btn"
+            onClick={handleDeleteQuest}
           >
-            Reopen Quest
+            Delete Quest
           </button>
-        ) : (
-          <button
-            className="complete-quest-btn"
-            onClick={handleCompleteQuest}
-          >
-            Complete Quest
-          </button>
-        )}
-        <button
-          className="delete-quest-btn"
-          onClick={handleDeleteQuest}
-        >
-          Delete Quest
-        </button>
+        </div>
       </div>
 
       {/* Confirmation Modals */}
@@ -398,6 +432,19 @@ const QuestDetailView = () => {
             <div className="modal-actions">
               <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
               <button onClick={deleteQuestConfirmed} className="confirm-btn delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showArchiveConfirm && (
+        <div className="confirmation-modal">
+          <div className="modal-content">
+            <h3>Archive Quest?</h3>
+            <p>This quest will move to your archive. You can restore it any time.</p>
+            <div className="modal-actions">
+              <button onClick={() => setShowArchiveConfirm(false)}>Cancel</button>
+              <button onClick={archiveQuestConfirmed} className="confirm-btn">Archive</button>
             </div>
           </div>
         </div>
