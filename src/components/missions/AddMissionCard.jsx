@@ -167,11 +167,10 @@ const AddMissionCard = ({
       }));
       setShowDueDateField(true);
     } else {
-      // UNIQUE or EVERGREEN: clear due date and recurrence
+      // UNIQUE or EVERGREEN: keep due date, reset recurrence only
       setFormData(prev => ({
         ...prev,
         dueType,
-        dueDate: '',
         recurrence: {
           pattern: RECURRENCE_PATTERNS.NONE,
           interval: 1,
@@ -181,7 +180,7 @@ const AddMissionCard = ({
           maxOccurrences: null
         }
       }));
-      setShowDueDateField(false);
+      setShowDueDateField(prev => prev || !!formData.dueDate);
     }
   };
 
