@@ -501,7 +501,7 @@ const AddMissionCard = ({
           )}
 
           {/* Recurrence Selector */}
-          {(formData.dueDate || formData.dueType === DUE_TYPES.RECURRING) && (
+          {formData.dueType === DUE_TYPES.RECURRING && (
             <div className="recurrence-section">
               <RecurrenceSelector
                 recurrence={formData.recurrence}
