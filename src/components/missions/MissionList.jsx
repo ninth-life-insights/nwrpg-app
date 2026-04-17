@@ -42,13 +42,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-const MissionList = ({ 
-  missionType = 'active', 
+const MissionList = ({
+  missionType = 'active',
   onMissionUpdate,
   showAddMission,
   onHideAddMission,
   filters = {},
-  selectionMode = false, 
+  onApplyFilters = null,
+  selectionMode = false,
   onMissionSelect = null,
   selectedMissions = [],
   maxSelections = null,
@@ -543,20 +544,41 @@ const MissionList = ({
   }
 
   if (displayMissions.length === 0) {
-    const emptyMessage = missionType === 'active' 
-      ? "No active missions. Add your first mission to get started!" 
-      : "No completed missions yet. Complete some active missions to see them here!";
-      
+    const isArchiveView = missionType === 'expired';
+
+    const emptyMessage = isArchiveView
+      ? "No archived missions."
+      : missionType === 'active'
+        ? "No active missions. Add your first mission to get started!"
+        : "No completed missions yet. Complete some active missions to see them here!";
+
     return (
       <div>
-        <div style={{ 
-          textAlign: 'center', 
+        <div style={{
+          textAlign: 'center',
           padding: '40px',
           color: '#666'
         }}>
           {emptyMessage}
+          {isArchiveView && onApplyFilters && (
+            <div style={{ marginTop: '12px' }}>
+              <button
+                onClick={() => onApplyFilters({ ...filters, showArchive: false })}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#007bff',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  padding: 0
+                }}
+              >
+                ← Back to active missions
+              </button>
+            </div>
+          )}
         </div>
-        
+
         {showAddMission && (
           <AddMissionCard
             onAddMission={handleAddMission}

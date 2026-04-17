@@ -151,18 +151,18 @@ const MissionBank = () => {
       {loadError && <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); loadUserProfile(); }} className="mission-bank-load-error" />}
 
       {/* UPDATED: MissionList component now automatically computes daily mission badges */}
-      <MissionList 
+      <MissionList
         missionType={getMissionType()}
         onMissionUpdate={handleMissionUpdate}
         showAddMission={showAddMission}
         onShowAddMission={handleShowAddMission}
         onHideAddMission={handleHideAddMission}
         filters={filters}
+        onApplyFilters={handleApplyFilters}
         recentlyCompletedMissions={recentlyCompletedMissions}
         onMissionCompletion={handleMissionCompletion}
         onMissionUncompletion={handleMissionUncompletion}
         onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
-        // Note: Daily mission badges will be computed automatically by addDailyMissionStatus
       />
 
       {/* Filter Modal */}
