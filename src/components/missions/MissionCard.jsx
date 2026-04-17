@@ -129,7 +129,7 @@ const MissionCard = ({
   <div 
     ref={setNodeRef} 
     style={style}
-    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : mission.isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
   >
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (

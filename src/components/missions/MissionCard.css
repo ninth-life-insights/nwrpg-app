@@ -36,6 +36,23 @@
   border-color: #bfdbfe; /* Light blue border */
 }
 
+/* Archived Mission Card Styling - gray */
+.mission-card.archived-mission-card {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.mission-card.archived-mission-card .mission-title {
+  color: #6b7280;
+}
+
+.mission-card.archived-mission-card .mission-toggle {
+  border-color: #d1d5db;
+  background-color: #e5e7eb;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 .mission-card.pinned {
   border-color: #fbbf24;
   box-shadow: var(--shadow-card), 0 0 0 1px rgba(251, 191, 36, 0.2);
