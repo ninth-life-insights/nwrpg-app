@@ -181,10 +181,7 @@ const MissionFilterModal = ({
                   onChange={(e) => handleFilterChange('includeCompleted', e.target.checked)}
                 />
                 <span className="checkmark"></span>
-                <span>
-                  Include completed missions
-                  <span className="filter-sublabel">Shows active and completed missions together</span>
-                </span>
+                Include completed missions
               </label>
 
               {/* Completion Date Range - Only show when includeCompleted is checked */}
@@ -203,39 +200,33 @@ const MissionFilterModal = ({
                   </select>
                 </div>
               )}
-
-              <div className="filter-divider" />
-
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.showArchive}
-                  onChange={(e) => handleFilterChange('showArchive', e.target.checked)}
-                />
-                <span className="checkmark"></span>
-                <span>
-                  View archive
-                  <span className="filter-sublabel">Shows expired and manually archived missions only</span>
-                </span>
-              </label>
             </div>
+
           </div>
 
         </div>
 
         {/* Footer */}
         <div className="filter-modal-footer">
-          <button 
-            onClick={handleReset}
-            className="filter-btn secondary"
+          <div className="filter-modal-footer-buttons">
+            <button
+              onClick={handleReset}
+              className="filter-btn secondary"
+            >
+              Reset to Default
+            </button>
+            <button
+              onClick={handleApply}
+              className="filter-btn primary"
+            >
+              Apply Filters
+            </button>
+          </div>
+          <button
+            className={`archive-link-btn ${filters.showArchive ? 'active' : ''}`}
+            onClick={() => handleFilterChange('showArchive', !filters.showArchive)}
           >
-            Reset to Default
-          </button>
-          <button 
-            onClick={handleApply}
-            className="filter-btn primary"
-          >
-            Apply Filters
+            View archive →
           </button>
         </div>
 
