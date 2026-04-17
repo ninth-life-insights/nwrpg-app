@@ -185,13 +185,15 @@
 
 .date-range-section {
   padding-left: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .date-range-label {
-  display: block;
   font-size: 13px;
   color: #6c757d;
-  margin-bottom: 6px;
+  white-space: nowrap;
 }
 
 /* Footer */
