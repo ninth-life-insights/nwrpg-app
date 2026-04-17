@@ -224,9 +224,13 @@ const MissionFilterModal = ({
           </div>
           <button
             className={`archive-link-btn ${filters.showArchive ? 'active' : ''}`}
-            onClick={() => handleFilterChange('showArchive', !filters.showArchive)}
+            onClick={() => {
+              const next = { ...filters, showArchive: !filters.showArchive, includeCompleted: false };
+              onApplyFilters(next);
+              onClose();
+            }}
           >
-            View archive →
+            {filters.showArchive ? 'Back to missions →' : 'View archive →'}
           </button>
         </div>
 
