@@ -40,7 +40,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-lg) var(--space-xl) 0 var(--space-xl);
+  padding: var(--space-lg) var(--space-md) 0 var(--space-md);
 }
 
 .mission-modal-back,
@@ -472,13 +472,15 @@
   border: none;
   padding: 6px;
   cursor: pointer;
-  color: var(--color-text-light);
+  color: var(--color-text-medium);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .edit-button-inline:hover {
@@ -487,5 +489,6 @@
 }
 
 .edit-button-inline .material-icons {
-  font-size: 20px;
+  font-size: 18px;
+  color: inherit;
 }
