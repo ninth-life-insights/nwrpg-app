@@ -120,8 +120,11 @@ const MissionCardFull = ({
           
           {/* Header */}
           <div className="mission-detail-header">
-            <button className="back-button" onClick={onClose} aria-label="Close">
-              <span className="material-icons">arrow_back</span>
+            <button className="mission-modal-back" onClick={onClose} aria-label="Close">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
             </button>
 
             {!isExpired && (
