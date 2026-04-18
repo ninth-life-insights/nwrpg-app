@@ -245,6 +245,16 @@ const MissionCardFull = ({
               )}
             </div>
 
+            {/* Scheduled Daily Dates */}
+            {futureScheduledDates.length > 0 && (
+              <div className="scheduled-daily-row">
+                <span className="material-icons scheduled-daily-icon">sunny</span>
+                <span className="scheduled-daily-text">
+                  Scheduled as daily: {futureScheduledDates.map(d => formatForUserLong(d)).join(', ')}
+                </span>
+              </div>
+            )}
+
             {/* Mission Metadata */}
             <div className="mission-metadata">
               {(createdDisplay || editedDisplay) && (
@@ -261,15 +271,6 @@ const MissionCardFull = ({
               {isCompleted && completedDisplay && (
                 <div className="metadata-row">
                   <span>Completed {completedDisplay}</span>
-                </div>
-              )}
-              {futureScheduledDates.length > 0 && (
-                <div className="metadata-row">
-                  <span className="material-icons scheduled-dates-icon">sunny</span>
-                  <span>
-                    Scheduled as daily:{' '}
-                    {futureScheduledDates.map(d => formatForUserLong(d)).join(', ')}
-                  </span>
                 </div>
               )}
               {expiryDisplay && (
