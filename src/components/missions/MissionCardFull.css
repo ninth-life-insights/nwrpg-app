@@ -477,7 +477,7 @@
   align-items: center;
   gap: var(--space-xs);
   background: none;
-  border: 1px dashed var(--color-border);
+  border: 2px dashed rgb(196, 188, 243);
   border-radius: var(--radius-sm);
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--font-size-sm);
