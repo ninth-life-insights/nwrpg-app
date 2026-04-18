@@ -216,15 +216,10 @@ const MissionCardFull = ({
                 <Badge variant="evergreen">Evergreen</Badge>
               )}
 
-              {dueDateInfo ? (
+              {dueDateInfo && (
                 <Badge variant={`due-${dueDateInfo.status}`}>
                   {dueDateInfo.display}
                 </Badge>
-              ) : isActive && (
-                <button className="ghost-prompt" onClick={handleEditClick}>
-                  <span className="material-icons">add</span>
-                  Add due date
-                </button>
               )}
 
               {quest && (
@@ -235,9 +230,18 @@ const MissionCardFull = ({
 
               <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
 
-              {mission.skill ? (
+              {mission.skill && (
                 <Badge variant="skill">Skill: {mission.skill}</Badge>
-              ) : isActive && (
+              )}
+
+              {isActive && !dueDateInfo && (
+                <button className="ghost-prompt" onClick={handleEditClick}>
+                  <span className="material-icons">add</span>
+                  Add due date
+                </button>
+              )}
+
+              {isActive && !mission.skill && (
                 <button className="ghost-prompt" onClick={handleEditClick}>
                   <span className="material-icons">add</span>
                   Add skill
