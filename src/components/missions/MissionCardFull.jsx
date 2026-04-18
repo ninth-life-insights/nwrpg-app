@@ -11,7 +11,8 @@ import {
   isMissionDueTomorrow,
   isMissionOverdue,
   formatForUser,
-  formatForUserLong
+  formatForUserLong,
+  toDateString
 } from '../../utils/dateHelpers';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardFull.css';
@@ -85,6 +86,10 @@ const MissionCardFull = ({
   const editedDisplay = wasEdited() ? formatTimestamp(mission.updatedAt) : null;
   const expiryDisplay = mission.expiryDate ? formatForUserLong(mission.expiryDate) : null;
   const completedDisplay = formatTimestamp(mission.completedAt);
+  const today = toDateString(new Date());
+  const futureScheduledDates = (mission.scheduledDates ?? [])
+    .filter(d => d >= today)
+    .sort();
   const isRecurring = isRecurringMission(mission);
   const isEvergreen = isEvergreenMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
@@ -256,6 +261,15 @@ const MissionCardFull = ({
               {isCompleted && completedDisplay && (
                 <div className="metadata-row">
                   <span>Completed {completedDisplay}</span>
+                </div>
+              )}
+              {futureScheduledDates.length > 0 && (
+                <div className="metadata-row">
+                  <span className="material-icons scheduled-dates-icon">sunny</span>
+                  <span>
+                    Scheduled as daily:{' '}
+                    {futureScheduledDates.map(d => formatForUserLong(d)).join(', ')}
+                  </span>
                 </div>
               )}
               {expiryDisplay && (
