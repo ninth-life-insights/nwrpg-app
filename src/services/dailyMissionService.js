@@ -1,15 +1,18 @@
 // src/services/dailyMissionService.js
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  orderBy, 
-  serverTimestamp 
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { toDateString } from '../utils/dateHelpers';
@@ -238,6 +241,35 @@ export const saveDailyMissionSelection = async (userId, missionIds) => {
     return { success: true };
   } catch (error) {
     console.error('Error saving daily mission selection:', error);
+    throw error;
+  }
+};
+
+// Sync scheduledDates on mission documents when a daily plan is saved.
+// prevMissionIds: the IDs that were previously planned for this date (may be empty).
+// nextMissionIds: the IDs now being planned for this date.
+export const syncScheduledDatesOnMissions = async (userId, prevMissionIds, nextMissionIds, dateString) => {
+  try {
+    const added = nextMissionIds.filter(id => !prevMissionIds.includes(id));
+    const removed = prevMissionIds.filter(id => !nextMissionIds.includes(id));
+
+    if (added.length === 0 && removed.length === 0) return;
+
+    const batch = writeBatch(db);
+
+    added.forEach(id => {
+      const ref = doc(db, 'users', userId, 'missions', id);
+      batch.update(ref, { scheduledDates: arrayUnion(dateString) });
+    });
+
+    removed.forEach(id => {
+      const ref = doc(db, 'users', userId, 'missions', id);
+      batch.update(ref, { scheduledDates: arrayRemove(dateString) });
+    });
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Error syncing scheduledDates on missions:', error);
     throw error;
   }
 };

@@ -109,6 +109,7 @@ export const MISSION_SCHEMA = {
   // Metadata
   version: 1,                          // number - for future schema migrations
   customSortOrder: null,               // number | null - for manual drag-and-drop ordering
+  scheduledDates: [],                  // string[] - future dates (YYYY-MM-DD) this mission is planned as a daily
 };
 
 

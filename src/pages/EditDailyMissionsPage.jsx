@@ -22,6 +22,7 @@ import {
   saveDailyMissionSelection,
   getDailyMissionsForDate,
   planDailyMissionsForDate,
+  syncScheduledDatesOnMissions,
 } from '../services/dailyMissionService';
 
 import { getAllQuests } from '../services/questService';
@@ -240,6 +241,10 @@ const handleAddNewMission = async (missionData) => {
 
       const selectedMissionIds = validMissions.map(mission => mission.id);
 
+      // Get previously planned IDs for this date to compute the diff
+      const prevHistory = await getDailyMissionsForDate(currentUser.uid, targetDate);
+      const prevMissionIds = prevHistory?.selectedMissionIds ?? [];
+
       if (targetDate === today) {
         // Today: write to config + history (existing flow)
         await updateDailyMissionsConfig(currentUser.uid, selectedMissionIds);
@@ -251,6 +256,9 @@ const handleAddNewMission = async (missionData) => {
         // Future date: write only to history, never touch config
         await planDailyMissionsForDate(currentUser.uid, selectedMissionIds, targetDate);
       }
+
+      // Sync scheduledDates on mission documents
+      await syncScheduledDatesOnMissions(currentUser.uid, prevMissionIds, selectedMissionIds, targetDate);
 
       if (isModal && onComplete) {
         onComplete();
