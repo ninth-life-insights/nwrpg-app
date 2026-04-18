@@ -138,6 +138,15 @@ const MissionCardFull = ({
                 </button>
                 {showActionsMenu && (
                   <div className="actions-dropdown">
+                    {isActive && (
+                      <button
+                        className="dropdown-item"
+                        onClick={() => { setShowActionsMenu(false); handleEditClick(); }}
+                      >
+                        <span className="material-icons">edit</span>
+                        Edit
+                      </button>
+                    )}
                     <button
                       className="dropdown-item archive-item"
                       onClick={() => { setShowActionsMenu(false); onArchiveMission && onArchiveMission(mission.id); }}
@@ -168,23 +177,28 @@ const MissionCardFull = ({
               </div>
             )}
             
-            {/* Title with Edit Button */}
+            {/* Title + Description */}
             <div className="mission-title-section">
-              <div className="title-with-edit">
-                <h2 className={`mission-detail-title ${isCompleted ? 'completed' : ''}`}>
-                  {mission.title}
-                </h2>
-                {isActive && (
-                  <button className="edit-button-inline" onClick={handleEditClick} title="Edit mission">
-                    <span className="material-icons">edit</span>
-                  </button>
-                )}
-              </div>
-              
-              {/* Description */}
-              <div className={`mission-description${mission.description ? '' : ' empty'}`}>
-                <p>{mission.description || 'No description'}</p>
-              </div>
+              <h2
+                className={`mission-detail-title ${isCompleted ? 'completed' : ''}${isActive ? ' tappable' : ''}`}
+                onClick={isActive ? handleEditClick : undefined}
+              >
+                {mission.title}
+              </h2>
+
+              {mission.description ? (
+                <div
+                  className={`mission-description${isActive ? ' tappable' : ''}`}
+                  onClick={isActive ? handleEditClick : undefined}
+                >
+                  <p>{mission.description}</p>
+                </div>
+              ) : isActive ? (
+                <button className="ghost-prompt" onClick={handleEditClick}>
+                  <span className="material-icons">add</span>
+                  Add description
+                </button>
+              ) : null}
             </div>
 
             {/* Badges */}
@@ -196,7 +210,7 @@ const MissionCardFull = ({
               {isEvergreen && (
                 <Badge variant="evergreen">Evergreen</Badge>
               )}
-              
+
               {dueDateInfo && (
                 <Badge variant={`due-${dueDateInfo.status}`}>
                   {dueDateInfo.display}
@@ -204,15 +218,20 @@ const MissionCardFull = ({
               )}
 
               {quest && (
-              <div className="quest-indicator-badge" onClick={handleQuestClick}>
-                <Badge variant="quest">Quest: {quest.title}</Badge>
-              </div>
-            )}
+                <div className="quest-indicator-badge" onClick={handleQuestClick}>
+                  <Badge variant="quest">Quest: {quest.title}</Badge>
+                </div>
+              )}
 
               <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
-              
-              {mission.skill && (
+
+              {mission.skill ? (
                 <Badge variant="skill">Skill: {mission.skill}</Badge>
+              ) : isActive && (
+                <button className="ghost-prompt" onClick={handleEditClick}>
+                  <span className="material-icons">add</span>
+                  Add skill
+                </button>
               )}
             </div>
 

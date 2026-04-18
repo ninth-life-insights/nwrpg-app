@@ -458,34 +458,40 @@
   }
 }
 
-.title-with-edit {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.edit-button-inline {
-  background: none;
-  border: none;
-  padding: 6px;
+/* Tappable title / description */
+.mission-detail-title.tappable,
+.mission-description.tappable {
   cursor: pointer;
-  color: var(--color-text-medium);
-  display: flex;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease;
+}
+
+.mission-detail-title.tappable:hover,
+.mission-description.tappable:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Ghost prompt buttons for missing fields */
+.ghost-prompt {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  gap: var(--space-xs);
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.edit-button-inline:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: var(--color-text-dark);
+.ghost-prompt:hover {
+  border-color: var(--color-text-light);
+  color: var(--color-text-medium);
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
-.edit-button-inline .material-icons {
-  font-size: 18px;
-  color: inherit;
+.ghost-prompt .material-icons {
+  font-size: 14px;
 }
