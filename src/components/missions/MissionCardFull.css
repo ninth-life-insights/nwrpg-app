@@ -234,9 +234,6 @@
 }
 
 .expiry-row {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-light);
-  opacity: 0.8;
 }
 
 /* Description empty state */
