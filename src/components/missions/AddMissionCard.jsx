@@ -488,10 +488,10 @@ const AddMissionCard = ({
                       }));
                       setShowDueDateField(false);
                     }}
-                    className="remove-field-btn"
+                    className="mission-remove-field-btn"
                     disabled={isSubmitting}
                   >
-                    ×
+                    X
                   </button>
                 )}
               </div>
@@ -537,7 +537,7 @@ const AddMissionCard = ({
                       setShowSkillField(false);
                       setSkillSearch('');
                     }}
-                    className="remove-field-btn"
+                    className="mission-remove-field-btn"
                     disabled={isSubmitting}
                   >
                     ×
@@ -560,7 +560,7 @@ const AddMissionCard = ({
                         setShowSkillField(false);
                         setSkillSearch('');
                       }}
-                      className="remove-field-btn"
+                      className="mission-remove-field-btn"
                       disabled={isSubmitting}
                     >
                       ×
@@ -605,7 +605,7 @@ const AddMissionCard = ({
                       handleRemoveExpiryDate();
                       setShowExpiryField(false);
                     }}
-                    className="remove-field-btn"
+                    className="mission-remove-field-btn"
                     disabled={isSubmitting}
                   >
                     ×

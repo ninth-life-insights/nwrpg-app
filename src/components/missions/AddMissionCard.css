@@ -570,13 +570,13 @@
   color: #9ca3af;
 }
 
-.remove-field-btn {
+.mission-remove-field-btn {
   background: #ef4444;
   color: white;
   border: none;
   border-radius: 4px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -587,7 +587,7 @@
   flex-shrink: 0;
 }
 
-.remove-field-btn:hover {
+.mission-remove-field-btn:hover {
   background: #dc2626;
 }
 
