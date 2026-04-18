@@ -211,10 +211,15 @@ const MissionCardFull = ({
                 <Badge variant="evergreen">Evergreen</Badge>
               )}
 
-              {dueDateInfo && (
+              {dueDateInfo ? (
                 <Badge variant={`due-${dueDateInfo.status}`}>
                   {dueDateInfo.display}
                 </Badge>
+              ) : isActive && (
+                <button className="ghost-prompt" onClick={handleEditClick}>
+                  <span className="material-icons">add</span>
+                  Add due date
+                </button>
               )}
 
               {quest && (
