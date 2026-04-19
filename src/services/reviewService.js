@@ -192,9 +192,11 @@ export const getDatesWithActivity = async (userId) => {
     const snapshotSnap = await getDocs(snapshotRef);
     const snapshotDates = new Set(snapshotSnap.docs.map(d => d.id));
 
-    // Return only dates without snapshots, sorted descending
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Return only past dates without snapshots, sorted descending
     return Object.entries(dateCounts)
-      .filter(([date]) => !snapshotDates.has(date))
+      .filter(([date]) => !snapshotDates.has(date) && date < today)
       .map(([date, missionCount]) => ({ date, missionCount }))
       .sort((a, b) => b.date.localeCompare(a.date));
   } catch (error) {
