@@ -43,7 +43,55 @@ Currently in personal-use MVP prototype phase, but with eventual plans to publis
 
 **`src/components/ui/ErrorMessage.jsx`** — Inline persistent error display. Props: `message` (string, required), `onRetry` (function, optional — renders "Try again" button), `className` (string, optional). Import and use this before writing any custom error div.
 
+**`src/components/ui/StickyFooter.jsx`** — Fixed bottom action area for pages with a primary save/submit/confirm CTA. Props: `children`, `bgColor` (optional — CSS color/var for the gradient, defaults to `var(--color-bg-main)`; pass `"var(--color-bg-white)"` for white-background pages), `className` (optional). The parent scroll container must add `padding-bottom: 120px`.
+
 **`src/utils/authErrors.js`** — `getAuthErrorMessage(error, mode)` maps Firebase auth error codes to user-facing strings. `mode` is `'login'` or `'signup'`. Use in any auth flow instead of hardcoding error text.
+
+## Sticky Footer Patterns
+
+Use a sticky bottom action area whenever the primary CTA (save, submit, confirm) lives at the end of potentially-scrollable content. There are two patterns in the app — pick the right one for the context.
+
+### Pattern 1 — Sticky Form Footer (`StickyFooter` component)
+
+For **pages** with a single primary action (save, submit, confirm, set). Renders a gradient-faded fixed panel centered at the bottom, max-width `--max-width-card`.
+
+```jsx
+import StickyFooter from '../components/ui/StickyFooter';
+
+// Default (cream/--color-bg-main background pages):
+<StickyFooter>
+  <button className="save-btn">Save</button>
+</StickyFooter>
+
+// White-background pages:
+<StickyFooter bgColor="var(--color-bg-white)">
+  <button className="save-btn">Save</button>
+</StickyFooter>
+```
+
+**Required:** Add `padding-bottom: 120px` to the page's scroll container so content isn't hidden behind the footer.
+
+Error messages that relate to the CTA (e.g. `saveError`) should be placed as children inside `<StickyFooter>` above the button.
+
+Used in: `EditDailyMissionsPage`, `SettingsPage`, `CharacterCreationPage`, `DailyReviewPage` step components.
+
+---
+
+### Pattern 2 — Floating FAB
+
+For **pages** where the primary action is "add" or "create" and should float above content rather than anchor to the edge. Use a centered pill button with `position: fixed; bottom: 24px`.
+
+Reference implementation: `AchievementsPage` (`.achievements-fab` in `AchievementsPage.css`).
+
+The parent page needs `padding-bottom: 100px` to prevent content from scrolling under the button.
+
+---
+
+### What NOT to use
+
+`QuestDetailView`'s `.quest-actions` bar is **not a standard pattern** — it predates the three-dot menu and will be reworked as part of the quest UI overhaul. Do not replicate it.
+
+Modal footers (e.g. `CreateQuestModal`) are a separate concern — they use `position: sticky` within the modal's scroll container, not `position: fixed`.
 
 ## Error Handling Patterns
 
