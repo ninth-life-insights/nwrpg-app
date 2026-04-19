@@ -335,16 +335,18 @@ const handleAddNewMission = async (missionData) => {
           What are your three most important priorities for the day?
         </p>}
 
-        {/* Date selector pill */}
-        <button
-          className={`date-selector-pill ${!isTargetToday ? 'future' : ''}`}
-          onClick={() => setShowDatePicker(true)}
-          aria-label="Change planning date"
-        >
-          <span className="date-selector-icon">📅</span>
-          <span className="date-selector-label">{targetDateDisplay}</span>
-          <span className="date-selector-caret">▾</span>
-        </button>
+        {/* Date selector pill — full page only */}
+        {!isModal && (
+          <button
+            className={`date-selector-pill ${!isTargetToday ? 'future' : ''}`}
+            onClick={() => setShowDatePicker(true)}
+            aria-label="Change planning date"
+          >
+            <span className="date-selector-icon">📅</span>
+            <span className="date-selector-label">{targetDateDisplay}</span>
+            <span className="date-selector-caret">▾</span>
+          </button>
+        )}
 
         {/* Status */}
         <div className={`current-status ${!isTargetToday ? 'future-status' : ''}`}>
@@ -539,7 +541,7 @@ const handleAddNewMission = async (missionData) => {
       )}
 
       {/* Date Picker Sheet */}
-      {showDatePicker && (
+      {!isModal && showDatePicker && (
         <div className="date-picker-overlay" onClick={() => setShowDatePicker(false)}>
           <div className="date-picker-sheet" onClick={e => e.stopPropagation()}>
             <p className="date-picker-heading">Plan for...</p>
