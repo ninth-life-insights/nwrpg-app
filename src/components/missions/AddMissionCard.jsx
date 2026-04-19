@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission, updateMission } from '../../services/missionService';
+import { getActiveQuests, addMissionToQuest, removeMissionFromQuest } from '../../services/questService';
 import Badge from '../ui/Badge';
 // import CompletionTypeSelector from './sub-components/CompletionTypeSelector'; // not yet fully implemented
 import RecurrenceSelector, { RECURRENCE_PATTERNS } from './sub-components/recurrenceSelector';
@@ -58,10 +59,11 @@ const AddMissionCard = ({
         },
         priority: initialMission.priority || 'normal',
         pinned: initialMission.pinned || false,
-        isDailyMission: initialMission.isDailyMission || false
+        isDailyMission: initialMission.isDailyMission || false,
+        questId: initialMission.questId || null,
       };
     }
-    
+
     return {
       title: '',
       description: '',
@@ -84,7 +86,8 @@ const AddMissionCard = ({
       },
       priority: 'normal',
       pinned: false,
-      isDailyMission: false
+      isDailyMission: false,
+      questId: null,
     };
   };
 
@@ -93,8 +96,18 @@ const AddMissionCard = ({
   const [showDueDateField, setShowDueDateField] = useState(mode === 'edit' && initialMission?.dueDate);
   const [showSkillField, setShowSkillField] = useState(mode === 'edit' && initialMission?.skill);
   const [showExpiryField, setShowExpiryField] = useState(false);
+  const [showQuestField, setShowQuestField] = useState(mode === 'edit' && !!initialMission?.questId);
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quests, setQuests] = useState([]);
+
+  // Load active quests on mount
+  useEffect(() => {
+    if (!currentUser) return;
+    getActiveQuests(currentUser.uid)
+      .then(setQuests)
+      .catch(err => console.error('Could not load quests:', err));
+  }, [currentUser]);
 
   // Update form when initialMission changes (for edit mode)
   useEffect(() => {
@@ -103,6 +116,7 @@ const AddMissionCard = ({
       setShowDueDateField(!!initialMission.dueDate);
       setShowSkillField(!!initialMission.skill);
       setShowExpiryField(!!initialMission.expiryDate);
+      setShowQuestField(!!initialMission.questId);
     }
   }, [mode, initialMission]);
 
@@ -143,6 +157,10 @@ const AddMissionCard = ({
       skill: skill
     }));
     setSkillSearch('');
+  };
+
+  const handleQuestSelect = (questId) => {
+    setFormData(prev => ({ ...prev, questId }));
   };
 
   const handleRecurrenceChange = (newRecurrence) => {
@@ -256,12 +274,14 @@ const AddMissionCard = ({
       },
       priority: 'normal',
       pinned: false,
-      isDailyMission: false
+      isDailyMission: false,
+      questId: null,
     });
-    
+
     setShowDueDateField(false);
     setShowSkillField(false);
     setShowExpiryField(false);
+    setShowQuestField(false);
     setSkillSearch('');
     setErrors({});
   };
@@ -281,26 +301,40 @@ const AddMissionCard = ({
       if (mode === 'edit' && initialMission) {
         // Update existing mission
         await updateMission(currentUser.uid, initialMission.id, missionData);
-        
+
+        // Handle quest link changes
+        const prevQuestId = initialMission.questId || null;
+        const nextQuestId = formData.questId || null;
+        if (prevQuestId !== nextQuestId) {
+          if (prevQuestId) await removeMissionFromQuest(currentUser.uid, prevQuestId, initialMission.id);
+          if (nextQuestId) await addMissionToQuest(currentUser.uid, nextQuestId, initialMission.id);
+        }
+
         if (onUpdateMission) {
           onUpdateMission({
             ...initialMission,
             ...missionData,
             id: initialMission.id,
+            questId: nextQuestId,
             updatedAt: new Date()
           });
         }
       } else {
         // Create new mission
         const missionId = await createMission(currentUser.uid, missionData);
-        
+
         if (!missionId) {
           throw new Error('Failed to create mission: No ID returned');
         }
-        
+
+        if (formData.questId) {
+          await addMissionToQuest(currentUser.uid, formData.questId, missionId);
+        }
+
         onAddMission({
           ...missionData,
           id: missionId,
+          questId: formData.questId || null,
           status: 'active',
           createdAt: new Date()
         });
@@ -428,6 +462,17 @@ const AddMissionCard = ({
                 disabled={isSubmitting}
               >
                 + Skill
+              </button>
+            )}
+
+            {!showQuestField && !formData.questId && quests.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowQuestField(true)}
+                className="ghost-badge"
+                disabled={isSubmitting}
+              >
+                + Quest
               </button>
             )}
             
@@ -581,6 +626,58 @@ const AddMissionCard = ({
                     ))}
                   </div>
                 </>
+              )}
+            </div>
+          )}
+
+          {/* Quest Field */}
+          {(showQuestField || formData.questId) && quests.length > 0 && (
+            <div className="skill-field-section">
+              <label>Quest</label>
+              {formData.questId ? (
+                <div className="selected-skill-inline">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuestField(true)}
+                    className="skill-badge-button"
+                    disabled={isSubmitting}
+                  >
+                    <Badge variant="quest">{quests.find(q => q.id === formData.questId)?.title ?? 'Quest'}</Badge>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, questId: null }));
+                      setShowQuestField(false);
+                    }}
+                    className="mission-remove-field-btn"
+                    disabled={isSubmitting}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <div className="field-with-remove">
+                  <select
+                    className="optional-input"
+                    value=""
+                    onChange={(e) => handleQuestSelect(e.target.value)}
+                    disabled={isSubmitting}
+                  >
+                    <option value="" disabled>Select a quest...</option>
+                    {quests.map(q => (
+                      <option key={q.id} value={q.id}>{q.title}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuestField(false)}
+                    className="mission-remove-field-btn"
+                    disabled={isSubmitting}
+                  >
+                    ×
+                  </button>
+                </div>
               )}
             </div>
           )}
