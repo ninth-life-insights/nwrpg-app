@@ -73,6 +73,7 @@
     background: var(--color-bg-main);
     font-family: var(--font-family);
     padding: var(--space-lg);
+    padding-bottom: 120px;
     max-width: var(--max-width-card);
     margin: 0 auto;
 }
@@ -348,7 +349,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  margin-top: var(--space-sm);
 }
 
 .create-character-btn:hover {

@@ -5,6 +5,7 @@ import { db } from '../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
 
 import ErrorMessage from '../components/ui/ErrorMessage';
+import StickyFooter from '../components/ui/StickyFooter';
 import './CharacterCreationPage.css';
 
 import { updateThemeColor } from '../utils/themeUtils';
@@ -236,9 +237,11 @@ const CharacterCreationPage = () => {
         </div>
 
         {/* Submit Button */}
-        <button onClick={handleSubmit} className="create-character-btn">
-          Begin Your Adventure
-        </button>
+        <StickyFooter>
+          <button onClick={handleSubmit} className="create-character-btn">
+            Begin Your Adventure
+          </button>
+        </StickyFooter>
       </div>
     </div>
   );

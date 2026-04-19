@@ -6,6 +6,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import StickyFooter from '../components/ui/StickyFooter';
 import './SettingsPage.css';
 
 const formatTime = (hour, minute) =>
@@ -202,7 +203,7 @@ const SettingsPage = () => {
           </div>
         )}
 
-        <div className="settings-save-row">
+        <StickyFooter>
           {saveError && <ErrorMessage message={saveError} />}
           <button
             className="settings-save-button"
@@ -211,7 +212,7 @@ const SettingsPage = () => {
           >
             {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
           </button>
-        </div>
+        </StickyFooter>
       </section>
     </div>
   );

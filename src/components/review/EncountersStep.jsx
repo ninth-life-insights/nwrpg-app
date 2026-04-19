@@ -1,6 +1,7 @@
 // src/components/review/EncountersStep.jsx
 import { useState } from 'react';
 import { addEncounter, removeEncounter } from '../../services/reviewService';
+import StickyFooter from '../ui/StickyFooter';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
 import { toDateString } from '../../utils/dateHelpers';
@@ -204,14 +205,14 @@ const EncountersStep = ({
         )}
       </div>
 
-      <div className="review-step-footer">
+      <StickyFooter>
         <button className="review-next-btn" onClick={onNext}>
           Next →
         </button>
         <button className="review-skip-link" onClick={onSkipToSummary}>
           Just show me my summary
         </button>
-      </div>
+      </StickyFooter>
     </div>
   );
 };

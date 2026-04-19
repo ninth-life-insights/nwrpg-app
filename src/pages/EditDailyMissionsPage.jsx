@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
 import Badge from '../components/ui/Badge';
+import StickyFooter from '../components/ui/StickyFooter';
 
 // Service imports - UPDATED for simplified system
 import {
@@ -494,7 +495,7 @@ const handleAddNewMission = async (missionData) => {
       </div>
 
       {/* Set Daily Missions Button */}
-      <div className="set-missions-section">
+      <StickyFooter>
         <button
           className={`set-missions-btn ${allSlotsFilled ? 'enabled' : 'disabled'}`}
           onClick={handleSetDailyMissions}
@@ -508,7 +509,7 @@ const handleAddNewMission = async (missionData) => {
             Fill all 3 slots to set your daily missions
           </p>
         )}
-      </div>
+      </StickyFooter>
 
       {/* Modals */}
       {showAddMission && (

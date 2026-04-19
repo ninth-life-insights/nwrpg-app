@@ -8,6 +8,7 @@ import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
+import StickyFooter from '../ui/StickyFooter';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 
 const FILTERS = ['All', 'Quests', 'Due Today', 'General'];
@@ -186,14 +187,14 @@ const OtherMissionsStep = ({
         />
       )}
 
-      <div className="review-step-footer">
+      <StickyFooter>
         <button className="review-next-btn" onClick={onNext}>
           Next →
         </button>
         <button className="review-skip-link" onClick={onSkipToSummary}>
           Just show me my summary
         </button>
-      </div>
+      </StickyFooter>
     </div>
   );
 };

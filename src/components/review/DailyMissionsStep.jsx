@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import MissionCard from '../missions/MissionCard';
 import EditDailyMissionsModal from '../missions/EditDailyMissionsModal';
+import StickyFooter from '../ui/StickyFooter';
 
 const DailyMissionsStep = ({
   dailyMissions,
@@ -55,14 +56,14 @@ const DailyMissionsStep = ({
         </button>
       </div>
 
-      <div className="review-step-footer">
+      <StickyFooter>
         <button className="review-next-btn" onClick={onNext}>
           Next →
         </button>
         <button className="review-skip-link" onClick={onSkipToSummary}>
           Just show me my summary
         </button>
-      </div>
+      </StickyFooter>
 
       {showEditModal && (
         <EditDailyMissionsModal

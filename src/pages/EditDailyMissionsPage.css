@@ -5,6 +5,7 @@
   background: var(--color-bg-main);
   font-family: var(--font-family);
   padding: var(--space-xl);
+  padding-bottom: 120px;
   max-width: 600px;
   margin: 0 auto;
 }
@@ -245,10 +246,7 @@
   color: #9ca3af;
 }
 
-/* Set Daily Missions Section */
-.set-missions-section {
-  text-align: center;
-}
+/* Set Daily Missions Button (inside StickyFooter) */
 
 .set-missions-btn {
   width: 100%;
