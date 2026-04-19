@@ -71,7 +71,7 @@ const ReviewSummary = ({
     try {
       const profile = await getUserProfile(userId);
       const displayName = profile?.displayName || 'You';
-      const newSnapshot = await generateDailySnapshot(userId, date, displayName);
+      const newSnapshot = await generateDailySnapshot(userId, date, displayName, { forceNewStory: true });
       onRegenerateStory(newSnapshot.aiStory);
     } catch (err) {
       console.error('Error regenerating story:', err);

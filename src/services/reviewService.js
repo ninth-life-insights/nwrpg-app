@@ -328,7 +328,7 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
  * @param {string} displayName - Used in the AI story prompt
  * @returns {object} The snapshot data that was written
  */
-export const generateDailySnapshot = async (userId, dateString, displayName) => {
+export const generateDailySnapshot = async (userId, dateString, displayName, { forceNewStory = false } = {}) => {
   try {
   const date = dateString || toDateString(new Date());
 
@@ -424,12 +424,17 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
   // 4. Current profile state (snapshot at time of review)
   const profile = await getUserProfile(userId);
 
-  // 5. Check for existing user-edited story — preserve it on rebuild
+  // 5. Check for existing snapshot — preserve user-edited story, and reuse AI story unless forced
   let existingUserStory = null;
+  let existingAiStory = null;
+  let existingAiStoryGeneratedAt = null;
   try {
     const existingSnap = await getDoc(doc(db, 'users', userId, 'dailySnapshots', date));
     if (existingSnap.exists()) {
-      existingUserStory = existingSnap.data().userEditedStory ?? null;
+      const existingData = existingSnap.data();
+      existingUserStory = existingData.userEditedStory ?? null;
+      existingAiStory = existingData.aiStory ?? null;
+      existingAiStoryGeneratedAt = existingData.aiStoryGeneratedAt ?? null;
     }
   } catch { /* non-fatal */ }
 
@@ -466,17 +471,16 @@ export const generateDailySnapshot = async (userId, dateString, displayName) => 
 
   console.log('storyData: ', storyData);
 
-  let aiStory = null;
-  let aiStoryGeneratedAt = null;
+  // Reuse existing story unless forced or none exists yet
+  let aiStory = (!forceNewStory && existingAiStory) ? existingAiStory : null;
+  let aiStoryGeneratedAt = (!forceNewStory && existingAiStory) ? existingAiStoryGeneratedAt : null;
 
-  if (missionsCompleted > 0) {
+  if (missionsCompleted > 0 && (forceNewStory || !existingAiStory)) {
     try {
       aiStory = await withTimeout(generateDailyStory(storyData), AI_TIMEOUT_MS);
-      console.log('aiStory: ', aiStory);
       aiStoryGeneratedAt = new Date().toISOString();
     } catch (error) {
       console.error('Error generating daily story:', error);
-      console.log('Error generating daily story');
       // Snapshot still saves without story — user can retry
     }
   }
