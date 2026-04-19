@@ -55,7 +55,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 1;
-  min-width: 80px;
+  min-width: 0;
+  text-align: left;
 }
 
 .mcc-title.completed {
@@ -77,12 +78,14 @@
   white-space: nowrap;
 }
 
-/* Badges sit to the right of the title, never wrap */
+/* Badges sit to the right of the title, never wrap, but can't dominate the row */
 .mcc-badges {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   flex-shrink: 0;
+  max-width: 55%;
+  overflow: hidden;
 }
 
 .mission-card-condensed.completed .mcc-badges {
