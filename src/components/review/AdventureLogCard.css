@@ -30,8 +30,15 @@
   border-left-color: #c9bfb0;
   border-style: dashed;
   border-left-style: solid;
-  opacity: 0.75;
   cursor: default;
+}
+
+.adventure-log-card--placeholder .alc-date--muted {
+  color: #b0a898;
+}
+
+.adventure-log-card--placeholder .alc-placeholder-text {
+  color: #b0a898;
 }
 
 /* Header row */
