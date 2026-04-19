@@ -4,12 +4,12 @@
   min-height: 100vh;
   background: var(--color-bg-main);
   font-family: var(--font-family);
-  padding: var(--space-lg);
+  padding: var(--space-md);
   max-width: var(--max-width-card);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--space-lg);
 }
 
 .loading {
@@ -92,7 +92,7 @@
   background: var(--color-bg-white);
   border: 2px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   box-shadow: var(--shadow-card);
 }
 
@@ -201,7 +201,7 @@
   background: var(--color-bg-white);
   border: 2px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md) var(--space-xs);
   box-shadow: var(--shadow-card);
 }
 
@@ -209,7 +209,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-xs);
 }
 
 .section-title {
@@ -242,8 +242,8 @@
 .missions-overview {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-md);
+  gap: 0;
+  margin-bottom: var(--space-sm);
   width: 100%;
   box-sizing: border-box;
 }
@@ -252,7 +252,7 @@
 .missions-overview .mission-card-condensed {
   max-width: 100%;
   box-sizing: border-box;
-  margin: 5px 0;
+  margin: var(--space-sm) 0;
 }
 
 .mission-item {
@@ -389,6 +389,7 @@
     gap: var(--space-md);
   }
 }
+
 
 .skills-shortcut {
   display: flex;
