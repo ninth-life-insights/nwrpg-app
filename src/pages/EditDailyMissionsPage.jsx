@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
 import Badge from '../components/ui/Badge';
-import StickyFooter from '../components/ui/StickyFooter';
 
 // Service imports - UPDATED for simplified system
 import {
@@ -495,21 +494,39 @@ const handleAddNewMission = async (missionData) => {
       </div>
 
       {/* Set Daily Missions Button */}
-      <StickyFooter>
-        <button
-          className={`set-missions-btn ${allSlotsFilled ? 'enabled' : 'disabled'}`}
-          onClick={handleSetDailyMissions}
-          disabled={!allSlotsFilled || saving}
-        >
-          {confirmLabel}
-        </button>
+      {isModal ? (
+        <div className="set-missions-footer set-missions-footer--modal">
+          <button
+            className={`set-missions-btn ${allSlotsFilled ? 'enabled' : 'disabled'}`}
+            onClick={handleSetDailyMissions}
+            disabled={!allSlotsFilled || saving}
+          >
+            {confirmLabel}
+          </button>
 
-        {!allSlotsFilled && (
-          <p className="requirements-text">
-            Fill all 3 slots to set your daily missions
-          </p>
-        )}
-      </StickyFooter>
+          {!allSlotsFilled && (
+            <p className="requirements-text">
+              Fill all 3 slots to set your daily missions
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="set-missions-footer set-missions-footer--page">
+          <button
+            className={`set-missions-btn ${allSlotsFilled ? 'enabled' : 'disabled'}`}
+            onClick={handleSetDailyMissions}
+            disabled={!allSlotsFilled || saving}
+          >
+            {confirmLabel}
+          </button>
+
+          {!allSlotsFilled && (
+            <p className="requirements-text">
+              Fill all 3 slots to set your daily missions
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Modals */}
       {showAddMission && (

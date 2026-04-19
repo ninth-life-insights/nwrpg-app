@@ -5,7 +5,6 @@
   background: var(--color-bg-main);
   font-family: var(--font-family);
   padding: var(--space-xl);
-  padding-bottom: 120px;
   max-width: 600px;
   margin: 0 auto;
 }
@@ -246,11 +245,17 @@
   color: #9ca3af;
 }
 
-/* Set Daily Missions Button (inside StickyFooter) */
+/* Set Daily Missions footer — sticky within page scroll */
+.set-missions-footer--page {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, var(--color-bg-main) 80%, transparent);
+  padding: var(--space-md) 0 var(--space-xl);
+  margin-top: var(--space-lg);
+}
 
 .set-missions-btn {
   width: 100%;
-  max-width: 300px;
   padding: var(--space-lg) var(--space-xl);
   border: none;
   border-radius: var(--radius-md);
@@ -258,7 +263,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  margin-bottom: var(--space-md);
 }
 
 .set-missions-btn.enabled {
