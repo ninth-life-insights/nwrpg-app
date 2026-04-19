@@ -22,6 +22,7 @@ import { addXP,
 } from '../services/userService';
 import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModal';
 import MissionCard from '../components/missions/MissionCard';
+import MissionCardCondensed from '../components/missions/MissionCardCondensed.jsx';
 import MissionDetailView from '../components/missions/MissionCardFull';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
@@ -378,15 +379,14 @@ const HomePage = () => {
         <div className="missions-overview">
           {dailyStatus.hasActiveDailyMissions ? (
             dailyMissions.map((mission) => (
-              <MissionCard
+              <MissionCardCondensed
                 key={mission.id}
                 mission={{
                   ...mission,
-                  isDailyMission: true, // All missions here are daily missions
+                  isDailyMission: true,
                 }}
                 onToggleComplete={handleToggleComplete}
                 onViewDetails={setSelectedMission}
-                hideDailyBadge={true}
               />
             ))
           ) : (

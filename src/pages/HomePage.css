@@ -248,7 +248,8 @@
   box-sizing: border-box;
 }
 
-.missions-overview .mission-card {
+.missions-overview .mission-card,
+.missions-overview .mission-card-condensed {
   max-width: 100%;
   box-sizing: border-box;
   margin: 5px 0;
