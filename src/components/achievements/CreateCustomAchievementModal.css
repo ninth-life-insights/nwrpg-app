@@ -207,19 +207,54 @@
   color: var(--color-text-dark);
 }
 
-.badge-carousel__viewport {
+/*
+ * Stage: contains the fixed badge bg + the sliding symbol strip.
+ * The badge bg sits at z-index 1 (always centered, never moves).
+ * The symbol viewport clips the strip at z-index 2 (slides left/right).
+ */
+.badge-carousel__stage {
   flex: 1;
-  overflow: hidden;
+  position: relative;
+  height: 130px;
   touch-action: pan-y;
   cursor: grab;
 }
 
-.badge-carousel__viewport:active {
+.badge-carousel__stage:active {
   cursor: grabbing;
 }
 
-/* 5 equal slots; track = 5/3 × viewport width so each slot = 1/3 viewport */
+/* Fixed badge background — centered in the middle third of the stage */
+.badge-carousel__badge-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% / 3 + 16px); /* slightly larger than one slot for visual weight */
+  aspect-ratio: 1;
+  object-fit: contain;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Symbol strip clips to the stage bounds */
+.badge-carousel__viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/*
+ * Track = 5 slots wide. Stage shows 3 slots.
+ * Track width = 5/3 × stage width → each slot = 20% of track = 1/3 of stage.
+ * Initial translateX(-20%) of track = -1/3 of stage = centers slot index 2.
+ */
 .badge-carousel__track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   width: calc(500% / 3);
 }
@@ -230,36 +265,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-sm) 0;
-  overflow: visible;
-}
-
-/* Symbol-only buttons for the side/far slots */
-.badge-carousel__sym {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  opacity: 0.4;
   transition: opacity var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.badge-carousel__sym img {
-  width: 56px;
-  height: 56px;
+.badge-carousel__slot img {
+  width: 62%;
+  aspect-ratio: 1;
   object-fit: contain;
   display: block;
 }
 
-.badge-carousel__sym:hover {
-  opacity: 0.65;
+/* Center slot: full opacity, symbol sits on top of badge bg */
+.badge-carousel__slot--center {
+  opacity: 1;
+  cursor: default;
 }
 
-.badge-carousel__sym--far {
-  opacity: 0.15;
+/* Adjacent slots: clearly visible, clickable */
+.badge-carousel__slot--adj {
+  opacity: 0.82;
+  cursor: pointer;
+}
+
+.badge-carousel__slot--adj:hover {
+  opacity: 1;
+}
+
+/* Far slots: visible hint, non-interactive */
+.badge-carousel__slot--far {
+  opacity: 0.4;
   pointer-events: none;
 }
 
