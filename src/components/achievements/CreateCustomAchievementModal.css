@@ -274,8 +274,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.55;
-  transition: opacity var(--transition);
 }
 
 .badge-carousel__slot img {
@@ -284,11 +282,6 @@
   object-fit: contain;
   display: block;
   user-select: none;
-}
-
-/* Selected symbol sits directly over the badge — full opacity */
-.badge-carousel__slot--active {
-  opacity: 1;
 }
 
 /* Error */

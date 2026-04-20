@@ -117,10 +117,10 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
                 {/* Symbol strip — native scroll snapping over the badge */}
                 <div className="badge-carousel__track" ref={trackRef}>
                   <div className="badge-carousel__spacer" aria-hidden="true" />
-                  {BUILDER_SYMBOLS.map((sym, i) => (
+                  {BUILDER_SYMBOLS.map((sym) => (
                     <div
                       key={sym}
-                      className={`badge-carousel__slot${i === symbolIndex ? ' badge-carousel__slot--active' : ''}`}
+                      className="badge-carousel__slot"
                     >
                       <img
                         src={`/assets/Achievement-Builder/achievement_builder_symbol_${sym}.png`}
