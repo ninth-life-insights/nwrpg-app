@@ -187,7 +187,6 @@
   align-items: center;
   gap: 4px;
   width: 100%;
-  user-select: none;
 }
 
 .badge-carousel__arrow {
@@ -203,98 +202,93 @@
   transition: color var(--transition);
 }
 
-.badge-carousel__arrow:hover {
+.badge-carousel__arrow:hover:not(:disabled) {
   color: var(--color-text-dark);
 }
 
+.badge-carousel__arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 /*
- * Stage: contains the fixed badge bg + the sliding symbol strip.
- * The badge bg sits at z-index 1 (always centered, never moves).
- * The symbol viewport clips the strip at z-index 2 (slides left/right).
+ * Stage: position:relative container for the two layers.
+ * Layer 1 (z-index 1): badge background image — always centered, never moves.
+ * Layer 2 (z-index 2): scroll track — symbols snap over the badge.
  */
 .badge-carousel__stage {
   flex: 1;
   position: relative;
   height: 130px;
-  touch-action: pan-y;
-  cursor: grab;
 }
 
-.badge-carousel__stage:active {
-  cursor: grabbing;
-}
-
-/* Fixed badge background — centered in the middle third of the stage */
+/* Fixed badge — sits behind the symbol track, centered in the middle slot */
 .badge-carousel__badge-bg {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: calc(100% / 3 + 16px); /* slightly larger than one slot for visual weight */
+  width: calc(100% / 3 + 20px); /* slightly wider than one slot for visual emphasis */
   aspect-ratio: 1;
   object-fit: contain;
   z-index: 1;
   pointer-events: none;
-}
-
-/* Symbol strip clips to the stage bounds */
-.badge-carousel__viewport {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  z-index: 2;
+  user-select: none;
 }
 
 /*
- * Track = 5 slots wide. Stage shows 3 slots.
- * Track width = 5/3 × stage width → each slot = 20% of track = 1/3 of stage.
- * Initial translateX(-20%) of track = -1/3 of stage = centers slot index 2.
+ * Native scroll container — covers the full stage.
+ * scroll-snap-type: x mandatory  →  browser handles all physics & snapping.
+ * Spacer divs at each end allow the first/last symbol to snap to center.
+ *
+ * Slot width = stage width / 3.
+ * scrollLeft = symbolIndex × slotWidth  →  that symbol is centered.
  */
 .badge-carousel__track {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   display: flex;
-  width: calc(500% / 3);
+  align-items: center;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  z-index: 2;
+}
+
+.badge-carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Each spacer = one slot width, allowing first/last items to center-snap */
+.badge-carousel__spacer {
+  flex-shrink: 0;
+  width: calc(100% / 3);
 }
 
 .badge-carousel__slot {
-  width: 20%;
   flex-shrink: 0;
+  width: calc(100% / 3);
+  scroll-snap-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.55;
   transition: opacity var(--transition);
 }
 
 .badge-carousel__slot img {
-  width: 62%;
+  width: 68%;
   aspect-ratio: 1;
   object-fit: contain;
   display: block;
+  user-select: none;
 }
 
-/* Center slot: full opacity, symbol sits on top of badge bg */
-.badge-carousel__slot--center {
+/* Selected symbol sits directly over the badge — full opacity */
+.badge-carousel__slot--active {
   opacity: 1;
-  cursor: default;
-}
-
-/* Adjacent slots: clearly visible, clickable */
-.badge-carousel__slot--adj {
-  opacity: 0.82;
-  cursor: pointer;
-}
-
-.badge-carousel__slot--adj:hover {
-  opacity: 1;
-}
-
-/* Far slots: visible hint, non-interactive */
-.badge-carousel__slot--far {
-  opacity: 0.4;
-  pointer-events: none;
 }
 
 /* Error */

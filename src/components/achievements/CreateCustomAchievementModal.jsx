@@ -1,12 +1,12 @@
 // src/components/achievements/CreateCustomAchievementModal.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createCustomAchievement } from '../../services/achievementService';
 import { BUILDER_BADGE_COLORS, BUILDER_SYMBOLS } from '../../data/achievementDefinitions';
 import './CreateCustomAchievementModal.css';
 
 const COLOR_KEYS = Object.keys(BUILDER_BADGE_COLORS);
-const STEP_PX = 65; // pixels of drag required to advance one symbol
+const N = BUILDER_SYMBOLS.length;
 
 const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
   const { currentUser } = useAuth();
@@ -14,49 +14,43 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
   const [description, setDescription] = useState('');
   const [selectedColor, setSelectedColor] = useState('blue');
   const [symbolIndex, setSymbolIndex] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [dragging, setDragging] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const N = BUILDER_SYMBOLS.length;
   const selectedSymbol = BUILDER_SYMBOLS[symbolIndex];
+  const trackRef = useRef(null);
 
-  const dragStartX = useRef(null);
-  const didDrag = useRef(false);
+  // Programmatically scroll the track to center a given index
+  const scrollToIndex = useCallback((index) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const slotW = track.offsetWidth / 3;
+    track.scrollTo({ left: index * slotW, behavior: 'smooth' });
+  }, []);
 
-  const handlePrev = () => setSymbolIndex(i => (i - 1 + N) % N);
-  const handleNext = () => setSymbolIndex(i => (i + 1) % N);
+  // After each native snap, sync the scroll position back to React state
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const handleScrollEnd = () => {
+      const slotW = track.offsetWidth / 3;
+      const newIndex = Math.round(track.scrollLeft / slotW);
+      setSymbolIndex(Math.max(0, Math.min(N - 1, newIndex)));
+    };
+    track.addEventListener('scrollend', handleScrollEnd);
+    return () => track.removeEventListener('scrollend', handleScrollEnd);
+  }, []);
 
-  const handleDragStart = (e) => {
-    dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-    didDrag.current = false;
-    setDragging(true);
+  const handlePrev = () => {
+    const next = Math.max(0, symbolIndex - 1);
+    setSymbolIndex(next);
+    scrollToIndex(next);
   };
 
-  const handleDragMove = (e) => {
-    if (dragStartX.current === null) return;
-    const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-    const offset = currentX - dragStartX.current;
-    if (Math.abs(offset) > 8) didDrag.current = true;
-    setDragOffset(offset);
-  };
-
-  const handleDragEnd = (e) => {
-    if (dragStartX.current === null) return;
-    const endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
-    const delta = endX - dragStartX.current;
-    const steps = -Math.round(delta / STEP_PX);
-    if (steps !== 0) setSymbolIndex(i => ((i + steps) % N + N) % N);
-    dragStartX.current = null;
-    setDragOffset(0);
-    setDragging(false);
-  };
-
-  const handleSlotClick = (offset) => {
-    if (didDrag.current) return;
-    if (offset < 0) handlePrev();
-    else if (offset > 0) handleNext();
+  const handleNext = () => {
+    const next = Math.min(N - 1, symbolIndex + 1);
+    setSymbolIndex(next);
+    scrollToIndex(next);
   };
 
   const handleBackdropClick = (e) => {
@@ -103,61 +97,48 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
           {/* Badge carousel */}
           <div className="custom-achievement-preview">
             <div className="badge-carousel">
-              <button className="badge-carousel__arrow" onClick={handlePrev} aria-label="Previous symbol">
+              <button
+                className="badge-carousel__arrow"
+                onClick={handlePrev}
+                disabled={symbolIndex === 0}
+                aria-label="Previous symbol"
+              >
                 <span className="material-icons">chevron_left</span>
               </button>
 
-              {/* Stage: fixed badge bg + sliding symbol strip */}
-              <div
-                className="badge-carousel__stage"
-                onMouseDown={handleDragStart}
-                onMouseMove={handleDragMove}
-                onMouseUp={handleDragEnd}
-                onMouseLeave={handleDragEnd}
-                onTouchStart={handleDragStart}
-                onTouchMove={handleDragMove}
-                onTouchEnd={handleDragEnd}
-              >
-                {/* Fixed badge background — never moves */}
+              <div className="badge-carousel__stage">
+                {/* Badge background — fixed, never scrolls, updates on color change */}
                 <img
                   className="badge-carousel__badge-bg"
                   src={`/assets/Achievement-Builder/achievement_builder_badge_${selectedColor}.png`}
                   alt=""
                   draggable={false}
                 />
-
-                {/* Symbol strip — slides over the badge */}
-                <div className="badge-carousel__viewport">
-                  <div
-                    className="badge-carousel__track"
-                    style={{
-                      transform: `translateX(calc(-20% + ${dragOffset}px))`,
-                      transition: dragging ? 'none' : 'transform 0.2s ease',
-                    }}
-                  >
-                    {[-2, -1, 0, 1, 2].map(offset => {
-                      const sym = BUILDER_SYMBOLS[((symbolIndex + offset) % N + N) % N];
-                      const isCenter = offset === 0;
-                      const isFar = Math.abs(offset) === 2;
-                      return (
-                        <div
-                          key={offset}
-                          className={`badge-carousel__slot${isCenter ? ' badge-carousel__slot--center' : isFar ? ' badge-carousel__slot--far' : ' badge-carousel__slot--adj'}`}
-                          onClick={() => handleSlotClick(offset)}
-                        >
-                          <img
-                            src={`/assets/Achievement-Builder/achievement_builder_symbol_${sym}.png`}
-                            alt={sym}
-                            draggable={false}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                {/* Symbol strip — native scroll snapping over the badge */}
+                <div className="badge-carousel__track" ref={trackRef}>
+                  <div className="badge-carousel__spacer" aria-hidden="true" />
+                  {BUILDER_SYMBOLS.map((sym, i) => (
+                    <div
+                      key={sym}
+                      className={`badge-carousel__slot${i === symbolIndex ? ' badge-carousel__slot--active' : ''}`}
+                    >
+                      <img
+                        src={`/assets/Achievement-Builder/achievement_builder_symbol_${sym}.png`}
+                        alt={sym}
+                        draggable={false}
+                      />
+                    </div>
+                  ))}
+                  <div className="badge-carousel__spacer" aria-hidden="true" />
                 </div>
               </div>
 
-              <button className="badge-carousel__arrow" onClick={handleNext} aria-label="Next symbol">
+              <button
+                className="badge-carousel__arrow"
+                onClick={handleNext}
+                disabled={symbolIndex === N - 1}
+                aria-label="Next symbol"
+              >
                 <span className="material-icons">chevron_right</span>
               </button>
             </div>
