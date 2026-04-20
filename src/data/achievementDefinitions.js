@@ -22,23 +22,22 @@ export const BADGE_COLORS = {
   slate:  { bg: '#cbd5e1', icon: '#1e293b', cardAccent: '#64748b' },
 };
 
-export const BADGE_ICONS = [
-  'star',
-  'military_tech',
-  'emoji_events',
-  'local_fire_department',
-  'bolt',
-  'favorite',
-  'shield',
-  'auto_awesome',
-  'home',
-  'construction',
-  'restaurant',
-  'fitness_center',
-  'menu_book',
-  'group',
-  'wb_sunny',
-  'nights_stay',
+// Badge background color options for the achievement builder (maps to PNG filenames)
+export const BUILDER_BADGE_COLORS = {
+  blue:   { bg: '#93c5fd', cardAccent: '#3b82f6' },
+  green:  { bg: '#6ee7b7', cardAccent: '#10b981' },
+  orange: { bg: '#fdba74', cardAccent: '#f97316' },
+  purple: { bg: '#c4b5fd', cardAccent: '#7c3aed' },
+  red:    { bg: '#fca5a5', cardAccent: '#ef4444' },
+  yellow: { bg: '#fde68a', cardAccent: '#f59e0b' },
+};
+
+// Symbol overlay options for the achievement builder (match PNG filename slugs)
+export const BUILDER_SYMBOLS = [
+  'star', 'crown', 'medal', 'hearts', 'flowers', 'unicorn',
+  'barbell', 'swords', 'treasure', 'lightning', 'coffee',
+  'book', 'sneaker', 'home', 'bullseye', 'number_one',
+  'poop', 'boobs', 'wine',
 ];
 
 // checkType values used by achievementService.checkAndAwardAchievements:

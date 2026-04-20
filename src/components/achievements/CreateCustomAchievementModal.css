@@ -181,39 +181,41 @@
   transform: scale(1.15);
 }
 
-/* Icon grid */
-.custom-achievement-icons {
+/* Symbol grid */
+.custom-achievement-symbols {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--space-sm);
 }
 
-.icon-option {
+.symbol-option {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   aspect-ratio: 1;
   background: var(--color-bg-white);
-  border: 1.5px solid var(--color-border);
+  border: 2px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  color: var(--color-text-light);
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
-  padding: 0;
+  padding: 6px;
+  transition: border-color var(--transition), background var(--transition);
 }
 
-.icon-option .material-icons {
-  font-size: 20px;
+.symbol-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
-.icon-option:hover {
+.symbol-option:hover {
   background: var(--color-bg-main);
-  color: var(--color-text-medium);
 }
 
-.icon-option--selected {
-  border-width: 2px;
+.symbol-option--selected {
+  border-color: #374151;
+  background: var(--color-bg-main);
 }
 
 /* Error */

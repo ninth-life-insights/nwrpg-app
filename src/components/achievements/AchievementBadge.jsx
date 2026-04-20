@@ -20,7 +20,7 @@ const ICON_SIZES = {
  * Otherwise falls back to a colored circle with a Material Icon.
  * Pass `locked` to render the greyed-out state for unawarded achievements.
  */
-const AchievementBadge = ({ color = 'amber', icon = 'star', badgeImage, size = 'md', locked = false }) => {
+const AchievementBadge = ({ color = 'amber', icon = 'star', badgeImage, badgeSymbol, size = 'md', locked = false }) => {
   const palette = BADGE_COLORS[color] || BADGE_COLORS.amber;
   const px = SIZES[size] || SIZES.md;
   const iconSize = ICON_SIZES[size] || ICON_SIZES.md;
@@ -36,6 +36,29 @@ const AchievementBadge = ({ color = 'amber', icon = 'star', badgeImage, size = '
           src={badgeImage}
           alt=""
           className="achievement-badge__img"
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
+  if (badgeSymbol) {
+    return (
+      <div
+        className={`achievement-badge achievement-badge--builder achievement-badge--${size}${locked ? ' achievement-badge--locked' : ''}`}
+        style={{ width: px, height: px }}
+        aria-hidden="true"
+      >
+        <img
+          src={`/assets/Achievement-Builder/achievement_builder_badge_${color}.png`}
+          alt=""
+          className="achievement-badge__builder-bg"
+          draggable={false}
+        />
+        <img
+          src={`/assets/Achievement-Builder/achievement_builder_symbol_${badgeSymbol}.png`}
+          alt=""
+          className="achievement-badge__builder-symbol"
           draggable={false}
         />
       </div>

@@ -2,18 +2,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createCustomAchievement } from '../../services/achievementService';
-import { BADGE_COLORS, BADGE_ICONS } from '../../data/achievementDefinitions';
+import { BUILDER_BADGE_COLORS, BUILDER_SYMBOLS } from '../../data/achievementDefinitions';
 import AchievementBadge from './AchievementBadge';
 import './CreateCustomAchievementModal.css';
 
-const COLOR_KEYS = Object.keys(BADGE_COLORS);
+const COLOR_KEYS = Object.keys(BUILDER_BADGE_COLORS);
 
 const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
   const { currentUser } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedColor, setSelectedColor] = useState('amber');
-  const [selectedIcon, setSelectedIcon] = useState('star');
+  const [selectedColor, setSelectedColor] = useState('blue');
+  const [selectedSymbol, setSelectedSymbol] = useState('star');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -33,7 +33,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
         name: name.trim(),
         description: description.trim(),
         badgeColor: selectedColor,
-        badgeIcon: selectedIcon,
+        badgeSymbol: selectedSymbol,
       });
       onCreated(achievement);
     } catch (err) {
@@ -60,7 +60,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
 
           {/* Live preview */}
           <div className="custom-achievement-preview">
-            <AchievementBadge color={selectedColor} icon={selectedIcon} size="lg" />
+            <AchievementBadge color={selectedColor} badgeSymbol={selectedSymbol} size="lg" />
             <p className="custom-achievement-preview-name">{name || 'Your Win'}</p>
           </div>
 
@@ -104,8 +104,8 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
                   key={color}
                   className={`color-swatch${selectedColor === color ? ' color-swatch--selected' : ''}`}
                   style={{
-                    backgroundColor: BADGE_COLORS[color].bg,
-                    borderColor: selectedColor === color ? BADGE_COLORS[color].icon : 'transparent',
+                    backgroundColor: BUILDER_BADGE_COLORS[color].bg,
+                    borderColor: selectedColor === color ? '#374151' : 'transparent',
                   }}
                   onClick={() => setSelectedColor(color)}
                   aria-label={color}
@@ -114,23 +114,21 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
             </div>
           </div>
 
-          {/* Icon picker */}
+          {/* Symbol picker */}
           <div className="custom-achievement-field">
-            <label className="custom-achievement-label">Badge Icon</label>
-            <div className="custom-achievement-icons">
-              {BADGE_ICONS.map(icon => (
+            <label className="custom-achievement-label">Badge Symbol</label>
+            <div className="custom-achievement-symbols">
+              {BUILDER_SYMBOLS.map(symbol => (
                 <button
-                  key={icon}
-                  className={`icon-option${selectedIcon === icon ? ' icon-option--selected' : ''}`}
-                  style={selectedIcon === icon ? {
-                    backgroundColor: BADGE_COLORS[selectedColor].bg,
-                    color: BADGE_COLORS[selectedColor].icon,
-                    borderColor: BADGE_COLORS[selectedColor].icon,
-                  } : {}}
-                  onClick={() => setSelectedIcon(icon)}
-                  aria-label={icon}
+                  key={symbol}
+                  className={`symbol-option${selectedSymbol === symbol ? ' symbol-option--selected' : ''}`}
+                  onClick={() => setSelectedSymbol(symbol)}
+                  aria-label={symbol}
                 >
-                  <span className="material-icons">{icon}</span>
+                  <img
+                    src={`/assets/Achievement-Builder/achievement_builder_symbol_${symbol}.png`}
+                    alt={symbol}
+                  />
                 </button>
               ))}
             </div>
