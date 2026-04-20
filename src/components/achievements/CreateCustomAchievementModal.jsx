@@ -1,5 +1,5 @@
 // src/components/achievements/CreateCustomAchievementModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createCustomAchievement } from '../../services/achievementService';
 import { BUILDER_BADGE_COLORS, BUILDER_SYMBOLS } from '../../data/achievementDefinitions';
@@ -13,9 +13,32 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedColor, setSelectedColor] = useState('blue');
-  const [selectedSymbol, setSelectedSymbol] = useState('star');
+  const [symbolIndex, setSymbolIndex] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const N = BUILDER_SYMBOLS.length;
+  const selectedSymbol = BUILDER_SYMBOLS[symbolIndex];
+  const prevSymbol = BUILDER_SYMBOLS[(symbolIndex - 1 + N) % N];
+  const nextSymbol = BUILDER_SYMBOLS[(symbolIndex + 1) % N];
+
+  const dragStartX = useRef(null);
+
+  const handlePrev = () => setSymbolIndex(i => (i - 1 + N) % N);
+  const handleNext = () => setSymbolIndex(i => (i + 1) % N);
+
+  const handleDragStart = (e) => {
+    dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  };
+
+  const handleDragEnd = (e) => {
+    if (dragStartX.current === null) return;
+    const endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+    const delta = dragStartX.current - endX;
+    if (delta > 40) handleNext();
+    else if (delta < -40) handlePrev();
+    dragStartX.current = null;
+  };
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();
@@ -58,9 +81,34 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
         {/* Body */}
         <div className="custom-achievement-body">
 
-          {/* Live preview */}
+          {/* Badge carousel */}
           <div className="custom-achievement-preview">
-            <AchievementBadge color={selectedColor} badgeSymbol={selectedSymbol} size="lg" />
+            <div
+              className="badge-carousel"
+              onMouseDown={handleDragStart}
+              onMouseUp={handleDragEnd}
+              onMouseLeave={() => { dragStartX.current = null; }}
+              onTouchStart={handleDragStart}
+              onTouchEnd={handleDragEnd}
+            >
+              <button className="badge-carousel__arrow" onClick={handlePrev} aria-label="Previous symbol">
+                <span className="material-icons">chevron_left</span>
+              </button>
+              <div className="badge-carousel__track">
+                <button className="badge-carousel__side" onClick={handlePrev} aria-label="Previous symbol">
+                  <AchievementBadge color={selectedColor} badgeSymbol={prevSymbol} size="md" />
+                </button>
+                <div className="badge-carousel__center">
+                  <AchievementBadge color={selectedColor} badgeSymbol={selectedSymbol} size="lg" />
+                </div>
+                <button className="badge-carousel__side" onClick={handleNext} aria-label="Next symbol">
+                  <AchievementBadge color={selectedColor} badgeSymbol={nextSymbol} size="md" />
+                </button>
+              </div>
+              <button className="badge-carousel__arrow" onClick={handleNext} aria-label="Next symbol">
+                <span className="material-icons">chevron_right</span>
+              </button>
+            </div>
             <p className="custom-achievement-preview-name">{name || 'Your Win'}</p>
           </div>
 
@@ -110,26 +158,6 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
                   onClick={() => setSelectedColor(color)}
                   aria-label={color}
                 />
-              ))}
-            </div>
-          </div>
-
-          {/* Symbol picker */}
-          <div className="custom-achievement-field">
-            <label className="custom-achievement-label">Badge Symbol</label>
-            <div className="custom-achievement-symbols">
-              {BUILDER_SYMBOLS.map(symbol => (
-                <button
-                  key={symbol}
-                  className={`symbol-option${selectedSymbol === symbol ? ' symbol-option--selected' : ''}`}
-                  onClick={() => setSelectedSymbol(symbol)}
-                  aria-label={symbol}
-                >
-                  <img
-                    src={`/assets/Achievement-Builder/achievement_builder_symbol_${symbol}.png`}
-                    alt={symbol}
-                  />
-                </button>
               ))}
             </div>
           </div>

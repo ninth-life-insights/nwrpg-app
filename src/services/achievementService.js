@@ -97,13 +97,13 @@ const awardBuiltInAchievement = async (userId, definition) => {
  * Creates and immediately awards a custom achievement (a moment capture).
  * @returns {object} The new achievement doc with its Firestore id
  */
-export const createCustomAchievement = async (userId, { name, description, badgeColor, badgeIcon }) => {
+export const createCustomAchievement = async (userId, { name, description, badgeColor, badgeSymbol }) => {
   const today = toDateString(new Date());
   const docRef = await addDoc(getAchievementsRef(userId), {
     name,
     description: description || '',
     badgeColor,
-    badgeIcon,
+    badgeSymbol,
     isCustom: true,
     awardedDate: today,
     awardedAt: serverTimestamp(),
@@ -113,7 +113,7 @@ export const createCustomAchievement = async (userId, { name, description, badge
     name,
     description: description || '',
     badgeColor,
-    badgeIcon,
+    badgeSymbol,
     isCustom: true,
     awardedDate: today,
     isAwarded: true,

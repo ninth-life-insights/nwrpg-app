@@ -181,41 +181,57 @@
   transform: scale(1.15);
 }
 
-/* Symbol grid */
-.custom-achievement-symbols {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-sm);
+/* Badge carousel */
+.badge-carousel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  user-select: none;
 }
 
-.symbol-option {
+.badge-carousel__arrow {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.badge-carousel__arrow:hover {
+  color: var(--color-text-dark);
+}
+
+.badge-carousel__track {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  aspect-ratio: 1;
-  background: var(--color-bg-white);
-  border: 2px solid transparent;
-  border-radius: var(--radius-sm);
+  gap: var(--space-md);
+  touch-action: pan-y;
+}
+
+.badge-carousel__center {
+  flex-shrink: 0;
+}
+
+.badge-carousel__side {
+  background: none;
+  border: none;
   cursor: pointer;
-  padding: 6px;
-  transition: border-color var(--transition), background var(--transition);
+  padding: 0;
+  opacity: 0.4;
+  flex-shrink: 0;
+  transition: opacity var(--transition);
 }
 
-.symbol-option img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-.symbol-option:hover {
-  background: var(--color-bg-main);
-}
-
-.symbol-option--selected {
-  border-color: #374151;
-  background: var(--color-bg-main);
+.badge-carousel__side:hover {
+  opacity: 0.65;
 }
 
 /* Error */
