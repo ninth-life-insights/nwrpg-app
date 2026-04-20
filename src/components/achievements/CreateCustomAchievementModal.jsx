@@ -19,25 +19,36 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
 
   const N = BUILDER_SYMBOLS.length;
   const selectedSymbol = BUILDER_SYMBOLS[symbolIndex];
-  const prevSymbol = BUILDER_SYMBOLS[(symbolIndex - 1 + N) % N];
-  const nextSymbol = BUILDER_SYMBOLS[(symbolIndex + 1) % N];
+  const [dragOffset, setDragOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
 
   const dragStartX = useRef(null);
+  const viewportRef = useRef(null);
 
   const handlePrev = () => setSymbolIndex(i => (i - 1 + N) % N);
   const handleNext = () => setSymbolIndex(i => (i + 1) % N);
 
   const handleDragStart = (e) => {
     dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    setDragging(true);
+  };
+
+  const handleDragMove = (e) => {
+    if (dragStartX.current === null) return;
+    const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    setDragOffset(currentX - dragStartX.current);
   };
 
   const handleDragEnd = (e) => {
     if (dragStartX.current === null) return;
     const endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
-    const delta = dragStartX.current - endX;
-    if (delta > 40) handleNext();
-    else if (delta < -40) handlePrev();
+    const delta = endX - dragStartX.current;
+    const slotW = viewportRef.current ? viewportRef.current.offsetWidth / 3 : 90;
+    const steps = -Math.round(delta / slotW);
+    if (steps !== 0) setSymbolIndex(i => ((i + steps) % N + N) % N);
     dragStartX.current = null;
+    setDragOffset(0);
+    setDragging(false);
   };
 
   const handleBackdropClick = (e) => {
@@ -83,27 +94,53 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
 
           {/* Badge carousel */}
           <div className="custom-achievement-preview">
-            <div
-              className="badge-carousel"
-              onMouseDown={handleDragStart}
-              onMouseUp={handleDragEnd}
-              onMouseLeave={() => { dragStartX.current = null; }}
-              onTouchStart={handleDragStart}
-              onTouchEnd={handleDragEnd}
-            >
+            <div className="badge-carousel">
               <button className="badge-carousel__arrow" onClick={handlePrev} aria-label="Previous symbol">
                 <span className="material-icons">chevron_left</span>
               </button>
-              <div className="badge-carousel__track">
-                <button className="badge-carousel__side" onClick={handlePrev} aria-label="Previous symbol">
-                  <AchievementBadge color={selectedColor} badgeSymbol={prevSymbol} size="md" />
-                </button>
-                <div className="badge-carousel__center">
-                  <AchievementBadge color={selectedColor} badgeSymbol={selectedSymbol} size="lg" />
+              <div
+                className="badge-carousel__viewport"
+                ref={viewportRef}
+                onMouseDown={handleDragStart}
+                onMouseMove={handleDragMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchStart={handleDragStart}
+                onTouchMove={handleDragMove}
+                onTouchEnd={handleDragEnd}
+              >
+                <div
+                  className="badge-carousel__track"
+                  style={{
+                    transform: `translateX(calc(-20% + ${dragOffset}px))`,
+                    transition: dragging ? 'none' : 'transform 0.2s ease',
+                  }}
+                >
+                  {[-2, -1, 0, 1, 2].map(offset => {
+                    const sym = BUILDER_SYMBOLS[((symbolIndex + offset) % N + N) % N];
+                    const isCenter = offset === 0;
+                    return (
+                      <div key={offset} className="badge-carousel__slot">
+                        {isCenter ? (
+                          <AchievementBadge color={selectedColor} badgeSymbol={sym} size="lg" />
+                        ) : (
+                          <button
+                            className={`badge-carousel__sym${Math.abs(offset) === 2 ? ' badge-carousel__sym--far' : ''}`}
+                            onClick={offset < 0 ? handlePrev : handleNext}
+                            tabIndex={Math.abs(offset) === 2 ? -1 : 0}
+                            aria-label={offset < 0 ? 'Previous symbol' : 'Next symbol'}
+                          >
+                            <img
+                              src={`/assets/Achievement-Builder/achievement_builder_symbol_${sym}.png`}
+                              alt=""
+                              draggable={false}
+                            />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                <button className="badge-carousel__side" onClick={handleNext} aria-label="Next symbol">
-                  <AchievementBadge color={selectedColor} badgeSymbol={nextSymbol} size="md" />
-                </button>
               </div>
               <button className="badge-carousel__arrow" onClick={handleNext} aria-label="Next symbol">
                 <span className="material-icons">chevron_right</span>
