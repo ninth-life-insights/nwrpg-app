@@ -37,7 +37,7 @@ const AchievementCard = ({ achievement }) => {
     </div>
   );
 
-  if (isPending && questId) {
+  if (questId) {
     return <Link to={`/quests/${questId}`} className="achievement-card-link">{card}</Link>;
   }
   return card;
