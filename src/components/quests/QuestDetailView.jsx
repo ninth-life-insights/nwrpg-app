@@ -20,7 +20,7 @@ import {
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
-import { createCustomAchievement } from '../../services/achievementService';
+import { createCustomAchievement, unawardPendingAchievement } from '../../services/achievementService';
 import { getAllMissions, updateMission } from '../../services/missionService';
 import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
@@ -258,6 +258,9 @@ const QuestDetailView = () => {
   const handleUncompleteQuest = async () => {
     setActionError(null);
     try {
+      if (quest.achievement) {
+        await unawardPendingAchievement(currentUser.uid, quest.achievement);
+      }
       await updateQuestStatus(currentUser.uid, questId, QUEST_STATUS.ACTIVE);
       await loadQuestData();
     } catch (err) {
