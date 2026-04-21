@@ -30,6 +30,15 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false,
     track.scrollTo({ left: index * slotW, behavior: 'smooth' });
   }, []);
 
+  // Scroll to the initial index on mount (instant, no animation)
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || symbolIndex === 0) return;
+    const slotW = track.offsetWidth / 3;
+    track.scrollTo({ left: symbolIndex * slotW, behavior: 'instant' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally runs once on mount only
+
   // After each native snap, sync the scroll position back to React state
   useEffect(() => {
     const track = trackRef.current;
