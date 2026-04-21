@@ -7,7 +7,8 @@ export const QUEST_STATUS = {
   PLANNING: 'planning',    // Building out the quest
   ACTIVE: 'active',        // Quest is in progress
   COMPLETED: 'completed',  // Quest is complete
-  ARCHIVED: 'archived'     // Quest is archived
+  ARCHIVED: 'archived',    // Quest is archived
+  DELETED: 'deleted',      // Soft-deleted
 };
 
 // Quest difficulty levels

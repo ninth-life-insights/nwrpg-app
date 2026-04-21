@@ -27,6 +27,7 @@ Currently in personal-use MVP prototype phase, but with eventual plans to publis
 - **Services:** All Firebase ops in `src/services/`. Each service exports standalone async functions that take `userId` as the first arg. Remove `id` field before writing to Firestore; re-attach on reads. Always use Firestore `serverTimestamp()` on writes.
 - **CSS:** Each component has a colocated `.css` file. Global design tokens in `src/styles/variables.css`. No CSS-in-JS. Tailwind is installed but not in use.
 - **Dates:** Store as `'YYYY-MM-DD'` strings. Use `dayjs` for math. Helpers in `src/utils/dateHelpers.js`.
+- **Soft Delete:** Nothing is permanently removed from Firestore. Set `status: 'deleted'` + `deletedAt: serverTimestamp()` on the doc. Reference: `deleteMission()` in `src/services/missionService.js`. All list queries must exclude `status === 'deleted'` docs.
 - **Path aliases:** `@/*` resolves to `src/*` (configured in `jsconfig.json`).
 
 ## Existing Utilities — Check Before Writing New Code
