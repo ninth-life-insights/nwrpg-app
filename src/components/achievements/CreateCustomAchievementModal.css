@@ -228,7 +228,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: calc(100% / 3 + 20px); /* slightly wider than one slot for visual emphasis */
+  width: calc(100% / 3);
   aspect-ratio: 1;
   object-fit: contain;
   z-index: 1;
@@ -277,7 +277,7 @@
 }
 
 .badge-carousel__slot img {
-  width: 68%;
+  width: 100%;
   aspect-ratio: 1;
   object-fit: contain;
   display: block;
