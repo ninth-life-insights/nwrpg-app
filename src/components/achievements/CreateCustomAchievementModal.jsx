@@ -1,19 +1,21 @@
 // src/components/achievements/CreateCustomAchievementModal.jsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { createCustomAchievement } from '../../services/achievementService';
+import { createCustomAchievement, updateCustomAchievement } from '../../services/achievementService';
 import { BUILDER_BADGE_COLORS, BUILDER_SYMBOLS } from '../../data/achievementDefinitions';
 import './CreateCustomAchievementModal.css';
 
 const COLOR_KEYS = Object.keys(BUILDER_BADGE_COLORS);
 const N = BUILDER_SYMBOLS.length;
 
-const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false }) => {
+const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false, editMode = false, initialValues = null, achievementId = null }) => {
   const { currentUser } = useAuth();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedColor, setSelectedColor] = useState('blue');
-  const [symbolIndex, setSymbolIndex] = useState(0);
+  const [name, setName] = useState(initialValues?.name || '');
+  const [description, setDescription] = useState(initialValues?.description || '');
+  const [selectedColor, setSelectedColor] = useState(initialValues?.badgeColor || 'blue');
+  const [symbolIndex, setSymbolIndex] = useState(
+    initialValues?.badgeSymbol ? Math.max(0, BUILDER_SYMBOLS.indexOf(initialValues.badgeSymbol)) : 0
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -70,13 +72,23 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false 
     setSaving(true);
     setError('');
     try {
-      const achievement = await createCustomAchievement(currentUser.uid, {
-        name: name.trim(),
-        description: description.trim(),
-        badgeColor: selectedColor,
-        badgeSymbol: selectedSymbol,
-      });
-      onCreated(achievement);
+      if (editMode && achievementId) {
+        await updateCustomAchievement(currentUser.uid, achievementId, {
+          name: name.trim(),
+          description: description.trim(),
+          badgeColor: selectedColor,
+          badgeSymbol: selectedSymbol,
+        });
+        onCreated({ id: achievementId, name: name.trim(), description: description.trim(), badgeColor: selectedColor, badgeSymbol: selectedSymbol });
+      } else {
+        const achievement = await createCustomAchievement(currentUser.uid, {
+          name: name.trim(),
+          description: description.trim(),
+          badgeColor: selectedColor,
+          badgeSymbol: selectedSymbol,
+        });
+        onCreated(achievement);
+      }
     } catch (err) {
       console.error('Error saving custom achievement:', err);
       setError('Something went wrong. Try again.');
@@ -90,7 +102,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false 
 
         {/* Header */}
         <div className="custom-achievement-header">
-          <h2 className="custom-achievement-title">{pendingMode ? 'Design Reward Badge' : 'Record a Win'}</h2>
+          <h2 className="custom-achievement-title">{pendingMode ? 'Design Reward Badge' : editMode ? 'Edit Achievement' : 'Record a Win'}</h2>
           <button className="custom-achievement-close" onClick={onClose}>
             <span className="material-icons">close</span>
           </button>
@@ -213,7 +225,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false 
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? 'Saving...' : pendingMode ? 'Add Reward' : 'Record Win'}
+            {saving ? 'Saving...' : pendingMode ? 'Add Reward' : editMode ? 'Save Changes' : 'Record Win'}
           </button>
         </div>
 

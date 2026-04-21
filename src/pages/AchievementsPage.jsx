@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getMergedAchievementLibrary } from '../services/achievementService';
+import { getMergedAchievementLibrary, deleteCustomAchievement } from '../services/achievementService';
 import AchievementCard from '../components/achievements/AchievementCard';
 import CreateCustomAchievementModal from '../components/achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -17,6 +17,7 @@ const AchievementsPage = () => {
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingAchievement, setEditingAchievement] = useState(null);
 
   const fetchLibrary = useCallback(async () => {
     if (!currentUser) return;
@@ -48,7 +49,21 @@ const AchievementsPage = () => {
 
   const handleCustomCreated = () => {
     setShowCreateModal(false);
+    setEditingAchievement(null);
     fetchLibrary();
+  };
+
+  const handleEdit = (achievement) => {
+    setEditingAchievement(achievement);
+  };
+
+  const handleDelete = async (achievement) => {
+    try {
+      await deleteCustomAchievement(currentUser.uid, achievement.id);
+      fetchLibrary();
+    } catch (err) {
+      console.error('Error deleting achievement:', err);
+    }
   };
 
   if (loading) {
@@ -98,7 +113,7 @@ const AchievementsPage = () => {
           ) : (
             <div className="achievements-grid">
               {custom.map(achievement => (
-                <AchievementCard key={achievement.id} achievement={achievement} />
+                <AchievementCard key={achievement.id} achievement={achievement} onEdit={handleEdit} onDelete={handleDelete} />
               ))}
             </div>
           )}
@@ -126,6 +141,16 @@ const AchievementsPage = () => {
       {showCreateModal && (
         <CreateCustomAchievementModal
           onClose={() => setShowCreateModal(false)}
+          onCreated={handleCustomCreated}
+        />
+      )}
+
+      {editingAchievement && (
+        <CreateCustomAchievementModal
+          editMode
+          achievementId={editingAchievement.id}
+          initialValues={editingAchievement}
+          onClose={() => setEditingAchievement(null)}
           onCreated={handleCustomCreated}
         />
       )}

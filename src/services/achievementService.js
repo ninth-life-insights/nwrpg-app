@@ -142,6 +142,22 @@ export const awardPendingAchievement = async (userId, achievementId) => {
 };
 
 /**
+ * Updates an existing custom achievement's display fields.
+ */
+export const updateCustomAchievement = async (userId, achievementId, { name, description, badgeColor, badgeSymbol }) => {
+  const ref = doc(db, 'users', userId, 'achievements', achievementId);
+  await updateDoc(ref, { name, description, badgeColor, badgeSymbol, updatedAt: serverTimestamp() });
+};
+
+/**
+ * Soft-deletes a custom achievement.
+ */
+export const deleteCustomAchievement = async (userId, achievementId) => {
+  const ref = doc(db, 'users', userId, 'achievements', achievementId);
+  await updateDoc(ref, { status: 'deleted', deletedAt: serverTimestamp() });
+};
+
+/**
  * Resets an awarded quest achievement back to pending (e.g. quest re-opened).
  */
 export const unawardPendingAchievement = async (userId, achievementId) => {
