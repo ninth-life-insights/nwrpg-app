@@ -13,12 +13,6 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { MISSION_STATUS } from '../types/Mission';
-
-const calculateTotalMissionXP = (mission) => {
-  let totalXP = mission.xpReward;
-  if (mission.isDailyMission) totalXP += 5;
-  return totalXP;
-};
 import {
   calculateNextDueDate,
   shouldCreateNextOccurrence,
@@ -35,6 +29,12 @@ import {
  } from './userService';
  import { logActivityEvent } from './reviewService';
 import { checkAndAwardAchievements } from './achievementService';
+
+const calculateTotalMissionXP = (mission) => {
+  let totalXP = mission.xpReward;
+  if (mission.isDailyMission) totalXP += 5;
+  return totalXP;
+};
 
 // Get user's missions collection reference
 const getUserMissionsRef = (userId) => {
