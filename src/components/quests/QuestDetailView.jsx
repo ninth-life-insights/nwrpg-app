@@ -1,7 +1,7 @@
 // src/components/quests/QuestDetailView.js
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
@@ -395,12 +395,14 @@ const QuestDetailView = () => {
         <div className="quest-reward-display">
           {questAchievement ? (
             <>
-              <AchievementBadge
-                color={questAchievement.badgeColor}
-                badgeSymbol={questAchievement.badgeSymbol}
-                size="sm"
-                locked={questAchievement.isPending}
-              />
+              <Link to="/achievements" className="quest-reward-badge-link">
+                <AchievementBadge
+                  color={questAchievement.badgeColor}
+                  badgeSymbol={questAchievement.badgeSymbol}
+                  size="sm"
+                  locked={questAchievement.isPending}
+                />
+              </Link>
               <div className="quest-reward-display__text">
                 <p className="quest-reward-name">{questAchievement.name}</p>
                 <p className="quest-reward-status">

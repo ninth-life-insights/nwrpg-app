@@ -27,7 +27,7 @@ const AchievementCard = ({ achievement }) => {
         <p className="achievement-card__description">{description}</p>
         {isAwarded && awardedDate && (
           <p className="achievement-card__date">
-            {isCustom ? 'Recorded' : 'Unlocked'} {formatDate(awardedDate)}
+            Unlocked {formatDate(awardedDate)}
           </p>
         )}
         {isPending && (
