@@ -354,3 +354,70 @@
     flex-direction: column;
   }
 }
+/* Quest Reward Section */
+.quest-reward-section {
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.quest-reward-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+}
+
+.quest-reward-optional {
+  font-weight: 400;
+  color: var(--color-text-light);
+}
+
+.quest-reward-add-btn {
+  background: none;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.quest-reward-add-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.quest-reward-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--color-bg-main);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+.quest-reward-preview__name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.quest-reward-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--color-text-light);
+  line-height: 1;
+  padding: 2px 4px;
+  transition: color var(--transition);
+}
+
+.quest-reward-remove:hover {
+  color: var(--color-text-dark);
+}

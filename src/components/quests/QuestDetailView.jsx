@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase/config';
 import QuestMissionList from './QuestMissionList';
 import AddMissionCard from '../missions/AddMissionCard';
 import Badge from '../ui/Badge';
@@ -18,11 +20,14 @@ import {
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
+import { createCustomAchievement } from '../../services/achievementService';
 import { getAllMissions, updateMission } from '../../services/missionService';
 import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
 import { formatForUserLong } from '../../utils/dateHelpers';
+import AchievementBadge from '../achievements/AchievementBadge';
 import AchievementToast from '../achievements/AchievementToast';
+import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../ui/ErrorMessage';
 import './QuestDetailView.css';
 
@@ -34,6 +39,8 @@ const QuestDetailView = () => {
   const [quest, setQuest] = useState(null);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [questAchievement, setQuestAchievement] = useState(null);
+  const [showRewardModal, setShowRewardModal] = useState(false);
   const [newAchievements, setNewAchievements] = useState([]);
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -78,6 +85,14 @@ const QuestDetailView = () => {
       
       setQuest(questData);
       setMissions(questMissions);
+
+      // Load linked achievement if present
+      if (questData.achievement) {
+        const achSnap = await getDoc(doc(db, 'users', currentUser.uid, 'achievements', questData.achievement));
+        setQuestAchievement(achSnap.exists() ? { id: achSnap.id, ...achSnap.data() } : null);
+      } else {
+        setQuestAchievement(null);
+      }
     } catch (err) {
       console.error('Error loading quest:', err);
       setError("Your quest didn't load.");
@@ -211,6 +226,32 @@ const QuestDetailView = () => {
       // Revert optimistic update
       await loadQuestData();
       setActionError("That reorder didn't save. Try again.");
+    }
+  };
+
+  const handleAddReward = async (data) => {
+    setActionError(null);
+    try {
+      const achDoc = await createCustomAchievement(currentUser.uid, { ...data, questId });
+      await updateQuest(currentUser.uid, questId, { achievement: achDoc.id });
+      setShowRewardModal(false);
+      await loadQuestData();
+    } catch (err) {
+      console.error('Error adding reward:', err);
+      setActionError("That reward didn't save. Try again.");
+    }
+  };
+
+  const handleRemoveReward = async () => {
+    setActionError(null);
+    try {
+      const achRef = doc(db, 'users', currentUser.uid, 'achievements', questAchievement.id);
+      await updateDoc(achRef, { status: 'deleted', deletedAt: serverTimestamp() });
+      await updateQuest(currentUser.uid, questId, { achievement: null });
+      await loadQuestData();
+    } catch (err) {
+      console.error('Error removing reward:', err);
+      setActionError("That reward didn't remove. Try again.");
     }
   };
 
@@ -349,6 +390,40 @@ const QuestDetailView = () => {
         </div>
       </div>
 
+      {/* Quest Reward */}
+      {(questAchievement || isEditMode) && (
+        <div className="quest-reward-display">
+          {questAchievement ? (
+            <>
+              <AchievementBadge
+                color={questAchievement.badgeColor}
+                badgeSymbol={questAchievement.badgeSymbol}
+                size="sm"
+                locked={questAchievement.isPending}
+              />
+              <div className="quest-reward-display__text">
+                <p className="quest-reward-name">{questAchievement.name}</p>
+                <p className="quest-reward-status">
+                  {questAchievement.isPending ? 'Complete quest to unlock' : 'Unlocked!'}
+                </p>
+              </div>
+              {isEditMode && (
+                <button className="quest-reward-remove-btn" onClick={handleRemoveReward}>
+                  Remove
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              className="quest-reward-add-btn"
+              onClick={() => setShowRewardModal(true)}
+            >
+              + Add Achievement Reward
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Mission List */}
       <div className="quest-missions-section">
         <QuestMissionList
@@ -462,6 +537,14 @@ const QuestDetailView = () => {
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
+
+      {showRewardModal && (
+        <CreateCustomAchievementModal
+          pendingMode
+          onClose={() => setShowRewardModal(false)}
+          onCreated={handleAddReward}
+        />
+      )}
     </div>
   );
 };

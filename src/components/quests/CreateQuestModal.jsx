@@ -3,10 +3,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import Badge from '../ui/Badge';
-import { createQuest, addMissionToQuest } from '../../services/questService';
+import { createQuest, addMissionToQuest, updateQuest } from '../../services/questService';
 import { createMission } from '../../services/missionService';
+import { createCustomAchievement } from '../../services/achievementService';
 import { QUEST_DIFFICULTY } from '../../types/Quests';
 import { DIFFICULTY_LEVELS, createMissionTemplate } from '../../types/Mission';
+import AchievementBadge from '../achievements/AchievementBadge';
+import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../ui/ErrorMessage';
 import './CreateQuestModal.css';
 
@@ -23,6 +26,8 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
   const [currentMission, setCurrentMission] = useState('');
   const [currentMissionDifficulty, setCurrentMissionDifficulty] = useState(DIFFICULTY_LEVELS.EASY);
   
+  const [pendingAchievement, setPendingAchievement] = useState(null);
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,7 +133,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       };
       
       const newQuest = await createQuest(currentUser.uid, questData);
-      
+
       // Update each mission to link it to the quest
       const { updateMission } = await import('../../services/missionService');
       for (let i = 0; i < missionIds.length; i++) {
@@ -137,7 +142,16 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           questOrder: i
         });
       }
-      
+
+      // Create pending achievement and link to quest
+      if (pendingAchievement) {
+        const achDoc = await createCustomAchievement(currentUser.uid, {
+          ...pendingAchievement,
+          questId: newQuest.id,
+        });
+        await updateQuest(currentUser.uid, newQuest.id, { achievement: achDoc.id });
+      }
+
       if (onQuestCreated) {
         onQuestCreated({
           ...newQuest,
@@ -145,7 +159,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           missionOrder: missionIds
         });
       }
-      
+
       // Reset form
       setFormData({
         title: '',
@@ -155,6 +169,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       setMissions([]);
       setCurrentMission('');
       setCurrentMissionDifficulty(DIFFICULTY_LEVELS.EASY);
+      setPendingAchievement(null);
       
       onClose();
     } catch (error) {
@@ -220,6 +235,32 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Quest Reward */}
+          <div className="quest-reward-section">
+            <div className="quest-reward-label">Quest Reward <span className="quest-reward-optional">(optional)</span></div>
+            {pendingAchievement ? (
+              <div className="quest-reward-preview">
+                <AchievementBadge color={pendingAchievement.badgeColor} badgeSymbol={pendingAchievement.badgeSymbol} size="sm" />
+                <span className="quest-reward-preview__name">{pendingAchievement.name}</span>
+                <button
+                  type="button"
+                  className="quest-reward-remove"
+                  onClick={() => setPendingAchievement(null)}
+                  disabled={isSubmitting}
+                >×</button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="quest-reward-add-btn"
+                onClick={() => setShowAchievementModal(true)}
+                disabled={isSubmitting}
+              >
+                + Add Achievement Reward
+              </button>
+            )}
           </div>
 
           {/* Missions Section */}
@@ -308,6 +349,13 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           </div>
         </form>
       </div>
+      {showAchievementModal && (
+        <CreateCustomAchievementModal
+          pendingMode
+          onClose={() => setShowAchievementModal(false)}
+          onCreated={(data) => { setPendingAchievement(data); setShowAchievementModal(false); }}
+        />
+      )}
     </div>
   );
 };

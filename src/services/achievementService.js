@@ -4,6 +4,7 @@ import {
   doc,
   addDoc,
   setDoc,
+  updateDoc,
   getDocs,
   query,
   where,
@@ -72,7 +73,9 @@ export const getMergedAchievementLibrary = async (userId) => {
 
   const custom = [];
   awardedMap.forEach(doc => {
-    if (doc.isCustom) custom.push({ ...doc, isAwarded: true });
+    if (doc.isCustom && doc.status !== 'deleted') {
+      custom.push({ ...doc, isAwarded: !doc.isPending });
+    }
   });
   custom.sort((a, b) => (b.awardedDate || '').localeCompare(a.awardedDate || ''));
 
@@ -94,19 +97,23 @@ const awardBuiltInAchievement = async (userId, definition) => {
 };
 
 /**
- * Creates and immediately awards a custom achievement (a moment capture).
+ * Creates a custom achievement. If questId is provided, saved as pending (not yet awarded).
+ * If no questId, awarded immediately (standard "Record a Win" flow).
  * @returns {object} The new achievement doc with its Firestore id
  */
-export const createCustomAchievement = async (userId, { name, description, badgeColor, badgeSymbol }) => {
-  const today = toDateString(new Date());
+export const createCustomAchievement = async (userId, { name, description, badgeColor, badgeSymbol, questId = null }) => {
+  const isPending = Boolean(questId);
+  const today = isPending ? null : toDateString(new Date());
   const docRef = await addDoc(getAchievementsRef(userId), {
     name,
     description: description || '',
     badgeColor,
     badgeSymbol,
     isCustom: true,
+    isPending,
+    questId,
     awardedDate: today,
-    awardedAt: serverTimestamp(),
+    awardedAt: isPending ? null : serverTimestamp(),
   });
   return {
     id: docRef.id,
@@ -115,9 +122,35 @@ export const createCustomAchievement = async (userId, { name, description, badge
     badgeColor,
     badgeSymbol,
     isCustom: true,
+    isPending,
+    questId,
     awardedDate: today,
-    isAwarded: true,
+    isAwarded: !isPending,
   };
+};
+
+/**
+ * Awards a previously pending quest achievement.
+ */
+export const awardPendingAchievement = async (userId, achievementId) => {
+  const ref = doc(db, 'users', userId, 'achievements', achievementId);
+  await updateDoc(ref, {
+    isPending: false,
+    awardedDate: toDateString(new Date()),
+    awardedAt: serverTimestamp(),
+  });
+};
+
+/**
+ * Resets an awarded quest achievement back to pending (e.g. quest re-opened).
+ */
+export const unawardPendingAchievement = async (userId, achievementId) => {
+  const ref = doc(db, 'users', userId, 'achievements', achievementId);
+  await updateDoc(ref, {
+    isPending: true,
+    awardedDate: null,
+    awardedAt: null,
+  });
 };
 
 // ─── Check Helpers (pure functions over already-fetched data) ─────────────────

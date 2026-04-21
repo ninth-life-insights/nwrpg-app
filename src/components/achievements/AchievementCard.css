@@ -81,3 +81,20 @@
   margin: 4px 0 0;
   font-style: italic;
 }
+
+.achievement-card__date--pending {
+  color: var(--color-primary);
+}
+
+/* Wrapper link for pending quest-reward cards */
+.achievement-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-lg);
+}
+
+.achievement-card-link:hover .achievement-card {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}

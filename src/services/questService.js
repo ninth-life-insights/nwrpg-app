@@ -15,7 +15,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase/config';
-import { checkAndAwardAchievements } from './achievementService';
+import { checkAndAwardAchievements, awardPendingAchievement, unawardPendingAchievement } from './achievementService';
 import { 
   QUEST_STATUS, 
   createQuestTemplate,
@@ -155,12 +155,12 @@ export const activateQuest = async (userId, questId) => {
 // Complete a quest
 export const completeQuest = async (userId, questId) => {
   const quest = await getQuest(userId, questId);
-  
+
   // Award XP if not already awarded
   if (!quest.xpAwarded) {
     const { addXP } = await import('./userService');
     await addXP(userId, quest.xpReward);
-    
+
     await updateQuest(userId, questId, {
       status: QUEST_STATUS.COMPLETED,
       xpAwarded: quest.xpReward,
@@ -169,7 +169,12 @@ export const completeQuest = async (userId, questId) => {
   } else {
     await updateQuestStatus(userId, questId, QUEST_STATUS.COMPLETED);
   }
-  
+
+  // Award linked achievement if present
+  if (quest.achievement) {
+    await awardPendingAchievement(userId, quest.achievement);
+  }
+
   return getQuest(userId, questId);
 };
 
@@ -191,10 +196,16 @@ export const restoreQuest = async (userId, questId) => {
   });
 };
 
-// Delete a quest
+// Delete a quest (soft-delete — mirrors deleteMission pattern)
 export const deleteQuest = async (userId, questId) => {
+  const quest = await getQuest(userId, questId);
+  // Soft-delete linked achievement if present
+  if (quest.achievement) {
+    const achRef = doc(db, 'users', userId, 'achievements', quest.achievement);
+    await updateDoc(achRef, { status: 'deleted', deletedAt: serverTimestamp() });
+  }
   const questRef = doc(db, 'users', userId, 'quests', questId);
-  await deleteDoc(questRef);
+  await updateDoc(questRef, { status: QUEST_STATUS.DELETED, deletedAt: serverTimestamp() });
 };
 
 // Add mission to quest
@@ -314,15 +325,29 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
     checkAndAwardAchievements(userId, { questCompleted: true }).catch(e =>
       console.error('Achievement check failed:', e)
     );
+
+    // Award linked quest achievement if present
+    if (quest.achievement) {
+      awardPendingAchievement(userId, quest.achievement).catch(e =>
+        console.error('Achievement award failed:', e)
+      );
+    }
   }
-  
+
   // Reopen quest if it was auto-completed but now has incomplete missions
-  if (quest.status === QUEST_STATUS.COMPLETED && 
+  if (quest.status === QUEST_STATUS.COMPLETED &&
       updatedCompletedIds.length < quest.totalMissions) {
     updates.status = QUEST_STATUS.ACTIVE;
     updates.completedAt = null;
-    
-    // Note: We don't subtract XP here - once earned, it's earned
+
+    // TODO: XP should also be unawarded here — flagged for separate fix
+
+    // Unaward linked quest achievement
+    if (quest.achievement) {
+      unawardPendingAchievement(userId, quest.achievement).catch(e =>
+        console.error('Achievement unaward failed:', e)
+      );
+    }
   }
   
   await updateQuest(userId, questId, updates);

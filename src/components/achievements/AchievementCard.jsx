@@ -1,5 +1,6 @@
 // src/components/achievements/AchievementCard.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 import AchievementBadge from './AchievementBadge';
 import { BADGE_COLORS, BUILDER_BADGE_COLORS } from '../../data/achievementDefinitions';
 import './AchievementCard.css';
@@ -9,12 +10,12 @@ import './AchievementCard.css';
  * Works for both built-in (with isAwarded) and custom achievements.
  */
 const AchievementCard = ({ achievement }) => {
-  const { name, description, badgeColor, badgeIcon, badgeImage, badgeSymbol, isAwarded, awardedDate, isCustom } = achievement;
+  const { name, description, badgeColor, badgeIcon, badgeImage, badgeSymbol, isAwarded, awardedDate, isCustom, isPending, questId } = achievement;
   const palette = BADGE_COLORS[badgeColor] || BUILDER_BADGE_COLORS[badgeColor] || BADGE_COLORS.amber;
 
-  return (
+  const card = (
     <div
-      className={`achievement-card${isAwarded ? ' achievement-card--awarded' : ' achievement-card--locked'}`}
+      className={`achievement-card${isAwarded ? ' achievement-card--awarded' : ' achievement-card--locked'}${isPending && questId ? ' achievement-card--quest-reward' : ''}`}
       style={isAwarded ? { '--card-accent': palette.cardAccent, '--card-accent-bg': palette.bg } : {}}
     >
       {isAwarded && <div className="achievement-card__accent-bar" />}
@@ -29,9 +30,17 @@ const AchievementCard = ({ achievement }) => {
             {isCustom ? 'Recorded' : 'Unlocked'} {formatDate(awardedDate)}
           </p>
         )}
+        {isPending && (
+          <p className="achievement-card__date achievement-card__date--pending">Quest reward</p>
+        )}
       </div>
     </div>
   );
+
+  if (isPending && questId) {
+    return <Link to={`/quests/${questId}`} className="achievement-card-link">{card}</Link>;
+  }
+  return card;
 };
 
 const formatDate = (dateString) => {

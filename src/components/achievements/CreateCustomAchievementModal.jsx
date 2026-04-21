@@ -8,7 +8,7 @@ import './CreateCustomAchievementModal.css';
 const COLOR_KEYS = Object.keys(BUILDER_BADGE_COLORS);
 const N = BUILDER_SYMBOLS.length;
 
-const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
+const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false }) => {
   const { currentUser } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -59,7 +59,12 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError('Give your win a name.');
+      setError(pendingMode ? 'Give your reward a name.' : 'Give your win a name.');
+      return;
+    }
+    if (pendingMode) {
+      // In pendingMode the parent handles the Firestore write (needs questId)
+      onCreated({ name: name.trim(), description: description.trim(), badgeColor: selectedColor, badgeSymbol: selectedSymbol });
       return;
     }
     setSaving(true);
@@ -85,7 +90,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
 
         {/* Header */}
         <div className="custom-achievement-header">
-          <h2 className="custom-achievement-title">Record a Win</h2>
+          <h2 className="custom-achievement-title">{pendingMode ? 'Design Reward Badge' : 'Record a Win'}</h2>
           <button className="custom-achievement-close" onClick={onClose}>
             <span className="material-icons">close</span>
           </button>
@@ -208,7 +213,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated }) => {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? 'Saving...' : 'Record Win'}
+            {saving ? 'Saving...' : pendingMode ? 'Add Reward' : 'Record Win'}
           </button>
         </div>
 
