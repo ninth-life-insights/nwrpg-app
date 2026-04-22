@@ -412,3 +412,93 @@
   color: var(--color-text-medium);
   background: rgba(0,0,0,0.03);
 }
+
+/* ── Weekly review badge dot ─────────────────────────────────── */
+
+.header-button--weekly-ready {
+  border-color: var(--color-primary);
+  position: relative;
+}
+
+.header-weekly-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-warning, #f59e0b);
+  border: 1.5px solid var(--color-bg-white);
+  pointer-events: none;
+}
+
+/* ── Weekly review bottom sheet ──────────────────────────────── */
+
+.review-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.review-sheet {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-xl) var(--space-lg) calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
+  width: 100%;
+  max-width: var(--max-width-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.review-sheet-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+  text-align: center;
+}
+
+.review-sheet-sub {
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
+  margin: 0;
+  text-align: center;
+}
+
+.review-sheet-primary-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background var(--transition);
+}
+
+.review-sheet-primary-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+.review-sheet-secondary-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--space-xs) 0;
+  text-align: center;
+  transition: color var(--transition);
+}
+
+.review-sheet-secondary-btn:hover {
+  color: var(--color-text-dark);
+}

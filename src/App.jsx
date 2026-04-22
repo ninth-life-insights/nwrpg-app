@@ -25,6 +25,8 @@ import SkillDetailPage from './pages/SkillDetailPage';
 import BasePage from './pages/BasePage';
 import AchievementsPage from './pages/AchievementsPage';
 import SettingsPage from './pages/SettingsPage';
+import WeeklyReviewPage from './pages/WeeklyReviewPage';
+import WeeklyLogDetailPage from './pages/WeeklyLogDetailPage';
 
 
 
@@ -70,7 +72,9 @@ function AppContent() {
         <Route path="/quests/:questId" element={<ProtectedRoute><QuestDetailView /></ProtectedRoute>} />
         <Route path="/skills" element={<ProtectedRoute><SkillsPage /></ProtectedRoute>} />
         <Route path="/skills/:skillName" element={<ProtectedRoute><SkillDetailPage /></ProtectedRoute>} />
+        <Route path="/weekly-review" element={<ProtectedRoute><WeeklyReviewPage /></ProtectedRoute>} />
         <Route path="/adventure-log" element={<ProtectedRoute><AdventureLogPage /></ProtectedRoute>} />
+        <Route path="/adventure-log/weekly/:weekStart" element={<ProtectedRoute><WeeklyLogDetailPage /></ProtectedRoute>} />
         <Route path="/adventure-log/:date" element={<ProtectedRoute><AdventureLogDetailPage /></ProtectedRoute>} />
         <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

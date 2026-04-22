@@ -1,0 +1,65 @@
+/* src/components/review/WeeklyAdventureLogCard.css */
+
+.walc-card {
+  width: 100%;
+  box-sizing: border-box;
+  background: #faf7fe;
+  border: 1px solid #ddd6fe;
+  border-left: 4px solid #7c3aed;
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  font-family: var(--font-family);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.walc-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+/* ── Header ─────────────────────────────────────────── */
+
+.walc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.walc-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.walc-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #7c3aed;
+  background: #ede9fe;
+  border-radius: 99px;
+  padding: 2px 8px;
+  align-self: flex-start;
+}
+
+.walc-week-label {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+/* ── Story excerpt (inherits .alc-story, adds 3-line clamp) ─── */
+
+.walc-story {
+  -webkit-line-clamp: 3;
+}

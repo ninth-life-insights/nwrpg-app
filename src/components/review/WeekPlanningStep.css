@@ -1,0 +1,195 @@
+/* src/components/review/WeekPlanningStep.css */
+
+/* ── Day panel ───────────────────────────────────────────────── */
+
+.wp-day-panel {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.wp-day-panel--today {
+  border-color: var(--color-primary);
+}
+
+.wp-day-header {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: left;
+}
+
+.wp-day-label {
+  flex: 1;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.wp-day-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  font-weight: 500;
+}
+
+.wp-day-saving {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+}
+
+.wp-day-saved {
+  font-size: var(--font-size-xs);
+  color: #10b981;
+  font-weight: 600;
+}
+
+.wp-chevron {
+  font-size: 18px;
+  color: var(--color-text-light);
+  flex-shrink: 0;
+}
+
+/* ── Day body ────────────────────────────────────────────────── */
+
+.wp-day-body {
+  padding: 0 var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  border-top: 1px solid var(--color-border-yellow);
+}
+
+.wp-empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  padding: var(--space-sm) 0;
+  margin: 0;
+}
+
+/* ── Planned missions list ───────────────────────────────────── */
+
+.wp-planned-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.wp-planned-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wp-planned-row:last-child {
+  border-bottom: none;
+}
+
+.wp-planned-title {
+  flex: 1;
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wp-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+
+.wp-remove-btn:hover {
+  color: #dc2626;
+}
+
+.wp-remove-btn .material-icons {
+  font-size: 16px;
+}
+
+/* ── Add button ──────────────────────────────────────────────── */
+
+.wp-add-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  width: 100%;
+  cursor: pointer;
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  justify-content: center;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.wp-add-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.wp-add-btn .material-icons {
+  font-size: 18px;
+}
+
+/* ── Mission bank picker ─────────────────────────────────────── */
+
+.wp-picker {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.wp-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-main);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wp-picker-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+}
+
+.wp-picker-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+
+.wp-picker-close .material-icons {
+  font-size: 18px;
+}
+
+.wp-day-error {
+  margin-top: var(--space-xs);
+}

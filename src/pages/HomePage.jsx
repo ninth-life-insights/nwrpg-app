@@ -29,6 +29,8 @@ import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import { getWeeklyReviewInfo } from '../utils/weeklyReviewHelpers';
+import { getWeeklySnapshot } from '../services/weeklyReviewService';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -47,6 +49,8 @@ const HomePage = () => {
   const [newAchievements, setNewAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
+  const [weeklyReviewEligible, setWeeklyReviewEligible] = useState(false);
+  const [showWeeklyReviewSheet, setShowWeeklyReviewSheet] = useState(false);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -137,6 +141,17 @@ const HomePage = () => {
         }
         setUserProfile(profile);
         await fetchDailyMissions();
+
+        // Check weekly review eligibility
+        try {
+          const weekStartDay = profile?.weekStartDay ?? 1;
+          const reviewInfo = getWeeklyReviewInfo(weekStartDay);
+          if (reviewInfo.isEligible) {
+            const weekStartStr = reviewInfo.reviewedWeekStart.format('YYYY-MM-DD');
+            const existing = await getWeeklySnapshot(currentUser.uid, weekStartStr);
+            setWeeklyReviewEligible(!existing);
+          }
+        } catch { /* non-fatal */ }
       } catch (error) {
         console.error('Error fetching user data:', error);
         setDailyMissions([]);
@@ -281,9 +296,13 @@ const HomePage = () => {
           Daily Planning
         </button>
         
-        <button className="header-button" onClick={() => navigate('/daily-review')}>
-          <span className="material-icons">{"check_circle"}</span>
-          Daily Review
+        <button
+          className={`header-button${weeklyReviewEligible ? ' header-button--weekly-ready' : ''}`}
+          onClick={() => weeklyReviewEligible ? setShowWeeklyReviewSheet(true) : navigate('/daily-review')}
+        >
+          <span className="material-icons">check_circle</span>
+          {weeklyReviewEligible ? 'Review' : 'Daily Review'}
+          {weeklyReviewEligible && <span className="header-weekly-dot" aria-label="Weekly review ready" />}
         </button>
         
         <button className="header-button adventure-log-button" onClick={() => navigate('/adventure-log')}>
@@ -467,6 +486,27 @@ const HomePage = () => {
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
+
+      {showWeeklyReviewSheet && (
+        <div className="review-sheet-overlay" onClick={() => setShowWeeklyReviewSheet(false)}>
+          <div className="review-sheet" onClick={e => e.stopPropagation()}>
+            <h3 className="review-sheet-title">Time for your weekly review</h3>
+            <p className="review-sheet-sub">Take stock of the week and plan what's ahead.</p>
+            <button
+              className="review-sheet-primary-btn"
+              onClick={() => { setShowWeeklyReviewSheet(false); navigate('/weekly-review'); }}
+            >
+              Start Weekly Review
+            </button>
+            <button
+              className="review-sheet-secondary-btn"
+              onClick={() => { setShowWeeklyReviewSheet(false); navigate('/daily-review'); }}
+            >
+              Just do daily review →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

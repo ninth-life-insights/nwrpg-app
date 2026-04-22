@@ -54,7 +54,8 @@ const AdventureLogFilterModal = ({ isOpen, onClose, currentFilters, onApplyFilte
               className="filter-select full-width"
             >
               <option value="all">All days with activity</option>
-              <option value="reviews-only">Reviews only</option>
+              <option value="reviews-only">Daily reviews only</option>
+              <option value="weekly-only">Weekly reviews only</option>
             </select>
           </div>
 

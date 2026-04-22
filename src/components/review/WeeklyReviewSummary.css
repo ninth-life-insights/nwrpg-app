@@ -1,0 +1,87 @@
+/* src/components/review/WeeklyReviewSummary.css */
+
+/* ── Week label ──────────────────────────────────────────────── */
+
+.wrs-week-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  text-align: center;
+}
+
+/* ── Per-day mini grid ───────────────────────────────────────── */
+
+.wrs-day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-xs);
+}
+
+.wrs-day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) 0;
+  min-width: 0;
+}
+
+.wrs-day-cell--active {
+  border-color: var(--color-border-yellow);
+  background: var(--color-bg-white);
+}
+
+/* Dot at bottom of cell when daily review was done that day */
+.wrs-day-cell--reviewed {
+  position: relative;
+}
+
+.wrs-day-cell--reviewed::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--color-primary);
+  border-radius: 50%;
+}
+
+.wrs-day-letter {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.wrs-day-count {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-medium);
+  line-height: 1;
+}
+
+.wrs-day-cell--active .wrs-day-count {
+  color: var(--color-primary);
+}
+
+/* ── Stats override for weekly (3-col same as daily) ─────────── */
+
+/* The wrs-stats class is a hook for any future overrides.
+   The weekly summary reuses .daily-review-stats from DailyReviewPage.css. */
+
+/* Third stat cell uses indigo (distinct from daily's amber) */
+.wrs-stats .stat-card:nth-child(3)::before {
+  background: #7c3aed;
+}
+.wrs-stats .stat-card:nth-child(3) .stat-number {
+  color: #7c3aed;
+}

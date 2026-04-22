@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
+import { getUserProfile, updateUserProfile } from '../services/userService';
+import { DAY_NAMES } from '../utils/weeklyReviewHelpers';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
 import './SettingsPage.css';
@@ -23,6 +25,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
 
   const [prefs, setPrefs] = useState(null);
+  const [weekStartDay, setWeekStartDay] = useState(1); // default Monday
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -33,6 +36,9 @@ const SettingsPage = () => {
   useEffect(() => {
     if (!currentUser) return;
     getNotificationPrefs(currentUser.uid).then(setPrefs);
+    getUserProfile(currentUser.uid).then(profile => {
+      if (profile?.weekStartDay != null) setWeekStartDay(profile.weekStartDay);
+    });
   }, [currentUser]);
 
   const handleMasterToggle = async () => {
@@ -67,7 +73,10 @@ const SettingsPage = () => {
     setSaving(true);
     setSaveError(null);
     try {
-      await saveNotificationPrefs(currentUser.uid, prefs);
+      await Promise.all([
+        saveNotificationPrefs(currentUser.uid, prefs),
+        updateUserProfile(currentUser.uid, { weekStartDay }),
+      ]);
       await refreshSchedule();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -202,6 +211,27 @@ const SettingsPage = () => {
             </div> */}
           </div>
         )}
+
+      </section>
+
+      <section className="settings-section">
+        <h2 className="settings-section-title">Weekly Review</h2>
+
+        <div className="settings-row">
+          <div className="settings-row-label-group">
+            <span className="settings-label">Week starts on</span>
+            <span className="settings-hint">Your review window opens 2 days before this day</span>
+          </div>
+          <select
+            value={weekStartDay}
+            onChange={e => setWeekStartDay(Number(e.target.value))}
+            className="settings-select"
+          >
+            {DAY_NAMES.map((name, i) => (
+              <option key={i} value={i}>{name}</option>
+            ))}
+          </select>
+        </div>
 
         <StickyFooter>
           {saveError && <ErrorMessage message={saveError} />}

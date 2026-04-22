@@ -1,0 +1,20 @@
+/* src/pages/WeeklyReviewPage.css */
+
+.weekly-review-page {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  font-family: var(--font-family);
+  padding: 0 0 40px;
+}
+
+/* The weekly review page reuses all shared review step styles from
+   DailyReviewPage.css (.review-step, .review-step-body, .review-step-heading,
+   .review-step-subtext, .review-step-empty, .review-step-loading,
+   .review-next-btn, .review-skip-link, .review-progress-bar,
+   .daily-review-header, .daily-review-content, .daily-review-stats,
+   .daily-review-story, .daily-review-section, etc.)
+   via App-level CSS import in main.jsx / index.css, so no duplication needed here. */
+
+.weekly-review-submit-error {
+  margin-bottom: var(--space-sm);
+}

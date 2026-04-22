@@ -9,7 +9,9 @@ import {
   generateDailySnapshot,
 } from '../services/reviewService';
 import AdventureLogCard from '../components/review/AdventureLogCard';
+import WeeklyAdventureLogCard from '../components/review/WeeklyAdventureLogCard';
 import AdventureLogFilterModal, { DEFAULT_FILTERS } from '../components/review/AdventureLogFilterModal';
+import { getAllWeeklySnapshots } from '../services/weeklyReviewService';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './AdventureLogPage.css';
@@ -64,6 +66,7 @@ const AdventureLogPage = () => {
   const navigate = useNavigate();
 
   const [snapshots, setSnapshots] = useState([]);
+  const [weeklySnapshots, setWeeklySnapshots] = useState([]);
   const [placeholders, setPlaceholders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
@@ -84,14 +87,16 @@ const AdventureLogPage = () => {
     setIsLoadingSlow(false);
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [snaps, holes] = await withTimeout(
+      const [snaps, holes, weeklies] = await withTimeout(
         Promise.all([
           getAllDailySnapshots(currentUser.uid),
           getDatesWithActivity(currentUser.uid),
+          getAllWeeklySnapshots(currentUser.uid),
         ])
       );
       setSnapshots(snaps);
       setPlaceholders(holes);
+      setWeeklySnapshots(weeklies);
     } catch (err) {
       console.error('Error loading adventure log:', err);
       setLoadError(getLoadErrorMessage(err, 'adventure log'));
@@ -123,18 +128,21 @@ const AdventureLogPage = () => {
     }
   };
 
-  // Merge snapshots + placeholders into a unified sorted list
+  // Merge snapshots + placeholders + weekly into a unified sorted list
   const allEntries = useMemo(() => {
     const snapshotEntries = snapshots.map(s => ({ ...s, type: 'snapshot' }));
     const placeholderEntries = placeholders.map(p => ({ ...p, type: 'placeholder' }));
-    return [...snapshotEntries, ...placeholderEntries].sort((a, b) => b.date.localeCompare(a.date));
-  }, [snapshots, placeholders]);
+    const weeklyEntries = weeklySnapshots.map(w => ({ ...w, type: 'weekly', date: w.weekStart }));
+    return [...snapshotEntries, ...placeholderEntries, ...weeklyEntries]
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [snapshots, placeholders, weeklySnapshots]);
 
   // Apply filters
   const filteredEntries = useMemo(() => {
     return allEntries.filter(entry => {
       if (!applyDateRange(entry.date, filters.dateRange)) return false;
-      if (filters.entryStatus === 'reviews-only' && entry.type === 'placeholder') return false;
+      if (filters.entryStatus === 'reviews-only' && entry.type !== 'snapshot') return false;
+      if (filters.entryStatus === 'weekly-only' && entry.type !== 'weekly') return false;
       if (filters.highlightsOnly && !isHighlight(entry)) return false;
       return true;
     });
@@ -199,12 +207,19 @@ const AdventureLogPage = () => {
               <h2 className="adventure-log-month-header">{formatMonthHeader(month)}</h2>
               <div className="adventure-log-entries">
                 {entries.map(entry => (
-                  <AdventureLogCard
-                    key={entry.date}
-                    entry={entry}
-                    onGenerate={handleGenerate}
-                    generatingDate={generatingDate}
-                  />
+                  entry.type === 'weekly' ? (
+                    <WeeklyAdventureLogCard
+                      key={`weekly-${entry.date}`}
+                      snapshot={entry}
+                    />
+                  ) : (
+                    <AdventureLogCard
+                      key={`daily-${entry.date}`}
+                      entry={entry}
+                      onGenerate={handleGenerate}
+                      generatingDate={generatingDate}
+                    />
+                  )
                 ))}
               </div>
             </div>

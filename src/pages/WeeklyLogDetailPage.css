@@ -1,0 +1,13 @@
+/* src/pages/WeeklyLogDetailPage.css */
+
+.weekly-log-detail-page {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  font-family: var(--font-family);
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Reuses header/loading/empty/content styles from AdventureLogDetailPage.css */
