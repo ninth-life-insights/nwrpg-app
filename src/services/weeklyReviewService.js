@@ -70,6 +70,7 @@ export const updateWeeklySnapshotStory = async (userId, weekStartDate, storyText
 
 /**
  * Fetches all daily snapshots between startDate and endDate (inclusive).
+ * Used only for supplementary data (dailyMissionsTotal) that isn't in activityLog.
  */
 const getDailySnapshotsForRange = async (userId, startDate, endDate) => {
   try {
@@ -89,62 +90,77 @@ const getDailySnapshotsForRange = async (userId, startDate, endDate) => {
 };
 
 /**
- * Aggregates an array of daily snapshots into weekly totals.
+ * Fetches all mission_completed activityLog events for a given week.
+ * Loads all events and filters in-memory to avoid requiring a composite index.
  */
-const aggregateDailySnapshots = (dailySnapshots) => {
+const getActivityEventsForWeek = async (userId, startDate, endDate) => {
+  try {
+    const logRef = collection(db, 'users', userId, 'activityLog');
+    const q = query(logRef, where('type', '==', 'mission_completed'));
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(e => e.date >= startDate && e.date <= endDate);
+  } catch (error) {
+    console.error('Error fetching activity events for week:', error);
+    throw error;
+  }
+};
+
+/**
+ * Aggregates activityLog events into weekly stats.
+ * This is the primary source — it captures all completions regardless of
+ * whether the user did a daily review.
+ */
+const aggregateActivityEvents = (events) => {
   let missionsCompleted = 0;
   let xpEarned = 0;
   let spEarned = 0;
   let dailyMissionsCompleted = 0;
-  let dailyMissionsTotal = 0;
-  let bestDay = null;
 
   const skillMap = {};
   const questMap = {};
   const levelUps = [];
   const skillLevelUps = [];
-  const achievementsUnlocked = []; // populated separately if needed
+  const dayMap = {};
 
-  dailySnapshots.forEach(snap => {
-    missionsCompleted += snap.missionsCompleted || 0;
-    xpEarned += snap.xpEarned || 0;
-    spEarned += snap.spEarned || 0;
-    dailyMissionsCompleted += snap.dailyMissionsCompleted || 0;
-    dailyMissionsTotal += snap.dailyMissionsTotal || 0;
+  events.forEach(e => {
+    missionsCompleted++;
+    xpEarned += e.xpEarned || 0;
+    spEarned += e.spEarned || 0;
+    if (e.isDailyMission) dailyMissionsCompleted++;
+    if (e.date) dayMap[e.date] = (dayMap[e.date] || 0) + 1;
 
-    // Track best day by missions completed
-    if (!bestDay || (snap.missionsCompleted || 0) > (bestDay.missionsCompleted || 0)) {
-      bestDay = { date: snap.date, missionsCompleted: snap.missionsCompleted || 0 };
+    if (e.skillName) {
+      if (!skillMap[e.skillName]) {
+        skillMap[e.skillName] = { name: e.skillName, spEarned: 0, missionsCompleted: 0 };
+      }
+      skillMap[e.skillName].spEarned += e.spEarned || 0;
+      skillMap[e.skillName].missionsCompleted++;
     }
 
-    // Aggregate skills
-    if (Array.isArray(snap.skillsUsed)) {
-      snap.skillsUsed.forEach(skill => {
-        if (!skillMap[skill.name]) {
-          skillMap[skill.name] = { name: skill.name, spEarned: 0, missionsCompleted: 0 };
-        }
-        skillMap[skill.name].spEarned += skill.spEarned || 0;
-        skillMap[skill.name].missionsCompleted += skill.missionsCompleted || 0;
-      });
+    if (e.questId) {
+      if (!questMap[e.questId]) {
+        questMap[e.questId] = {
+          questId: e.questId,
+          questTitle: e.questTitle || 'Unnamed Quest',
+          missionsCompleted: 0,
+        };
+      }
+      questMap[e.questId].missionsCompleted++;
     }
 
-    // Aggregate quests
-    if (Array.isArray(snap.questsAdvanced)) {
-      snap.questsAdvanced.forEach(quest => {
-        if (!questMap[quest.questId]) {
-          questMap[quest.questId] = {
-            questId: quest.questId,
-            questTitle: quest.questTitle,
-            missionsCompleted: 0,
-          };
-        }
-        questMap[quest.questId].missionsCompleted += quest.missionsCompleted || 0;
-      });
+    if (e.leveledUp && e.newLevel) levelUps.push({ newLevel: e.newLevel });
+    if (e.skillLeveledUp && e.newSkillLevel) {
+      skillLevelUps.push({ skillName: e.skillLevelUpName, newLevel: e.newSkillLevel });
     }
+  });
 
-    // Level-up events
-    if (Array.isArray(snap.levelUps)) levelUps.push(...snap.levelUps);
-    if (Array.isArray(snap.skillLevelUps)) skillLevelUps.push(...snap.skillLevelUps);
+  let bestDay = null;
+  Object.entries(dayMap).forEach(([date, count]) => {
+    if (!bestDay || count > bestDay.missionsCompleted) {
+      bestDay = { date, missionsCompleted: count };
+    }
   });
 
   return {
@@ -152,13 +168,12 @@ const aggregateDailySnapshots = (dailySnapshots) => {
     xpEarned,
     spEarned,
     dailyMissionsCompleted,
-    dailyMissionsTotal,
+    daysWithActivity: Object.keys(dayMap).length,
     bestDay,
     skillsUsed: Object.values(skillMap).sort((a, b) => b.missionsCompleted - a.missionsCompleted),
     questsAdvanced: Object.values(questMap).sort((a, b) => b.missionsCompleted - a.missionsCompleted),
     levelUps,
     skillLevelUps,
-    achievementsUnlocked,
   };
 };
 
@@ -184,17 +199,23 @@ export const generateWeeklySnapshot = async (
   { forceNewStory = false } = {}
 ) => {
   try {
-    // 1. Fetch all daily snapshots in the week range
+    // 1. Fetch activity log events for the week (primary stats source —
+    //    captures all completions even if no daily review was done)
+    const activityEvents = await getActivityEventsForWeek(userId, weekStartDate, weekEndDate);
+
+    // 2. Aggregate stats from activityLog
+    const aggregated = aggregateActivityEvents(activityEvents);
+
+    // 3. Fetch daily snapshots for supplementary data (dailyMissionsTotal)
+    //    only needed for the daily mission completion rate calculation
     const dailySnapshots = await getDailySnapshotsForRange(userId, weekStartDate, weekEndDate);
     const dailySnapshotDates = dailySnapshots.map(s => s.date);
+    const dailyMissionsTotal = dailySnapshots.reduce((sum, s) => sum + (s.dailyMissionsTotal || 0), 0);
 
-    // 2. Aggregate stats
-    const aggregated = aggregateDailySnapshots(dailySnapshots);
-
-    // 3. Current profile state
+    // 4. Current profile state
     const profile = await getUserProfile(userId);
 
-    // 4. Check for existing weekly snapshot — preserve user-edited story
+    // 5. Check for existing weekly snapshot — preserve user-edited story
     let existingUserStory = null;
     let existingAiStory = null;
     let existingAiStoryGeneratedAt = null;
@@ -209,7 +230,7 @@ export const generateWeeklySnapshot = async (
       }
     } catch { /* non-fatal */ }
 
-    // 5. Generate AI story
+    // 6. Generate AI story
     let aiStory = (!forceNewStory && existingAiStory) ? existingAiStory : null;
     let aiStoryGeneratedAt = (!forceNewStory && existingAiStory) ? existingAiStoryGeneratedAt : null;
 
@@ -231,7 +252,7 @@ export const generateWeeklySnapshot = async (
       }
     }
 
-    // 6. Build and write the snapshot document
+    // 7. Build and write the snapshot document
     const snapshotData = {
       weekStartDate,
       weekEndDate,
@@ -241,7 +262,7 @@ export const generateWeeklySnapshot = async (
       xpEarned: aggregated.xpEarned,
       spEarned: aggregated.spEarned,
       dailyMissionsCompleted: aggregated.dailyMissionsCompleted,
-      dailyMissionsTotal: aggregated.dailyMissionsTotal,
+      dailyMissionsTotal,
       bestDay: aggregated.bestDay,
 
       skillsUsed: aggregated.skillsUsed,
@@ -253,7 +274,7 @@ export const generateWeeklySnapshot = async (
       totalXPAtEndOfWeek: profile?.totalXP || 0,
 
       dailySnapshotDates,
-      daysWithActivity: dailySnapshots.filter(s => (s.missionsCompleted || 0) > 0).length,
+      daysWithActivity: aggregated.daysWithActivity,
 
       aiStoryGenerated: aiStory !== null,
       aiStory,

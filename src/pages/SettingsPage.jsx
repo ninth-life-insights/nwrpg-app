@@ -219,20 +219,16 @@ const SettingsPage = () => {
         <div className="settings-row">
           <div className="settings-row-label-group">
             <span className="settings-label">Week starts on</span>
-            <span className="settings-hint">Sets when your weekly review window opens</span>
+            <span className="settings-hint">Your review window opens the day before your week ends</span>
           </div>
           <select
             className="settings-select"
             value={weekStartDay}
             onChange={(e) => setWeekStartDay(e.target.value)}
           >
-            <option value="monday">Monday</option>
-            <option value="tuesday">Tuesday</option>
-            <option value="wednesday">Wednesday</option>
-            <option value="thursday">Thursday</option>
-            <option value="friday">Friday</option>
             <option value="saturday">Saturday</option>
             <option value="sunday">Sunday</option>
+            <option value="monday">Monday</option>
           </select>
         </div>
       </section>

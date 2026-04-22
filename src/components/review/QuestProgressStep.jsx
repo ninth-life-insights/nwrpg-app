@@ -17,6 +17,7 @@ import {
 import { getQuestActivityForWeek } from '../../services/weeklyReviewService';
 import { QUEST_STATUS, calculateQuestProgress } from '../../types/Quests';
 import { MISSION_STATUS } from '../../types/Mission';
+import MissionCardCondensed from '../missions/MissionCardCondensed';
 import { withTimeout, isDefinitelyOffline } from '../../utils/fetchWithTimeout';
 import ErrorMessage from '../ui/ErrorMessage';
 import StickyFooter from '../ui/StickyFooter';
@@ -124,14 +125,14 @@ const QuestProgressStep = ({ weekStartDate, weekEndDate, onNext, onBack }) => {
     setModalError(null);
   };
 
-  const handleToggleMission = async (mission) => {
+  // Matches MissionCardCondensed's onToggleComplete(missionId, isCompleted, xpReward, spReward)
+  const handleToggleMission = async (missionId, isCompleted) => {
     setModalError(null);
-    const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
     try {
       if (isCompleted) {
-        await uncompleteMission(currentUser.uid, mission.id);
+        await uncompleteMission(currentUser.uid, missionId);
       } else {
-        await completeMissionWithRecurrence(currentUser.uid, mission.id);
+        await completeMissionWithRecurrence(currentUser.uid, missionId);
       }
       // Refresh mission list and quest in modal
       const allMissions = await getAllMissions(currentUser.uid);
@@ -186,8 +187,8 @@ const QuestProgressStep = ({ weekStartDate, weekEndDate, onNext, onBack }) => {
   const renderQuestRow = (quest) => {
     const progress = calculateQuestProgress(quest);
     const thisWeekCount = weekActivity[quest.id]?.missionsCompleted ?? 0;
-    const isStalled = quest.status === QUEST_STATUS.ACTIVE && thisWeekCount === 0;
     const isPlanning = quest.status === QUEST_STATUS.PLANNING;
+    const isActive = quest.status === QUEST_STATUS.ACTIVE;
 
     return (
       <div key={quest.id} className="quest-progress-row">
@@ -195,9 +196,6 @@ const QuestProgressStep = ({ weekStartDate, weekEndDate, onNext, onBack }) => {
           <div className="quest-progress-row-info">
             <div className="quest-progress-row-title-row">
               <span className="quest-progress-row-title">{quest.title}</span>
-              {isStalled && (
-                <span className="quest-progress-stalled-badge">stalled</span>
-              )}
               {isPlanning && (
                 <span className="quest-progress-planning-badge">planning</span>
               )}
@@ -210,13 +208,13 @@ const QuestProgressStep = ({ weekStartDate, weekEndDate, onNext, onBack }) => {
                 />
               </div>
               <span className="quest-progress-bar-count">
-                {progress.completed}/{progress.total}
+                {progress.completed}/{progress.total} overall
               </span>
             </div>
-            {quest.status === QUEST_STATUS.ACTIVE && (
+            {isActive && (
               <span className="quest-progress-week-activity">
                 {thisWeekCount === 0
-                  ? 'No activity this week'
+                  ? 'No missions this week'
                   : `${thisWeekCount} mission${thisWeekCount !== 1 ? 's' : ''} this week`}
               </span>
             )}
@@ -231,10 +229,11 @@ const QuestProgressStep = ({ weekStartDate, weekEndDate, onNext, onBack }) => {
                 Activate
               </button>
             )}
-            {isStalled && (
+            {isActive && (
               <button
                 className="quest-progress-action-btn quest-progress-action-btn--archive"
                 onClick={() => handleArchive(quest)}
+                title="Archive this quest"
               >
                 Archive
               </button>
@@ -332,43 +331,35 @@ const QuestProgressStep = ({ weekStartDate, weekEndDate, onNext, onBack }) => {
 
               {!modalLoading && questMissions.length > 0 && (
                 <ul className="quest-modal-mission-list">
-                  {questMissions.map((mission, index) => {
-                    const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
-                    return (
-                      <li key={mission.id} className="quest-modal-mission-row">
+                  {questMissions.map((mission, index) => (
+                    <li key={mission.id} className="quest-modal-mission-item">
+                      <div className="quest-modal-mission-reorder">
                         <button
-                          className={`quest-modal-mission-check ${isCompleted ? 'quest-modal-mission-check--done' : ''}`}
-                          onClick={() => handleToggleMission(mission)}
-                          aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
+                          className="quest-modal-reorder-btn"
+                          onClick={() => handleMoveUp(index)}
+                          disabled={index === 0}
+                          aria-label="Move up"
                         >
-                          <span className="material-icons">
-                            {isCompleted ? 'check_circle' : 'radio_button_unchecked'}
-                          </span>
+                          <span className="material-icons">expand_less</span>
                         </button>
-                        <span className={`quest-modal-mission-title ${isCompleted ? 'quest-modal-mission-title--done' : ''}`}>
-                          {mission.title}
-                        </span>
-                        <div className="quest-modal-mission-reorder">
-                          <button
-                            className="quest-modal-reorder-btn"
-                            onClick={() => handleMoveUp(index)}
-                            disabled={index === 0}
-                            aria-label="Move up"
-                          >
-                            <span className="material-icons">expand_less</span>
-                          </button>
-                          <button
-                            className="quest-modal-reorder-btn"
-                            onClick={() => handleMoveDown(index)}
-                            disabled={index === questMissions.length - 1}
-                            aria-label="Move down"
-                          >
-                            <span className="material-icons">expand_more</span>
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
+                        <button
+                          className="quest-modal-reorder-btn"
+                          onClick={() => handleMoveDown(index)}
+                          disabled={index === questMissions.length - 1}
+                          aria-label="Move down"
+                        >
+                          <span className="material-icons">expand_more</span>
+                        </button>
+                      </div>
+                      <div className="quest-modal-mission-card">
+                        <MissionCardCondensed
+                          mission={mission}
+                          onToggleComplete={handleToggleMission}
+                          onViewDetails={() => {}}
+                        />
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>
