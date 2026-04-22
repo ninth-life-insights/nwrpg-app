@@ -174,6 +174,12 @@ export const updateUserProfile = async (userId, updates) => {
   }
 };
 
+// Get the user's preferred week start day (defaults to 'monday' if not set)
+export const getWeekStartDay = async (userId) => {
+  const profile = await getUserProfile(userId);
+  return profile?.weekStartDay ?? 'monday';
+};
+
 // ─── SP / Skill helpers ───────────────────────────────────────────────────────
 
 const SP_PER_SKILL_LEVEL = 40;

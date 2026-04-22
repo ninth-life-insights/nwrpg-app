@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
+import { getUserProfile, updateUserProfile } from '../services/userService';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
 import './SettingsPage.css';
@@ -23,6 +24,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
 
   const [prefs, setPrefs] = useState(null);
+  const [weekStartDay, setWeekStartDay] = useState('monday');
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -33,6 +35,9 @@ const SettingsPage = () => {
   useEffect(() => {
     if (!currentUser) return;
     getNotificationPrefs(currentUser.uid).then(setPrefs);
+    getUserProfile(currentUser.uid).then(profile => {
+      if (profile?.weekStartDay) setWeekStartDay(profile.weekStartDay);
+    });
   }, [currentUser]);
 
   const handleMasterToggle = async () => {
@@ -67,7 +72,10 @@ const SettingsPage = () => {
     setSaving(true);
     setSaveError(null);
     try {
-      await saveNotificationPrefs(currentUser.uid, prefs);
+      await Promise.all([
+        saveNotificationPrefs(currentUser.uid, prefs),
+        updateUserProfile(currentUser.uid, { weekStartDay }),
+      ]);
       await refreshSchedule();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -203,17 +211,42 @@ const SettingsPage = () => {
           </div>
         )}
 
-        <StickyFooter>
-          {saveError && <ErrorMessage message={saveError} />}
-          <button
-            className="settings-save-button"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-          </button>
-        </StickyFooter>
       </section>
+
+      <section className="settings-section">
+        <h2 className="settings-section-title">Weekly Review</h2>
+
+        <div className="settings-row">
+          <div className="settings-row-label-group">
+            <span className="settings-label">Week starts on</span>
+            <span className="settings-hint">Sets when your weekly review window opens</span>
+          </div>
+          <select
+            className="settings-select"
+            value={weekStartDay}
+            onChange={(e) => setWeekStartDay(e.target.value)}
+          >
+            <option value="monday">Monday</option>
+            <option value="tuesday">Tuesday</option>
+            <option value="wednesday">Wednesday</option>
+            <option value="thursday">Thursday</option>
+            <option value="friday">Friday</option>
+            <option value="saturday">Saturday</option>
+            <option value="sunday">Sunday</option>
+          </select>
+        </div>
+      </section>
+
+      <StickyFooter>
+        {saveError && <ErrorMessage message={saveError} />}
+        <button
+          className="settings-save-button"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
+        </button>
+      </StickyFooter>
     </div>
   );
 };
