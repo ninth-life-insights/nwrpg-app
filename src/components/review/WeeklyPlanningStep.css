@@ -1,0 +1,271 @@
+/* src/components/review/WeeklyPlanningStep.css */
+
+.weekly-planning-days {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* ── Day accordion row ───────────────────────────────────────────── */
+
+.weekly-day-row {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.weekly-day-row--open {
+  border-color: var(--color-primary);
+}
+
+.weekly-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-md);
+  gap: var(--space-sm);
+  text-align: left;
+}
+
+.weekly-day-label {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  flex: 1;
+}
+
+.weekly-day-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.weekly-day-due-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 99px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.weekly-day-priorities-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.weekly-day-chevron {
+  font-size: 20px;
+  color: var(--color-text-light);
+}
+
+/* ── Expanded body ───────────────────────────────────────────────── */
+
+.weekly-day-body {
+  padding: 0 var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.weekly-day-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-sm);
+}
+
+.weekly-day-section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.weekly-day-saving {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text-light);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+}
+
+.weekly-day-no-priorities {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-placeholder);
+  margin: 0;
+}
+
+/* Due mission row */
+.weekly-due-mission-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+}
+
+.weekly-due-mission-title {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dark);
+  flex: 1;
+  min-width: 0;
+}
+
+.weekly-due-mission-added {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+.weekly-due-mission-add-btn {
+  background: none;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 2px var(--space-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+}
+
+.weekly-due-mission-add-btn:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: white;
+}
+
+.weekly-due-mission-add-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Priority row */
+.weekly-priority-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.weekly-priority-row:last-of-type {
+  border-bottom: none;
+}
+
+.weekly-priority-title {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dark);
+  min-width: 0;
+}
+
+.weekly-priority-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+
+.weekly-priority-remove:hover:not(:disabled) {
+  color: #dc2626;
+}
+
+.weekly-priority-remove .material-icons {
+  font-size: 16px;
+}
+
+/* Add priority button */
+.weekly-add-priority-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-md);
+  width: 100%;
+  cursor: pointer;
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  justify-content: center;
+  transition: border-color var(--transition), color var(--transition);
+  margin-top: var(--space-xs);
+}
+
+.weekly-add-priority-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.weekly-add-priority-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.weekly-add-priority-btn .material-icons {
+  font-size: 16px;
+}
+
+/* ── Mission picker (reuses quest-modal styles, adds specifics) ──── */
+
+.weekly-picker-mission-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs) 0;
+  gap: var(--space-md);
+  text-align: left;
+}
+
+.weekly-picker-mission-title {
+  flex: 1;
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  min-width: 0;
+}
+
+.weekly-picker-mission-due {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.weekly-picker-mission-btn:hover .weekly-picker-mission-title {
+  color: var(--color-primary);
+}

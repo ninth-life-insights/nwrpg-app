@@ -1,0 +1,153 @@
+/* src/components/review/TaskExpirationStep.css */
+
+.expiry-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.expiry-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.expiry-section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.expiry-bulk-archive-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-medium);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 2px var(--space-sm);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.expiry-bulk-archive-btn:hover:not(:disabled) {
+  background: var(--color-bg-main);
+  color: var(--color-text-dark);
+}
+
+.expiry-bulk-archive-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Mission list */
+.expiry-mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.expiry-mission-row {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.expiry-mission-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expiry-mission-title {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-text-dark);
+}
+
+.expiry-mission-date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+}
+
+.expiry-mission-date--expired {
+  color: #dc2626;
+}
+
+.expiry-mission-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Action buttons */
+.expiry-btn {
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: var(--space-xs) var(--space-md);
+  cursor: pointer;
+  border: none;
+  transition: opacity var(--transition);
+}
+
+.expiry-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.expiry-btn--renew {
+  background: var(--color-primary);
+  color: white;
+}
+
+.expiry-btn--archive {
+  background: var(--color-bg-main);
+  color: var(--color-text-medium);
+  border: 1px solid var(--color-border);
+}
+
+.expiry-btn--confirm {
+  background: var(--color-success);
+  color: white;
+}
+
+.expiry-btn--cancel {
+  background: var(--color-bg-main);
+  color: var(--color-text-medium);
+  border: 1px solid var(--color-border);
+}
+
+.expiry-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+/* Renew form */
+.expiry-renew-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.expiry-date-input {
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-bg-white);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.expiry-renew-actions {
+  display: flex;
+  gap: var(--space-sm);
+}

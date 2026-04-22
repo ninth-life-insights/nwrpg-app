@@ -1,0 +1,327 @@
+/* src/components/review/QuestProgressStep.css */
+
+/* ── Quest rows ─────────────────────────────────────────────────── */
+
+.quest-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.quest-progress-section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.quest-progress-row {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-card);
+}
+
+.quest-progress-row-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.quest-progress-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quest-progress-row-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.quest-progress-row-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.quest-progress-stalled-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 99px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.quest-progress-planning-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+/* Progress bar */
+.quest-progress-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.quest-progress-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.quest-progress-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.quest-progress-bar-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+  white-space: nowrap;
+}
+
+.quest-progress-week-activity {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+}
+
+/* Action buttons */
+.quest-progress-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.quest-progress-action-btn {
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  transition: opacity var(--transition);
+  white-space: nowrap;
+}
+
+.quest-progress-action-btn--activate {
+  background: var(--color-primary);
+  color: white;
+}
+
+.quest-progress-action-btn--archive {
+  background: var(--color-bg-main);
+  color: var(--color-text-medium);
+  border: 1px solid var(--color-border);
+}
+
+.quest-progress-action-btn--open {
+  background: none;
+  color: var(--color-text-light);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.quest-progress-action-btn--open .material-icons {
+  font-size: 22px;
+}
+
+.quest-progress-action-btn:hover {
+  opacity: 0.8;
+}
+
+/* Empty state */
+.quest-progress-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl) 0;
+}
+
+.quest-progress-start-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+
+.quest-progress-start-btn:hover {
+  opacity: 0.9;
+}
+
+/* ── Quest detail modal ──────────────────────────────────────────── */
+
+.quest-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.quest-modal {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%;
+  max-width: var(--max-width-card);
+  max-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+}
+
+.quest-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.quest-modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.quest-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.quest-modal-close:hover {
+  color: var(--color-text-dark);
+}
+
+.quest-modal-body {
+  padding: var(--space-md) var(--space-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Mission list in modal */
+.quest-modal-mission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quest-modal-mission-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.quest-modal-mission-row:last-child {
+  border-bottom: none;
+}
+
+.quest-modal-mission-check {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-border);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.quest-modal-mission-check--done {
+  color: var(--color-success);
+}
+
+.quest-modal-mission-check .material-icons {
+  font-size: 22px;
+}
+
+.quest-modal-mission-title {
+  flex: 1;
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.quest-modal-mission-title--done {
+  color: var(--color-text-light);
+  text-decoration: line-through;
+}
+
+.quest-modal-mission-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.quest-modal-reorder-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color var(--transition);
+  line-height: 1;
+}
+
+.quest-modal-reorder-btn:hover:not(:disabled) {
+  color: var(--color-text-medium);
+}
+
+.quest-modal-reorder-btn:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.quest-modal-reorder-btn .material-icons {
+  font-size: 18px;
+}

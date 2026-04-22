@@ -1,0 +1,15 @@
+/* src/pages/WeeklyReviewPage.css */
+
+/* Header title group — stacks title + week range label */
+.weekly-review-header-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.weekly-review-week-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  font-weight: 400;
+}
