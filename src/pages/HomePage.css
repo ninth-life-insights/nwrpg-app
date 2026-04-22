@@ -412,3 +412,95 @@
   color: var(--color-text-medium);
   background: rgba(0,0,0,0.03);
 }
+
+/* ── Daily Review button badge (weekly review due indicator) ─────── */
+
+.header-button--has-badge {
+  position: relative;
+}
+
+.header-button-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 1px solid var(--color-bg-white);
+}
+
+/* ── Review choice bottom sheet ─────────────────────────────────── */
+
+.review-choice-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.review-choice-sheet {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%;
+  max-width: var(--max-width-card);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1);
+}
+
+.review-choice-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  font-weight: 500;
+  margin: 0 0 var(--space-xs) 0;
+  text-align: center;
+}
+
+.review-choice-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-text-dark);
+  text-align: left;
+  transition: background var(--transition), border-color var(--transition);
+  min-height: 52px;
+}
+
+.review-choice-option:hover {
+  background: var(--color-bg-white);
+  border-color: var(--color-primary);
+}
+
+.review-choice-option--weekly {
+  border-color: var(--color-primary);
+  background: var(--color-bg-white);
+}
+
+.review-choice-icon {
+  font-size: 22px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.review-choice-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  background: var(--color-primary);
+  border-radius: 99px;
+  padding: 1px 8px;
+}

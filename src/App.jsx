@@ -15,6 +15,7 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import HomePage from './pages/HomePage';
 import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
 import DailyReviewPage from './pages/DailyReviewPage';
+import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import AdventureLogPage from './pages/AdventureLogPage';
 import AdventureLogDetailPage from './pages/AdventureLogDetailPage';
 import MissionBankPage from './pages/MissionBankPage';
@@ -64,6 +65,7 @@ function AppContent() {
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         <Route path="/daily-review" element={<ProtectedRoute><DailyReviewPage /></ProtectedRoute>} />
+        <Route path="/weekly-review" element={<ProtectedRoute><WeeklyReviewPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
         <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
         <Route path="/quest-bank" element={<ProtectedRoute><QuestBank /></ProtectedRoute>} />

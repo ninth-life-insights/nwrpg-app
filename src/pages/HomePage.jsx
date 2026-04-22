@@ -4,11 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   getTodaysDailyMissions,
   getDailyMissionStatus,
   needsToSetDailyMissions,
 } from '../services/dailyMissionService';
+import { getWeeklySnapshot } from '../services/weeklyReviewService';
+import { isInWeeklyReviewWindow, getWeekBounds } from '../utils/dateHelpers';
 import {
   completeMissionWithRecurrence,
   uncompleteMission,
@@ -47,6 +49,8 @@ const HomePage = () => {
   const [newAchievements, setNewAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
+  const [weeklyReviewDue, setWeeklyReviewDue] = useState(false);
+  const [showReviewChoiceSheet, setShowReviewChoiceSheet] = useState(false);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -137,6 +141,20 @@ const HomePage = () => {
         }
         setUserProfile(profile);
         await fetchDailyMissions();
+
+        // Check if weekly review window is open and not yet completed
+        try {
+          const weekStartDay = profile?.weekStartDay ?? 'monday';
+          if (isInWeeklyReviewWindow(weekStartDay)) {
+            const { startDate } = getWeekBounds(weekStartDay);
+            const existingSnapshot = await getWeeklySnapshot(currentUser.uid, startDate);
+            setWeeklyReviewDue(!existingSnapshot);
+          } else {
+            setWeeklyReviewDue(false);
+          }
+        } catch {
+          // Non-fatal — badge just won't show
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
         setDailyMissions([]);
@@ -281,9 +299,13 @@ const HomePage = () => {
           Daily Planning
         </button>
         
-        <button className="header-button" onClick={() => navigate('/daily-review')}>
-          <span className="material-icons">{"check_circle"}</span>
+        <button
+          className={`header-button ${weeklyReviewDue ? 'header-button--has-badge' : ''}`}
+          onClick={() => weeklyReviewDue ? setShowReviewChoiceSheet(true) : navigate('/daily-review')}
+        >
+          <span className="material-icons">check_circle</span>
           Daily Review
+          {weeklyReviewDue && <span className="header-button-badge" />}
         </button>
         
         <button className="header-button adventure-log-button" onClick={() => navigate('/adventure-log')}>
@@ -467,6 +489,30 @@ const HomePage = () => {
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
+
+      {/* Weekly / Daily review choice bottom sheet */}
+      {showReviewChoiceSheet && (
+        <div className="review-choice-overlay" onClick={() => setShowReviewChoiceSheet(false)}>
+          <div className="review-choice-sheet" onClick={e => e.stopPropagation()}>
+            <p className="review-choice-label">What would you like to do?</p>
+            <button
+              className="review-choice-option"
+              onClick={() => { setShowReviewChoiceSheet(false); navigate('/daily-review'); }}
+            >
+              <span className="material-icons review-choice-icon">check_circle</span>
+              <span>Daily Review</span>
+            </button>
+            <button
+              className="review-choice-option review-choice-option--weekly"
+              onClick={() => { setShowReviewChoiceSheet(false); navigate('/weekly-review'); }}
+            >
+              <span className="material-icons review-choice-icon">calendar_view_week</span>
+              <span>Weekly Review</span>
+              <span className="review-choice-badge">Due</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

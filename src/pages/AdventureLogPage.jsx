@@ -8,6 +8,8 @@ import {
   getDatesWithActivity,
   generateDailySnapshot,
 } from '../services/reviewService';
+import { getAllWeeklySnapshots } from '../services/weeklyReviewService';
+import { formatWeekRange } from '../utils/dateHelpers';
 import AdventureLogCard from '../components/review/AdventureLogCard';
 import AdventureLogFilterModal, { DEFAULT_FILTERS } from '../components/review/AdventureLogFilterModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -64,6 +66,7 @@ const AdventureLogPage = () => {
   const navigate = useNavigate();
 
   const [snapshots, setSnapshots] = useState([]);
+  const [weeklySnapshots, setWeeklySnapshots] = useState([]);
   const [placeholders, setPlaceholders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
@@ -84,14 +87,16 @@ const AdventureLogPage = () => {
     setIsLoadingSlow(false);
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [snaps, holes] = await withTimeout(
+      const [snaps, holes, weeklySnaps] = await withTimeout(
         Promise.all([
           getAllDailySnapshots(currentUser.uid),
           getDatesWithActivity(currentUser.uid),
+          getAllWeeklySnapshots(currentUser.uid),
         ])
       );
       setSnapshots(snaps);
       setPlaceholders(holes);
+      setWeeklySnapshots(weeklySnaps);
     } catch (err) {
       console.error('Error loading adventure log:', err);
       setLoadError(getLoadErrorMessage(err, 'adventure log'));
@@ -123,12 +128,19 @@ const AdventureLogPage = () => {
     }
   };
 
-  // Merge snapshots + placeholders into a unified sorted list
+  // Merge snapshots + placeholders + weekly snapshots into a unified sorted list
+  // Weekly snapshots use weekStartDate as their sort key
   const allEntries = useMemo(() => {
     const snapshotEntries = snapshots.map(s => ({ ...s, type: 'snapshot' }));
     const placeholderEntries = placeholders.map(p => ({ ...p, type: 'placeholder' }));
-    return [...snapshotEntries, ...placeholderEntries].sort((a, b) => b.date.localeCompare(a.date));
-  }, [snapshots, placeholders]);
+    const weeklyEntries = weeklySnapshots.map(s => ({
+      ...s,
+      type: 'weekly',
+      date: s.weekStartDate, // use weekStartDate for grouping/sorting
+    }));
+    return [...snapshotEntries, ...placeholderEntries, ...weeklyEntries]
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [snapshots, placeholders, weeklySnapshots]);
 
   // Apply filters
   const filteredEntries = useMemo(() => {
@@ -198,14 +210,51 @@ const AdventureLogPage = () => {
             <div key={month} className="adventure-log-month-group">
               <h2 className="adventure-log-month-header">{formatMonthHeader(month)}</h2>
               <div className="adventure-log-entries">
-                {entries.map(entry => (
-                  <AdventureLogCard
-                    key={entry.date}
-                    entry={entry}
-                    onGenerate={handleGenerate}
-                    generatingDate={generatingDate}
-                  />
-                ))}
+                {entries.map(entry => {
+                  if (entry.type === 'weekly') {
+                    const story = entry.userEditedStory ?? entry.aiStory ?? null;
+                    return (
+                      <div key={`weekly-${entry.weekStartDate}`} className="alc-weekly-card">
+                        <div className="alc-weekly-card-header">
+                          <span className="alc-weekly-card-label">
+                            <span className="material-icons">calendar_view_week</span>
+                            Weekly Review
+                          </span>
+                          <span className="alc-weekly-card-range">
+                            {formatWeekRange(entry.weekStartDate, entry.weekEndDate)}
+                          </span>
+                        </div>
+                        {story && (
+                          <p className="alc-weekly-card-story">{story}</p>
+                        )}
+                        <div className="alc-weekly-card-stats">
+                          <span className="alc-stat">
+                            <span className="material-icons">check_circle</span>
+                            {entry.missionsCompleted} mission{entry.missionsCompleted !== 1 ? 's' : ''}
+                          </span>
+                          <span className="alc-stat">
+                            <span className="material-icons">bolt</span>
+                            +{entry.xpEarned} XP
+                          </span>
+                          {entry.daysWithActivity != null && (
+                            <span className="alc-stat">
+                              <span className="material-icons">local_fire_department</span>
+                              {entry.daysWithActivity}/7 days
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <AdventureLogCard
+                      key={entry.date}
+                      entry={entry}
+                      onGenerate={handleGenerate}
+                      generatingDate={generatingDate}
+                    />
+                  );
+                })}
               </div>
             </div>
           ))
