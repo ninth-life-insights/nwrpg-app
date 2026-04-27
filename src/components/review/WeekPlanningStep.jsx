@@ -10,7 +10,7 @@ import { getActiveMissions } from '../../services/missionService';
 import MissionList from '../missions/MissionList';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
-import { getWeekDates } from '../../utils/weeklyReviewHelpers';
+import dayjs from 'dayjs';
 import { toDateString } from '../../utils/dateHelpers';
 import { withTimeout } from '../../utils/fetchWithTimeout';
 import './WeekPlanningStep.css';
@@ -157,7 +157,10 @@ const WeekPlanningStep = ({ weekInfo, onNext, onSkipToSummary }) => {
   const [dayErrors, setDayErrors] = useState({});
 
   const today = toDateString(new Date());
-  const weekDates = weekInfo ? getWeekDates(weekInfo.nextWeekStart) : [];
+
+  const weekDates = weekInfo?.nextWeekStart
+    ? Array.from({ length: 7 }, (_, i) => dayjs(weekInfo.nextWeekStart).add(i, 'day'))
+    : [];
 
   const handleDayError = (dateStr, msg) => {
     setDayErrors(prev => ({ ...prev, [dateStr]: msg }));
@@ -190,7 +193,7 @@ const WeekPlanningStep = ({ weekInfo, onNext, onSkipToSummary }) => {
       }
     };
     load();
-  }, [currentUser]);
+  }, [currentUser, weekInfo]);
 
   return (
     <div className="review-step">

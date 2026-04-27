@@ -37,7 +37,14 @@ const SettingsPage = () => {
     if (!currentUser) return;
     getNotificationPrefs(currentUser.uid).then(setPrefs);
     getUserProfile(currentUser.uid).then(profile => {
-      if (profile?.weekStartDay != null) setWeekStartDay(profile.weekStartDay);
+      if (profile?.weekStartDay != null) {
+        const stored = profile.weekStartDay;
+        const dayNameMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+        const coerced = typeof stored === 'string'
+          ? (dayNameMap[stored.toLowerCase()] ?? 1)
+          : Number(stored);
+        setWeekStartDay(Number.isFinite(coerced) ? coerced : 1);
+      }
     });
   }, [currentUser]);
 

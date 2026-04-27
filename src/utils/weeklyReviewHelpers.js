@@ -16,10 +16,24 @@ import dayjs from 'dayjs';
  *   nextWeekStart: dayjs,      // the upcoming week's start date
  * }}
  */
+// Map day name strings to their numeric index, for backwards compat with
+// profiles that stored weekStartDay as a string (e.g. "friday") instead of a number.
+const DAY_NAME_TO_INDEX = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+};
+
 export const getWeeklyReviewInfo = (weekStartDay = 1) => {
+  // Coerce string day names to numbers
+  if (typeof weekStartDay === 'string') {
+    weekStartDay = DAY_NAME_TO_INDEX[weekStartDay.toLowerCase()] ?? 1;
+  }
+  const numericDay = Number(weekStartDay);
+  const resolvedDay = (Number.isFinite(numericDay) && numericDay >= 0 && numericDay <= 6) ? numericDay : 1;
+
   const today = dayjs();
-  const todayDOW = today.day(); // 0=Sun, 1=Mon, ..., 6=Sat
-  const daysUntilWeekStart = (weekStartDay - todayDOW + 7) % 7;
+  const todayDOW = today.day();
+  const daysUntilWeekStart = (resolvedDay - todayDOW + 7) % 7;
   const nextWeekStart = today.add(daysUntilWeekStart, 'day');
   const graceWindowStart = nextWeekStart.subtract(2, 'day');
 
