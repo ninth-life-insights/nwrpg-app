@@ -1,0 +1,198 @@
+/* src/components/review/QuestMissionsModal.css */
+
+/* ── Overlay ──────────────────────────────────────────────────── */
+
+.qmm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* ── Bottom sheet ────────────────────────────────────────────── */
+
+.qmm-sheet {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.qmm-header {
+  flex-shrink: 0;
+  padding: var(--space-lg) var(--space-lg) 0;
+  background: var(--color-bg-white);
+}
+
+.qmm-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.qmm-header-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qmm-quest-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.qmm-header-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.qmm-progress-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  font-weight: 500;
+}
+
+.qmm-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+
+.qmm-close-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.qmm-close-btn .material-icons {
+  font-size: 22px;
+}
+
+/* Progress bar in header */
+.qmm-header-bar {
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+}
+
+.qmm-header-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+/* ── Body / mission list ─────────────────────────────────────── */
+
+.qmm-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--space-lg) var(--space-xl);
+}
+
+.qmm-empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  padding: var(--space-lg) 0;
+  margin: 0;
+  text-align: center;
+}
+
+/* ── Mission rows ────────────────────────────────────────────── */
+
+.qmm-mission-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+  min-height: 48px;
+}
+
+.qmm-mission-row:last-child {
+  border-bottom: none;
+}
+
+.qmm-mission-row--done {
+  opacity: 0.5;
+}
+
+.qmm-complete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.qmm-complete-btn:hover:not(:disabled) {
+  color: var(--color-primary);
+}
+
+.qmm-complete-btn--done {
+  color: var(--color-primary);
+  cursor: default;
+}
+
+.qmm-complete-btn .material-icons {
+  font-size: 22px;
+}
+
+.qmm-mission-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qmm-mission-title {
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  line-height: 1.3;
+}
+
+.qmm-mission-row--done .qmm-mission-title {
+  text-decoration: line-through;
+  color: var(--color-text-light);
+}
+
+.qmm-mission-skill {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+  font-weight: 500;
+}
+
+.qmm-completing {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  flex-shrink: 0;
+}

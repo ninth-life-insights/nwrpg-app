@@ -265,6 +265,53 @@ export const generateWeeklySnapshot = async (
   }
 };
 
+// ─── Quest activity for week ──────────────────────────────────────────────────
+
+/**
+ * Returns a map of quest activity for the given week range.
+ * Only counts mission_completed events that have a questId.
+ *
+ * @param {string} userId
+ * @param {string} weekStart - 'YYYY-MM-DD'
+ * @param {string} weekEnd   - 'YYYY-MM-DD'
+ * @returns {Object} { [questId]: { count: number, lastDate: string, lastTimestampMs: number } }
+ */
+export const getQuestActivityForWeek = async (userId, weekStart, weekEnd) => {
+  try {
+    const logRef = collection(db, 'users', userId, 'activityLog');
+    const q = query(
+      logRef,
+      where('date', '>=', weekStart),
+      where('date', '<=', weekEnd),
+      where('type', '==', 'mission_completed'),
+    );
+    const snap = await getDocs(q);
+
+    const result = {};
+    snap.docs.forEach(d => {
+      const data = d.data();
+      if (!data.questId) return;
+      if (!result[data.questId]) {
+        result[data.questId] = { count: 0, lastDate: data.date, lastTimestampMs: 0 };
+      }
+      result[data.questId].count += 1;
+      const ts = data.timestamp?.toMillis?.() ?? 0;
+      if (
+        data.date > result[data.questId].lastDate ||
+        (data.date === result[data.questId].lastDate && ts > result[data.questId].lastTimestampMs)
+      ) {
+        result[data.questId].lastDate = data.date;
+        result[data.questId].lastTimestampMs = ts;
+      }
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching quest activity for week:', error);
+    throw error;
+  }
+};
+
 // ─── Story update ──────────────────────────────────────────────────────────────
 
 /**

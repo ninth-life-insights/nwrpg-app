@@ -1,200 +1,18 @@
 // src/components/review/QuestGroomingStep.jsx
 import { useState, useEffect } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '../../contexts/AuthContext';
-import { getActiveQuests, archiveQuest, completeQuest } from '../../services/questService';
-import { getActiveMissions, completeMissionWithRecurrence, batchUpdateMissionOrders } from '../../services/missionService';
+import { getActiveQuests, archiveQuest } from '../../services/questService';
+import { getActiveMissions, completeMissionWithRecurrence } from '../../services/missionService';
+import { getQuestActivityForWeek } from '../../services/weeklyReviewService';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
+import QuestReviewCard from './QuestReviewCard';
+import QuestMissionsModal from './QuestMissionsModal';
 import { withTimeout, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import './QuestGroomingStep.css';
 
-// ─── Sortable mission row ─────────────────────────────────────────────────────
-
-const SortableMissionRow = ({ mission, onComplete }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: mission.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const isCompleted = mission.status === 'completed';
-
-  return (
-    <div ref={setNodeRef} style={style} className={`qg-mission-row ${isCompleted ? 'qg-mission-row--done' : ''}`}>
-      <button
-        className="qg-drag-handle"
-        {...attributes}
-        {...listeners}
-        aria-label="Drag to reorder"
-      >
-        <span className="material-icons">drag_indicator</span>
-      </button>
-      <button
-        className={`qg-complete-btn ${isCompleted ? 'qg-complete-btn--done' : ''}`}
-        onClick={() => !isCompleted && onComplete(mission.id)}
-        disabled={isCompleted}
-        aria-label={isCompleted ? 'Completed' : 'Mark complete'}
-      >
-        <span className="material-icons">{isCompleted ? 'check_circle' : 'radio_button_unchecked'}</span>
-      </button>
-      <span className={`qg-mission-title ${isCompleted ? 'qg-mission-title--done' : ''}`}>
-        {mission.title}
-      </span>
-    </div>
-  );
-};
-
-// ─── Quest accordion panel ────────────────────────────────────────────────────
-
-const QuestPanel = ({
-  quest,
-  missions,
-  onMissionComplete,
-  onQuestAction,
-  actionError,
-}) => {
-  const [expanded, setExpanded] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(null); // 'archive' | 'complete' | null
-  const [localMissions, setLocalMissions] = useState(missions);
-  const { currentUser } = useAuth();
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
-  );
-
-  const completedCount = localMissions.filter(m => m.status === 'completed').length;
-  const progressPct = localMissions.length > 0
-    ? Math.round((completedCount / localMissions.length) * 100)
-    : 0;
-
-  const handleDragEnd = async (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = localMissions.findIndex(m => m.id === active.id);
-    const newIndex = localMissions.findIndex(m => m.id === over.id);
-    const reordered = arrayMove(localMissions, oldIndex, newIndex);
-    setLocalMissions(reordered);
-
-    try {
-      const updates = reordered.map((m, i) => ({ missionId: m.id, customSortOrder: i }));
-      await batchUpdateMissionOrders(currentUser.uid, updates);
-    } catch (err) {
-      console.error('Error reordering missions:', err);
-      setLocalMissions(missions); // revert on failure
-    }
-  };
-
-  const handleMissionComplete = async (missionId) => {
-    const result = await onMissionComplete(missionId);
-    if (result) {
-      setLocalMissions(prev =>
-        prev.map(m => m.id === missionId ? { ...m, status: 'completed' } : m)
-      );
-    }
-  };
-
-  const handleConfirm = async (action) => {
-    setShowConfirm(null);
-    await onQuestAction(quest.id, action);
-  };
-
-  return (
-    <div className={`qg-quest-panel ${expanded ? 'qg-quest-panel--open' : ''}`}>
-      <button
-        className="qg-quest-header"
-        onClick={() => setExpanded(prev => !prev)}
-        aria-expanded={expanded}
-      >
-        <div className="qg-quest-progress-bar">
-          <div className="qg-quest-progress-fill" style={{ width: `${progressPct}%` }} />
-        </div>
-        <span className="qg-quest-title">{quest.title}</span>
-        <span className="qg-quest-count">{completedCount}/{localMissions.length}</span>
-        <span className="material-icons qg-chevron">
-          {expanded ? 'expand_less' : 'expand_more'}
-        </span>
-      </button>
-
-      {expanded && (
-        <div className="qg-quest-body">
-          {localMissions.length === 0 ? (
-            <p className="qg-empty">No missions in this quest.</p>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={localMissions.map(m => m.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {localMissions.map(m => (
-                  <SortableMissionRow
-                    key={m.id}
-                    mission={m}
-                    onComplete={handleMissionComplete}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-          )}
-
-          {actionError && <ErrorMessage message={actionError} />}
-
-          {showConfirm ? (
-            <div className="qg-confirm-row">
-              <span className="qg-confirm-text">
-                {showConfirm === 'complete'
-                  ? 'Mark this quest as complete?'
-                  : 'Archive this quest?'}
-              </span>
-              <div className="qg-confirm-actions">
-                <button className="qg-confirm-btn qg-confirm-btn--yes" onClick={() => handleConfirm(showConfirm)}>
-                  Yes
-                </button>
-                <button className="qg-confirm-btn qg-confirm-btn--no" onClick={() => setShowConfirm(null)}>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="qg-quest-actions">
-              <button className="qg-action-link" onClick={() => setShowConfirm('complete')}>
-                Mark quest complete
-              </button>
-              <button className="qg-action-link qg-action-link--archive" onClick={() => setShowConfirm('archive')}>
-                Archive quest
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─── Main step ────────────────────────────────────────────────────────────────
-
 const QuestGroomingStep = ({
+  weekInfo,        // { reviewedWeekStart, reviewedWeekEnd, nextWeekStart } — dayjs objects; may be null on first render
   onMissionComplete,
   onNext,
   onSkipToSummary,
@@ -202,37 +20,55 @@ const QuestGroomingStep = ({
   const { currentUser } = useAuth();
   const [quests, setQuests] = useState([]);
   const [missionsByQuest, setMissionsByQuest] = useState({});
+  const [weeklyStatsByQuest, setWeeklyStatsByQuest] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [questActionError, setQuestActionError] = useState({});
+  const [openQuestId, setOpenQuestId] = useState(null);   // which quest's modal is open
 
   const loadData = async () => {
     setLoadError(null);
     setLoading(true);
     try {
-      const [activeQuests, allMissions] = await withTimeout(
-        Promise.all([
-          getActiveQuests(currentUser.uid),
-          getActiveMissions(currentUser.uid),
-        ])
+      const weekStart = weekInfo?.reviewedWeekStart?.format('YYYY-MM-DD') ?? null;
+      const weekEnd   = weekInfo?.reviewedWeekEnd?.format('YYYY-MM-DD') ?? null;
+
+      const fetches = [
+        getActiveQuests(currentUser.uid),
+        getActiveMissions(currentUser.uid),
+      ];
+      if (weekStart && weekEnd) {
+        fetches.push(getQuestActivityForWeek(currentUser.uid, weekStart, weekEnd));
+      }
+
+      const [activeQuests, allMissions, weeklyActivity = {}] = await withTimeout(
+        Promise.all(fetches)
       );
 
-      // Group missions by questId
+      // Group missions by questId, sort by customSortOrder
       const byQuest = {};
       activeQuests.forEach(q => { byQuest[q.id] = []; });
       allMissions.forEach(m => {
-        if (m.questId && byQuest[m.questId]) {
-          byQuest[m.questId].push(m);
-        }
+        if (m.questId && byQuest[m.questId]) byQuest[m.questId].push(m);
       });
-
-      // Sort each quest's missions by customSortOrder
       Object.keys(byQuest).forEach(qId => {
         byQuest[qId].sort((a, b) => (a.customSortOrder ?? 0) - (b.customSortOrder ?? 0));
       });
 
-      setQuests(activeQuests);
+      // Sort quests by weekly activity: volume desc, then recency desc, then alphabetically
+      const sortedQuests = [...activeQuests].sort((a, b) => {
+        const aStats = weeklyActivity[a.id] ?? { count: 0, lastTimestampMs: 0 };
+        const bStats = weeklyActivity[b.id] ?? { count: 0, lastTimestampMs: 0 };
+        if (bStats.count !== aStats.count) return bStats.count - aStats.count;
+        if (bStats.lastTimestampMs !== aStats.lastTimestampMs) {
+          return bStats.lastTimestampMs - aStats.lastTimestampMs;
+        }
+        return a.title.localeCompare(b.title);
+      });
+
+      setQuests(sortedQuests);
       setMissionsByQuest(byQuest);
+      setWeeklyStatsByQuest(weeklyActivity);
     } catch (err) {
       console.error('Error loading quest grooming data:', err);
       setLoadError(getLoadErrorMessage(err, 'quests'));
@@ -243,12 +79,22 @@ const QuestGroomingStep = ({
 
   useEffect(() => {
     if (currentUser) loadData();
-  }, [currentUser]);
+  }, [currentUser, weekInfo]);
 
   const handleMissionComplete = async (missionId) => {
     try {
       const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
       onMissionComplete?.(result);
+      // Update local mission state
+      setMissionsByQuest(prev => {
+        const updated = { ...prev };
+        for (const qId of Object.keys(updated)) {
+          updated[qId] = updated[qId].map(m =>
+            m.id === missionId ? { ...m, status: 'completed' } : m
+          );
+        }
+        return updated;
+      });
       return result;
     } catch (err) {
       console.error('Error completing mission:', err);
@@ -256,37 +102,35 @@ const QuestGroomingStep = ({
     }
   };
 
-  const handleQuestAction = async (questId, action) => {
+  const handleArchiveQuest = async (questId) => {
     setQuestActionError(prev => ({ ...prev, [questId]: null }));
     try {
-      if (action === 'complete') {
-        await completeQuest(currentUser.uid, questId);
-      } else if (action === 'archive') {
-        await archiveQuest(currentUser.uid, questId);
-      }
+      await archiveQuest(currentUser.uid, questId);
       setQuests(prev => prev.filter(q => q.id !== questId));
+      // Close modal if open for this quest
+      if (openQuestId === questId) setOpenQuestId(null);
     } catch (err) {
-      console.error(`Error ${action}ing quest:`, err);
+      console.error('Error archiving quest:', err);
       setQuestActionError(prev => ({
         ...prev,
-        [questId]: `That quest didn't ${action}. Try again.`,
+        [questId]: "That quest didn't archive. Try again.",
       }));
     }
   };
+
+  const openQuest = quests.find(q => q.id === openQuestId) ?? null;
+  const openMissions = openQuestId ? (missionsByQuest[openQuestId] ?? []) : [];
 
   return (
     <div className="review-step">
       <div className="review-step-body">
         <h2 className="review-step-heading">Quest Check-In</h2>
         <p className="review-step-subtext">
-          Review your active quests. Complete missions, reorder, or close out quests that are done.
+          Review your active quests. See what moved this week, complete missions, or archive anything that's stalled.
         </p>
 
         {loadError && (
-          <ErrorMessage
-            message={loadError}
-            onRetry={loadData}
-          />
+          <ErrorMessage message={loadError} onRetry={loadData} />
         )}
 
         {loading && !loadError && (
@@ -298,14 +142,18 @@ const QuestGroomingStep = ({
         )}
 
         {!loading && !loadError && quests.map(quest => (
-          <QuestPanel
-            key={quest.id}
-            quest={quest}
-            missions={missionsByQuest[quest.id] || []}
-            onMissionComplete={handleMissionComplete}
-            onQuestAction={handleQuestAction}
-            actionError={questActionError[quest.id]}
-          />
+          <div key={quest.id}>
+            <QuestReviewCard
+              quest={quest}
+              missions={missionsByQuest[quest.id] ?? []}
+              weeklyStats={weeklyStatsByQuest[quest.id] ?? null}
+              onViewMissions={(qId) => setOpenQuestId(qId)}
+              onArchive={handleArchiveQuest}
+            />
+            {questActionError[quest.id] && (
+              <ErrorMessage message={questActionError[quest.id]} />
+            )}
+          </div>
         ))}
       </div>
 
@@ -317,6 +165,15 @@ const QuestGroomingStep = ({
           Skip to summary
         </button>
       </StickyFooter>
+
+      {openQuest && (
+        <QuestMissionsModal
+          quest={openQuest}
+          missions={openMissions}
+          onMissionComplete={handleMissionComplete}
+          onClose={() => setOpenQuestId(null)}
+        />
+      )}
     </div>
   );
 };

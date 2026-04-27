@@ -153,6 +153,7 @@ const WeeklyReviewPage = () => {
 
         {!loadError && step === 2 && (
           <QuestGroomingStep
+            weekInfo={weekInfo}
             onMissionComplete={handleMissionComplete}
             onNext={handleNext}
             onSkipToSummary={goToSummary}
