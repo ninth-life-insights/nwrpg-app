@@ -255,8 +255,8 @@ export const generateWeeklySnapshot = async (
       userEditedStory: existingUserStory ?? null,
     };
 
-    const snapshotRef = doc(db, 'users', userId, 'weeklySnapshots', weekStart);
-    await setDoc(snapshotRef, snapshotData);
+    const weeklySnapshotRef = doc(db, 'users', userId, 'weeklySnapshots', weekStart);
+    await setDoc(weeklySnapshotRef, snapshotData);
 
     return snapshotData;
   } catch (error) {
