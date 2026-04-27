@@ -138,7 +138,6 @@ const QuestGroomingStep = ({
           <div key={quest.id}>
             <QuestReviewCard
               quest={quest}
-              missions={missionsByQuest[quest.id] ?? []}
               weeklyStats={weeklyStatsByQuest[quest.id] ?? null}
               onViewMissions={(qId) => setOpenQuestId(qId)}
               onArchive={handleArchiveQuest}

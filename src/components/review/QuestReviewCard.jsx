@@ -5,18 +5,19 @@ import './QuestReviewCard.css';
 
 const QuestReviewCard = ({
   quest,
-  missions,       // all missions for this quest (active, sorted)
   weeklyStats,    // { count, lastDate } | null
   onViewMissions,
   onArchive,      // (questId) => void — called after confirm
 }) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const totalMissions = missions.length;
-  const completedMissions = missions.filter(m => m.status === 'completed').length;
+  // Use quest's cached counts — getActiveMissions only returns active (incomplete)
+  // missions so counting from the array would always show 0 completed.
+  const totalMissions = quest.totalMissions ?? 0;
+  const completedMissions = quest.completedMissions ?? 0;
   const weeklyCount = weeklyStats?.count ?? 0;
 
-  // Progress bar segments
+  // Progress bar segments: prior = completed before this week, weekly = completed this week
   const priorCompleted = Math.max(0, completedMissions - weeklyCount);
   const priorPct = totalMissions > 0 ? (priorCompleted / totalMissions) * 100 : 0;
   const weeklyPct = totalMissions > 0 ? (Math.min(weeklyCount, completedMissions) / totalMissions) * 100 : 0;
