@@ -3,10 +3,12 @@ import React from 'react';
 import EditDailyMissionsPage from '../../pages/EditDailyMissionsPage';
 import './EditDailyMissionsModal.css';
 
-const EditDailyMissionsModal = ({ 
-  currentDailyMissions, 
-  onClose, 
-  onSave 
+const EditDailyMissionsModal = ({
+  currentDailyMissions,
+  onClose,
+  onSave,
+  initialTargetDate = null,
+  allowPartialSave = false,
 }) => {
   const handleComplete = async () => {
     if (onSave) {
@@ -38,10 +40,12 @@ const EditDailyMissionsModal = ({
 
         {/* Modal Content - Embedded EditDailyMissionsPage */}
         <div className="edit-daily-missions-modal-content">
-          <EditDailyMissionsPage 
+          <EditDailyMissionsPage
             isModal={true}
             onComplete={handleComplete}
             showNavigation={false}
+            initialTargetDate={initialTargetDate}
+            allowPartialSave={allowPartialSave}
           />
         </div>
       </div>

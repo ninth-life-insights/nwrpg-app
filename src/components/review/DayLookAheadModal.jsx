@@ -5,7 +5,6 @@ import { completeMissionWithRecurrence } from '../../services/missionService';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
-import './DayPlanModal.css';   // shares overlay/sheet styles
 import './DayLookAheadModal.css';
 
 const DayLookAheadModal = ({

@@ -54,7 +54,9 @@ import './EditDailyMissionsPage.css';
 const EditDailyMissionsPage = ({
   isModal = false,
   onComplete = null,
-  showNavigation = true
+  showNavigation = true,
+  initialTargetDate = null,  // pre-set the date (YYYY-MM-DD); defaults to today when null
+  allowPartialSave = false,  // when true, allow saving with 1–2 missions instead of requiring 3
 }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -62,7 +64,7 @@ const EditDailyMissionsPage = ({
   const today = toDateString(new Date());
   const tomorrow = toDateString(new Date(Date.now() + 86400000));
 
-  const [targetDate, setTargetDate] = useState(today);
+  const [targetDate, setTargetDate] = useState(initialTargetDate || today);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
   const [quests, setQuests] = useState([]);
@@ -230,8 +232,12 @@ const handleAddNewMission = async (missionData) => {
 
   const validMissions = dailyMissions.filter(mission => mission !== null);
 
-    if (validMissions.length !== 3) {
-      setError('Please select exactly 3 missions for your daily missions.');
+    const minRequired = allowPartialSave ? 1 : 3;
+    if (validMissions.length < minRequired) {
+      setError(allowPartialSave
+        ? 'Add at least one mission to save your plan.'
+        : 'Please select exactly 3 missions for your daily missions.'
+      );
       return;
     }
 
@@ -279,8 +285,11 @@ const handleAddNewMission = async (missionData) => {
     setShowDatePicker(false);
   };
 
-  // Check if all slots are filled
+  // Check if enough slots are filled to save
   const allSlotsFilled = dailyMissions.every(mission => mission !== null);
+  const canSave = allowPartialSave
+    ? dailyMissions.some(mission => mission !== null)
+    : allSlotsFilled;
 
   // Show loading state
   if (loading) {
@@ -497,32 +506,32 @@ const handleAddNewMission = async (missionData) => {
       {isModal ? (
         <div className="set-missions-footer set-missions-footer--modal">
           <button
-            className={`set-missions-btn ${allSlotsFilled ? 'enabled' : 'disabled'}`}
+            className={`set-missions-btn ${canSave ? 'enabled' : 'disabled'}`}
             onClick={handleSetDailyMissions}
-            disabled={!allSlotsFilled || saving}
+            disabled={!canSave || saving}
           >
             {confirmLabel}
           </button>
 
-          {!allSlotsFilled && (
+          {!canSave && (
             <p className="requirements-text">
-              Fill all 3 slots to set your daily missions
+              {allowPartialSave ? 'Add at least one mission to save.' : 'Fill all 3 slots to set your daily missions'}
             </p>
           )}
         </div>
       ) : (
         <div className="set-missions-footer set-missions-footer--page">
           <button
-            className={`set-missions-btn ${allSlotsFilled ? 'enabled' : 'disabled'}`}
+            className={`set-missions-btn ${canSave ? 'enabled' : 'disabled'}`}
             onClick={handleSetDailyMissions}
-            disabled={!allSlotsFilled || saving}
+            disabled={!canSave || saving}
           >
             {confirmLabel}
           </button>
 
-          {!allSlotsFilled && (
+          {!canSave && (
             <p className="requirements-text">
-              Fill all 3 slots to set your daily missions
+              {allowPartialSave ? 'Add at least one mission to save.' : 'Fill all 3 slots to set your daily missions'}
             </p>
           )}
         </div>

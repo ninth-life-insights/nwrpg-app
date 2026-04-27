@@ -7,7 +7,7 @@ import {
 import { getActiveMissions } from '../../services/missionService';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
-import DayPlanModal from './DayPlanModal';
+import EditDailyMissionsModal from '../missions/EditDailyMissionsModal';
 import DayLookAheadModal from './DayLookAheadModal';
 import dayjs from 'dayjs';
 import { toDateString } from '../../utils/dateHelpers';
@@ -18,7 +18,6 @@ import './WeekPlanningStep.css';
 
 const DayCard = ({
   date,           // dayjs
-  allMissions,    // full active mission bank
   missionsDue,    // missions with dueDate === dateStr
   initialPlannedIds,
   isToday,
@@ -100,15 +99,13 @@ const DayCard = ({
       </div>
 
       {showPlanModal && (
-        <DayPlanModal
-          date={date}
-          allMissions={allMissions}
-          initialPlannedIds={plannedIds}
-          onSave={(newIds) => {
-            setPlannedIds(newIds);
+        <EditDailyMissionsModal
+          initialTargetDate={dateStr}
+          allowPartialSave
+          onClose={() => {
+            setShowPlanModal(false);
             onPlanSaved?.();
           }}
-          onClose={() => setShowPlanModal(false)}
         />
       )}
 
@@ -200,7 +197,6 @@ const WeekPlanningStep = ({ weekInfo, onNext, onSkipToSummary }) => {
             <DayCard
               key={dateStr}
               date={date}
-              allMissions={allMissions}
               missionsDue={missionsDueByDate[dateStr] || []}
               initialPlannedIds={plannedByDate[dateStr] || []}
               isToday={dateStr === today}
