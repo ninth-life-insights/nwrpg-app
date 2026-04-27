@@ -1,7 +1,7 @@
 // src/components/review/QuestGroomingStep.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getActiveQuests, archiveQuest } from '../../services/questService';
+import { getActiveQuests, getCompletedQuests, archiveQuest } from '../../services/questService';
 import { getActiveMissions, completeMissionWithRecurrence } from '../../services/missionService';
 import { getQuestActivityForWeek } from '../../services/weeklyReviewService';
 import StickyFooter from '../ui/StickyFooter';
@@ -19,6 +19,7 @@ const QuestGroomingStep = ({
 }) => {
   const { currentUser } = useAuth();
   const [quests, setQuests] = useState([]);
+  const [recentlyCompletedQuests, setRecentlyCompletedQuests] = useState([]);
   const [missionsByQuest, setMissionsByQuest] = useState({});
   const [weeklyStatsByQuest, setWeeklyStatsByQuest] = useState({});
   const [loading, setLoading] = useState(true);
@@ -36,12 +37,13 @@ const QuestGroomingStep = ({
       const fetches = [
         getActiveQuests(currentUser.uid),
         getActiveMissions(currentUser.uid),
+        getCompletedQuests(currentUser.uid),
       ];
       if (weekStart && weekEnd) {
         fetches.push(getQuestActivityForWeek(currentUser.uid, weekStart, weekEnd));
       }
 
-      const [activeQuests, allMissions, weeklyActivity = {}] = await withTimeout(
+      const [activeQuests, allMissions, completedQuests, weeklyActivity = {}] = await withTimeout(
         Promise.all(fetches)
       );
 
@@ -66,7 +68,18 @@ const QuestGroomingStep = ({
         return a.title.localeCompare(b.title);
       });
 
+      // Filter completed quests to only those completed within the reviewed week
+      const recentlyDone = weekStart && weekEnd
+        ? completedQuests.filter(q => {
+            if (!q.completedAt) return false;
+            const completedMs = q.completedAt.toMillis?.() ?? q.completedAt.seconds * 1000;
+            const completedDate = new Date(completedMs).toISOString().slice(0, 10);
+            return completedDate >= weekStart && completedDate <= weekEnd;
+          })
+        : [];
+
       setQuests(sortedQuests);
+      setRecentlyCompletedQuests(recentlyDone);
       setMissionsByQuest(byQuest);
       setWeeklyStatsByQuest(weeklyActivity);
     } catch (err) {
@@ -130,8 +143,24 @@ const QuestGroomingStep = ({
           <p className="review-step-loading">Loading your quests...</p>
         )}
 
-        {!loading && !loadError && quests.length === 0 && (
+        {!loading && !loadError && quests.length === 0 && recentlyCompletedQuests.length === 0 && (
           <p className="review-step-empty">No active quests. Head to the next step.</p>
+        )}
+
+        {!loading && !loadError && recentlyCompletedQuests.length > 0 && (
+          <div className="qgs-completed-section">
+            {recentlyCompletedQuests.map(quest => (
+              <div key={quest.id}>
+                <QuestReviewCard
+                  quest={quest}
+                  weeklyStats={weeklyStatsByQuest[quest.id] ?? null}
+                  isRecentlyCompleted
+                  onViewMissions={(qId) => setOpenQuestId(qId)}
+                  onArchive={handleArchiveQuest}
+                />
+              </div>
+            ))}
+          </div>
         )}
 
         {!loading && !loadError && quests.map(quest => (

@@ -1,5 +1,14 @@
 /* src/components/review/QuestGroomingStep.css */
 
+/* ── Recently completed section ─────────────────────────────── */
+
+.qgs-completed-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
 /* ── Quest panel ─────────────────────────────────────────────── */
 
 .qg-quest-panel {

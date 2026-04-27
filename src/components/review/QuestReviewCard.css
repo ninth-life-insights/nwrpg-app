@@ -186,6 +186,46 @@
   font-size: 18px;
 }
 
+/* ── Completed-this-week variant ────────────────────────────── */
+
+.qrc-card--completed {
+  border-color: #4ade80;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1a4a2e 100%);
+}
+
+.qrc-completed-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-lg);
+  background: rgba(74, 222, 128, 0.18);
+  border-bottom: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.qrc-completed-icon {
+  font-size: 16px;
+  color: #4ade80;
+}
+
+.qrc-completed-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4ade80;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Full green bar for completed quest */
+.qrc-bar-full {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #4ade80;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
 /* ── Confirm row (reuses QuestGroomingStep.css styles) ──────── */
 /* .qg-confirm-row / .qg-confirm-btn live in QuestGroomingStep.css */
 /* Override colours for dark background context */
