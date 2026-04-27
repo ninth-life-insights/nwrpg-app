@@ -7,7 +7,7 @@ import { getQuestActivityForWeek } from '../../services/weeklyReviewService';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
 import QuestReviewCard from './QuestReviewCard';
-import QuestMissionsModal from './QuestMissionsModal';
+import QuestDetailView from '../quests/QuestDetailView';
 import { withTimeout, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import './QuestGroomingStep.css';
 
@@ -85,21 +85,17 @@ const QuestGroomingStep = ({
     try {
       const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
       onMissionComplete?.(result);
-      // Update local mission state
-      setMissionsByQuest(prev => {
-        const updated = { ...prev };
-        for (const qId of Object.keys(updated)) {
-          updated[qId] = updated[qId].map(m =>
-            m.id === missionId ? { ...m, status: 'completed' } : m
-          );
-        }
-        return updated;
-      });
       return result;
     } catch (err) {
       console.error('Error completing mission:', err);
       return null;
     }
+  };
+
+  const handleModalClose = () => {
+    setOpenQuestId(null);
+    // Reload so progress bars reflect any completions made inside the modal
+    loadData();
   };
 
   const handleArchiveQuest = async (questId) => {
@@ -117,9 +113,6 @@ const QuestGroomingStep = ({
       }));
     }
   };
-
-  const openQuest = quests.find(q => q.id === openQuestId) ?? null;
-  const openMissions = openQuestId ? (missionsByQuest[openQuestId] ?? []) : [];
 
   return (
     <div className="review-step">
@@ -166,13 +159,15 @@ const QuestGroomingStep = ({
         </button>
       </StickyFooter>
 
-      {openQuest && (
-        <QuestMissionsModal
-          quest={openQuest}
-          missions={openMissions}
-          onMissionComplete={handleMissionComplete}
-          onClose={() => setOpenQuestId(null)}
-        />
+      {openQuestId && (
+        <div className="quest-detail-modal-overlay" onClick={handleModalClose}>
+          <div className="quest-detail-modal-sheet" onClick={e => e.stopPropagation()}>
+            <QuestDetailView
+              questId={openQuestId}
+              onClose={handleModalClose}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

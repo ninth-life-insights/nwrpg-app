@@ -31,8 +31,10 @@ import CreateCustomAchievementModal from '../achievements/CreateCustomAchievemen
 import ErrorMessage from '../ui/ErrorMessage';
 import './QuestDetailView.css';
 
-const QuestDetailView = () => {
-  const { questId } = useParams();
+const QuestDetailView = ({ questId: questIdProp, onClose }) => {
+  const { questId: questIdParam } = useParams();
+  const questId = questIdProp ?? questIdParam;
+  const isModal = !!onClose;
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -102,7 +104,8 @@ const QuestDetailView = () => {
   };
 
   const handleBack = () => {
-    navigate('/quest-bank');
+    if (isModal) onClose();
+    else navigate('/quest-bank');
   };
 
   const handleToggleEditMode = async () => {
@@ -159,7 +162,8 @@ const QuestDetailView = () => {
     try {
       await deleteQuest(currentUser.uid, questId);
       setShowDeleteConfirm(false);
-      navigate('/quests');
+      if (isModal) onClose();
+      else navigate('/quests');
     } catch (err) {
       console.error('Error deleting quest:', err);
       setShowDeleteConfirm(false);
@@ -176,7 +180,8 @@ const QuestDetailView = () => {
     try {
       await archiveQuest(currentUser.uid, questId);
       setShowArchiveConfirm(false);
-      navigate('/quest-bank');
+      if (isModal) onClose();
+      else navigate('/quest-bank');
     } catch (err) {
       console.error('Error archiving quest:', err);
       setShowArchiveConfirm(false);
@@ -303,10 +308,10 @@ const QuestDetailView = () => {
       <div className={`quest-detail-header ${isCompleted ? 'completed' : ''}`}>
         <div className="header-top">
           <button className="back-button" onClick={handleBack}>
-            <span className="material-icons">arrow_back</span>
-            Back
+            <span className="material-icons">{isModal ? 'close' : 'arrow_back'}</span>
+            {!isModal && 'Back'}
           </button>
-          <button 
+          <button
             className={`edit-button ${isEditMode ? 'active' : ''}`}
             onClick={handleToggleEditMode}
           >
@@ -481,12 +486,14 @@ const QuestDetailView = () => {
               Archive Quest
             </button>
           )}
-          <button
-            className="delete-quest-btn"
-            onClick={handleDeleteQuest}
-          >
-            Delete Quest
-          </button>
+          {!isModal && (
+            <button
+              className="delete-quest-btn"
+              onClick={handleDeleteQuest}
+            >
+              Delete Quest
+            </button>
+          )}
         </div>
       </div>
 

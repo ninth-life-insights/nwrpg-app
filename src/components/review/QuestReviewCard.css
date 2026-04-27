@@ -1,29 +1,33 @@
 /* src/components/review/QuestReviewCard.css */
 
 .qrc-card {
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border-yellow);
+  background: #1e3a8a;
+  border: 2px solid #3b82f6;
   border-radius: var(--radius-lg);
-  overflow: hidden;
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  gap: 0;
+  overflow: hidden;
+  transition: box-shadow var(--transition);
+}
+
+.qrc-card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 /* ── Header ─────────────────────────────────────────────────── */
 
 .qrc-header {
-  padding: var(--space-md);
+  padding: var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 .qrc-title-row {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
 .qrc-title-group {
@@ -31,21 +35,21 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-sm);
 }
 
 .qrc-title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  color: var(--color-text-dark);
+  color: white;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .qrc-meta {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   flex-wrap: wrap;
 }
 
@@ -55,10 +59,10 @@
   align-items: center;
   font-size: 11px;
   font-weight: 700;
-  color: #92400e;
-  background: #fef3c7;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.2);
   border-radius: 99px;
-  padding: 2px 7px;
+  padding: 2px 8px;
   letter-spacing: 0.2px;
 }
 
@@ -71,21 +75,21 @@
 }
 
 .qrc-count-done {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
   font-weight: 800;
-  color: var(--color-primary);
+  color: #4ade80;
   line-height: 1;
 }
 
 .qrc-count-sep {
   font-size: var(--font-size-base);
-  color: var(--color-text-light);
+  color: rgba(255, 255, 255, 0.5);
   margin: 0 1px;
 }
 
 .qrc-count-total {
   font-size: var(--font-size-base);
-  color: var(--color-text-light);
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
 }
 
@@ -95,17 +99,17 @@
   position: relative;
   height: 8px;
   border-radius: 99px;
-  background: var(--color-border);
+  background: rgba(255, 255, 255, 0.2);
   overflow: hidden;
 }
 
-/* Solid blue — missions completed before this week */
+/* Solid green — missions completed before this week */
 .qrc-bar-prior {
   position: absolute;
   left: 0;
   top: 0;
   height: 100%;
-  background: var(--color-primary);
+  background: #4ade80;
   border-radius: 99px 0 0 99px;
   transition: width 0.3s ease;
 }
@@ -126,38 +130,33 @@
   transition: width 0.3s ease, left 0.3s ease;
 }
 
-/* When there's no prior progress, give weekly bar left-side radius too */
-.qrc-bar-prior[style*="width: 0"] + .qrc-bar-weekly,
-.qrc-bar-prior:not([style]) + .qrc-bar-weekly {
-  border-radius: 99px;
-}
-
 /* ── Actions ─────────────────────────────────────────────────── */
 
 .qrc-actions {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md) var(--space-md);
-  border-top: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-lg) var(--space-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .qrc-archive-btn {
-  background: none;
-  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-md);
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-light);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: white;
   cursor: pointer;
-  transition: color var(--transition), border-color var(--transition);
-  min-height: 36px;
+  transition: background var(--transition), border-color var(--transition);
+  min-height: 40px;
+  white-space: nowrap;
 }
 
 .qrc-archive-btn:hover {
-  color: var(--color-text-medium);
-  border-color: var(--color-text-light);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .qrc-view-btn {
@@ -166,25 +165,50 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  background: var(--color-primary);
-  color: white;
+  background: #4ade80;
+  color: #1e3a8a;
   border: none;
   border-radius: var(--radius-md);
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-base);
+  font-weight: 700;
   cursor: pointer;
   transition: background var(--transition);
-  min-height: 36px;
+  min-height: 40px;
 }
 
 .qrc-view-btn:hover {
-  background: var(--color-primary-hover);
+  background: #22c55e;
 }
 
 .qrc-view-btn .material-icons {
-  font-size: 16px;
+  font-size: 18px;
 }
 
-/* ── Confirm row (reuses QuestGroomingStep styles) ───────────── */
-/* .qg-confirm-row styles come from QuestGroomingStep.css */
+/* ── Confirm row (reuses QuestGroomingStep.css styles) ──────── */
+/* .qg-confirm-row / .qg-confirm-btn live in QuestGroomingStep.css */
+/* Override colours for dark background context */
+
+.qrc-card .qg-confirm-row {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  border-radius: 0;
+  margin-top: 0;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.qrc-card .qg-confirm-text {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.qrc-card .qg-confirm-btn--yes {
+  background: rgba(255, 255, 255, 0.13);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.qrc-card .qg-confirm-btn--no {
+  background: #4ade80;
+  color: #1e3a8a;
+  border: none;
+}
