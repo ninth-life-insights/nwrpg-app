@@ -1,0 +1,85 @@
+/* src/components/review/DayLookAheadModal.css */
+
+.wla-sheet {
+  /* Slightly taller since it shows a full mission list */
+  max-height: 92dvh;
+}
+
+/* ── Error ───────────────────────────────────────────────────── */
+
+.wla-error {
+  padding: 0 var(--space-lg);
+}
+
+/* ── Mission list ────────────────────────────────────────────── */
+
+.wla-list {
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.wla-empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  padding: var(--space-lg) var(--space-md);
+  margin: 0;
+  text-align: center;
+}
+
+.wla-completed-label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-light);
+  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+  margin: 0;
+}
+
+/* ── Inline form sections ────────────────────────────────────── */
+
+.wla-form-section {
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.wla-form-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  margin: 0 0 var(--space-sm);
+}
+
+/* ── Add row ─────────────────────────────────────────────────── */
+
+.wla-add-row {
+  padding: var(--space-sm) var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.wla-add-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.wla-add-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.wla-add-btn .material-icons {
+  font-size: 18px;
+}

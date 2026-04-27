@@ -1,193 +1,180 @@
 /* src/components/review/WeekPlanningStep.css */
 
-/* ── Day panel ───────────────────────────────────────────────── */
+/* ── Day card ─────────────────────────────────────────────────── */
 
-.wp-day-panel {
+.wp-day-card {
   background: var(--color-bg-white);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
-  overflow: hidden;
   box-shadow: var(--shadow-card);
+  cursor: pointer;
+  overflow: hidden;
+  transition: box-shadow var(--transition), border-color var(--transition);
+  outline: none;
 }
 
-.wp-day-panel--today {
+.wp-day-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.wp-day-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.wp-day-card--today {
   border-color: var(--color-primary);
 }
 
-.wp-day-header {
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: var(--space-md);
+/* ── Header row ─────────────────────────────────────────────── */
+
+.wp-day-card-header {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  text-align: left;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.wp-day-label {
-  flex: 1;
-  font-size: var(--font-size-base);
-  font-weight: 600;
+.wp-day-name-group {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.wp-day-abbr {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
   color: var(--color-text-dark);
 }
 
-.wp-day-count {
+.wp-day-fulldate {
   font-size: var(--font-size-sm);
   color: var(--color-text-light);
   font-weight: 500;
 }
 
-.wp-day-saving {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-light);
-}
-
-.wp-day-saved {
-  font-size: var(--font-size-xs);
-  color: #10b981;
-  font-weight: 600;
-}
-
-.wp-chevron {
-  font-size: 18px;
-  color: var(--color-text-light);
-  flex-shrink: 0;
-}
-
-/* ── Day body ────────────────────────────────────────────────── */
-
-.wp-day-body {
-  padding: 0 var(--space-md) var(--space-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  border-top: 1px solid var(--color-border-yellow);
-}
-
-.wp-empty {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-light);
-  padding: var(--space-sm) 0;
-  margin: 0;
-}
-
-/* ── Planned missions list ───────────────────────────────────── */
-
-.wp-planned-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.wp-planned-row {
-  display: flex;
+/* "X due" badge — amber/orange, punchy */
+.wp-due-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.wp-planned-row:last-child {
-  border-bottom: none;
-}
-
-.wp-planned-title {
-  flex: 1;
-  font-size: var(--font-size-base);
-  color: var(--color-text-dark);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 
-.wp-remove-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-light);
+/* ── Body row ────────────────────────────────────────────────── */
+
+.wp-day-card-body {
   display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
+  align-items: stretch;
+  min-height: 80px;
+}
+
+/* ── Plan widget (left ~60%) ─────────────────────────────────── */
+
+.wp-plan-widget {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--space-md) var(--space-lg);
+  border-right: 1px solid var(--color-border);
+  cursor: pointer;
+  background: #f8faff;
+  transition: background var(--transition);
+  min-width: 0;
+}
+
+.wp-plan-widget:hover {
+  background: #eff6ff;
+}
+
+.wp-plan-count-row {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 1;
+}
+
+.wp-plan-count-done {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--color-text-light);
+  line-height: 1;
   transition: color var(--transition);
 }
 
-.wp-remove-btn:hover {
-  color: #dc2626;
-}
-
-.wp-remove-btn .material-icons {
-  font-size: 16px;
-}
-
-/* ── Add button ──────────────────────────────────────────────── */
-
-.wp-add-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  background: none;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
-  width: 100%;
-  cursor: pointer;
-  color: var(--color-text-light);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  justify-content: center;
-  transition: border-color var(--transition), color var(--transition);
-}
-
-.wp-add-btn:hover {
-  border-color: var(--color-primary);
+.wp-plan-count-done--set {
   color: var(--color-primary);
 }
 
-.wp-add-btn .material-icons {
-  font-size: 18px;
+.wp-plan-count-denom {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  font-weight: 500;
 }
 
-/* ── Mission bank picker ─────────────────────────────────────── */
-
-.wp-picker {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.wp-picker-header {
+/* Three pips showing filled slots */
+.wp-plan-pips {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-bg-main);
-  border-bottom: 1px solid var(--color-border);
+  gap: 4px;
+  margin-top: 2px;
 }
 
-.wp-picker-title {
+.wp-plan-pip {
+  width: 20px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--color-border);
+  transition: background var(--transition);
+}
+
+.wp-plan-pip--filled {
+  background: var(--color-primary);
+}
+
+/* CTA label below the counter */
+.wp-plan-cta {
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-text-medium);
+  color: var(--color-primary);
+  margin-top: var(--space-xs);
+  white-space: nowrap;
 }
 
-.wp-picker-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-light);
+/* ── Look-ahead hint (right ~40%) ───────────────────────────── */
+
+.wp-lookahead-hint {
+  flex: 2;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 2px;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
+  color: var(--color-text-light);
+  min-width: 0;
 }
 
-.wp-picker-close .material-icons {
-  font-size: 18px;
+.wp-lookahead-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.wp-lookahead-arrow {
+  font-size: 22px;
+  color: var(--color-text-light);
 }
 
 .wp-day-error {

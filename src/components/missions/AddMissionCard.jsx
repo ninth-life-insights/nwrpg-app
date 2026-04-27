@@ -18,11 +18,12 @@ import {
 import ErrorMessage from '../ui/ErrorMessage';
 import './AddMissionCard.css';
 
-const AddMissionCard = ({ 
-  onAddMission, 
+const AddMissionCard = ({
+  onAddMission,
   onCancel,
   mode = 'add',
   initialMission = null,
+  initialDueDate = null,   // pre-fill dueDate in add mode (YYYY-MM-DD string)
   onUpdateMission
 }) => {
   const { currentUser } = useAuth();
@@ -70,7 +71,7 @@ const AddMissionCard = ({
       difficulty: DIFFICULTY_LEVELS.EASY,
       completionType: COMPLETION_TYPES.SIMPLE,
       dueType: DUE_TYPES.UNIQUE,
-      dueDate: '',
+      dueDate: initialDueDate || '',
       skill: '',
       expiryDate: getDefaultExpiryDate(),
       hasExpiryDate: true,
@@ -93,7 +94,7 @@ const AddMissionCard = ({
 
   const [formData, setFormData] = useState(getInitialFormData());
   const [errors, setErrors] = useState({});
-  const [showDueDateField, setShowDueDateField] = useState(mode === 'edit' && initialMission?.dueDate);
+  const [showDueDateField, setShowDueDateField] = useState((mode === 'edit' && !!initialMission?.dueDate) || !!initialDueDate);
   const [showSkillField, setShowSkillField] = useState(mode === 'edit' && initialMission?.skill);
   const [showExpiryField, setShowExpiryField] = useState(false);
   const [showQuestField, setShowQuestField] = useState(mode === 'edit' && !!initialMission?.questId);
