@@ -25,7 +25,6 @@ const DayCard = ({
   onError,        // (msg) => void
 }) => {
   const [plannedIds, setPlannedIds] = useState(initialPlannedIds || []);
-  const [expanded, setExpanded] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showLookAheadModal, setShowLookAheadModal] = useState(false);
 
@@ -42,56 +41,38 @@ const DayCard = ({
 
   return (
     <>
-      <div className={`wp-day-card ${isToday ? 'wp-day-card--today' : ''} ${expanded ? 'wp-day-card--expanded' : ''}`}>
-        {/* Header row — always visible, clicking toggles expand */}
-        <button
-          className="wp-day-card-header"
-          onClick={() => setExpanded(prev => !prev)}
-          aria-expanded={expanded}
-        >
+      <div className={`wp-day-card ${isToday ? 'wp-day-card--today' : ''}`}>
+        {/* Header row */}
+        <div className="wp-day-card-header">
           <div className="wp-day-name-group">
             <span className="wp-day-abbr">{dayAbbr}</span>
             <span className="wp-day-fulldate">{dayDate}</span>
+          </div>
+          <div className="wp-badges-row">
             {dueCount > 0 && (
               <span className="wp-due-badge">{dueCount} due</span>
             )}
+            <span className={`wp-planned-badge ${plannedCount > 0 ? 'wp-planned-badge--set' : ''}`}>
+              {plannedCount}/3 daily
+            </span>
           </div>
-          <span className={`material-icons wp-expand-icon`}>
-            {expanded ? 'expand_less' : 'expand_more'}
-          </span>
-        </button>
+        </div>
 
-        {/* Collapsible body */}
-        {expanded && (
-          <div className="wp-day-card-body">
-            {/* Inset plan widget */}
-            <button
-              className={`wp-plan-widget ${plannedCount > 0 ? 'wp-plan-widget--set' : ''}`}
-              onClick={e => { e.stopPropagation(); setShowPlanModal(true); }}
-            >
-              <div className="wp-plan-count-row">
-                <span className="wp-plan-count-done">{plannedCount}</span>
-                <span className="wp-plan-count-denom">/ 3 daily missions</span>
-              </div>
-              <div className="wp-plan-pips">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className={`wp-plan-pip ${i < plannedCount ? 'wp-plan-pip--filled' : ''}`} />
-                ))}
-              </div>
-              <span className="wp-plan-cta">Plan Priorities</span>
-            </button>
-
-            {/* Look-ahead button */}
-            <button
-              className="wp-lookahead-hint"
-              onClick={e => { e.stopPropagation(); setShowLookAheadModal(true); }}
-            >
-              <span className="wp-lookahead-label">Look</span>
-              <span className="wp-lookahead-label">Ahead</span>
-              <span className="material-icons wp-lookahead-arrow">chevron_right</span>
-            </button>
-          </div>
-        )}
+        {/* Actions row */}
+        <div className="wp-day-card-actions">
+          <button
+            className="wp-plan-btn"
+            onClick={() => setShowPlanModal(true)}
+          >
+            Plan Priorities
+          </button>
+          <button
+            className="wp-lookahead-btn"
+            onClick={() => setShowLookAheadModal(true)}
+          >
+            Look Ahead &rsaquo;
+          </button>
+        </div>
       </div>
 
       {showPlanModal && (

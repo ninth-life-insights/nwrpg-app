@@ -11,38 +11,28 @@
   transition: box-shadow var(--transition), border-color var(--transition);
 }
 
+.wp-day-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
 .wp-day-card--today {
   border-color: var(--color-primary);
 }
 
-.wp-day-card--expanded {
-  box-shadow: var(--shadow-hover);
-}
-
-/* ── Header row — always visible, acts as toggle ────────────── */
+/* ── Header row ──────────────────────────────────────────────── */
 
 .wp-day-card-header {
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
   gap: var(--space-sm);
-}
-
-.wp-day-card-header:hover .wp-day-abbr {
-  color: var(--color-primary);
 }
 
 .wp-day-name-group {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  flex: 1;
   min-width: 0;
 }
 
@@ -50,7 +40,6 @@
   font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-dark);
-  transition: color var(--transition);
 }
 
 .wp-day-fulldate {
@@ -59,7 +48,15 @@
   font-weight: 500;
 }
 
-/* "X due" badge — matches Badge component shape, inline with date */
+/* Right side: both badges together */
+.wp-badges-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+/* "X due" badge — amber, matches Badge component */
 .wp-due-badge {
   display: inline-flex;
   align-items: center;
@@ -72,137 +69,71 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-.wp-expand-icon {
-  font-size: 20px;
-  color: var(--color-text-light);
-  flex-shrink: 0;
-  transition: color var(--transition);
+/* "X/3 daily" badge — neutral/blue tint to contrast with amber */
+.wp-planned-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: var(--color-text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
-.wp-day-card-header:hover .wp-expand-icon {
-  color: var(--color-primary);
+.wp-planned-badge--set {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
-/* ── Body row ────────────────────────────────────────────────── */
+/* ── Actions row ─────────────────────────────────────────────── */
 
-.wp-day-card-body {
+.wp-day-card-actions {
   display: flex;
   align-items: center;
-  padding: var(--space-md) var(--space-md);
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-lg) var(--space-md);
 }
 
-/* ── Plan widget — inset button, light orange tint ───────────── */
-
-.wp-plan-widget {
-  flex: 0 0 auto;
-  width: 58%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
+/* Primary orange-tinted "Plan Priorities" button */
+.wp-plan-btn {
   padding: var(--space-sm) var(--space-md);
   background: #fff7ed;
   border: 1.5px solid #fed7aa;
   border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: #c2410c;
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition);
-  text-align: center;
+  white-space: nowrap;
 }
 
-.wp-plan-widget:hover {
+.wp-plan-btn:hover {
   background: #ffedd5;
   border-color: #fb923c;
 }
 
-.wp-plan-count-row {
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  line-height: 1;
-  justify-content: center;
-}
-
-.wp-plan-count-done {
-  font-size: var(--font-size-2xl);
-  font-weight: 800;
-  color: #c2410c;
-  line-height: 1;
-}
-
-.wp-plan-count-denom {
-  font-size: var(--font-size-sm);
-  color: #9a3412;
-  font-weight: 500;
-}
-
-/* Three pips showing filled slots */
-.wp-plan-pips {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-}
-
-.wp-plan-pip {
-  width: 18px;
-  height: 4px;
-  border-radius: 99px;
-  background: #fed7aa;
-  transition: background var(--transition);
-}
-
-.wp-plan-pip--filled {
-  background: #f97316;
-}
-
-/* CTA label below the counter */
-.wp-plan-cta {
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  color: #c2410c;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  white-space: nowrap;
-  margin-top: 2px;
-}
-
-/* ── Look-ahead button (right side) ─────────────────────────── */
-
-.wp-lookahead-hint {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
+/* Ghost "Look Ahead ›" text button */
+.wp-lookahead-btn {
   background: none;
   border: none;
-  cursor: pointer;
   padding: var(--space-sm) var(--space-xs);
-  border-radius: var(--radius-md);
-  transition: background var(--transition);
-}
-
-.wp-lookahead-hint:hover {
-  background: #eff6ff;
-}
-
-.wp-lookahead-arrow {
-  font-size: 18px;
-  color: var(--color-primary);
-  margin-top: 2px;
-}
-
-.wp-lookahead-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-primary);
-  text-align: center;
-  line-height: 1.2;
+  cursor: pointer;
+  transition: opacity var(--transition);
+  white-space: nowrap;
+}
+
+.wp-lookahead-btn:hover {
+  opacity: 0.75;
 }
 
 .wp-day-error {
