@@ -25,6 +25,7 @@ const DayCard = ({
   onError,        // (msg) => void
 }) => {
   const [plannedIds, setPlannedIds] = useState(initialPlannedIds || []);
+  const [expanded, setExpanded] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showLookAheadModal, setShowLookAheadModal] = useState(false);
 
@@ -41,51 +42,56 @@ const DayCard = ({
 
   return (
     <>
-      <div
-        className={`wp-day-card ${isToday ? 'wp-day-card--today' : ''}`}
-        onClick={() => setShowLookAheadModal(true)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowLookAheadModal(true); }}
-      >
-        {/* Header row */}
-        <div className="wp-day-card-header">
+      <div className={`wp-day-card ${isToday ? 'wp-day-card--today' : ''} ${expanded ? 'wp-day-card--expanded' : ''}`}>
+        {/* Header row — always visible, clicking toggles expand */}
+        <button
+          className="wp-day-card-header"
+          onClick={() => setExpanded(prev => !prev)}
+          aria-expanded={expanded}
+        >
           <div className="wp-day-name-group">
             <span className="wp-day-abbr">{dayAbbr}</span>
             <span className="wp-day-fulldate">{dayDate}</span>
+            {dueCount > 0 && (
+              <span className="wp-due-badge">{dueCount} due</span>
+            )}
           </div>
-          {dueCount > 0 && (
-            <span className="wp-due-badge">
-              {dueCount} due
-            </span>
-          )}
-        </div>
+          <span className={`material-icons wp-expand-icon`}>
+            {expanded ? 'expand_less' : 'expand_more'}
+          </span>
+        </button>
 
-        {/* Card body: plan widget inset + look-ahead nudge */}
-        <div className="wp-day-card-body">
-          {/* Inset plan widget — orange-tinted, intercepts clicks */}
-          <button
-            className={`wp-plan-widget ${plannedCount > 0 ? 'wp-plan-widget--set' : ''}`}
-            onClick={e => { e.stopPropagation(); setShowPlanModal(true); }}
-          >
-            <div className="wp-plan-count-row">
-              <span className="wp-plan-count-done">{plannedCount}</span>
-              <span className="wp-plan-count-denom">/ 3 daily missions</span>
-            </div>
-            <div className="wp-plan-pips">
-              {[0, 1, 2].map(i => (
-                <div key={i} className={`wp-plan-pip ${i < plannedCount ? 'wp-plan-pip--filled' : ''}`} />
-              ))}
-            </div>
-            <span className="wp-plan-cta">Plan Priorities</span>
-          </button>
+        {/* Collapsible body */}
+        {expanded && (
+          <div className="wp-day-card-body">
+            {/* Inset plan widget */}
+            <button
+              className={`wp-plan-widget ${plannedCount > 0 ? 'wp-plan-widget--set' : ''}`}
+              onClick={e => { e.stopPropagation(); setShowPlanModal(true); }}
+            >
+              <div className="wp-plan-count-row">
+                <span className="wp-plan-count-done">{plannedCount}</span>
+                <span className="wp-plan-count-denom">/ 3 daily missions</span>
+              </div>
+              <div className="wp-plan-pips">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className={`wp-plan-pip ${i < plannedCount ? 'wp-plan-pip--filled' : ''}`} />
+                ))}
+              </div>
+              <span className="wp-plan-cta">Plan Priorities</span>
+            </button>
 
-          {/* Look-ahead nudge — subtle, right side */}
-          <div className="wp-lookahead-hint">
-            <span className="material-icons wp-lookahead-arrow">chevron_right</span>
-            <span className="wp-lookahead-label">Look Ahead</span>
+            {/* Look-ahead button */}
+            <button
+              className="wp-lookahead-hint"
+              onClick={e => { e.stopPropagation(); setShowLookAheadModal(true); }}
+            >
+              <span className="wp-lookahead-label">Look</span>
+              <span className="wp-lookahead-label">Ahead</span>
+              <span className="material-icons wp-lookahead-arrow">chevron_right</span>
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {showPlanModal && (
@@ -167,7 +173,7 @@ const WeekPlanningStep = ({ weekInfo, onNext, onSkipToSummary }) => {
       <div className="review-step-body">
         <h2 className="review-step-heading">Plan the Week Ahead</h2>
         <p className="review-step-subtext">
-          Set your daily priorities for the coming week. Tap a card to see what's due, or hit "Plan priorities" to choose your daily missions.
+          Set your daily priorities for the coming week from a bird's eye view. 
         </p>
 
         {loadError && (
