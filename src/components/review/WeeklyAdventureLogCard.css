@@ -23,20 +23,13 @@
   transform: translateY(-1px);
 }
 
-/* ── Header ─────────────────────────────────────────── */
+/* ── Header (single row: pill · label · stats · badges) ─────────── */
 
 .walc-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--space-sm);
-}
-
-.walc-header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .walc-pill {
@@ -49,13 +42,14 @@
   background: #ede9fe;
   border-radius: 99px;
   padding: 2px 8px;
-  align-self: flex-start;
+  flex-shrink: 0;
 }
 
 .walc-week-label {
   font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-text-dark);
+  flex-shrink: 0;
 }
 
 /* ── Story excerpt (inherits .alc-story, adds 3-line clamp) ─── */

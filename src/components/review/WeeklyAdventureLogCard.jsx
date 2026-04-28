@@ -23,31 +23,8 @@ const WeeklyAdventureLogCard = ({ snapshot }) => {
       onClick={() => navigate(`/adventure-log/weekly/${snapshot.weekStart}`)}
     >
       <div className="walc-header">
-        <div className="walc-header-left">
-          <span className="walc-pill">Weekly Review</span>
-          <span className="walc-week-label">{weekLabel}</span>
-        </div>
-        <div className="alc-badges">
-          {hasLevelUp && (
-            <span className="alc-badge alc-badge--levelup" title="Leveled up">
-              <span className="material-icons">star</span>
-            </span>
-          )}
-          {hasSkillLevelUp && (
-            <span className="alc-badge alc-badge--skill" title="Skill level up">
-              <span className="material-icons">trending_up</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {story ? (
-        <p className="alc-story walc-story">{story}</p>
-      ) : (
-        <p className="alc-story alc-story--empty walc-story">No chronicle for this week.</p>
-      )}
-
-      <div className="alc-stats">
+        <span className="walc-pill">Weekly</span>
+        <span className="walc-week-label">{weekLabel}</span>
         <span className="alc-stat">
           <span className="material-icons">check_circle</span>
           {snapshot.totalMissionsCompleted} mission{snapshot.totalMissionsCompleted !== 1 ? 's' : ''}
@@ -56,11 +33,29 @@ const WeeklyAdventureLogCard = ({ snapshot }) => {
           <span className="material-icons">bolt</span>
           +{snapshot.totalXpEarned} XP
         </span>
-        <span className="alc-stat">
-          <span className="material-icons">calendar_today</span>
-          {daysActive}/7 days
-        </span>
+        {daysActive > 0 && (
+          <span className="alc-stat">
+            <span className="material-icons">calendar_today</span>
+            {daysActive}/7 days
+          </span>
+        )}
+        {hasLevelUp && (
+          <span className="alc-badge alc-badge--levelup" title="Leveled up">
+            <span className="material-icons">star</span>
+          </span>
+        )}
+        {hasSkillLevelUp && (
+          <span className="alc-badge alc-badge--skill" title="Skill level up">
+            <span className="material-icons">trending_up</span>
+          </span>
+        )}
       </div>
+
+      {story ? (
+        <p className="alc-story walc-story">{story}</p>
+      ) : (
+        <p className="alc-story alc-story--empty walc-story">No chronicle for this week.</p>
+      )}
     </button>
   );
 };

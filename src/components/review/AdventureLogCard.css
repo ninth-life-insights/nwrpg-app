@@ -41,12 +41,12 @@
   color: #b0a898;
 }
 
-/* Header row */
+/* Header row — date · stats · badges all inline */
 .alc-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .alc-date {
@@ -114,11 +114,10 @@
   opacity: 0.6;
 }
 
-/* Stats row */
+/* Stats (used inline in header) */
 .alc-stats {
   display: flex;
   gap: var(--space-lg);
-  margin-top: var(--space-xs);
 }
 
 .alc-stat {

@@ -25,32 +25,6 @@ const FullCard = ({ snapshot }) => {
     >
       <div className="alc-header">
         <span className="alc-date">{formatDate(snapshot.date)}</span>
-        <div className="alc-badges">
-          {hasLevelUp && (
-            <span className="alc-badge alc-badge--levelup" title="Leveled up">
-              <span className="material-icons">star</span>
-            </span>
-          )}
-          {hasSkillLevelUp && (
-            <span className="alc-badge alc-badge--skill" title="Skill level up">
-              <span className="material-icons">trending_up</span>
-            </span>
-          )}
-          {hasQuestComplete && (
-            <span className="alc-badge alc-badge--quest" title="Quest completed">
-              <span className="material-icons">flag</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {story ? (
-        <p className="alc-story">{story}</p>
-      ) : (
-        <p className="alc-story alc-story--empty">No chronicle for this day.</p>
-      )}
-
-      <div className="alc-stats">
         <span className="alc-stat">
           <span className="material-icons">check_circle</span>
           {snapshot.missionsCompleted} mission{snapshot.missionsCompleted !== 1 ? 's' : ''}
@@ -59,7 +33,28 @@ const FullCard = ({ snapshot }) => {
           <span className="material-icons">bolt</span>
           +{snapshot.xpEarned} XP
         </span>
+        {hasLevelUp && (
+          <span className="alc-badge alc-badge--levelup" title="Leveled up">
+            <span className="material-icons">star</span>
+          </span>
+        )}
+        {hasSkillLevelUp && (
+          <span className="alc-badge alc-badge--skill" title="Skill level up">
+            <span className="material-icons">trending_up</span>
+          </span>
+        )}
+        {hasQuestComplete && (
+          <span className="alc-badge alc-badge--quest" title="Quest completed">
+            <span className="material-icons">flag</span>
+          </span>
+        )}
       </div>
+
+      {story ? (
+        <p className="alc-story">{story}</p>
+      ) : (
+        <p className="alc-story alc-story--empty">No chronicle for this day.</p>
+      )}
     </button>
   );
 };

@@ -24,7 +24,6 @@
 .wp-day-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
   gap: var(--space-sm);
 }
@@ -48,12 +47,10 @@
   font-weight: 500;
 }
 
-/* Right side: both badges together */
 .wp-badges-row {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  flex-shrink: 0;
 }
 
 /* "X due" badge — amber, matches Badge component */
