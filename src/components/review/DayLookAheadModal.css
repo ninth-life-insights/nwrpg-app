@@ -76,23 +76,37 @@
 /* ── Look-ahead sheet ────────────────────────────────────────── */
 
 .wla-sheet {
-  /* Slightly taller since it shows a full mission list */
   max-height: 92dvh;
+}
+
+/* Left-align header title/date */
+.wla-sheet .wp-modal-header {
+  align-items: flex-start;
 }
 
 /* ── Error ───────────────────────────────────────────────────── */
 
 .wla-error {
-  padding: 0 var(--space-lg);
+  padding: 0 var(--space-md);
 }
 
-/* ── Mission list ────────────────────────────────────────────── */
+/* ── Mission list — full-width cards ─────────────────────────── */
 
 .wla-list {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) 0;
   display: flex;
   flex-direction: column;
   flex: 1;
+}
+
+/* Override MissionCard's max-width so cards go full width in the sheet */
+.wla-list .mission-card {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
 }
 
 .wla-empty {
@@ -109,52 +123,45 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-text-light);
-  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+  padding: var(--space-sm) var(--space-md) var(--space-xs);
   margin: 0;
 }
 
-/* ── Inline form sections ────────────────────────────────────── */
+/* ── Add mission form ────────────────────────────────────────── */
 
 .wla-form-section {
-  padding: var(--space-sm) var(--space-lg) var(--space-md);
+  padding: var(--space-sm) var(--space-md) var(--space-md);
   border-top: 1px solid var(--color-border);
-}
-
-.wla-form-label {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-text-medium);
-  margin: 0 0 var(--space-sm);
 }
 
 /* ── Add row ─────────────────────────────────────────────────── */
 
 .wla-add-row {
-  padding: var(--space-sm) var(--space-lg) var(--space-xl);
+  padding: var(--space-md) var(--space-md) var(--space-xl);
   border-top: 1px solid var(--color-border);
-}
-
-.wla-add-btn {
   display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  width: 100%;
-  background: none;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
+  justify-content: center;
+}
+
+.wla-add-row .add-mission-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  color: var(--color-text-medium);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  transition: border-color var(--transition), color var(--transition);
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
 }
 
-.wla-add-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+.wla-add-row .add-mission-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+  background: linear-gradient(135deg, #218838, #1fa085);
 }
 
-.wla-add-btn .material-icons {
-  font-size: 18px;
+.wla-add-row .add-mission-btn:active {
+  transform: translateY(0);
 }

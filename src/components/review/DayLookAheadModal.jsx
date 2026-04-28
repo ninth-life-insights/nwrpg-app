@@ -1,10 +1,19 @@
 // src/components/review/DayLookAheadModal.jsx
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { completeMissionWithRecurrence } from '../../services/missionService';
-import MissionCardCondensed from '../missions/MissionCardCondensed';
+import {
+  completeMissionWithRecurrence,
+  uncompleteMission,
+  deleteMission,
+  archiveMission,
+  updateMission,
+} from '../../services/missionService';
+import MissionCard from '../missions/MissionCard';
+import MissionDetailView from '../missions/MissionCardFull';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
+import { getAllQuests } from '../../services/questService';
+import { useEffect } from 'react';
 import './DayLookAheadModal.css';
 
 const DayLookAheadModal = ({
@@ -15,41 +24,74 @@ const DayLookAheadModal = ({
 }) => {
   const { currentUser } = useAuth();
   const [localMissions, setLocalMissions] = useState(missions);
-  const [editingMission, setEditingMission] = useState(null);
+  const [selectedMission, setSelectedMission] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [quests, setQuests] = useState([]);
 
   const dateStr = date.format('YYYY-MM-DD');
 
+  useEffect(() => {
+    if (!currentUser) return;
+    getAllQuests(currentUser.uid).then(setQuests).catch(() => {});
+  }, [currentUser]);
+
   const handleToggleComplete = async (missionId, isCompleted) => {
-    if (isCompleted) {
-      // Uncomplete not supported via this modal — read-only toggle back
-      return;
-    }
     setActionError(null);
     try {
-      await completeMissionWithRecurrence(currentUser.uid, missionId);
-      setLocalMissions(prev =>
-        prev.map(m => m.id === missionId ? { ...m, status: 'completed' } : m)
-      );
+      if (isCompleted) {
+        await uncompleteMission(currentUser.uid, missionId);
+        setLocalMissions(prev =>
+          prev.map(m => m.id === missionId ? { ...m, status: 'active' } : m)
+        );
+      } else {
+        await completeMissionWithRecurrence(currentUser.uid, missionId);
+        setLocalMissions(prev =>
+          prev.map(m => m.id === missionId ? { ...m, status: 'completed' } : m)
+        );
+      }
       onUpdate?.();
     } catch (err) {
-      console.error('Error completing mission:', err);
-      setActionError("That mission didn't complete. Try again.");
+      console.error('Error toggling mission:', err);
+      setActionError("That mission didn't update. Try again.");
     }
   };
 
   const handleViewDetails = (mission) => {
-    setEditingMission(mission);
+    setSelectedMission(mission);
     setShowAddMission(false);
   };
 
-  const handleMissionUpdated = (updated) => {
+  const handleUpdateMission = async (updatedMission) => {
     setLocalMissions(prev =>
-      prev.map(m => m.id === updated.id ? updated : m)
+      prev.map(m => m.id === updatedMission.id ? updatedMission : m)
     );
-    setEditingMission(null);
+    setSelectedMission(updatedMission);
     onUpdate?.();
+  };
+
+  const handleDeleteMission = async (missionId) => {
+    try {
+      await deleteMission(currentUser.uid, missionId);
+      setLocalMissions(prev => prev.filter(m => m.id !== missionId));
+      setSelectedMission(null);
+      onUpdate?.();
+    } catch (err) {
+      console.error('Error deleting mission:', err);
+      setActionError("That mission didn't delete. Try again.");
+    }
+  };
+
+  const handleArchiveMission = async (missionId) => {
+    try {
+      await archiveMission(currentUser.uid, missionId);
+      setLocalMissions(prev => prev.filter(m => m.id !== missionId));
+      setSelectedMission(null);
+      onUpdate?.();
+    } catch (err) {
+      console.error('Error archiving mission:', err);
+      setActionError("That mission didn't archive. Try again.");
+    }
   };
 
   const handleMissionAdded = (newMission) => {
@@ -80,7 +122,6 @@ const DayLookAheadModal = ({
           </button>
         </div>
 
-        {/* Error */}
         {actionError && (
           <div className="wla-error">
             <ErrorMessage message={actionError} />
@@ -94,9 +135,10 @@ const DayLookAheadModal = ({
           )}
 
           {activeMissions.map(m => (
-            <MissionCardCondensed
+            <MissionCard
               key={m.id}
               mission={m}
+              quest={quests.find(q => q.id === m.questId) ?? null}
               onToggleComplete={handleToggleComplete}
               onViewDetails={handleViewDetails}
             />
@@ -106,9 +148,10 @@ const DayLookAheadModal = ({
             <>
               <p className="wla-completed-label">Completed</p>
               {completedMissions.map(m => (
-                <MissionCardCondensed
+                <MissionCard
                   key={m.id}
                   mission={m}
+                  quest={quests.find(q => q.id === m.questId) ?? null}
                   onToggleComplete={handleToggleComplete}
                   onViewDetails={handleViewDetails}
                 />
@@ -117,23 +160,9 @@ const DayLookAheadModal = ({
           )}
         </div>
 
-        {/* Edit form (inline, replaces add) */}
-        {editingMission && (
-          <div className="wla-form-section">
-            <p className="wla-form-label">Edit mission</p>
-            <AddMissionCard
-              mode="edit"
-              initialMission={editingMission}
-              onUpdateMission={handleMissionUpdated}
-              onCancel={() => setEditingMission(null)}
-            />
-          </div>
-        )}
-
         {/* Add mission form */}
-        {showAddMission && !editingMission && (
+        {showAddMission && (
           <div className="wla-form-section">
-            <p className="wla-form-label">New mission</p>
             <AddMissionCard
               mode="add"
               initialDueDate={dateStr}
@@ -144,18 +173,30 @@ const DayLookAheadModal = ({
         )}
 
         {/* Add button */}
-        {!showAddMission && !editingMission && (
+        {!showAddMission && (
           <div className="wla-add-row">
             <button
-              className="wla-add-btn"
+              className="add-mission-btn"
               onClick={() => setShowAddMission(true)}
             >
-              <span className="material-icons">add</span>
-              Add a mission for this day
+              + Add Mission
             </button>
           </div>
         )}
       </div>
+
+      {/* MissionCardFull — renders on top, same as rest of app */}
+      {selectedMission && (
+        <MissionDetailView
+          mission={selectedMission}
+          onClose={() => setSelectedMission(null)}
+          onToggleComplete={handleToggleComplete}
+          onDeleteMission={handleDeleteMission}
+          onArchiveMission={handleArchiveMission}
+          onUpdateMission={handleUpdateMission}
+          quest={quests.find(q => q.id === selectedMission.questId)}
+        />
+      )}
     </div>
   );
 };

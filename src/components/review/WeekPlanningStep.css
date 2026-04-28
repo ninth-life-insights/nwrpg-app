@@ -73,28 +73,38 @@
 
 .wp-day-card-body {
   display: flex;
-  align-items: stretch;
-  min-height: 80px;
+  align-items: center;
+  padding: var(--space-md) var(--space-md);
+  gap: var(--space-md);
 }
 
-/* ── Plan widget (left ~60%) ─────────────────────────────────── */
+/* ── Plan widget — inset button, orange daily-mission cue ────── */
 
 .wp-plan-widget {
-  flex: 3;
+  flex: 0 0 auto;
+  width: 58%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: var(--space-md) var(--space-lg);
-  border-right: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-md);
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  background: #f8faff;
-  transition: background var(--transition);
-  min-width: 0;
+  transition: background var(--transition), border-color var(--transition);
+  text-align: center;
 }
 
 .wp-plan-widget:hover {
-  background: #eff6ff;
+  background: #ffedd5;
+  border-color: #fb923c;
+}
+
+.wp-plan-widget--set {
+  background: #fff7ed;
+  border-color: #f97316;
 }
 
 .wp-plan-count-row {
@@ -102,23 +112,19 @@
   align-items: baseline;
   gap: 2px;
   line-height: 1;
+  justify-content: center;
 }
 
 .wp-plan-count-done {
   font-size: var(--font-size-2xl);
   font-weight: 800;
-  color: var(--color-text-light);
+  color: #c2410c;
   line-height: 1;
-  transition: color var(--transition);
-}
-
-.wp-plan-count-done--set {
-  color: var(--color-primary);
 }
 
 .wp-plan-count-denom {
   font-size: var(--font-size-sm);
-  color: var(--color-text-light);
+  color: #9a3412;
   font-weight: 500;
 }
 
@@ -126,55 +132,55 @@
 .wp-plan-pips {
   display: flex;
   gap: 4px;
-  margin-top: 2px;
+  justify-content: center;
 }
 
 .wp-plan-pip {
-  width: 20px;
+  width: 18px;
   height: 4px;
   border-radius: 99px;
-  background: var(--color-border);
+  background: #fed7aa;
   transition: background var(--transition);
 }
 
 .wp-plan-pip--filled {
-  background: var(--color-primary);
+  background: #f97316;
 }
 
 /* CTA label below the counter */
 .wp-plan-cta {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-primary);
-  margin-top: var(--space-xs);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: #c2410c;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
   white-space: nowrap;
+  margin-top: 2px;
 }
 
-/* ── Look-ahead hint (right ~40%) ───────────────────────────── */
+/* ── Look-ahead nudge (right side, subtle) ──────────────────── */
 
 .wp-lookahead-hint {
-  flex: 2;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
-  padding: var(--space-md) var(--space-sm);
+  gap: 2px;
   color: var(--color-text-light);
-  min-width: 0;
+  opacity: 0.6;
+}
+
+.wp-lookahead-arrow {
+  font-size: 20px;
+  color: var(--color-text-light);
 }
 
 .wp-lookahead-label {
   font-size: var(--font-size-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-align: center;
-}
-
-.wp-lookahead-arrow {
-  font-size: 22px;
+  font-weight: 500;
   color: var(--color-text-light);
+  text-align: center;
 }
 
 .wp-day-error {

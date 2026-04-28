@@ -61,25 +61,15 @@ const DayCard = ({
           )}
         </div>
 
-        {/* Body row: plan widget (left) + look-ahead hint (right) */}
+        {/* Card body: plan widget inset + look-ahead nudge */}
         <div className="wp-day-card-body">
-          {/* Plan widget — left zone, intercepts clicks */}
-          <div
-            className="wp-plan-widget"
+          {/* Inset plan widget — orange-tinted, intercepts clicks */}
+          <button
+            className={`wp-plan-widget ${plannedCount > 0 ? 'wp-plan-widget--set' : ''}`}
             onClick={e => { e.stopPropagation(); setShowPlanModal(true); }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={e => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.stopPropagation();
-                setShowPlanModal(true);
-              }
-            }}
           >
             <div className="wp-plan-count-row">
-              <span className={`wp-plan-count-done ${plannedCount > 0 ? 'wp-plan-count-done--set' : ''}`}>
-                {plannedCount}
-              </span>
+              <span className="wp-plan-count-done">{plannedCount}</span>
               <span className="wp-plan-count-denom">/3 daily</span>
             </div>
             <div className="wp-plan-pips">
@@ -87,13 +77,13 @@ const DayCard = ({
                 <div key={i} className={`wp-plan-pip ${i < plannedCount ? 'wp-plan-pip--filled' : ''}`} />
               ))}
             </div>
-            <span className="wp-plan-cta">Plan priorities</span>
-          </div>
+            <span className="wp-plan-cta">Plan Priorities</span>
+          </button>
 
-          {/* Look-ahead hint — right zone (passive, whole-card click handles it) */}
+          {/* Look-ahead nudge — subtle, right side */}
           <div className="wp-lookahead-hint">
+            <span className="material-icons wp-lookahead-arrow">chevron_right</span>
             <span className="wp-lookahead-label">Look ahead</span>
-            <span className="material-icons wp-lookahead-arrow">arrow_forward</span>
           </div>
         </div>
       </div>
