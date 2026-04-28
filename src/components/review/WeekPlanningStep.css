@@ -69,7 +69,7 @@
 /* ── Expanded body ───────────────────────────────────────────────── */
 
 .wp-day-card-body {
-  padding: 0 var(--space-lg) var(--space-md);
+  padding: var(--space-sm) var(--space-md) var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
@@ -79,8 +79,21 @@
 .wp-planned-missions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-  padding-top: var(--space-sm);
+  gap: 2px;
+}
+
+/* Force mission cards full-width and orange daily styling */
+.wp-planned-missions .mission-card-condensed {
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.wp-no-missions {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin: 0;
 }
 
 /* "X due" badge — amber, matches Badge component */
@@ -123,44 +136,42 @@
 .wp-day-card-actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-xs);
 }
 
-/* Primary orange-tinted "Plan Priorities" button */
 .wp-plan-btn {
-  padding: var(--space-sm) var(--space-md);
-  background: #fff7ed;
-  border: 1.5px solid #fed7aa;
+  background: var(--color-primary);
+  color: white;
+  border: none;
   border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
   font-size: var(--font-size-sm);
-  font-weight: 700;
-  color: #c2410c;
+  font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition);
+  transition: background var(--transition);
   white-space: nowrap;
 }
 
 .wp-plan-btn:hover {
-  background: #ffedd5;
-  border-color: #fb923c;
+  background: var(--color-primary-hover, #1d4ed8);
 }
 
 /* Ghost "Look Ahead ›" text button */
 .wp-lookahead-btn {
   background: none;
   border: none;
-  padding: var(--space-sm) var(--space-xs);
+  padding: var(--space-xs) 0;
   font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-primary);
+  font-weight: 500;
+  color: var(--color-text-medium);
   cursor: pointer;
-  transition: opacity var(--transition);
+  transition: color var(--transition);
   white-space: nowrap;
 }
 
 .wp-lookahead-btn:hover {
-  opacity: 0.75;
+  color: var(--color-text-dark);
 }
 
 .wp-day-error {

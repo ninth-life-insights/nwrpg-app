@@ -59,18 +59,20 @@ const DayCard = ({
         {/* Expanded body */}
         {isOpen && (
           <div className="wp-day-card-body">
-            {plannedMissions.length > 0 && (
-              <div className="wp-planned-missions">
-                {plannedMissions.map(m => (
+            <div className="wp-planned-missions">
+              {plannedMissions.length === 0 ? (
+                <p className="wp-no-missions">No daily missions set</p>
+              ) : (
+                plannedMissions.map(m => (
                   <MissionCardCondensed
                     key={m.id}
                     mission={m}
                     onToggleComplete={() => {}}
                     onViewDetails={() => {}}
                   />
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
 
             <div className="wp-day-card-actions">
               <button

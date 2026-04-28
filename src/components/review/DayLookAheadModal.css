@@ -10,12 +10,15 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .wp-modal-sheet {
   background: var(--color-bg-white);
   border-radius: 16px 16px 0 0;
   max-height: 90dvh;
+  width: 100%;
+  max-width: var(--max-width-card);
   overflow-y: auto;
   overscroll-behavior: contain;
   display: flex;
@@ -90,23 +93,20 @@
   padding: 0 var(--space-md);
 }
 
-/* ── Mission list — full-width cards ─────────────────────────── */
+/* ── Mission list ────────────────────────────────────────────── */
 
 .wla-list {
-  padding: var(--space-sm) 0;
+  padding: var(--space-sm) var(--space-md);
   display: flex;
   flex-direction: column;
   flex: 1;
+  gap: var(--space-xs);
 }
 
-/* Override MissionCard's max-width so cards go full width in the sheet */
 .wla-list .mission-card {
   max-width: none;
-  margin-left: 0;
-  margin-right: 0;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .wla-empty {
