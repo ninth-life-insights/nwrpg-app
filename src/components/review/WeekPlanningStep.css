@@ -64,8 +64,8 @@
   border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 700;
-  background: #fef3c7;
-  color: #b45309;
+  background: #dbeafe;
+  color: #1d4ed8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -87,15 +87,16 @@
 }
 
 .wp-planned-badge--set {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #fef3c7;
+  color: #b45309;
 }
 
 /* ── Actions row ─────────────────────────────────────────────── */
 
 .wp-day-card-actions {
   display: flex;
-  align-items: center;
+  align-items: right;
+  justify-content: right;
   gap: var(--space-sm);
   padding: var(--space-xs) var(--space-lg) var(--space-md);
 }
