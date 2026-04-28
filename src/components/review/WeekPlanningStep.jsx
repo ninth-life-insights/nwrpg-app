@@ -70,7 +70,7 @@ const DayCard = ({
           >
             <div className="wp-plan-count-row">
               <span className="wp-plan-count-done">{plannedCount}</span>
-              <span className="wp-plan-count-denom">/3 daily</span>
+              <span className="wp-plan-count-denom">/ 3 daily missions</span>
             </div>
             <div className="wp-plan-pips">
               {[0, 1, 2].map(i => (
@@ -83,7 +83,7 @@ const DayCard = ({
           {/* Look-ahead nudge — subtle, right side */}
           <div className="wp-lookahead-hint">
             <span className="material-icons wp-lookahead-arrow">chevron_right</span>
-            <span className="wp-lookahead-label">Look ahead</span>
+            <span className="wp-lookahead-label">Look Ahead</span>
           </div>
         </div>
       </div>
