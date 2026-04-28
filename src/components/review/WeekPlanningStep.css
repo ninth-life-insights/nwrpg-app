@@ -24,8 +24,15 @@
 .wp-day-card-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
   gap: var(--space-sm);
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-family);
 }
 
 .wp-day-name-group {
@@ -51,6 +58,29 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.wp-day-chevron {
+  font-size: 18px;
+  color: var(--color-text-light);
+}
+
+/* ── Expanded body ───────────────────────────────────────────────── */
+
+.wp-day-card-body {
+  padding: 0 var(--space-lg) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.wp-planned-missions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-sm);
 }
 
 /* "X due" badge — amber, matches Badge component */
@@ -88,14 +118,13 @@
   color: #b45309;
 }
 
-/* ── Actions row ─────────────────────────────────────────────── */
+/* ── Actions ─────────────────────────────────────────────────── */
 
 .wp-day-card-actions {
   display: flex;
-  align-items: right;
-  justify-content: right;
-  gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-lg) var(--space-md);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
 }
 
 /* Primary orange-tinted "Plan Priorities" button */

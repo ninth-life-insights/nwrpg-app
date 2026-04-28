@@ -9,6 +9,7 @@ import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
 import EditDailyMissionsModal from '../missions/EditDailyMissionsModal';
 import DayLookAheadModal from './DayLookAheadModal';
+import MissionCardCondensed from '../missions/MissionCardCondensed';
 import dayjs from 'dayjs';
 import { toDateString } from '../../utils/dateHelpers';
 import { withTimeout } from '../../utils/fetchWithTimeout';
@@ -17,33 +18,27 @@ import './WeekPlanningStep.css';
 // ─── Day card ─────────────────────────────────────────────────────────────────
 
 const DayCard = ({
-  date,           // dayjs
-  missionsDue,    // missions with dueDate === dateStr
-  initialPlannedIds,
+  date,             // dayjs
+  missionsDue,      // missions with dueDate === dateStr
+  plannedMissions,  // full mission objects that are planned for this day
   isToday,
-  onPlanSaved,    // () => void — parent reloads after save
-  onError,        // (msg) => void
+  onPlanSaved,      // () => void — parent reloads after save
 }) => {
-  const [plannedIds, setPlannedIds] = useState(initialPlannedIds || []);
+  const [isOpen, setIsOpen] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showLookAheadModal, setShowLookAheadModal] = useState(false);
 
-  // Sync if parent reloads and passes new initialPlannedIds
-  useEffect(() => {
-    setPlannedIds(initialPlannedIds || []);
-  }, [initialPlannedIds]);
-
   const dateStr = date.format('YYYY-MM-DD');
-  const dayAbbr = date.format('ddd');   // "Mon", "Tue" …
-  const dayDate = date.format('MMM D'); // "Apr 28"
-  const plannedCount = plannedIds.length;
+  const dayAbbr = date.format('ddd');
+  const dayDate = date.format('MMM D');
+  const plannedCount = plannedMissions.length;
   const dueCount = missionsDue.length;
 
   return (
     <>
-      <div className={`wp-day-card ${isToday ? 'wp-day-card--today' : ''}`}>
-        {/* Header row */}
-        <div className="wp-day-card-header">
+      <div className={`wp-day-card ${isToday ? 'wp-day-card--today' : ''} ${isOpen ? 'wp-day-card--open' : ''}`}>
+        {/* Clickable header row */}
+        <button className="wp-day-card-header" onClick={() => setIsOpen(o => !o)}>
           <div className="wp-day-name-group">
             <span className="wp-day-abbr">{dayAbbr}</span>
             <span className="wp-day-fulldate">{dayDate}</span>
@@ -55,24 +50,44 @@ const DayCard = ({
             <span className={`wp-planned-badge ${plannedCount > 0 ? 'wp-planned-badge--set' : ''}`}>
               {plannedCount}/3 daily
             </span>
+            <span className="material-icons wp-day-chevron">
+              {isOpen ? 'expand_less' : 'expand_more'}
+            </span>
           </div>
-        </div>
+        </button>
 
-        {/* Actions row */}
-        <div className="wp-day-card-actions">
-          <button
-            className="wp-plan-btn"
-            onClick={() => setShowPlanModal(true)}
-          >
-            Plan Priorities
-          </button>
-          <button
-            className="wp-lookahead-btn"
-            onClick={() => setShowLookAheadModal(true)}
-          >
-            Look Ahead &rsaquo;
-          </button>
-        </div>
+        {/* Expanded body */}
+        {isOpen && (
+          <div className="wp-day-card-body">
+            {plannedMissions.length > 0 && (
+              <div className="wp-planned-missions">
+                {plannedMissions.map(m => (
+                  <MissionCardCondensed
+                    key={m.id}
+                    mission={m}
+                    onToggleComplete={() => {}}
+                    onViewDetails={() => {}}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="wp-day-card-actions">
+              <button
+                className="wp-plan-btn"
+                onClick={() => setShowPlanModal(true)}
+              >
+                Plan Priorities
+              </button>
+              <button
+                className="wp-lookahead-btn"
+                onClick={() => setShowLookAheadModal(true)}
+              >
+                Look Ahead &rsaquo;
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showPlanModal && (
@@ -170,15 +185,18 @@ const WeekPlanningStep = ({ weekInfo, onNext, onSkipToSummary }) => {
 
         {!loading && !loadError && weekDates.map(date => {
           const dateStr = date.format('YYYY-MM-DD');
+          const plannedIds = plannedByDate[dateStr] || [];
+          const plannedMissions = plannedIds
+            .map(id => allMissions.find(m => m.id === id))
+            .filter(Boolean);
           return (
             <DayCard
               key={dateStr}
               date={date}
               missionsDue={missionsDueByDate[dateStr] || []}
-              initialPlannedIds={plannedByDate[dateStr] || []}
+              plannedMissions={plannedMissions}
               isToday={dateStr === today}
               onPlanSaved={load}
-              onError={(msg) => console.error('Day plan error:', msg)}
             />
           );
         })}
