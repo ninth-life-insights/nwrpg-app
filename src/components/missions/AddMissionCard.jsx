@@ -24,7 +24,8 @@ const AddMissionCard = ({
   mode = 'add',
   initialMission = null,
   initialDueDate = null,   // pre-fill dueDate in add mode (YYYY-MM-DD string)
-  onUpdateMission
+  onUpdateMission,
+  defaultRoomId = null,    // pre-assign mission to a room (silently)
 }) => {
   const { currentUser } = useAuth();
   
@@ -227,7 +228,8 @@ const AddMissionCard = ({
       category: 'personal',
       isDailyMission: formData.isDailyMission,
       priority: formData.priority,
-      pinned: formData.pinned
+      pinned: formData.pinned,
+      ...(defaultRoomId ? { baseLocation: defaultRoomId } : {}),
     });
   };
 

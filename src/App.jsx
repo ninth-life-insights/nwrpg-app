@@ -23,6 +23,7 @@ import QuestDetailView from './components/quests/QuestDetailView';
 import SkillsPage from './pages/SkillsPage';
 import SkillDetailPage from './pages/SkillDetailPage';
 import BasePage from './pages/BasePage';
+import RoomPage from './pages/RoomPage';
 import AchievementsPage from './pages/AchievementsPage';
 import SettingsPage from './pages/SettingsPage';
 import WeeklyReviewPage from './pages/WeeklyReviewPage';
@@ -68,6 +69,7 @@ function AppContent() {
         <Route path="/daily-review" element={<ProtectedRoute><DailyReviewPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
         <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
+        <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
         <Route path="/quest-bank" element={<ProtectedRoute><QuestBank /></ProtectedRoute>} />
         <Route path="/quests/:questId" element={<ProtectedRoute><QuestDetailView /></ProtectedRoute>} />
         <Route path="/skills" element={<ProtectedRoute><SkillsPage /></ProtectedRoute>} />

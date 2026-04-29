@@ -210,7 +210,7 @@ export const deleteRoom = async (userId, roomId) => {
 export const getRoomStats = async (roomId, missions) => {
   try {
     // Filter missions for this room
-    const roomMissions = missions.filter(m => m.roomId === roomId);
+    const roomMissions = missions.filter(m => m.baseLocation === roomId);
     
     const now = new Date();
     const oneWeekFromNow = new Date();
