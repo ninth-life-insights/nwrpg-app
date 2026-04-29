@@ -1,60 +1,148 @@
 /* src/components/review/TaskArchivingStep.css */
 
-.ta-mission-row {
+/* ── Bulk action bar ─────────────────────────────────────────── */
+
+.ta-bulk-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-sm);
-  padding: var(--space-md);
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border-yellow);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  padding: var(--space-xs) 0 var(--space-sm);
+  flex-wrap: wrap;
 }
 
-.ta-mission-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-.ta-mission-title {
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text-dark);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ta-expiry-date {
+.ta-select-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: var(--space-xs) 0;
   font-size: var(--font-size-sm);
-  color: var(--color-text-light);
+  font-weight: 500;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: color var(--transition);
 }
 
-.ta-archive-btn {
-  background: var(--color-bg-main);
+.ta-select-all-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.ta-archive-selected-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-xs) var(--space-md);
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-text-medium);
+  color: var(--color-warning);
   cursor: pointer;
-  flex-shrink: 0;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
-  min-height: 36px;
+  transition: background var(--transition), border-color var(--transition);
+  margin-left: auto;
 }
 
-.ta-archive-btn:hover:not(:disabled) {
+.ta-archive-selected-btn:hover:not(:disabled) {
+  background: #fff7ed;
+  border-color: var(--color-warning);
+}
+
+.ta-archive-selected-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ta-archive-selected-btn .material-icons {
+  font-size: 16px;
+}
+
+/* ── Checkbox ────────────────────────────────────────────────── */
+
+.ta-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.ta-checkbox--checked {
   background: var(--color-primary);
-  color: white;
   border-color: var(--color-primary);
 }
 
+.ta-checkbox--checked .material-icons {
+  font-size: 14px;
+  color: white;
+}
+
+.ta-checkbox-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Mission list ────────────────────────────────────────────── */
+
+.ta-mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.ta-mission-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.ta-mission-card-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.ta-mission-card-wrap .mission-card-condensed {
+  width: 100%;
+  box-sizing: border-box;
+  max-width: none;
+}
+
+/* ── Per-row archive button (icon only, matches MissionCardFull dropdown) */
+
+.ta-archive-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-warning);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+}
+
+.ta-archive-btn:hover:not(:disabled) {
+  background: #fff7ed;
+}
+
 .ta-archive-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: default;
+}
+
+.ta-archive-btn .material-icons {
+  font-size: 20px;
 }

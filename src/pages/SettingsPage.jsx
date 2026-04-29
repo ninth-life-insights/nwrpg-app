@@ -234,8 +234,8 @@ const SettingsPage = () => {
             onChange={e => setWeekStartDay(Number(e.target.value))}
             className="settings-select"
           >
-            {DAY_NAMES.map((name, i) => (
-              <option key={i} value={i}>{name}</option>
+            {[6, 0, 1].map(i => (
+              <option key={i} value={i}>{DAY_NAMES[i]}</option>
             ))}
           </select>
         </div>
