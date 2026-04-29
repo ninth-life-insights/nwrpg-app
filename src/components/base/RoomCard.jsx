@@ -34,15 +34,15 @@ const RoomCard = ({ room, stats, onClick }) => {
       <div className="room-stats-grid">
         <div className="stat-item">
           <div className="stat-number">{stats.total}</div>
-          <div className="stat-label">All Tasks</div>
+          <div className="stat-label">Tasks</div>
         </div>
         <div className="stat-item">
           <div className="stat-number">{stats.dueThisWeek}</div>
-          <div className="stat-label">Due This Week</div>
+          <div className="stat-label">This Week</div>
         </div>
         <div className="stat-item">
           <div className="stat-number">{stats.overdue}</div>
-          <div className="stat-label">Overdue</div>
+          <div className="stat-label">Late</div>
         </div>
       </div>
 
