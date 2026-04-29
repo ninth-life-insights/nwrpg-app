@@ -1,21 +1,23 @@
-// src/components/rooms/AddRoomModal.js
-import React, { useState } from 'react';
+// src/components/base/AddRoomModal.jsx
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createRoom } from '../../services/roomService';
 import ErrorMessage from '../ui/ErrorMessage';
 import './AddRoomModal.css';
 
 const ROOM_ICONS = [
-  { value: 'Room-bed.jpg',     label: 'Bedroom' },
-  { value: 'Room-couch.jpg',   label: 'Living Room' },
-  { value: 'Room-TV.jpg',      label: 'TV Room' },
-  { value: 'Room-dining.jpg',  label: 'Dining Room' },
-  { value: 'Room-Shower.jpg',  label: 'Bathroom' },
-  { value: 'Room-toilet.jpg',  label: 'Toilet' },
-  { value: 'Room-kitchen.jpg', label: 'Kitchen' },
-  { value: 'Room-craft.jpg',   label: 'Craft Room' },
-  { value: 'Room-entry.jpg',   label: 'Entryway' },
+  { value: 'Room-bed.jpg',    label: 'Bedroom' },
+  { value: 'Room-couch.jpg',  label: 'Living Room' },
+  { value: 'Room-TV.jpg',     label: 'TV Room' },
+  { value: 'Room-dining.jpg', label: 'Dining Room' },
+  { value: 'Room-Shower.jpg', label: 'Bathroom' },
+  { value: 'Room-toilet.jpg', label: 'Toilet' },
+  { value: 'Room-craft.jpg',  label: 'Craft Room' },
+  { value: 'Room-entry.jpg',  label: 'Entryway' },
 ];
+
+const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs help', 3: 'Workable', 4: 'Clean', 5: 'Spotless' };
+const CLEANLINESS_COLORS = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#10b981' };
 
 const AddRoomModal = ({ onClose, onRoomAdded }) => {
   const { currentUser } = useAuth();
@@ -25,8 +27,11 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const handleSubmit = async () => {
     if (!roomName.trim()) return;
     setSaveError(null);
     setSaving(true);
@@ -44,95 +49,93 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
     }
   };
 
-  const getCleanlinessLabel = (value) => {
-    const labels = {
-      1: 'Messy',
-      2: 'Needs help',
-      3: 'Workable',
-      4: 'Clean',
-      5: 'Spotless'
-    };
-    return labels[value];
-  };
-
-  const getCleanlinessColor = (value) => {
-    const colors = {
-      1: '#ef4444',
-      2: '#f97316',
-      3: '#eab308',
-      4: '#84cc16',
-      5: '#10b981'
-    };
-    return colors[value];
-  };
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content add-room-modal-compact" onClick={(e) => e.stopPropagation()}>
-        <button className="close-button-compact" onClick={onClose}>
-          <span className="material-icons">close</span>
-        </button>
+    <div className="add-room-overlay" onClick={handleBackdropClick}>
+      <div className="add-room-modal">
 
-        <form onSubmit={handleSubmit}>
-          {/* Room Name Input */}
-          <input
-            type="text"
-            className="room-name-input"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            placeholder="Room name (e.g., Kitchen)"
-            autoFocus
-          />
+        {/* Header */}
+        <div className="add-room-header">
+          <h2 className="add-room-title">Add a Room</h2>
+          <button className="add-room-close" onClick={onClose} aria-label="Close">
+            <span className="material-icons">close</span>
+          </button>
+        </div>
 
-          {/* Icon Picker - Single Row Scroll */}
-          <div className="icon-scroll-container">
-            <div className="icon-scroll">
+        {/* Body */}
+        <div className="add-room-body">
+
+          {/* Name */}
+          <div className="add-room-field">
+            <label className="add-room-label" htmlFor="room-name">Room Name</label>
+            <input
+              id="room-name"
+              className="add-room-input"
+              type="text"
+              placeholder="e.g. Kitchen"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              maxLength={40}
+              autoFocus
+            />
+          </div>
+
+          {/* Icon picker */}
+          <div className="add-room-field">
+            <label className="add-room-label">Room Type</label>
+            <div className="room-icon-scroll">
               {ROOM_ICONS.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
-                  className={`icon-option-compact ${selectedIcon === value ? 'selected' : ''}`}
+                  className={`room-icon-btn${selectedIcon === value ? ' selected' : ''}`}
                   onClick={() => setSelectedIcon(value)}
-                  title={label}
+                  aria-label={label}
                 >
                   <img
                     src={`/assets/Rooms/${value}`}
                     alt={label}
-                    className="icon-option-img"
+                    className="room-icon-img"
+                    draggable={false}
                   />
+                  <span className="room-icon-img-label">{label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Cleanliness Slider */}
-          <div className="cleanliness-section">
-            <div className="cleanliness-label" style={{ color: getCleanlinessColor(cleanliness) }}>
-              {getCleanlinessLabel(cleanliness)}
-            </div>
-            <div className="cleanliness-slider-compact">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                value={cleanliness}
-                onChange={(e) => setCleanliness(parseInt(e.target.value))}
-                className="slider-input"
-              />
-            </div>
+          {/* Cleanliness */}
+          <div className="add-room-field">
+            <label className="add-room-label">
+              Cleanliness —{' '}
+              <span style={{ color: CLEANLINESS_COLORS[cleanliness] }}>
+                {CLEANLINESS_LABELS[cleanliness]}
+              </span>
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              value={cleanliness}
+              onChange={(e) => setCleanliness(parseInt(e.target.value))}
+              className="add-room-slider"
+            />
           </div>
 
           {saveError && <ErrorMessage message={saveError} />}
+        </div>
 
-          {/* Submit Button */}
+        {/* Footer */}
+        <div className="add-room-footer">
+          <button className="add-room-cancel" onClick={onClose}>Cancel</button>
           <button
-            type="submit"
-            className="submit-button-compact"
+            className="add-room-save"
+            onClick={handleSubmit}
             disabled={saving || !roomName.trim()}
           >
             {saving ? 'Adding...' : 'Add Room'}
           </button>
-        </form>
+        </div>
+
       </div>
     </div>
   );
