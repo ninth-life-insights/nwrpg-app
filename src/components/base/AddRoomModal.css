@@ -4,8 +4,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: var(--color-bg-overlay);
   display: flex;
   justify-content: center;
@@ -22,12 +22,13 @@
 .add-room-modal {
   background: var(--color-bg-main);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  width: 100%;
+  width: 100vw;
   max-width: 480px;
   max-height: 92vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
   animation: addRoomSlideUp 0.25s ease-out;
 }
 
@@ -87,10 +88,18 @@
 .add-room-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--space-xl);
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Ensure right padding is respected in webkit scrollable flex containers */
+.add-room-body > * {
+  max-width: 100%;
 }
 
 /* Fields */

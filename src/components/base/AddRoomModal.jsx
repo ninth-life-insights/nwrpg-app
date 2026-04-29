@@ -66,7 +66,7 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
 
           {/* Name */}
           <div className="add-room-field">
-            <label className="add-room-label" htmlFor="room-name">Room Name <span className="add-room-required">*</span></label>
+            <label className="add-room-label" htmlFor="room-name">Name <span className="add-room-required">*</span></label>
             <input
               id="room-name"
               className="add-room-input"
@@ -81,7 +81,7 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
 
           {/* Icon picker */}
           <div className="add-room-field">
-            <label className="add-room-label">Room Type</label>
+            <label className="add-room-label">Icon</label>
             <div className="room-icon-scroll">
               {ROOM_ICONS.map(({ value, label }) => (
                 <button
