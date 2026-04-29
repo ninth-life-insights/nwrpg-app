@@ -469,8 +469,6 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
     rollingAverages,
   };
 
-  console.log('storyData: ', storyData);
-
   // Reuse existing story unless forced or none exists yet
   let aiStory = (!forceNewStory && existingAiStory) ? existingAiStory : null;
   let aiStoryGeneratedAt = (!forceNewStory && existingAiStory) ? existingAiStoryGeneratedAt : null;
@@ -636,8 +634,6 @@ Rules:
 - If nothing dramatic happened, say something true about what ordinary days are actually for
 - Under 120 words`;
 
-console.log('System prompt: ', systemPrompt);
-
   const response = await fetch('/api/anthropic', {
     method: 'POST',
     headers: {
@@ -653,8 +649,6 @@ console.log('System prompt: ', systemPrompt);
       ],
     }),
   });
-
-  console.log('Response: ', response);
 
   if (!response.ok) {
     throw new Error(`Anthropic API error: ${response.status}`);

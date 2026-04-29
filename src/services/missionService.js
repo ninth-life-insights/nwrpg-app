@@ -158,8 +158,6 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
 
     const xpAwarded = calculateTotalMissionXP(missionData);
 
-    console.log("xp awarded: ", xpAwarded);
-
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
       xpAwarded: xpAwarded,
@@ -336,8 +334,6 @@ const completeRecurringMission = async (userId, missionId, prefetchedData = null
             ...nextMissionData,
             createdAt: serverTimestamp()
           });
-          
-          console.log(`Created next recurring mission instance: ${newMissionRef.id}`);
           
           return {
             xpAwarded,

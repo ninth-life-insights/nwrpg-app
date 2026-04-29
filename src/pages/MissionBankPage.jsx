@@ -63,7 +63,6 @@ const MissionBank = () => {
 
   // Handle mission completion updates
   const handleMissionCompletion = (completedMission, levelUpData, skillLevelUpData) => {
-    console.log('levelUpData received:', levelUpData);
     // Add to recently completed missions if not already there
     setRecentlyCompletedMissions(prev => {
       const existingIndex = prev.findIndex(mission => mission.id === completedMission.id);
