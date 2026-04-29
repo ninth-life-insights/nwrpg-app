@@ -1,57 +1,45 @@
 // src/components/rooms/AddRoomModal.js
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createRoom } from '../../services/roomService';
+import ErrorMessage from '../ui/ErrorMessage';
 import './AddRoomModal.css';
 
-// Common room icons - using verified Material Icons names
 const ROOM_ICONS = [
-  'kitchen',
-  'bed',
-  'bathroom',
-  'weekend', // Using 'weekend' instead of 'living_room'
-  'restaurant', // Using 'restaurant' instead of 'dining_room'
-  'garage',
-  'grass', // Using 'grass' instead of 'yard'
-  'balcony',
-  'computer', // Using 'computer' instead of 'office'
-  'child_care',
-  'pets',
-  'fitness_center',
-  'local_laundry_service',
-  'meeting_room',
-  'storage',
-  'stairs',
-  'deck',
-  'home',
-  'door_front'
+  { value: 'Room-bed.jpg',     label: 'Bedroom' },
+  { value: 'Room-couch.jpg',   label: 'Living Room' },
+  { value: 'Room-TV.jpg',      label: 'TV Room' },
+  { value: 'Room-dining.jpg',  label: 'Dining Room' },
+  { value: 'Room-Shower.jpg',  label: 'Bathroom' },
+  { value: 'Room-toilet.jpg',  label: 'Toilet' },
+  { value: 'Room-kitchen.jpg', label: 'Kitchen' },
+  { value: 'Room-craft.jpg',   label: 'Craft Room' },
+  { value: 'Room-entry.jpg',   label: 'Entryway' },
 ];
 
 const AddRoomModal = ({ onClose, onRoomAdded }) => {
   const { currentUser } = useAuth();
   const [roomName, setRoomName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('room');
+  const [selectedIcon, setSelectedIcon] = useState(ROOM_ICONS[0].value);
   const [cleanliness, setCleanliness] = useState(3);
   const [saving, setSaving] = useState(false);
-  const iconScrollRef = useRef(null);
+  const [saveError, setSaveError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!roomName.trim()) return;
-
+    setSaveError(null);
+    setSaving(true);
     try {
-      setSaving(true);
-      
       await createRoom(currentUser.uid, {
         name: roomName.trim(),
         icon: selectedIcon,
-        cleanliness: cleanliness
+        cleanliness,
       });
-      
       onRoomAdded();
     } catch (err) {
       console.error('Error creating room:', err);
+      setSaveError("That room didn't save. Try again.");
       setSaving(false);
     }
   };
@@ -97,16 +85,21 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
           />
 
           {/* Icon Picker - Single Row Scroll */}
-          <div className="icon-scroll-container" ref={iconScrollRef}>
+          <div className="icon-scroll-container">
             <div className="icon-scroll">
-              {ROOM_ICONS.map((icon) => (
+              {ROOM_ICONS.map(({ value, label }) => (
                 <button
-                  key={icon}
+                  key={value}
                   type="button"
-                  className={`icon-option-compact ${selectedIcon === icon ? 'selected' : ''}`}
-                  onClick={() => setSelectedIcon(icon)}
+                  className={`icon-option-compact ${selectedIcon === value ? 'selected' : ''}`}
+                  onClick={() => setSelectedIcon(value)}
+                  title={label}
                 >
-                  <span className="material-icons">{icon}</span>
+                  <img
+                    src={`/assets/Rooms/${value}`}
+                    alt={label}
+                    className="icon-option-img"
+                  />
                 </button>
               ))}
             </div>
@@ -125,12 +118,11 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
                 value={cleanliness}
                 onChange={(e) => setCleanliness(parseInt(e.target.value))}
                 className="slider-input"
-                style={{
-                  '--slider-color': getCleanlinessColor(cleanliness)
-                }}
               />
             </div>
           </div>
+
+          {saveError && <ErrorMessage message={saveError} />}
 
           {/* Submit Button */}
           <button

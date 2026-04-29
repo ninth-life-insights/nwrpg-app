@@ -36,6 +36,13 @@
   color: white;
 }
 
+.room-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .room-name {
   font-size: 18px;
   font-weight: 600;

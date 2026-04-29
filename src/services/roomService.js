@@ -1,17 +1,15 @@
 // src/services/roomService.js
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDocs, 
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  getDocs,
   getDoc,
   setDoc,
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp 
+  query,
+  orderBy,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 
@@ -83,11 +81,10 @@ export const getRooms = async (userId) => {
     const roomsRef = getUserRoomsRef(userId);
     const q = query(roomsRef, orderBy('order', 'asc'));
     const snapshot = await getDocs(q);
-    
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(room => room.status !== 'deleted');
   } catch (error) {
     console.error('Error getting rooms:', error);
     throw error;
@@ -181,28 +178,27 @@ export const reorderRooms = async (userId, orderedRoomIds) => {
   }
 };
 
-// Delete a room (soft delete, but also check canDelete)
+// Delete a room (soft delete)
 export const deleteRoom = async (userId, roomId) => {
   try {
     const roomRef = doc(db, 'users', userId, 'rooms', roomId);
     const roomSnap = await getDoc(roomRef);
-    
+
     if (!roomSnap.exists()) {
       throw new Error('Room not found');
     }
-    
+
     const roomData = roomSnap.data();
-    
+
     if (!roomData.canDelete) {
       throw new Error('This room cannot be deleted');
     }
-    
-    // Actually delete the room
-    await deleteDoc(roomRef);
-    
-    // TODO: Optionally handle missions assigned to this room
-    // (either unassign them or move them to "Entire Base")
-    
+
+    await updateDoc(roomRef, {
+      status: 'deleted',
+      deletedAt: serverTimestamp()
+    });
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting room:', error);
@@ -211,13 +207,10 @@ export const deleteRoom = async (userId, roomId) => {
 };
 
 // Get room statistics (task counts)
-export const getRoomStats = async (userId, roomId, missions) => {
+export const getRoomStats = async (roomId, missions) => {
   try {
     // Filter missions for this room
     const roomMissions = missions.filter(m => m.roomId === roomId);
-    
-    // If it's Entire Base, also include missions specifically marked for it
-    const isEntireBase = roomId === ENTIRE_BASE_ROOM_ID;
     
     const now = new Date();
     const oneWeekFromNow = new Date();
@@ -256,7 +249,7 @@ export const getAllRoomStats = async (userId, missions) => {
     const statsPromises = rooms.map(async (room) => ({
       roomId: room.id,
       ...room,
-      stats: await getRoomStats(userId, room.id, missions)
+      stats: await getRoomStats(room.id, missions)
     }));
     
     return await Promise.all(statsPromises);

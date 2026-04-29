@@ -1,6 +1,7 @@
 // src/components/base/RoomCard.js
-import React from 'react';
 import './RoomCard.css';
+
+const isImageIcon = (icon) => icon && icon.includes('.');
 
 const RoomCard = ({ room, stats, onClick }) => {
   // Calculate cleanliness color (1=red, 5=green)
@@ -22,7 +23,10 @@ const RoomCard = ({ room, stats, onClick }) => {
     <div className="room-card" onClick={onClick}>
       <div className="room-card-header">
         <div className="room-icon">
-          <span className="material-icons">{room.icon}</span>
+          {isImageIcon(room.icon)
+            ? <img src={`/assets/Rooms/${room.icon}`} alt={room.name} className="room-icon-img" />
+            : <span className="material-icons">{room.icon}</span>
+          }
         </div>
         <h3 className="room-name">{room.name}</h3>
       </div>
