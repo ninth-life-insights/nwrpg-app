@@ -66,7 +66,7 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
 
           {/* Name */}
           <div className="add-room-field">
-            <label className="add-room-label" htmlFor="room-name">Room Name</label>
+            <label className="add-room-label" htmlFor="room-name">Room Name <span className="add-room-required">*</span></label>
             <input
               id="room-name"
               className="add-room-input"
@@ -97,7 +97,6 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
                     className="room-icon-img"
                     draggable={false}
                   />
-                  <span className="room-icon-img-label">{label}</span>
                 </button>
               ))}
             </div>
