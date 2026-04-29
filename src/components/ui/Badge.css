@@ -53,6 +53,14 @@
   text-overflow: ellipsis;
 }
 
+/* Variant: Room */
+.badge-room {
+  background-color: #ffedd5;
+  color: #c2410c;
+  font-size: 12px;
+  text-transform: none !important;
+}
+
 /* Variant: Skill */
 .badge-skill {
   background-color: #f3e8ff;

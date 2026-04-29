@@ -19,16 +19,17 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import './MissionCard.css';
 
-const MissionCard = ({ 
-  mission, 
-  onToggleComplete, 
-  onViewDetails, 
+const MissionCard = ({
+  mission,
+  onToggleComplete,
+  onViewDetails,
   isRecentlyCompleted = false,
   selectionMode = false,
   isCustomOrderMode = false,
   hideDailyBadge = false,
   quest = null,
-  hideQuestIndicator = false
+  hideQuestIndicator = false,
+  roomName = null,
 }) => {
   const navigate = useNavigate();
   const [showXpBadge, setShowXpBadge] = useState(false);
@@ -194,14 +195,19 @@ const MissionCard = ({
               </Badge>
             )}
 
+            {/* Room badge */}
+            {roomName && (
+              <Badge variant="room" icon="home">{roomName}</Badge>
+            )}
+
             {/* Quest badge */}
             {quest && !hideQuestIndicator && (
               <div onClick={handleQuestClick} style={{ display: 'inline-block' }}>
-                <Badge variant="quest-card" >Quest: {quest.title}</Badge>
+                <Badge variant="quest-card">Quest: {quest.title}</Badge>
               </div>
-            )}      
+            )}
 
-            <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>   
+            <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
 
             {/* Skill badge */}
             {missionHasSkill && (

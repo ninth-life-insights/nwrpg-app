@@ -180,12 +180,13 @@
   }
 }
 
-/* Hero image */
+/* Hero image — treated as an icon, not a banner */
 .room-page-hero-img {
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
   display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin: var(--space-lg) auto var(--space-sm);
 }
 
 /* Cleanliness section */

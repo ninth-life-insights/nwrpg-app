@@ -1,7 +1,7 @@
 // src/components/base/AddRoomModal.jsx
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { createRoom } from '../../services/roomService';
+import { createRoom, updateRoom } from '../../services/roomService';
 import ErrorMessage from '../ui/ErrorMessage';
 import './AddRoomModal.css';
 
@@ -19,11 +19,13 @@ const ROOM_ICONS = [
 const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs help', 3: 'Workable', 4: 'Clean', 5: 'Spotless' };
 const CLEANLINESS_COLORS = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#10b981' };
 
-const AddRoomModal = ({ onClose, onRoomAdded }) => {
+const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null }) => {
   const { currentUser } = useAuth();
-  const [roomName, setRoomName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState(ROOM_ICONS[0].value);
-  const [cleanliness, setCleanliness] = useState(3);
+  const isEditing = !!editRoom;
+
+  const [roomName, setRoomName] = useState(editRoom?.name || '');
+  const [selectedIcon, setSelectedIcon] = useState(editRoom?.icon || ROOM_ICONS[0].value);
+  const [cleanliness, setCleanliness] = useState(editRoom?.cleanliness ?? 3);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
@@ -36,15 +38,23 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
     setSaveError(null);
     setSaving(true);
     try {
-      await createRoom(currentUser.uid, {
-        name: roomName.trim(),
-        icon: selectedIcon,
-        cleanliness,
-      });
+      if (isEditing) {
+        await updateRoom(currentUser.uid, editRoom.id, {
+          name: roomName.trim(),
+          icon: selectedIcon,
+          cleanliness,
+        });
+      } else {
+        await createRoom(currentUser.uid, {
+          name: roomName.trim(),
+          icon: selectedIcon,
+          cleanliness,
+        });
+      }
       onRoomAdded();
     } catch (err) {
-      console.error('Error creating room:', err);
-      setSaveError("That room didn't save. Try again.");
+      console.error('Error saving room:', err);
+      setSaveError(isEditing ? "That room didn't update. Try again." : "That room didn't save. Try again.");
       setSaving(false);
     }
   };
@@ -55,7 +65,7 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
 
         {/* Header */}
         <div className="add-room-header">
-          <h2 className="add-room-title">Add a Room</h2>
+          <h2 className="add-room-title">{isEditing ? 'Edit Room' : 'Add a Room'}</h2>
           <button className="add-room-close" onClick={onClose} aria-label="Close">
             <span className="material-icons">close</span>
           </button>
@@ -131,7 +141,7 @@ const AddRoomModal = ({ onClose, onRoomAdded }) => {
             onClick={handleSubmit}
             disabled={saving || !roomName.trim()}
           >
-            {saving ? 'Adding...' : 'Add Room'}
+            {saving ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Changes' : 'Add Room')}
           </button>
         </div>
 
