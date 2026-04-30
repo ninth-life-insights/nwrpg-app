@@ -324,7 +324,7 @@ const RoomPage = () => {
               aria-label="Adjust cleanliness"
             >
               <span className="material-icons">
-                {showSlider ? 'expand_less' : 'tune'}
+                {showSlider ? 'expand_less' : 'edit'}
               </span>
             </button>
           </div>
@@ -370,6 +370,7 @@ const RoomPage = () => {
             mission={mission}
             onToggleComplete={handleToggleComplete}
             onViewDetails={setSelectedMission}
+            hideRoomBadge={true}
           />
         ))}
 

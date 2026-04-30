@@ -29,6 +29,7 @@ const MissionCard = ({
   selectionMode = false,
   isCustomOrderMode = false,
   hideDailyBadge = false,
+  hideRoomBadge = false,
   hideQuestIndicator = false,
 }) => {
   const navigate = useNavigate();
@@ -200,7 +201,7 @@ const MissionCard = ({
             )}
 
             {/* Room badge */}
-            {roomName && (
+            {roomName && !hideRoomBadge && (
               <Badge variant="room" icon="home">{roomName}</Badge>
             )}
 
