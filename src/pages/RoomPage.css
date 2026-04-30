@@ -174,17 +174,19 @@
   margin-right: auto;
 }
 
-@media (min-width: 480px) {
+/* On narrow screens the card fills edge-to-edge; give it side breathing room */
+@media (max-width: 440px) {
   .room-page-stats-card {
-    margin: var(--space-lg) auto;
+    margin-left: var(--space-lg);
+    margin-right: var(--space-lg);
   }
 }
 
 /* Hero image — treated as an icon, not a banner */
 .room-page-hero-img {
   display: block;
-  width: 80px;
-  height: 80px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
   margin: var(--space-lg) auto var(--space-sm);
 }

@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from '../../services/missionService';
 import { getDailyMissionsConfig } from '../../services/dailyMissionService';
 import { getAllQuests } from '../../services/questService';
+import { getRooms } from '../../services/roomService';
 import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
@@ -24,6 +25,7 @@ const OtherMissionsStep = ({
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
   const [quests, setQuests] = useState([]);
+  const [roomsMap, setRoomsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -45,12 +47,13 @@ const OtherMissionsStep = ({
       }
       const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
-        const [allActive, allCompleted, config, questData] = await withTimeout(
+        const [allActive, allCompleted, config, questData, roomData] = await withTimeout(
           Promise.all([
             getActiveMissions(currentUser.uid),
             getCompletedMissions(currentUser.uid),
             getDailyMissionsConfig(currentUser.uid),
             getAllQuests(currentUser.uid),
+            getRooms(currentUser.uid),
           ])
         );
         const dailyIds = new Set(
@@ -63,6 +66,7 @@ const OtherMissionsStep = ({
         });
         setMissions([...completedToday, ...activeMissions]);
         setQuests(questData);
+        setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
       } catch (err) {
         console.error('Error loading other missions:', err);
         setLoadError(getLoadErrorMessage(err, 'missions'));
@@ -171,6 +175,7 @@ const OtherMissionsStep = ({
                     onViewDetails={() => {}}
                     hideDailyBadge={true}
                     quest={quests.find(q => q.id === mission.questId) ?? null}
+                    roomName={mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null}
                   />
                 ))}
               </div>

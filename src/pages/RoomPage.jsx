@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats } from '../services/roomService';
 import { getAllMissions, completeMissionWithRecurrence, uncompleteMission, deleteMission } from '../services/missionService';
+import { getAllQuests } from '../services/questService';
 import MissionCard from '../components/missions/MissionCard';
 import MissionDetailView from '../components/missions/MissionCardFull';
 import AddMissionCard from '../components/missions/AddMissionCard';
@@ -25,6 +26,7 @@ const RoomPage = () => {
 
   const [room, setRoom] = useState(null);
   const [missions, setMissions] = useState([]);
+  const [quests, setQuests] = useState([]);
   const [stats, setStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
@@ -74,10 +76,11 @@ const RoomPage = () => {
     setIsLoadingSlow(false);
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [roomData, allMissions] = await withTimeout(
+      const [roomData, allMissions, questData] = await withTimeout(
         Promise.all([
           getRoom(currentUser.uid, roomId),
           getAllMissions(currentUser.uid),
+          getAllQuests(currentUser.uid),
         ])
       );
 
@@ -95,6 +98,7 @@ const RoomPage = () => {
       setLocalCleanliness(roomData.cleanliness || 3);
       setMissions(roomMissions);
       setStats(roomStats);
+      setQuests(questData);
     } catch (error) {
       console.error('Error fetching room data:', error);
       setLoadError(getLoadErrorMessage(error, 'room'));
@@ -367,6 +371,7 @@ const RoomPage = () => {
             mission={mission}
             onToggleComplete={handleToggleComplete}
             onViewDetails={setSelectedMission}
+            quest={quests.find(q => q.id === mission.questId) ?? null}
           />
         ))}
 
@@ -381,6 +386,7 @@ const RoomPage = () => {
                 mission={mission}
                 onToggleComplete={handleToggleComplete}
                 onViewDetails={setSelectedMission}
+                quest={quests.find(q => q.id === mission.questId) ?? null}
               />
             ))}
           </>

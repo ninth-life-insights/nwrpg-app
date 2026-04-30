@@ -10,6 +10,7 @@ import { completeMissionWithRecurrence, uncompleteMission } from '../services/mi
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import { getRooms } from '../services/roomService';
 import './SkillDetailPage.css';
 
 const SP_PER_SKILL_LEVEL = 50;
@@ -22,6 +23,7 @@ const SkillDetailPage = () => {
 
   const [skillData, setSkillData] = useState(null);
   const [missions, setMissions] = useState([]);
+  const [roomsMap, setRoomsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [selectedMission, setSelectedMission] = useState(null);
@@ -40,11 +42,12 @@ const SkillDetailPage = () => {
     setIsLoadingSlow(false);
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [profile, activeMissions, completedMissions] = await withTimeout(
+      const [profile, activeMissions, completedMissions, roomData] = await withTimeout(
         Promise.all([
           getUserProfile(currentUser.uid),
           getActiveMissions(currentUser.uid),
           getCompletedMissions(currentUser.uid),
+          getRooms(currentUser.uid),
         ])
       );
 
@@ -62,6 +65,7 @@ const SkillDetailPage = () => {
         ...filterBySkill(completedMissions),
       ];
       setMissions(filtered);
+      setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
     } catch (error) {
       console.error('Error fetching skill detail data:', error);
       setLoadError(getLoadErrorMessage(error, 'skill details'));
@@ -187,6 +191,7 @@ const SkillDetailPage = () => {
               mission={mission}
               onToggleComplete={handleToggleComplete}
               onViewDetails={setSelectedMission}
+              roomName={mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null}
             />
           ))
         )}

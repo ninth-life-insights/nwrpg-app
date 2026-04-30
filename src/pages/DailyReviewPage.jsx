@@ -11,6 +11,7 @@ import {
 import {
   getTodaysDailyMissions,
 } from '../services/dailyMissionService';
+import { getRooms } from '../services/roomService';
 import {
   completeMissionWithRecurrence,
   uncompleteMission,
@@ -43,6 +44,7 @@ const DailyReviewPage = () => {
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [sessionAchievements, setSessionAchievements] = useState([]);
   const [todayAchievements, setTodayAchievements] = useState([]);
+  const [roomsMap, setRoomsMap] = useState({});
   const [loadError, setLoadError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
@@ -58,14 +60,16 @@ const DailyReviewPage = () => {
         return;
       }
       try {
-        const [missions, existingEncounters] = await withTimeout(
+        const [missions, existingEncounters, roomData] = await withTimeout(
           Promise.all([
             getTodaysDailyMissions(currentUser.uid),
             getEncountersForDate(currentUser.uid, today),
+            getRooms(currentUser.uid),
           ])
         );
         setDailyMissions(missions);
         setEncounters(existingEncounters);
+        setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
       } catch (err) {
         console.error('Error initializing daily review:', err);
         setLoadError(getLoadErrorMessage(err, 'review'));
@@ -183,6 +187,7 @@ const DailyReviewPage = () => {
             onMissionsUpdated={refreshDailyMissions}
             onNext={handleNext}
             onSkipToSummary={goToSummary}
+            roomsMap={roomsMap}
           />
         )}
 

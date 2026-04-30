@@ -10,6 +10,7 @@ const DailyMissionsStep = ({
   onMissionsUpdated,
   onNext,
   onSkipToSummary,
+  roomsMap = {},
 }) => {
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -37,6 +38,7 @@ const DailyMissionsStep = ({
                 onToggleComplete={onToggleComplete}
                 onViewDetails={() => {}}
                 hideDailyBadge={true}
+                roomName={mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null}
               />
             ))}
           </div>

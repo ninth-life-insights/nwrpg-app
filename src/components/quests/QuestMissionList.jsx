@@ -30,12 +30,13 @@ import { CSS } from '@dnd-kit/utilities';
 import './QuestMissionList.css';
 
 // Sortable Mission Card Wrapper
-const SortableMissionCard = ({ 
-  mission, 
-  isEditMode, 
-  onToggleComplete, 
+const SortableMissionCard = ({
+  mission,
+  isEditMode,
+  onToggleComplete,
   onViewDetails,
-  onRemove 
+  onRemove,
+  roomName,
 }) => {
   const {
     attributes,
@@ -75,6 +76,7 @@ const SortableMissionCard = ({
             mission={mission}
             onToggleComplete={onToggleComplete}
             onViewDetails={onViewDetails}
+            roomName={roomName}
           />
         </div>
 
@@ -100,6 +102,7 @@ const QuestMissionList = ({
   onRemoveMission,
   onReorderMissions,
   onAchievementsUnlocked,
+  roomsMap = {},
 }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
@@ -232,6 +235,7 @@ const QuestMissionList = ({
               onToggleComplete={handleToggleComplete}
               onViewDetails={handleViewDetails}
               onRemove={handleRemoveMission}
+              roomName={mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null}
             />
           ))}
         </SortableContext>

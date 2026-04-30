@@ -12,7 +12,8 @@ const QuestCard = ({
   nextMission,
   onMissionToggleComplete,
   onMissionViewDetails,
-  onRestore
+  onRestore,
+  roomsMap = {},
 }) => {
   const navigate = useNavigate();
   const progress = calculateQuestProgress(quest);
@@ -85,6 +86,7 @@ const QuestCard = ({
             mission={nextMission}
             onToggleComplete={onMissionToggleComplete}
             onViewDetails={onMissionViewDetails}
+            roomName={nextMission.baseLocation ? roomsMap[nextMission.baseLocation]?.name ?? null : null}
           />
         </div>
       )}

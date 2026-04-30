@@ -12,6 +12,7 @@ import {
   restoreQuest
 } from '../services/questService';
 import { getAllMissions } from '../services/missionService';
+import { getRooms } from '../services/roomService';
 import { getNextMission } from '../types/Quests';
 import { completeMissionWithRecurrence } from '../services/missionService';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -24,6 +25,7 @@ const QuestBank = () => {
   
   const [quests, setQuests] = useState([]);
   const [missions, setMissions] = useState([]);
+  const [roomsMap, setRoomsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -77,8 +79,12 @@ const QuestBank = () => {
 
   const loadMissions = async () => {
     try {
-      const missionData = await getAllMissions(currentUser.uid);
+      const [missionData, roomData] = await Promise.all([
+        getAllMissions(currentUser.uid),
+        getRooms(currentUser.uid),
+      ]);
       setMissions(missionData);
+      setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
     } catch (err) {
       console.error('Error loading missions:', err);
     }
@@ -232,6 +238,7 @@ const QuestBank = () => {
                 onMissionToggleComplete={handleMissionToggleComplete}
                 onMissionViewDetails={handleMissionViewDetails}
                 onRestore={includeArchived ? handleRestoreQuest : undefined}
+                roomsMap={roomsMap}
               />
             );
           })
