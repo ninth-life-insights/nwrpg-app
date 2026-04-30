@@ -515,3 +515,20 @@
 .ghost-prompt .material-icons {
   font-size: 14px;
 }
+
+/* Room badge rendered as a tappable button in detail view */
+.badge-as-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+  display: inline-flex;
+}
+
+.badge-as-button.tappable {
+  cursor: pointer;
+}
+
+.badge-as-button:disabled {
+  cursor: default;
+}

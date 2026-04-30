@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission, updateMission } from '../../services/missionService';
 import { getActiveQuests, addMissionToQuest, removeMissionFromQuest } from '../../services/questService';
+import { getRooms } from '../../services/roomService';
 import Badge from '../ui/Badge';
 // import CompletionTypeSelector from './sub-components/CompletionTypeSelector'; // not yet fully implemented
 import RecurrenceSelector, { RECURRENCE_PATTERNS } from './sub-components/recurrenceSelector';
@@ -63,6 +64,7 @@ const AddMissionCard = ({
         pinned: initialMission.pinned || false,
         isDailyMission: initialMission.isDailyMission || false,
         questId: initialMission.questId || null,
+        baseLocation: initialMission.baseLocation || null,
       };
     }
 
@@ -90,6 +92,7 @@ const AddMissionCard = ({
       pinned: false,
       isDailyMission: false,
       questId: null,
+      baseLocation: defaultRoomId || null,
     };
   };
 
@@ -102,13 +105,21 @@ const AddMissionCard = ({
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quests, setQuests] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [showRoomField, setShowRoomField] = useState(mode === 'edit' && !!initialMission?.baseLocation);
 
-  // Load active quests on mount
+  // Load active quests and rooms on mount
   useEffect(() => {
     if (!currentUser) return;
-    getActiveQuests(currentUser.uid)
-      .then(setQuests)
-      .catch(err => console.error('Could not load quests:', err));
+    Promise.all([
+      getActiveQuests(currentUser.uid),
+      getRooms(currentUser.uid),
+    ])
+      .then(([questData, roomData]) => {
+        setQuests(questData);
+        setRooms(roomData);
+      })
+      .catch(err => console.error('Could not load quests/rooms:', err));
   }, [currentUser]);
 
   // Update form when initialMission changes (for edit mode)
@@ -119,6 +130,7 @@ const AddMissionCard = ({
       setShowSkillField(!!initialMission.skill);
       setShowExpiryField(!!initialMission.expiryDate);
       setShowQuestField(!!initialMission.questId);
+      setShowRoomField(!!initialMission.baseLocation);
     }
   }, [mode, initialMission]);
 
@@ -229,7 +241,7 @@ const AddMissionCard = ({
       isDailyMission: formData.isDailyMission,
       priority: formData.priority,
       pinned: formData.pinned,
-      ...(defaultRoomId ? { baseLocation: defaultRoomId } : {}),
+      baseLocation: formData.baseLocation || null,
     });
   };
 
@@ -279,12 +291,14 @@ const AddMissionCard = ({
       pinned: false,
       isDailyMission: false,
       questId: null,
+      baseLocation: null,
     });
 
     setShowDueDateField(false);
     setShowSkillField(false);
     setShowExpiryField(false);
     setShowQuestField(false);
+    setShowRoomField(false);
     setSkillSearch('');
     setErrors({});
   };
@@ -476,6 +490,17 @@ const AddMissionCard = ({
                 disabled={isSubmitting}
               >
                 + Quest
+              </button>
+            )}
+
+            {!showRoomField && !formData.baseLocation && rooms.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowRoomField(true)}
+                className="ghost-badge"
+                disabled={isSubmitting}
+              >
+                + Room
               </button>
             )}
             
@@ -675,6 +700,60 @@ const AddMissionCard = ({
                   <button
                     type="button"
                     onClick={() => setShowQuestField(false)}
+                    className="mission-remove-field-btn"
+                    disabled={isSubmitting}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Room Field */}
+          {(showRoomField || formData.baseLocation) && rooms.length > 0 && (
+            <div className="skill-field-section">
+              <label>Room</label>
+              {formData.baseLocation ? (
+                <div className="selected-skill-inline">
+                  <button
+                    type="button"
+                    onClick={() => setShowRoomField(true)}
+                    className="skill-badge-button"
+                    disabled={isSubmitting}
+                  >
+                    <Badge variant="room" icon="home">
+                      {rooms.find(r => r.id === formData.baseLocation)?.name ?? 'Room'}
+                    </Badge>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, baseLocation: null }));
+                      setShowRoomField(false);
+                    }}
+                    className="mission-remove-field-btn"
+                    disabled={isSubmitting}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <div className="field-with-remove">
+                  <select
+                    className="optional-input"
+                    value=""
+                    onChange={(e) => setFormData(prev => ({ ...prev, baseLocation: e.target.value }))}
+                    disabled={isSubmitting}
+                  >
+                    <option value="" disabled>Select a room...</option>
+                    {rooms.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowRoomField(false)}
                     className="mission-remove-field-btn"
                     disabled={isSubmitting}
                   >

@@ -204,6 +204,7 @@ const SkillDetailPage = () => {
           onToggleComplete={handleToggleComplete}
           onDeleteMission={handleDeleteMission}
           onUpdateMission={handleUpdateMission}
+          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
 

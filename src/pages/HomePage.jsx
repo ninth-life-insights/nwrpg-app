@@ -14,6 +14,7 @@ import {
   uncompleteMission,
   deleteMission
 } from '../services/missionService';
+import { getRooms } from '../services/roomService';
 import { addXP, 
   subtractXP, 
   getUserProfile,  
@@ -47,6 +48,7 @@ const HomePage = () => {
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
+  const [roomsMap, setRoomsMap] = useState({});
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [weeklyReviewEligible, setWeeklyReviewEligible] = useState(false);
@@ -130,16 +132,18 @@ const HomePage = () => {
       setIsLoadingSlow(false);
       const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
-        const [userDoc, profile] = await withTimeout(
+        const [userDoc, profile, roomData] = await withTimeout(
           Promise.all([
             getDoc(doc(db, 'users', currentUser.uid)),
             getUserProfile(currentUser.uid),
+            getRooms(currentUser.uid),
           ])
         );
         if (userDoc.exists()) {
           setCharacter(userDoc.data().character);
         }
         setUserProfile(profile);
+        setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
         await fetchDailyMissions();
 
         // Check weekly review eligibility
@@ -458,12 +462,13 @@ const HomePage = () => {
       )}
 
       {selectedMission && (
-        <MissionDetailView 
-          mission={selectedMission} 
-          onClose={() => setSelectedMission(null)} 
+        <MissionDetailView
+          mission={selectedMission}
+          onClose={() => setSelectedMission(null)}
           onToggleComplete={handleToggleComplete}
-          onDeleteMission={handleDeleteMission}     
-          onUpdateMission={handleUpdateMission}    
+          onDeleteMission={handleDeleteMission}
+          onUpdateMission={handleUpdateMission}
+          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
 

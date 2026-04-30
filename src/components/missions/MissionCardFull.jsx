@@ -25,7 +25,8 @@ const MissionCardFull = ({
   onArchiveMission,
   onRestoreMission,
   onUpdateMission,
-  quest = null
+  quest = null,
+  roomName = null,
 }) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -222,6 +223,16 @@ const MissionCardFull = ({
                 </Badge>
               )}
 
+              {roomName && (
+                <button
+                  className={`badge-as-button${isActive ? ' tappable' : ''}`}
+                  onClick={isActive ? handleEditClick : undefined}
+                  disabled={!isActive}
+                >
+                  <Badge variant="room" icon="home">{roomName}</Badge>
+                </button>
+              )}
+
               {quest && (
                 <div className="quest-indicator-badge" onClick={handleQuestClick}>
                   <Badge variant="quest">Quest: {quest.title}</Badge>
@@ -245,6 +256,13 @@ const MissionCardFull = ({
                 <button className="ghost-prompt" onClick={handleEditClick}>
                   <span className="material-icons">add</span>
                   Add skill
+                </button>
+              )}
+
+              {isActive && !roomName && (
+                <button className="ghost-prompt" onClick={handleEditClick}>
+                  <span className="material-icons">add</span>
+                  Add room
                 </button>
               )}
             </div>

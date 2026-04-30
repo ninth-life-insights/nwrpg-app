@@ -242,12 +242,13 @@ const QuestMissionList = ({
       </DndContext>
 
       {selectedMission && (
-        <MissionDetailView 
-          mission={selectedMission} 
-          onClose={() => setSelectedMission(null)} 
+        <MissionDetailView
+          mission={selectedMission}
+          onClose={() => setSelectedMission(null)}
           onToggleComplete={handleToggleComplete}
           onUpdateMission={onMissionUpdate}
           onEditMission={handleEditMission}
+          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
 

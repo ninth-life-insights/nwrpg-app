@@ -205,6 +205,7 @@ const DayLookAheadModal = ({
           onArchiveMission={handleArchiveMission}
           onUpdateMission={handleUpdateMission}
           quest={quests.find(q => q.id === selectedMission.questId)}
+          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
     </div>
