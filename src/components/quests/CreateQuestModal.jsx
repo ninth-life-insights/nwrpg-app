@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useQuests } from '../../contexts/QuestsContext';
 import Badge from '../ui/Badge';
 import { createQuest, addMissionToQuest, updateQuest } from '../../services/questService';
 import { createMission } from '../../services/missionService';
@@ -15,6 +16,7 @@ import './CreateQuestModal.css';
 
 const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
   const { currentUser } = useAuth();
+  const { refreshQuests } = useQuests();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -151,6 +153,8 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
         });
         await updateQuest(currentUser.uid, newQuest.id, { achievement: achDoc.id });
       }
+
+      await refreshQuests();
 
       if (onQuestCreated) {
         onQuestCreated({

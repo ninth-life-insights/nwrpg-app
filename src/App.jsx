@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { RoomsProvider } from './contexts/RoomsContext';
+import { QuestsProvider } from './contexts/QuestsContext';
 import { Navigate } from 'react-router-dom';
 import Login from './components/auth/Login';
 import './App.css';
@@ -92,7 +93,9 @@ function App() {
       <Router>
         <NotificationProvider>
           <RoomsProvider>
-            <AppContent />
+            <QuestsProvider>
+              <AppContent />
+            </QuestsProvider>
           </RoomsProvider>
         </NotificationProvider>
       </Router>

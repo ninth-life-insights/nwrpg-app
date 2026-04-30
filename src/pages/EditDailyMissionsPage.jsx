@@ -25,7 +25,7 @@ import {
   syncScheduledDatesOnMissions,
 } from '../services/dailyMissionService';
 
-import { getAllQuests } from '../services/questService';
+import { useQuests } from '../contexts/QuestsContext';
 
 // Date helpers
 import {
@@ -64,10 +64,10 @@ const EditDailyMissionsPage = ({
   const today = toDateString(new Date());
   const tomorrow = toDateString(new Date(Date.now() + 86400000));
 
+  const { questsMap } = useQuests();
   const [targetDate, setTargetDate] = useState(initialTargetDate || today);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
-  const [quests, setQuests] = useState([]);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
   const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
@@ -82,7 +82,6 @@ const EditDailyMissionsPage = ({
   // Reload whenever the target date changes
   useEffect(() => {
     loadExistingDailyMissions();
-    loadQuests();
   }, [currentUser, targetDate]);
 
   const loadExistingDailyMissions = async () => {
@@ -153,15 +152,6 @@ const EditDailyMissionsPage = ({
       clearTimeout(slowTimer);
       setLoading(false);
       setIsLoadingSlow(false);
-    }
-  };
-
-  const loadQuests = async () => {
-    try {
-      const questData = await getAllQuests(currentUser.uid);
-      setQuests(questData);
-    } catch (err) {
-      console.error('Error loading quests:', err);
     }
   };
 
@@ -407,7 +397,7 @@ const handleAddNewMission = async (missionData) => {
               const recurrenceText = getRecurrenceDisplayText(mission);
               const dueDateInfo = getDueDateInfo(mission);
               const missionHasSkill = hasSkill(mission);
-              const quest = mission ? quests.find(q => q.id === mission.questId) : null;
+              const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
 
             return (
               <div className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}>

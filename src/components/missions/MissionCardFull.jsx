@@ -16,6 +16,7 @@ import {
 } from '../../utils/dateHelpers';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { useRooms } from '../../contexts/RoomsContext';
+import { useQuests } from '../../contexts/QuestsContext';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({
@@ -26,11 +27,12 @@ const MissionCardFull = ({
   onArchiveMission,
   onRestoreMission,
   onUpdateMission,
-  quest = null,
 }) => {
   const navigate = useNavigate();
   const { roomsMap } = useRooms();
+  const { questsMap } = useQuests();
   const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
+  const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
   const [isEditing, setIsEditing] = useState(false);
   const [showExpiryNote, setShowExpiryNote] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);

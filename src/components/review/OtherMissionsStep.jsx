@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from '../../services/missionService';
 import { getDailyMissionsConfig } from '../../services/dailyMissionService';
-import { getAllQuests } from '../../services/questService';
 import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
@@ -23,7 +22,6 @@ const OtherMissionsStep = ({
 }) => {
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
-  const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -45,12 +43,11 @@ const OtherMissionsStep = ({
       }
       const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
-        const [allActive, allCompleted, config, questData] = await withTimeout(
+        const [allActive, allCompleted, config] = await withTimeout(
           Promise.all([
             getActiveMissions(currentUser.uid),
             getCompletedMissions(currentUser.uid),
             getDailyMissionsConfig(currentUser.uid),
-            getAllQuests(currentUser.uid),
           ])
         );
         const dailyIds = new Set(
@@ -62,7 +59,6 @@ const OtherMissionsStep = ({
           return toDateString(m.completedAt.toDate()) === today;
         });
         setMissions([...completedToday, ...activeMissions]);
-        setQuests(questData);
       } catch (err) {
         console.error('Error loading other missions:', err);
         setLoadError(getLoadErrorMessage(err, 'missions'));
@@ -170,7 +166,6 @@ const OtherMissionsStep = ({
                     onToggleComplete={handleToggle}
                     onViewDetails={() => {}}
                     hideDailyBadge={true}
-                    quest={quests.find(q => q.id === mission.questId) ?? null}
                   />
                 ))}
               </div>

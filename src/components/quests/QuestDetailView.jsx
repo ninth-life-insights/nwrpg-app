@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useQuests } from '../../contexts/QuestsContext';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
 import QuestMissionList from './QuestMissionList';
@@ -36,6 +37,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const questId = questIdProp ?? questIdParam;
   const isModal = !!onClose;
   const { currentUser } = useAuth();
+  const { refreshQuests } = useQuests();
   const navigate = useNavigate();
 
   const [quest, setQuest] = useState(null);
@@ -147,7 +149,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     try {
       await completeQuest(currentUser.uid, questId);
       setShowCompleteConfirm(false);
-      await loadQuestData();
+      await Promise.all([loadQuestData(), refreshQuests()]);
     } catch (err) {
       console.error('Error completing quest:', err);
       setShowCompleteConfirm(false);
@@ -164,6 +166,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     try {
       await deleteQuest(currentUser.uid, questId);
       setShowDeleteConfirm(false);
+      await refreshQuests();
       if (isModal) onClose();
       else navigate('/quests');
     } catch (err) {
@@ -182,6 +185,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     try {
       await archiveQuest(currentUser.uid, questId);
       setShowArchiveConfirm(false);
+      await refreshQuests();
       if (isModal) onClose();
       else navigate('/quest-bank');
     } catch (err) {
@@ -269,7 +273,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
         await unawardPendingAchievement(currentUser.uid, quest.achievement);
       }
       await updateQuestStatus(currentUser.uid, questId, QUEST_STATUS.ACTIVE);
-      await loadQuestData();
+      await Promise.all([loadQuestData(), refreshQuests()]);
     } catch (err) {
       console.error('Error reopening quest:', err);
       setActionError("That quest didn't reopen. Try again.");

@@ -12,8 +12,6 @@ import MissionCard from '../missions/MissionCard';
 import MissionDetailView from '../missions/MissionCardFull';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
-import { getAllQuests } from '../../services/questService';
-import { useEffect } from 'react';
 import './DayLookAheadModal.css';
 
 const DayLookAheadModal = ({
@@ -27,16 +25,8 @@ const DayLookAheadModal = ({
   const [selectedMission, setSelectedMission] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [actionError, setActionError] = useState(null);
-  const [quests, setQuests] = useState([]);
 
   const dateStr = date.format('YYYY-MM-DD');
-
-  useEffect(() => {
-    if (!currentUser) return;
-    getAllQuests(currentUser.uid)
-      .then(setQuests)
-      .catch(() => {});
-  }, [currentUser]);
 
   const handleToggleComplete = async (missionId, isCompleted) => {
     setActionError(null);
@@ -140,7 +130,6 @@ const DayLookAheadModal = ({
             <MissionCard
               key={m.id}
               mission={m}
-              quest={quests.find(q => q.id === m.questId) ?? null}
               onToggleComplete={handleToggleComplete}
               onViewDetails={handleViewDetails}
             />
@@ -153,8 +142,7 @@ const DayLookAheadModal = ({
                 <MissionCard
                   key={m.id}
                   mission={m}
-                  quest={quests.find(q => q.id === m.questId) ?? null}
-                  onToggleComplete={handleToggleComplete}
+                      onToggleComplete={handleToggleComplete}
                   onViewDetails={handleViewDetails}
                     />
               ))}
@@ -196,7 +184,6 @@ const DayLookAheadModal = ({
           onDeleteMission={handleDeleteMission}
           onArchiveMission={handleArchiveMission}
           onUpdateMission={handleUpdateMission}
-          quest={quests.find(q => q.id === selectedMission.questId)}
         />
       )}
     </div>
