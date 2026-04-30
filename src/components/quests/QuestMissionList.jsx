@@ -36,7 +36,6 @@ const SortableMissionCard = ({
   onToggleComplete,
   onViewDetails,
   onRemove,
-  roomName,
 }) => {
   const {
     attributes,
@@ -76,7 +75,6 @@ const SortableMissionCard = ({
             mission={mission}
             onToggleComplete={onToggleComplete}
             onViewDetails={onViewDetails}
-            roomName={roomName}
           />
         </div>
 
@@ -102,7 +100,6 @@ const QuestMissionList = ({
   onRemoveMission,
   onReorderMissions,
   onAchievementsUnlocked,
-  roomsMap = {},
 }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
@@ -235,7 +232,6 @@ const QuestMissionList = ({
               onToggleComplete={handleToggleComplete}
               onViewDetails={handleViewDetails}
               onRemove={handleRemoveMission}
-              roomName={mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null}
             />
           ))}
         </SortableContext>
@@ -248,7 +244,6 @@ const QuestMissionList = ({
           onToggleComplete={handleToggleComplete}
           onUpdateMission={onMissionUpdate}
           onEditMission={handleEditMission}
-          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
 

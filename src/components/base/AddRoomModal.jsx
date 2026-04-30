@@ -1,6 +1,7 @@
 // src/components/base/AddRoomModal.jsx
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRooms } from '../../contexts/RoomsContext';
 import { createRoom, updateRoom } from '../../services/roomService';
 import ErrorMessage from '../ui/ErrorMessage';
 import './AddRoomModal.css';
@@ -21,6 +22,7 @@ const CLEANLINESS_COLORS = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc
 
 const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null }) => {
   const { currentUser } = useAuth();
+  const { refreshRooms } = useRooms();
   const isEditing = !!editRoom;
 
   const [roomName, setRoomName] = useState(editRoom?.name || '');
@@ -51,6 +53,7 @@ const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null }) => {
           cleanliness,
         });
       }
+      await refreshRooms();
       onRoomAdded();
     } catch (err) {
       console.error('Error saving room:', err);

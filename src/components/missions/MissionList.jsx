@@ -22,7 +22,6 @@ import {
   addDailyMissionStatus 
 } from '../../services/dailyMissionService';
 import { getAllQuests } from '../../services/questService';
-import { getRooms } from '../../services/roomService';
 
 import { isWithinCompletedDateRange } from './sub-components/MissionFilterModal';
 
@@ -63,7 +62,6 @@ const MissionList = ({
   const { currentUser } = useAuth();
   const [missions, setMissions] = useState([]);
   const [quests, setQuests] = useState([]);
-  const [roomsMap, setRoomsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
@@ -254,14 +252,10 @@ const MissionList = ({
 
   const loadQuests = async () => {
     try {
-      const [questData, roomData] = await Promise.all([
-        getAllQuests(currentUser.uid),
-        getRooms(currentUser.uid),
-      ]);
+      const questData = await getAllQuests(currentUser.uid);
       setQuests(questData);
-      setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
     } catch (err) {
-      console.error('Error loading quests/rooms:', err);
+      console.error('Error loading quests:', err);
     }
   };
 
@@ -697,7 +691,6 @@ const MissionList = ({
                     selectionMode={selectionMode}
                     isRecentlyCompleted={isRecentlyCompleted}
                     isCustomOrderMode={isCustomOrderMode}
-                    roomName={mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null}
                   />
                 </div>
               );
@@ -716,7 +709,6 @@ const MissionList = ({
           onRestoreMission={handleRestoreMission}
           onUpdateMission={handleUpdateMission}
           quest={quests.find(q => q.id === selectedMission.questId)}
-          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
 

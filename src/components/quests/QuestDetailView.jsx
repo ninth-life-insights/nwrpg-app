@@ -22,7 +22,6 @@ import {
 } from '../../services/questService';
 import { createCustomAchievement, unawardPendingAchievement } from '../../services/achievementService';
 import { getAllMissions, updateMission } from '../../services/missionService';
-import { getRooms } from '../../services/roomService';
 import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
 import { formatForUserLong } from '../../utils/dateHelpers';
@@ -41,7 +40,6 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
 
   const [quest, setQuest] = useState(null);
   const [missions, setMissions] = useState([]);
-  const [roomsMap, setRoomsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [questAchievement, setQuestAchievement] = useState(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -79,10 +77,9 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
       setLoading(true);
       setError(null);
 
-      const [questData, allMissions, roomData] = await Promise.all([
+      const [questData, allMissions] = await Promise.all([
         getQuest(currentUser.uid, questId),
         getAllMissions(currentUser.uid),
-        getRooms(currentUser.uid),
       ]);
 
       // Filter missions that belong to this quest, excluding archived (expired) ones
@@ -92,7 +89,6 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
 
       setQuest(questData);
       setMissions(questMissions);
-      setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
 
       // Load linked achievement if present
       if (questData.achievement) {
@@ -450,7 +446,6 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
           onRemoveMission={handleRemoveMission}
           onReorderMissions={handleReorderMissions}
           onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
-          roomsMap={roomsMap}
         />
 
         {!isCompleted && (

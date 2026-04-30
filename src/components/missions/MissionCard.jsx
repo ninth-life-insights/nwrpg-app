@@ -17,6 +17,7 @@ import {
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useRooms } from '../../contexts/RoomsContext';
 import './MissionCard.css';
 
 const MissionCard = ({
@@ -29,9 +30,10 @@ const MissionCard = ({
   hideDailyBadge = false,
   quest = null,
   hideQuestIndicator = false,
-  roomName = null,
 }) => {
   const navigate = useNavigate();
+  const { roomsMap } = useRooms();
+  const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const [showXpBadge, setShowXpBadge] = useState(false);
   
   // Drag and drop setup

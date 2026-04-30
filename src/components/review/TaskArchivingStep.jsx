@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getActiveMissions, expireMission } from '../../services/missionService';
-import { getRooms } from '../../services/roomService';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
 import MissionDetailView from '../missions/MissionCardFull';
 import StickyFooter from '../ui/StickyFooter';
@@ -20,7 +19,6 @@ const TaskArchivingStep = ({ onNext, onSkipToSummary }) => {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [archivingIds, setArchivingIds] = useState(new Set());
   const [selectedMission, setSelectedMission] = useState(null);
-  const [roomsMap, setRoomsMap] = useState({});
 
   const today = toDateString(new Date());
 
@@ -28,16 +26,10 @@ const TaskArchivingStep = ({ onNext, onSkipToSummary }) => {
     setLoadError(null);
     setLoading(true);
     try {
-      const [missions, roomData] = await withTimeout(
-        Promise.all([
-          getActiveMissions(currentUser.uid),
-          getRooms(currentUser.uid),
-        ])
-      );
+      const missions = await withTimeout(getActiveMissions(currentUser.uid));
       const expired = missions.filter(m => m.expiryDate && m.expiryDate < today);
       setExpiredMissions(expired);
       setSelectedIds(new Set());
-      setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
     } catch (err) {
       console.error('Error loading missions for archiving:', err);
       setLoadError(getLoadErrorMessage(err, 'missions'));
@@ -191,7 +183,6 @@ const TaskArchivingStep = ({ onNext, onSkipToSummary }) => {
             handleArchive(id);
           }}
           onUpdateMission={() => {}}
-          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
     </>

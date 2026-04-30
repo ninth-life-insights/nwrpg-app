@@ -13,7 +13,6 @@ import MissionDetailView from '../missions/MissionCardFull';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
 import { getAllQuests } from '../../services/questService';
-import { getRooms } from '../../services/roomService';
 import { useEffect } from 'react';
 import './DayLookAheadModal.css';
 
@@ -29,19 +28,14 @@ const DayLookAheadModal = ({
   const [showAddMission, setShowAddMission] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [quests, setQuests] = useState([]);
-  const [roomsMap, setRoomsMap] = useState({});
 
   const dateStr = date.format('YYYY-MM-DD');
 
   useEffect(() => {
     if (!currentUser) return;
-    Promise.all([
-      getAllQuests(currentUser.uid),
-      getRooms(currentUser.uid),
-    ]).then(([questData, roomData]) => {
-      setQuests(questData);
-      setRoomsMap(Object.fromEntries(roomData.map(r => [r.id, r])));
-    }).catch(() => {});
+    getAllQuests(currentUser.uid)
+      .then(setQuests)
+      .catch(() => {});
   }, [currentUser]);
 
   const handleToggleComplete = async (missionId, isCompleted) => {
@@ -149,7 +143,6 @@ const DayLookAheadModal = ({
               quest={quests.find(q => q.id === m.questId) ?? null}
               onToggleComplete={handleToggleComplete}
               onViewDetails={handleViewDetails}
-              roomName={m.baseLocation ? roomsMap[m.baseLocation]?.name ?? null : null}
             />
           ))}
 
@@ -163,8 +156,7 @@ const DayLookAheadModal = ({
                   quest={quests.find(q => q.id === m.questId) ?? null}
                   onToggleComplete={handleToggleComplete}
                   onViewDetails={handleViewDetails}
-                  roomName={m.baseLocation ? roomsMap[m.baseLocation]?.name ?? null : null}
-                />
+                    />
               ))}
             </>
           )}
@@ -205,7 +197,6 @@ const DayLookAheadModal = ({
           onArchiveMission={handleArchiveMission}
           onUpdateMission={handleUpdateMission}
           quest={quests.find(q => q.id === selectedMission.questId)}
-          roomName={selectedMission.baseLocation ? roomsMap[selectedMission.baseLocation]?.name ?? null : null}
         />
       )}
     </div>

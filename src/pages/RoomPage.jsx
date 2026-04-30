@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats } from '../services/roomService';
+import { useRooms } from '../contexts/RoomsContext';
 import { getAllMissions, completeMissionWithRecurrence, uncompleteMission, deleteMission } from '../services/missionService';
 import { getAllQuests } from '../services/questService';
 import MissionCard from '../components/missions/MissionCard';
@@ -22,6 +23,7 @@ const isImageIcon = (icon) => icon && icon.includes('.');
 const RoomPage = () => {
   const { roomId } = useParams();
   const { currentUser } = useAuth();
+  const { refreshRooms } = useRooms();
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
@@ -183,6 +185,7 @@ const RoomPage = () => {
     setActionError(null);
     try {
       await deleteRoom(currentUser.uid, roomId);
+      await refreshRooms();
       navigate('/base');
     } catch (error) {
       console.error('Error deleting room:', error);

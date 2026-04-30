@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission, updateMission } from '../../services/missionService';
 import { getActiveQuests, addMissionToQuest, removeMissionFromQuest } from '../../services/questService';
-import { getRooms } from '../../services/roomService';
+import { useRooms } from '../../contexts/RoomsContext';
 import Badge from '../ui/Badge';
 // import CompletionTypeSelector from './sub-components/CompletionTypeSelector'; // not yet fully implemented
 import RecurrenceSelector, { RECURRENCE_PATTERNS } from './sub-components/recurrenceSelector';
@@ -105,21 +105,15 @@ const AddMissionCard = ({
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quests, setQuests] = useState([]);
-  const [rooms, setRooms] = useState([]);
+  const { rooms } = useRooms();
   const [showRoomField, setShowRoomField] = useState(mode === 'edit' && !!initialMission?.baseLocation);
 
-  // Load active quests and rooms on mount
+  // Load active quests on mount
   useEffect(() => {
     if (!currentUser) return;
-    Promise.all([
-      getActiveQuests(currentUser.uid),
-      getRooms(currentUser.uid),
-    ])
-      .then(([questData, roomData]) => {
-        setQuests(questData);
-        setRooms(roomData);
-      })
-      .catch(err => console.error('Could not load quests/rooms:', err));
+    getActiveQuests(currentUser.uid)
+      .then(setQuests)
+      .catch(err => console.error('Could not load quests:', err));
   }, [currentUser]);
 
   // Update form when initialMission changes (for edit mode)
