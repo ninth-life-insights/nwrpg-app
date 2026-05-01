@@ -1,5 +1,6 @@
 // src/components/missions/AddMissionCard.js
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission, updateMission } from '../../services/missionService';
 import { getActiveQuests, addMissionToQuest, removeMissionFromQuest } from '../../services/questService';
@@ -366,7 +367,7 @@ const AddMissionCard = ({
     skill.toLowerCase().includes(skillSearch.toLowerCase())
   );
 
-  return (
+  return createPortal(
     <div className="add-mission-overlay" onClick={onCancel}>
       <form className="add-mission-card" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
         <div className="add-mission-header">
@@ -818,7 +819,8 @@ const AddMissionCard = ({
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 };
 
