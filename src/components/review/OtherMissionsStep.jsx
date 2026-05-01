@@ -79,7 +79,7 @@ const OtherMissionsStep = ({
       if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
       setMissions(prev => prev.map(m =>
         m.id === missionId
-          ? { ...m, status: isCurrentlyCompleted ? 'active' : 'completed' }
+          ? { ...m, status: isCurrentlyCompleted ? 'active' : 'completed', xpAwarded: isCurrentlyCompleted ? null : (result?.xpAwarded ?? m.xpAwarded) }
           : m
       ));
     } catch (err) {
@@ -96,7 +96,7 @@ const OtherMissionsStep = ({
       if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
       if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
       if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
-      setMissions(prev => [{ ...newMission, status: 'completed' }, ...prev]);
+      setMissions(prev => [{ ...newMission, status: 'completed', xpAwarded: result?.xpAwarded }, ...prev]);
     } catch (err) {
       console.error('Error completing new mission:', err);
       setMissions(prev => [...prev, newMission]);
