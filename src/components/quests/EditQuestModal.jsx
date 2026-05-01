@@ -6,6 +6,7 @@ import Badge from '../ui/Badge';
 import { updateQuest } from '../../services/questService';
 import { QUEST_DIFFICULTY } from '../../types/Quests';
 import ErrorMessage from '../ui/ErrorMessage';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './CreateQuestModal.css'; // Reuse the same styles
 
 const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
@@ -19,6 +20,7 @@ const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  useModalBackButton(isOpen, onClose);
 
   if (!isOpen) return null;
 

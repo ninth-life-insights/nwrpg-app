@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRooms } from '../../contexts/RoomsContext';
 import { createRoom, updateRoom } from '../../services/roomService';
 import ErrorMessage from '../ui/ErrorMessage';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './AddRoomModal.css';
 
 const ROOM_ICONS = [
@@ -30,6 +31,7 @@ const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null }) => {
   const [cleanliness, setCleanliness] = useState(editRoom?.cleanliness ?? 3);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  useModalBackButton(true, onClose);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();

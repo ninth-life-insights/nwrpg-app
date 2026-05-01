@@ -12,6 +12,7 @@ import { DIFFICULTY_LEVELS, createMissionTemplate } from '../../types/Mission';
 import AchievementBadge from '../achievements/AchievementBadge';
 import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../ui/ErrorMessage';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './CreateQuestModal.css';
 
 const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
@@ -32,6 +33,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  useModalBackButton(isOpen, onClose);
 
   if (!isOpen) return null;
 

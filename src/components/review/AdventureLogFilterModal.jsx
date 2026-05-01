@@ -1,6 +1,7 @@
 // src/components/review/AdventureLogFilterModal.jsx
 import { useState, useEffect } from 'react';
 import '../missions/sub-components/MissionFilterModal.css';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 
 const DEFAULT_FILTERS = {
   entryStatus: 'all',    // 'all' | 'reviews-only'
@@ -10,6 +11,7 @@ const DEFAULT_FILTERS = {
 
 const AdventureLogFilterModal = ({ isOpen, onClose, currentFilters, onApplyFilters }) => {
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, ...currentFilters });
+  useModalBackButton(isOpen, onClose);
 
   useEffect(() => {
     setFilters({ ...DEFAULT_FILTERS, ...currentFilters });

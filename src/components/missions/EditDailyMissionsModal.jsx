@@ -1,6 +1,7 @@
 // src/components/missions/EditDailyMissionsModal.js
 import React from 'react';
 import EditDailyMissionsPage from '../../pages/EditDailyMissionsPage';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './EditDailyMissionsModal.css';
 
 const EditDailyMissionsModal = ({
@@ -10,6 +11,8 @@ const EditDailyMissionsModal = ({
   initialTargetDate = null,
   allowPartialSave = false,
 }) => {
+  useModalBackButton(true, onClose);
+
   const handleComplete = async () => {
     if (onSave) {
       await onSave();

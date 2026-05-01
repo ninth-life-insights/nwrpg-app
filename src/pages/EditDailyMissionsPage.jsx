@@ -49,6 +49,7 @@ import {
 } from '../utils/missionHelpers';
 
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import { useModalBackButton } from '../hooks/useModalBackButton';
 import './EditDailyMissionsPage.css';
 
 const EditDailyMissionsPage = ({
@@ -70,6 +71,7 @@ const EditDailyMissionsPage = ({
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
+  useModalBackButton(showMissionBank, () => setShowMissionBank(false));
   const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);

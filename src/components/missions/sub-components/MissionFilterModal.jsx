@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './MissionFilterModal.css';
 import { AVAILABLE_SKILLS } from '../../../data/Skills';
+import { useModalBackButton } from '../../../hooks/useModalBackButton';
 
 // Helper function to check if a mission's completion date falls within the specified range
 export const isWithinCompletedDateRange = (mission, dateRange) => {
@@ -65,6 +66,8 @@ const MissionFilterModal = ({
     completedDateRange: 'last7days',
     ...currentFilters
   });
+
+  useModalBackButton(isOpen, onClose);
 
   // Update local state when currentFilters prop changes
   useEffect(() => {

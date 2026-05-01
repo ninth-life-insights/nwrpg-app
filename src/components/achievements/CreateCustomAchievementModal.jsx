@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createCustomAchievement, updateCustomAchievement } from '../../services/achievementService';
 import { BUILDER_BADGE_COLORS, BUILDER_SYMBOLS } from '../../data/achievementDefinitions';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './CreateCustomAchievementModal.css';
 
 const COLOR_KEYS = Object.keys(BUILDER_BADGE_COLORS);
@@ -18,6 +19,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false,
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  useModalBackButton(true, onClose);
 
   const selectedSymbol = BUILDER_SYMBOLS[symbolIndex];
   const trackRef = useRef(null);
