@@ -97,8 +97,7 @@ const QuestBank = () => {
   };
 
   const handleQuestCreated = async (newQuest) => {
-    // Reload quests to show the new one
-    await loadQuests();
+    await Promise.all([loadQuests(), loadMissions()]);
   };
 
   const handleToggleCompleted = () => {
