@@ -354,37 +354,81 @@
 
 .add-mission-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: var(--color-bg-overlay);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;
   z-index: 1000;
-  padding: 20px;
 }
 
 .add-mission-card {
-  background: #fefce8;
-  border-radius: 12px;
+  background: var(--color-bg-main);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100%;
-  max-width: 400px;
-  padding: 20px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  animation: slideUp 0.2s ease-out;
-  position: relative;
+  max-width: var(--max-width-card);
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  animation: sheetSlideUp 0.25s ease-out;
 }
 
-@keyframes slideUp {
+@keyframes sheetSlideUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.95);
+    transform: translateY(100%);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+  }
+}
+
+.add-mission-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.add-mission-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text-dark);
+}
+
+.add-mission-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.add-mission-footer {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+@media (min-width: 480px) {
+  .add-mission-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+  .add-mission-card {
+    border-radius: var(--radius-xl);
+    animation: sheetScaleIn 0.2s ease-out;
+  }
+  @keyframes sheetScaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
   }
 }
 
@@ -656,13 +700,6 @@
 }
 
 /* Action Buttons */
-.add-mission-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
 
 .cancel-btn {
   flex: 1;
@@ -706,32 +743,23 @@
 
 /* Mobile Optimizations */
 @media (max-width: 480px) {
-  .add-mission-overlay {
-    padding: 15px;
-  }
-  
-  .add-mission-card {
-    max-width: none;
-    padding: 16px;
-  }
-  
   .add-mission-title-input {
     font-size: 16px;
   }
-  
+
   .difficulty-selector {
     gap: 8px;
   }
-  
+
   .ghost-badges {
     gap: 6px;
   }
-  
+
   .ghost-badge {
     font-size: 11px;
     padding: 5px 10px;
   }
-  
+
   .skills-grid-inline {
     gap: 4px;
   }

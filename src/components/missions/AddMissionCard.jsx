@@ -368,10 +368,12 @@ const AddMissionCard = ({
 
   return (
     <div className="add-mission-overlay" onClick={onCancel}>
-      <div className="add-mission-card" onClick={(e) => e.stopPropagation()}>
-        
-        <form onSubmit={handleSubmit}>
-          
+      <form className="add-mission-card" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
+        <div className="add-mission-header">
+          <h2>{mode === 'edit' ? 'Edit Mission' : 'Add Mission'}</h2>
+        </div>
+        <div className="add-mission-body">
+
           {/* Title Input */}
           <div className="add-mission-title-section">
             <input
@@ -794,29 +796,28 @@ const AddMissionCard = ({
           {/* Submit Error Display */}
           {errors.submit && <ErrorMessage message={errors.submit} />}
 
-          {/* Action Buttons */}
-          <div className="add-mission-actions">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="cancel-btn"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="add-btn"
-              disabled={isSubmitting}
-            >
-              {isSubmitting 
-                ? (mode === 'edit' ? 'Updating...' : 'Adding...') 
-                : (mode === 'edit' ? 'Update Mission' : 'Add Mission')
-              }
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+        <div className="add-mission-footer">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="cancel-btn"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="add-btn"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? (mode === 'edit' ? 'Updating...' : 'Adding...')
+              : (mode === 'edit' ? 'Update Mission' : 'Add Mission')
+            }
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
