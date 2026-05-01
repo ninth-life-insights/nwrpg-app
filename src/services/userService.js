@@ -35,7 +35,20 @@ export const getUserProfile = async (userId) => {
     const docSnap = await getDoc(userRef);
     
     if (docSnap.exists()) {
-      return docSnap.data();
+      const data = docSnap.data();
+      // One-time correction: recompute level/currentXP from totalXP using current formula
+      if (data.totalXP != null) {
+        const correctLevel = calculateLevelFromXP(data.totalXP);
+        const correctProgress = getXPProgressInLevel(data.totalXP, correctLevel);
+        if (data.level !== correctLevel || data.currentXP !== correctProgress.current) {
+          await updateDoc(userRef, {
+            level: correctLevel,
+            currentXP: correctProgress.current,
+          });
+          return { ...data, level: correctLevel, currentXP: correctProgress.current };
+        }
+      }
+      return data;
     } else {
       return null;
     }
@@ -54,7 +67,7 @@ export const getXPRequiredForLevel = (level) => {
   // For level 4+, scale by 1.5x from previous
   let xpRequired = 100;
   for (let i = 3; i < level; i++) {
-    xpRequired = Math.round(xpRequired * 1.5);
+    xpRequired = Math.min(Math.round(xpRequired * 1.5 / 5) * 5, 1000);
   }
   return xpRequired;
 };
