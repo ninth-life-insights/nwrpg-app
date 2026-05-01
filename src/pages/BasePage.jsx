@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getRooms, getAllRoomStats } from '../services/roomService';
+import { getRooms, getAllRoomStats, ENTIRE_BASE_ROOM_ID } from '../services/roomService';
 import { getAllMissions } from '../services/missionService';
 import { getUserProfile, updateUserProfile } from '../services/userService';
 import RoomCard from '../components/base/RoomCard';
@@ -116,37 +116,11 @@ const BasePage = () => {
     <div className="base-page-container">
       {/* Header */}
       <header className="base-page-header">
-        <button className="back-button" onClick={() => navigate('/home')}>
+        <button className="base-page-back-btn" onClick={() => navigate('/home')}>
           <span className="material-icons">arrow_back</span>
         </button>
-
-        {isEditingName ? (
-          <div className="base-name-edit">
-            <input
-              ref={nameInputRef}
-              className="base-name-input"
-              value={editNameValue}
-              onChange={e => setEditNameValue(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') handleCancelEditName(); }}
-              placeholder="Name your base..."
-              maxLength={40}
-            />
-            <div className="base-name-edit-actions">
-              {saveNameError && <span className="base-name-error">{saveNameError}</span>}
-              <button className="base-name-cancel" onClick={handleCancelEditName}>Cancel</button>
-              <button className="base-name-save" onClick={handleSaveName}>Save</button>
-            </div>
-          </div>
-        ) : (
-          <div className="base-title-row">
-            <h1 className="page-title">{baseName || 'Your Base'}</h1>
-            <button className="base-name-edit-btn" onClick={handleStartEditName} aria-label="Edit base name">
-              <span className="material-icons">edit</span>
-            </button>
-          </div>
-        )}
-
-        <div className="header-spacer" />
+        <h1 className="base-page-title">Your Base</h1>
+        <div className="base-page-header-spacer" />
       </header>
 
       {loadError && (
@@ -159,23 +133,58 @@ const BasePage = () => {
 
       {/* Rooms Grid */}
       <div className="rooms-grid">
-        {roomStats.map((room) => (
-          <RoomCard
-            key={room.roomId}
-            room={room}
-            stats={room.stats}
-            onClick={() => handleRoomClick(room.roomId)}
-          />
-        ))}
+        {roomStats.map((room) => {
+          const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
+          const displayRoom = isEntireBase
+            ? { ...room, name: baseName || room.name }
+            : room;
+
+          return (
+            <div key={room.roomId} className="room-card-slot">
+              <RoomCard
+                room={displayRoom}
+                stats={room.stats}
+                onClick={() => handleRoomClick(room.roomId)}
+              />
+              {isEntireBase && (
+                isEditingName ? (
+                  <div className="base-name-edit">
+                    <input
+                      ref={nameInputRef}
+                      className="base-name-input"
+                      value={editNameValue}
+                      onChange={e => setEditNameValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') handleCancelEditName(); }}
+                      placeholder="Name your base..."
+                      maxLength={40}
+                    />
+                    <div className="base-name-edit-actions">
+                      {saveNameError && <span className="base-name-error">{saveNameError}</span>}
+                      <button className="base-name-cancel" onClick={handleCancelEditName}>Cancel</button>
+                      <button className="base-name-save" onClick={handleSaveName}>Save</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button className="base-rename-btn" onClick={handleStartEditName}>
+                    <span className="material-icons">edit</span>
+                    {baseName ? 'Rename' : 'Add nickname'}
+                  </button>
+                )
+              )}
+            </div>
+          );
+        })}
 
         {/* Add Room Card */}
-        <div className="add-room-card" onClick={handleAddRoom}>
-          <div className="add-room-icon">
-            <span className="material-icons">add</span>
+        <div className="room-card-slot">
+          <div className="add-room-card" onClick={handleAddRoom}>
+            <div className="add-room-icon">
+              <span className="material-icons">add</span>
+            </div>
+            {!hasCustomRooms && (
+              <div className="add-room-label">Add your first room</div>
+            )}
           </div>
-          {!hasCustomRooms && (
-            <div className="add-room-label">Add your first room</div>
-          )}
         </div>
       </div>
 
