@@ -49,6 +49,7 @@ const HomePage = () => {
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
   const [baseStats, setBaseStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
+  const [baseName, setBaseName] = useState('');
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [weeklyReviewEligible, setWeeklyReviewEligible] = useState(false);
@@ -143,6 +144,7 @@ const HomePage = () => {
           setCharacter(userDoc.data().character);
         }
         setUserProfile(profile);
+        setBaseName(profile?.baseName || '');
 
         // Compute base stats across all room-assigned active missions
         const now = new Date();
@@ -470,7 +472,7 @@ const HomePage = () => {
           <button className="home-base-widget" onClick={() => navigate('/base')}>
             <div className="home-base-widget-header">
               <span className="material-icons">home</span>
-              <span className="home-base-widget-title">Base</span>
+              <span className="home-base-widget-title">{baseName || 'Base'}</span>
             </div>
             <div className="home-base-stats">
               <div className="home-base-stat">
