@@ -391,26 +391,112 @@
 }
 
 
-.skills-shortcut {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--space-sm);
+/* ── Home shortcuts row (Skills + Achievements + Base widget) ─── */
+
+.home-shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  align-items: stretch;
 }
 
-.action-button.skills-link {
+.home-shortcut-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.home-shortcut-btn {
+  flex: 1;
   background: var(--color-primary);
-  color: var(--color-bg-white);
-  border: 1px solid var(--color-border);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-xs);
   font-size: var(--font-size-sm);
-  padding: var(--space-sm) var(--space-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
   display: flex;
   align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 40px;
+}
+
+.home-shortcut-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.home-base-widget {
+  background: var(--color-bg-white);
+  border: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-sm) var(--space-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  text-align: center;
+}
+
+.home-base-widget:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.home-base-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.home-base-widget-header .material-icons {
+  font-size: 18px;
+  color: var(--color-text-medium);
+}
+
+.home-base-widget-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.home-base-stats {
+  display: flex;
+  justify-content: space-around;
   gap: var(--space-xs);
 }
 
-.action-button.skills-link:hover {
+.home-base-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.home-base-stat-number {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  line-height: 1;
+}
+
+.home-base-stat-number--late {
+  color: #ef4444;
+}
+
+.home-base-stat-label {
+  font-size: 10px;
   color: var(--color-text-medium);
-  background: rgba(0,0,0,0.03);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* ── Weekly review badge dot ─────────────────────────────────── */

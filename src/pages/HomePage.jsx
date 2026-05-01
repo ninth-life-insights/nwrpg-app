@@ -12,7 +12,8 @@ import {
 import {
   completeMissionWithRecurrence,
   uncompleteMission,
-  deleteMission
+  deleteMission,
+  getAllMissions,
 } from '../services/missionService';
 import { addXP, 
   subtractXP, 
@@ -47,6 +48,7 @@ const HomePage = () => {
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
+  const [baseStats, setBaseStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [weeklyReviewEligible, setWeeklyReviewEligible] = useState(false);
@@ -130,16 +132,33 @@ const HomePage = () => {
       setIsLoadingSlow(false);
       const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
-        const [userDoc, profile] = await withTimeout(
+        const [userDoc, profile, allMissions] = await withTimeout(
           Promise.all([
             getDoc(doc(db, 'users', currentUser.uid)),
             getUserProfile(currentUser.uid),
+            getAllMissions(currentUser.uid),
           ])
         );
         if (userDoc.exists()) {
           setCharacter(userDoc.data().character);
         }
         setUserProfile(profile);
+
+        // Compute base stats across all room-assigned active missions
+        const now = new Date();
+        const oneWeekFromNow = new Date();
+        oneWeekFromNow.setDate(now.getDate() + 7);
+        const roomMissions = allMissions.filter(m => m.baseLocation && m.status !== 'completed');
+        let bTotal = roomMissions.length, bOverdue = 0, bDueThisWeek = 0;
+        roomMissions.forEach(m => {
+          if (m.dueDate) {
+            const d = m.dueDate.toDate ? m.dueDate.toDate() : new Date(m.dueDate);
+            if (d < now) bOverdue++;
+            else if (d <= oneWeekFromNow) bDueThisWeek++;
+          }
+        });
+        setBaseStats({ total: bTotal, dueThisWeek: bDueThisWeek, overdue: bOverdue });
+
         await fetchDailyMissions();
 
         // Check weekly review eligibility
@@ -437,14 +456,38 @@ const HomePage = () => {
       </section>
 
       <section>
-        <div className="skills-shortcut">
-          <button className="action-button skills-link" onClick={() => navigate('/skills')}>
-            <span className="material-icons-light">brush</span>
-            Skills
-          </button>
-          <button className="action-button skills-link" onClick={() => navigate('/achievements')}>
-            <span className="material-icons-light">military_tech</span>
-            Achievements
+        <div className="home-shortcuts">
+          <div className="home-shortcut-col">
+            <button className="home-shortcut-btn" onClick={() => navigate('/skills')}>
+              <span className="material-icons-light">brush</span>
+              Skills
+            </button>
+            <button className="home-shortcut-btn" onClick={() => navigate('/achievements')}>
+              <span className="material-icons-light">military_tech</span>
+              Achievements
+            </button>
+          </div>
+          <button className="home-base-widget" onClick={() => navigate('/base')}>
+            <div className="home-base-widget-header">
+              <span className="material-icons">home</span>
+              <span className="home-base-widget-title">Base</span>
+            </div>
+            <div className="home-base-stats">
+              <div className="home-base-stat">
+                <span className="home-base-stat-number">{baseStats.total}</span>
+                <span className="home-base-stat-label">Tasks</span>
+              </div>
+              <div className="home-base-stat">
+                <span className="home-base-stat-number">{baseStats.dueThisWeek}</span>
+                <span className="home-base-stat-label">This Week</span>
+              </div>
+              <div className="home-base-stat">
+                <span className={`home-base-stat-number${baseStats.overdue > 0 ? ' home-base-stat-number--late' : ''}`}>
+                  {baseStats.overdue}
+                </span>
+                <span className="home-base-stat-label">Late</span>
+              </div>
+            </div>
           </button>
         </div>
       </section>
