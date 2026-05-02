@@ -2,26 +2,48 @@
 
 .add-quest-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: var(--color-bg-overlay);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: flex-end;
   z-index: 1000;
-  padding: var(--space-lg);
 }
 
 .add-quest-card {
   background: var(--color-bg-main);
-  border: 2px solid var(--color-border-yellow);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
+  border-top: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100%;
   max-width: var(--max-width-card);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  animation: sheetSlideUp 0.25s ease-out;
+  overflow-y: auto;
+}
+
+@keyframes sheetSlideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (min-width: 480px) {
+  .add-quest-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+  .add-quest-card {
+    border-radius: var(--radius-xl);
+    border-top: none;
+    border: 2px solid var(--color-border-yellow);
+    animation: questCardScaleIn 0.2s ease-out;
+  }
+  @keyframes questCardScaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
 }
 
 /* Title Section */
@@ -344,12 +366,7 @@
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .add-quest-card {
-    padding: var(--space-lg);
-    max-width: 100%;
-  }
-
+@media (max-width: 480px) {
   .add-quest-actions {
     flex-direction: column;
   }

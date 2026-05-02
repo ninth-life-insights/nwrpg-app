@@ -1,5 +1,6 @@
 // src/components/review/AdventureLogFilterModal.jsx
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import '../missions/sub-components/MissionFilterModal.css';
 import { useModalBackButton } from '../../hooks/useModalBackButton';
 
@@ -32,7 +33,7 @@ const AdventureLogFilterModal = ({ isOpen, onClose, currentFilters, onApplyFilte
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="filter-modal-overlay" onClick={onClose}>
       <div className="filter-modal" onClick={e => e.stopPropagation()}>
 
@@ -102,7 +103,8 @@ const AdventureLogFilterModal = ({ isOpen, onClose, currentFilters, onApplyFilte
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

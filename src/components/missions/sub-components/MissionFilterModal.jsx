@@ -1,5 +1,6 @@
 // src/components/missions/MissionFilterModal.js
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './MissionFilterModal.css';
 import { AVAILABLE_SKILLS } from '../../../data/Skills';
 import { useModalBackButton } from '../../../hooks/useModalBackButton';
@@ -113,7 +114,7 @@ const MissionFilterModal = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="filter-modal-overlay" onClick={onClose}>
       <div className="filter-modal" onClick={(e) => e.stopPropagation()}>
         
@@ -238,7 +239,8 @@ const MissionFilterModal = ({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

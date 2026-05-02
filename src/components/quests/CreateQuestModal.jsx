@@ -1,6 +1,7 @@
 // src/components/quests/CreateQuestModal.js
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import Badge from '../ui/Badge';
@@ -192,7 +193,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div className="add-quest-overlay" onClick={handleBackdropClick}>
       <div className="add-quest-card" onClick={(e) => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
@@ -362,7 +363,8 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           onCreated={(data) => { setPendingAchievement(data); setShowAchievementModal(false); }}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 

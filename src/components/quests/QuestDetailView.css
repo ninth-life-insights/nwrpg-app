@@ -498,15 +498,24 @@
   background: rgba(0, 0, 0, 0.5);
   z-index: 200;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
 .quest-detail-modal-sheet {
-  max-height: 92dvh;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--radius-xl);
+  animation: questDetailModalIn 0.2s ease-out;
+}
+
+@keyframes questDetailModalIn {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 
 /* Mobile Responsiveness */

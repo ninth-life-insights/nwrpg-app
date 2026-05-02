@@ -1,5 +1,6 @@
 // src/components/review/QuestGroomingStep.jsx
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getActiveQuests, getCompletedQuests, archiveQuest } from '../../services/questService';
 import { getActiveMissions, completeMissionWithRecurrence } from '../../services/missionService';
@@ -187,7 +188,7 @@ const QuestGroomingStep = ({
         </button>
       </StickyFooter>
 
-      {openQuestId && (
+      {openQuestId && createPortal(
         <div className="quest-detail-modal-overlay" onClick={handleModalClose}>
           <div className="quest-detail-modal-sheet" onClick={e => e.stopPropagation()}>
             <QuestDetailView
@@ -195,7 +196,8 @@ const QuestGroomingStep = ({
               onClose={handleModalClose}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

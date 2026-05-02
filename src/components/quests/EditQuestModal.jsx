@@ -1,6 +1,7 @@
 // src/components/quests/EditQuestModal.js
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Badge from '../ui/Badge';
 import { updateQuest } from '../../services/questService';
@@ -103,7 +104,7 @@ const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div className="add-quest-overlay" onClick={handleBackdropClick}>
       <div className="add-quest-card" onClick={(e) => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
@@ -177,7 +178,8 @@ const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -94,6 +94,60 @@ The parent page needs `padding-bottom: 100px` to prevent content from scrolling 
 
 Modal footers (e.g. `CreateQuestModal`) are a separate concern — they use `position: sticky` within the modal's scroll container, not `position: fixed`.
 
+## Modal Patterns
+
+### Shape by use case
+
+| Use case | Mobile shape | Desktop (≥480px) |
+|---|---|---|
+| Confirmation / destructive action | Centered dialog | Centered dialog |
+| Celebration / notification | Centered dialog | Centered dialog |
+| Form / data entry | Bottom sheet | Centered dialog |
+| Filter / sort | Bottom sheet | Centered dialog |
+| Detail view | Centered dialog | Centered dialog |
+
+### Bottom sheet — reference implementation
+
+`AddRoomModal` and `CreateCustomAchievementModal` are the canonical pattern. Copy their CSS structure:
+
+- Overlay: `position: fixed; inset: 0; align-items: flex-end; z-index: 1000`
+- Sheet: `border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 92dvh; display: flex; flex-direction: column`
+- Animation: `sheetSlideUp` — `translateY(100%)` → `translateY(0)`
+- Desktop override at `@media (min-width: 480px)`: `align-items: center`, full `border-radius: var(--radius-xl)`, scale animation
+- Internal structure: sticky `.modal-header` (`flex-shrink: 0`), scrollable `.modal-body` (`flex: 1; overflow-y: auto`), sticky `.modal-footer` (`flex-shrink: 0`)
+
+### Portal — always required for modals
+
+All modal components **must** render via `createPortal(content, document.body)`. This escapes any ancestor stacking context (sticky headers, fixed action bars, nested overlay wrappers) that would otherwise trap the modal behind a `z-index` ceiling.
+
+```jsx
+import { createPortal } from 'react-dom';
+
+const MyModal = ({ onClose }) => {
+  return createPortal(
+    <div className="my-overlay" onClick={onClose}>
+      <div className="my-sheet" onClick={e => e.stopPropagation()}>
+        ...
+      </div>
+    </div>,
+    document.body
+  );
+};
+```
+
+Modals currently using portal: `AddMissionCard`, `MissionCardFull`, `CreateCustomAchievementModal`, `EditQuestModal`, and the `QuestDetailView` wrapper in `QuestGroomingStep`.
+
+### Z-index tiers
+
+| Tier | Value | Used for |
+|---|---|---|
+| Sticky headers / nav | 100 | Page-level sticky elements |
+| Nested modal wrappers | 200 | e.g. `quest-detail-modal-overlay` in review flow |
+| Standard modals / sheets | 1000 | All modal components |
+| Celebrations / toasts | 2000 | `LevelUpModal`, `SkillLevelUpModal`, `AchievementToast` |
+
+---
+
 ## Error Handling Patterns
 
 ### Principle

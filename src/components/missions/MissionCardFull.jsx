@@ -1,5 +1,6 @@
 // src/components/missions/MissionCardFull.js
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import AddMissionCard from './AddMissionCard';
@@ -123,7 +124,7 @@ const MissionCardFull = ({
     setIsEditing(false);
   };
 
-  return (
+  return createPortal(
     <>
       <div className="mission-detail-overlay" onClick={onClose}>
         <div className="mission-detail-modal" onClick={(e) => e.stopPropagation()}>
@@ -345,7 +346,8 @@ const MissionCardFull = ({
           onUpdateMission={handleMissionUpdate}
         />
       )}
-    </>
+    </>,
+    document.body
   );
 };
 

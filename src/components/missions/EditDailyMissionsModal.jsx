@@ -1,5 +1,6 @@
 // src/components/missions/EditDailyMissionsModal.js
 import React from 'react';
+import { createPortal } from 'react-dom';
 import EditDailyMissionsPage from '../../pages/EditDailyMissionsPage';
 import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './EditDailyMissionsModal.css';
@@ -26,7 +27,7 @@ const EditDailyMissionsModal = ({
     }
   };
 
-  return (
+  return createPortal(
     <div className="edit-daily-missions-modal-overlay" onClick={handleBackdropClick}>
       <div className="edit-daily-missions-modal-container">
         
@@ -52,7 +53,8 @@ const EditDailyMissionsModal = ({
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

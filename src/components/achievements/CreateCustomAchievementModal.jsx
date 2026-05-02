@@ -1,5 +1,6 @@
 // src/components/achievements/CreateCustomAchievementModal.jsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createCustomAchievement, updateCustomAchievement } from '../../services/achievementService';
 import { BUILDER_BADGE_COLORS, BUILDER_SYMBOLS } from '../../data/achievementDefinitions';
@@ -107,7 +108,7 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false,
     }
   };
 
-  return (
+  return createPortal(
     <div className="custom-achievement-overlay" onClick={handleBackdropClick}>
       <div className="custom-achievement-modal">
 
@@ -241,7 +242,8 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false,
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

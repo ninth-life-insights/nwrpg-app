@@ -2,38 +2,43 @@
 
 .edit-daily-missions-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: var(--color-bg-overlay);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;
   z-index: 1000;
-  padding: var(--space-lg);
 }
 
 .edit-daily-missions-modal-container {
   background: var(--color-bg-main);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100%;
   max-width: 600px;
-  max-height: 90vh;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: modalSlideIn 0.3s ease-out;
+  max-height: 92dvh;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  animation: sheetSlideUp 0.25s ease-out;
   display: flex;
   flex-direction: column;
 }
 
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
+@keyframes sheetSlideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (min-width: 480px) {
+  .edit-daily-missions-modal-overlay {
+    align-items: center;
+    padding: 20px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  .edit-daily-missions-modal-container {
+    border-radius: var(--radius-xl);
+    animation: sheetScaleIn 0.2s ease-out;
+  }
+  @keyframes sheetScaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
   }
 }
 
