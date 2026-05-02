@@ -24,6 +24,10 @@
   overflow-y: auto;
 }
 
+.add-quest-card > form {
+  padding: var(--space-xl);
+}
+
 @keyframes sheetSlideUp {
   from { opacity: 0; transform: translateY(100%); }
   to   { opacity: 1; transform: translateY(0); }
@@ -373,7 +377,7 @@
 }
 /* Quest Reward Section */
 .quest-reward-section {
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md) 0;
   border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
