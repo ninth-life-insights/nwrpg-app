@@ -22,6 +22,11 @@ import { useEffect, useRef } from 'react';
  */
 export function useModalBackButton(isOpen, onClose) {
   const closedViaBack = useRef(false);
+  // Suppresses the popstate fired by our own cleanup's history.back() call.
+  // Needed because React StrictMode double-invokes effects: cleanup calls
+  // history.back(), then the re-mounted effect registers a new listener which
+  // would otherwise catch that popstate and close the modal spuriously.
+  const ignoreNextPopState = useRef(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -32,10 +37,14 @@ export function useModalBackButton(isOpen, onClose) {
     // Using location.href keeps the URL identical so React Router won't navigate.
     history.pushState({ __modalSentinel: true }, '', location.href);
 
-    function handlePopState() {
+    const handlePopState = () => {
+      if (ignoreNextPopState.current) {
+        ignoreNextPopState.current = false;
+        return;
+      }
       closedViaBack.current = true;
       onClose();
-    }
+    };
 
     window.addEventListener('popstate', handlePopState);
 
@@ -44,6 +53,7 @@ export function useModalBackButton(isOpen, onClose) {
       if (!closedViaBack.current) {
         // Modal was closed via UI — remove the sentinel entry we pushed.
         // Since the URL doesn't change, React Router won't treat this as navigation.
+        ignoreNextPopState.current = true;
         history.back();
       }
     };

@@ -495,7 +495,7 @@ const HomePage = () => {
       </section>
 
       {showEditDailyMissions && (
-        <EditDailyMissionsModal 
+        <EditDailyMissionsModal
           currentDailyMissions={dailyMissions}
           onClose={() => setShowEditDailyMissions(false)}
           onSave={handleDailyMissionsUpdate}
