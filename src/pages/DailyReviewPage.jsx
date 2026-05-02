@@ -223,6 +223,9 @@ const DailyReviewPage = () => {
               loading={summaryLoading}
               onDone={() => navigate('/home')}
               onUpdateStory={handleUpdateStory}
+              onRegenerateStory={(newStory) => setSnapshot(prev => ({ ...prev, aiStory: newStory, aiStoryGenerated: true }))}
+              userId={currentUser.uid}
+              date={today}
               newAchievements={todayAchievements}
             />
           </>
