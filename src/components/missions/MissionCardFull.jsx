@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import AddMissionCard from './AddMissionCard';
+import ErrorMessage from '../ui/ErrorMessage';
 import {
   MISSION_STATUS,
 } from '../../types/Mission';
@@ -18,26 +19,41 @@ import {
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { deleteMission, archiveMission, restoreMission } from '../../services/missionService';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({
   mission,
   onClose,
   onToggleComplete,
-  onDeleteMission,
-  onArchiveMission,
-  onRestoreMission,
-  onUpdateMission,
+  onMissionChanged,
 }) => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
-  const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
-  const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
   const [isEditing, setIsEditing] = useState(false);
   const [showExpiryNote, setShowExpiryNote] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [actionError, setActionError] = useState(null);
+  const [actionRetry, setActionRetry] = useState(null);
+  const [missionOverride, setMissionOverride] = useState(null);
   const actionsMenuRef = useRef(null);
+
+  const displayMission = missionOverride
+    ? { ...missionOverride, status: mission.status, xpAwarded: mission.xpAwarded }
+    : mission;
+
+  const roomName = displayMission.baseLocation ? roomsMap[displayMission.baseLocation]?.name ?? null : null;
+  const quest = displayMission.questId ? questsMap[displayMission.questId] ?? null : null;
+
+  const handleClose = () => {
+    setMissionOverride(null);
+    setActionError(null);
+    setActionRetry(null);
+    onClose();
+  };
 
   useEffect(() => {
     if (!showActionsMenu) return;
@@ -62,15 +78,15 @@ const MissionCardFull = ({
   };
 
   const getDueDateInfo = () => {
-    if (!mission.dueDate) return null;
+    if (!displayMission.dueDate) return null;
 
-    if (isMissionOverdue(mission)) return { status: 'overdue', display: `Overdue · ${formatForUser(mission.dueDate)}` };
-    if (isMissionDueToday(mission)) return { status: 'today', display: 'Due Today' };
-    if (isMissionDueTomorrow(mission)) return { status: 'tomorrow', display: 'Due Tomorrow' };
+    if (isMissionOverdue(displayMission)) return { status: 'overdue', display: `Overdue · ${formatForUser(displayMission.dueDate)}` };
+    if (isMissionDueToday(displayMission)) return { status: 'today', display: 'Due Today' };
+    if (isMissionDueTomorrow(displayMission)) return { status: 'tomorrow', display: 'Due Tomorrow' };
 
     return {
       status: 'upcoming',
-      display: formatForUser(mission.dueDate)
+      display: formatForUser(displayMission.dueDate)
     };
   };
 
@@ -81,31 +97,61 @@ const MissionCardFull = ({
   };
 
   const wasEdited = () => {
-    if (!mission.updatedAt || !mission.createdAt) return false;
-    const created = mission.createdAt.toDate ? mission.createdAt.toDate() : new Date(mission.createdAt);
-    const updated = mission.updatedAt.toDate ? mission.updatedAt.toDate() : new Date(mission.updatedAt);
-    return Math.abs(updated - created) > 5 * 60 * 1000; // more than 5 minutes apart
+    if (!displayMission.updatedAt || !displayMission.createdAt) return false;
+    const created = displayMission.createdAt.toDate ? displayMission.createdAt.toDate() : new Date(displayMission.createdAt);
+    const updated = displayMission.updatedAt.toDate ? displayMission.updatedAt.toDate() : new Date(displayMission.updatedAt);
+    return Math.abs(updated - created) > 5 * 60 * 1000;
   };
 
   const dueDateInfo = getDueDateInfo();
-  const createdDisplay = formatTimestamp(mission.createdAt);
-  const editedDisplay = wasEdited() ? formatTimestamp(mission.updatedAt) : null;
-  const expiryDisplay = mission.expiryDate ? formatForUserLong(mission.expiryDate) : null;
-  const completedDisplay = formatTimestamp(mission.completedAt);
+  const createdDisplay = formatTimestamp(displayMission.createdAt);
+  const editedDisplay = wasEdited() ? formatTimestamp(displayMission.updatedAt) : null;
+  const expiryDisplay = displayMission.expiryDate ? formatForUserLong(displayMission.expiryDate) : null;
+  const completedDisplay = formatTimestamp(displayMission.completedAt);
   const today = toDateString(new Date());
-  const futureScheduledDates = (mission.scheduledDates ?? [])
+  const futureScheduledDates = (displayMission.scheduledDates ?? [])
     .filter(d => d >= today)
     .sort();
-  const isRecurring = isRecurringMission(mission);
-  const isEvergreen = isEvergreenMission(mission);
-  const recurrenceText = getRecurrenceDisplayText(mission);
-  const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
-  const isActive = mission.status === MISSION_STATUS.ACTIVE;
-  const isExpired = mission.status === MISSION_STATUS.EXPIRED;
+  const isRecurring = isRecurringMission(displayMission);
+  const isEvergreen = isEvergreenMission(displayMission);
+  const recurrenceText = getRecurrenceDisplayText(displayMission);
+  const isCompleted = displayMission.status === MISSION_STATUS.COMPLETED;
+  const isActive = displayMission.status === MISSION_STATUS.ACTIVE;
+  const isExpired = displayMission.status === MISSION_STATUS.EXPIRED;
 
-  const handleDeleteMission = async () => {
-    if (onDeleteMission) {
-      await onDeleteMission(mission.id);
+  const handleDelete = async () => {
+    setActionError(null);
+    setActionRetry(() => handleDelete);
+    try {
+      await deleteMission(currentUser.uid, mission.id);
+      onMissionChanged?.();
+      handleClose();
+    } catch {
+      setActionError("That mission didn't delete. Try again.");
+    }
+  };
+
+  const handleArchive = async () => {
+    setActionError(null);
+    setActionRetry(() => handleArchive);
+    try {
+      await archiveMission(currentUser.uid, mission.id);
+      onMissionChanged?.();
+      handleClose();
+    } catch {
+      setActionError("That mission didn't archive. Try again.");
+    }
+  };
+
+  const handleRestore = async () => {
+    setActionError(null);
+    setActionRetry(() => handleRestore);
+    try {
+      await restoreMission(currentUser.uid, mission.id);
+      onMissionChanged?.();
+      handleClose();
+    } catch {
+      setActionError("That mission didn't restore. Try again.");
     }
   };
 
@@ -118,20 +164,19 @@ const MissionCardFull = ({
   };
 
   const handleMissionUpdate = (updatedMission) => {
-    if (onUpdateMission) {
-      onUpdateMission(updatedMission);
-    }
+    setMissionOverride(updatedMission);
     setIsEditing(false);
+    onMissionChanged?.();
   };
 
   return createPortal(
     <>
-      <div className="mission-detail-overlay" onClick={onClose}>
+      <div className="mission-detail-overlay" onClick={handleClose}>
         <div className="mission-detail-modal" onClick={(e) => e.stopPropagation()}>
-          
+
           {/* Header */}
           <div className="mission-detail-header">
-            <button className="mission-modal-back" onClick={onClose} aria-label="Close">
+            <button className="mission-modal-back" onClick={handleClose} aria-label="Close">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
@@ -160,14 +205,14 @@ const MissionCardFull = ({
                     )}
                     <button
                       className="dropdown-item archive-item"
-                      onClick={() => { setShowActionsMenu(false); onArchiveMission && onArchiveMission(mission.id); }}
+                      onClick={() => { setShowActionsMenu(false); handleArchive(); }}
                     >
                       <span className="material-icons">archive</span>
                       Archive
                     </button>
                     <button
                       className="dropdown-item delete-item"
-                      onClick={() => { setShowActionsMenu(false); handleDeleteMission(); }}
+                      onClick={() => { setShowActionsMenu(false); handleDelete(); }}
                     >
                       <span className="material-icons">delete</span>
                       Delete
@@ -182,27 +227,27 @@ const MissionCardFull = ({
           <div className="mission-detail-content">
             
             {/* Daily Mission Badge */}
-            {mission.isDailyMission && (
+            {displayMission.isDailyMission && (
               <div className="daily-mission-header">
                 <Badge variant="daily-large" icon="sunny">Daily</Badge>
               </div>
             )}
-            
+
             {/* Title + Description */}
             <div className="mission-title-section">
               <h2
                 className={`mission-detail-title ${isCompleted ? 'completed' : ''}${isActive ? ' tappable' : ''}`}
                 onClick={isActive ? handleEditClick : undefined}
               >
-                {mission.title}
+                {displayMission.title}
               </h2>
 
-              {mission.description ? (
+              {displayMission.description ? (
                 <div
                   className={`mission-description${isActive ? ' tappable' : ''}`}
                   onClick={isActive ? handleEditClick : undefined}
                 >
-                  <p>{mission.description}</p>
+                  <p>{displayMission.description}</p>
                 </div>
               ) : isActive ? (
                 <button className="ghost-prompt" onClick={handleEditClick}>
@@ -244,10 +289,10 @@ const MissionCardFull = ({
                 </div>
               )}
 
-              <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
+              <Badge variant="difficulty" difficulty={displayMission.difficulty}>{displayMission.difficulty}</Badge>
 
-              {mission.skill && (
-                <Badge variant="skill">Skill: {mission.skill}</Badge>
+              {displayMission.skill && (
+                <Badge variant="skill">Skill: {displayMission.skill}</Badge>
               )}
 
               {isActive && !dueDateInfo && (
@@ -257,7 +302,7 @@ const MissionCardFull = ({
                 </button>
               )}
 
-              {isActive && !mission.skill && (
+              {isActive && !displayMission.skill && (
                 <button className="ghost-prompt" onClick={handleEditClick}>
                   <span className="material-icons">add</span>
                   Add skill
@@ -316,10 +361,13 @@ const MissionCardFull = ({
             </div>
 
             {/* Action Buttons */}
+            {actionError && (
+              <ErrorMessage message={actionError} onRetry={actionRetry} />
+            )}
             <div className="mission-actions">
               {isExpired ? (
                 <button
-                  onClick={() => onRestoreMission && onRestoreMission(mission.id)}
+                  onClick={handleRestore}
                   className="action-button restore-button"
                 >
                   Restore Mission
@@ -341,7 +389,7 @@ const MissionCardFull = ({
       {isEditing && (
         <AddMissionCard
           mode="edit"
-          initialMission={mission}
+          initialMission={displayMission}
           onCancel={handleEditCancel}
           onUpdateMission={handleMissionUpdate}
         />

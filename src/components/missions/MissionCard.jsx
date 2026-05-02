@@ -1,6 +1,7 @@
 // src/components/missions/MissionCard.js - WITH QUEST INDICATOR
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MissionCardFull from './MissionCardFull';
 import Badge from '../ui/Badge';
 import {
   MISSION_STATUS,
@@ -24,7 +25,7 @@ import './MissionCard.css';
 const MissionCard = ({
   mission,
   onToggleComplete,
-  onViewDetails,
+  onMissionChanged,
   isRecentlyCompleted = false,
   selectionMode = false,
   isCustomOrderMode = false,
@@ -38,6 +39,7 @@ const MissionCard = ({
   const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
   const [showXpBadge, setShowXpBadge] = useState(false);
+  const [viewingDetails, setViewingDetails] = useState(false);
   
   // Drag and drop setup
   const {
@@ -118,8 +120,6 @@ const MissionCard = ({
     } else {
       if (canComplete) {
         onToggleComplete(mission.id, false, mission.xpReward, mission.spReward);
-      } else {
-        console.log('Mission cannot be completed yet');
       }
     }
   };
@@ -132,8 +132,9 @@ const MissionCard = ({
   };
 
   return (
-  <div 
-    ref={setNodeRef} 
+  <>
+  <div
+    ref={setNodeRef}
     style={style}
     className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : mission.isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
   >
@@ -157,7 +158,7 @@ const MissionCard = ({
     )}
 
     {/* Content area */}
-    <div className="content-area" onClick={() => onViewDetails(mission)}>
+    <div className="content-area" onClick={() => setViewingDetails(true)}>
         
         {/* Header with title and badges */}
         <div className="mission-header">
@@ -273,6 +274,16 @@ const MissionCard = ({
         </button>
       </div>
     </div>
+
+    {viewingDetails && (
+      <MissionCardFull
+        mission={mission}
+        onClose={() => setViewingDetails(false)}
+        onToggleComplete={onToggleComplete}
+        onMissionChanged={onMissionChanged}
+      />
+    )}
+  </>
   );
 };
 
