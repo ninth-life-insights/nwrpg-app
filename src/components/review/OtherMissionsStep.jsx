@@ -164,7 +164,7 @@ const OtherMissionsStep = ({
                     key={mission.id}
                     mission={mission}
                     onToggleComplete={handleToggle}
-                    onViewDetails={() => {}}
+                    onMissionChanged={() => setReloadTrigger(t => t + 1)}
                     hideDailyBadge={true}
                   />
                 ))}

@@ -68,7 +68,7 @@ const DayCard = ({
                     key={m.id}
                     mission={m}
                     onToggleComplete={() => {}}
-                    onViewDetails={() => {}}
+                    onMissionChanged={onPlanSaved}
                   />
                 ))
               )}

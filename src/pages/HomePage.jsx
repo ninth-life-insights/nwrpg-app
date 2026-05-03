@@ -12,7 +12,6 @@ import {
 import {
   completeMissionWithRecurrence,
   uncompleteMission,
-  deleteMission,
   getAllMissions,
 } from '../services/missionService';
 import { addXP, 
@@ -24,7 +23,6 @@ import { addXP,
 import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModal';
 import MissionCard from '../components/missions/MissionCard';
 import MissionCardCondensed from '../components/missions/MissionCardCondensed.jsx';
-import MissionDetailView from '../components/missions/MissionCardFull';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
@@ -44,7 +42,6 @@ const HomePage = () => {
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
   const navigate = useNavigate();
-  const [selectedMission, setSelectedMission] = useState(null);
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
@@ -272,42 +269,6 @@ const HomePage = () => {
     }
   };
 
-  // Add after handleToggleComplete function (around line 164)
-
-  const handleDeleteMission = async (missionId) => {
-    setActionError(null);
-    try {
-      await deleteMission(currentUser.uid, missionId);
-      setSelectedMission(null);
-      
-      // Refresh daily missions and user profile
-      await fetchDailyMissions();
-      const updatedProfile = await getUserProfile(currentUser.uid);
-      setUserProfile(updatedProfile);
-      
-    } catch (error) {
-      console.error('Failed to delete mission:', error);
-      setActionError("That mission didn't delete. Try again.");
-    }
-  };
-
-  const handleUpdateMission = async (updatedMission) => {
-    // Update the mission in local state
-    setDailyMissions(prevMissions =>
-      prevMissions.map(m =>
-        m.id === updatedMission.id ? updatedMission : m
-      )
-    );
-
-    // If this is the currently selected mission, update that too
-    if (selectedMission && selectedMission.id === updatedMission.id) {
-      setSelectedMission(updatedMission);
-    }
-
-    // Refresh to ensure data consistency
-    await fetchDailyMissions();
-  };
-
   return (
     <div className="homepage-container">
       {/* Header */}
@@ -426,7 +387,7 @@ const HomePage = () => {
                   isDailyMission: true,
                 }}
                 onToggleComplete={handleToggleComplete}
-                onViewDetails={setSelectedMission}
+                onMissionChanged={fetchDailyMissions}
               />
             ))
           ) : (
@@ -499,16 +460,6 @@ const HomePage = () => {
           currentDailyMissions={dailyMissions}
           onClose={() => setShowEditDailyMissions(false)}
           onSave={handleDailyMissionsUpdate}
-        />
-      )}
-
-      {selectedMission && (
-        <MissionDetailView
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onToggleComplete={handleToggleComplete}
-          onDeleteMission={handleDeleteMission}
-          onUpdateMission={handleUpdateMission}
         />
       )}
 

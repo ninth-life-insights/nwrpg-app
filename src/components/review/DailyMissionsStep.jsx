@@ -35,7 +35,7 @@ const DailyMissionsStep = ({
                 key={mission.id}
                 mission={mission}
                 onToggleComplete={onToggleComplete}
-                onViewDetails={() => {}}
+                onMissionChanged={onMissionsUpdated}
                 hideDailyBadge={true}
               />
             ))}

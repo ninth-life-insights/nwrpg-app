@@ -11,7 +11,6 @@ const QuestCard = ({
   quest,
   nextMission,
   onMissionToggleComplete,
-  onMissionViewDetails,
   onRestore,
   activeMissionCount,
 }) => {
@@ -86,7 +85,6 @@ const QuestCard = ({
           <MissionCard
             mission={nextMission}
             onToggleComplete={onMissionToggleComplete}
-            onViewDetails={onMissionViewDetails}
           />
         </div>
       )}

@@ -136,11 +136,6 @@ const QuestBank = () => {
     }
   };
 
-  const handleMissionViewDetails = (mission) => {
-    // TODO: Open mission detail modal
-    console.log('View mission details:', mission);
-  };
-
   if (loading) {
     return (
       <div className="quest-bank-page">
@@ -233,7 +228,6 @@ const QuestBank = () => {
                 nextMission={nextMission}
                 activeMissionCount={activeMissionCount}
                 onMissionToggleComplete={handleMissionToggleComplete}
-                onMissionViewDetails={handleMissionViewDetails}
                 onRestore={includeArchived ? handleRestoreQuest : undefined}
               />
             );

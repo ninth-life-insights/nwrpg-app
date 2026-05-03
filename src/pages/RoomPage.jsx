@@ -4,9 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats } from '../services/roomService';
 import { useRooms } from '../contexts/RoomsContext';
-import { getAllMissions, completeMissionWithRecurrence, uncompleteMission, deleteMission } from '../services/missionService';
+import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
 import MissionCard from '../components/missions/MissionCard';
-import MissionDetailView from '../components/missions/MissionCardFull';
 import AddMissionCard from '../components/missions/AddMissionCard';
 import AddRoomModal from '../components/base/AddRoomModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -42,7 +41,6 @@ const RoomPage = () => {
   const [localCleanliness, setLocalCleanliness] = useState(3);
 
   // Modals
-  const [selectedMission, setSelectedMission] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showEditRoom, setShowEditRoom] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -140,7 +138,6 @@ const RoomPage = () => {
         }
       }
       await fetchData();
-      setSelectedMission(null);
     } catch (error) {
       console.error('Error toggling mission:', error);
       setActionError(isCurrentlyCompleted
@@ -148,23 +145,6 @@ const RoomPage = () => {
         : "That mission didn't complete. Try again."
       );
     }
-  };
-
-  const handleDeleteMission = async (missionId) => {
-    setActionError(null);
-    try {
-      await deleteMission(currentUser.uid, missionId);
-      setSelectedMission(null);
-      await fetchData();
-    } catch (error) {
-      console.error('Error deleting mission:', error);
-      setActionError("That mission didn't delete. Try again.");
-    }
-  };
-
-  const handleUpdateMission = (updatedMission) => {
-    setMissions(prev => prev.map(m => m.id === updatedMission.id ? updatedMission : m));
-    if (selectedMission?.id === updatedMission.id) setSelectedMission(updatedMission);
   };
 
   const handleMissionAdded = async () => {
@@ -369,7 +349,7 @@ const RoomPage = () => {
             key={mission.id}
             mission={mission}
             onToggleComplete={handleToggleComplete}
-            onViewDetails={setSelectedMission}
+            onMissionChanged={fetchData}
             hideRoomBadge={true}
           />
         ))}
@@ -384,7 +364,7 @@ const RoomPage = () => {
                 key={mission.id}
                 mission={mission}
                 onToggleComplete={handleToggleComplete}
-                onViewDetails={setSelectedMission}
+                onMissionChanged={fetchData}
                   />
             ))}
           </>
@@ -406,17 +386,6 @@ const RoomPage = () => {
           onClose={() => setShowEditRoom(false)}
           onRoomAdded={handleRoomUpdated}
           editRoom={room}
-        />
-      )}
-
-      {/* Mission detail modal */}
-      {selectedMission && (
-        <MissionDetailView
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onToggleComplete={handleToggleComplete}
-          onDeleteMission={handleDeleteMission}
-          onUpdateMission={handleUpdateMission}
         />
       )}
 

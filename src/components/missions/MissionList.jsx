@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from './MissionCard';
-import MissionDetailView from './MissionCardFull';
 import AddMissionCard from './AddMissionCard';
 import { useNotifications } from '../../contexts/NotificationContext';
 import {
@@ -11,9 +10,6 @@ import {
   getExpiredMissions,
   uncompleteMission,
   completeMissionWithRecurrence,
-  deleteMission,
-  archiveMission,
-  restoreMission,
   updateMissionCustomOrder,
   batchUpdateMissionOrders
 } from '../../services/missionService';
@@ -62,7 +58,6 @@ const MissionList = ({
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedMission, setSelectedMission] = useState(null);
   const [showDragPrompt, setShowDragPrompt] = useState(false);
   const [dragPromptPosition, setDragPromptPosition] = useState(null);
   const [hasInitializedCustomOrder, setHasInitializedCustomOrder] = useState(false);
@@ -339,69 +334,6 @@ const MissionList = ({
     onMissionSelect(mission);
   };
 
-  const handleViewDetails = (mission) => {
-    if (selectionMode) {
-      handleMissionSelect(mission);
-    } else {
-      setSelectedMission(mission);
-    }
-  };
-
-  const handleDeleteMission = async (missionId) => {
-    try {
-      await deleteMission(currentUser.uid, missionId);
-      setSelectedMission(null);
-      await loadMissions();
-
-      if (onMissionUpdate) {
-        onMissionUpdate();
-      }
-    } catch (error) {
-      console.error('Failed to delete mission:', error);
-    }
-  };
-
-  const handleArchiveMission = async (missionId) => {
-    try {
-      await archiveMission(currentUser.uid, missionId);
-      setSelectedMission(null);
-      await loadMissions();
-      if (onMissionUpdate) onMissionUpdate();
-    } catch (error) {
-      console.error('Failed to archive mission:', error);
-    }
-  };
-
-  const handleRestoreMission = async (missionId) => {
-    try {
-      await restoreMission(currentUser.uid, missionId);
-      setSelectedMission(null);
-      await loadMissions();
-      if (onMissionUpdate) onMissionUpdate();
-    } catch (error) {
-      console.error('Failed to restore mission:', error);
-    }
-  };
-
-  const handleUpdateMission = (updatedMission) => {
-  // Update the mission in local state
-  setMissions(prevMissions =>
-    prevMissions.map(m =>
-      m.id === updatedMission.id ? updatedMission : m
-    )
-  );
-
-  // If this is the currently selected mission, update that too
-  if (selectedMission && selectedMission.id === updatedMission.id) {
-    setSelectedMission(updatedMission);
-  }
-
-  // Notify parent component if needed
-  if (onMissionUpdate) {
-    onMissionUpdate();
-  }
-};
-
   // Initialize custom order when first switching to custom mode
   const initializeCustomOrder = async () => {
     if (hasInitializedCustomOrder) return;
@@ -617,7 +549,6 @@ const MissionList = ({
                       marginBottom: index === recentlyCompletedMissions.length - 1 ? '25px' : '8px'
                     })
                   }}
-                  onClick={selectionMode ? () => handleMissionSelect(mission) : undefined}
                 >
                   {/* Drag Prompt - appears near the mission that was attempted to drag */}
                   {showDragPrompt && dragPromptPosition === mission.id && (
@@ -673,7 +604,8 @@ const MissionList = ({
                     key={mission.id}
                     mission={mission}
                     onToggleComplete={handleToggleComplete}
-                    onViewDetails={handleViewDetails}
+                    onMissionChanged={loadMissions}
+                    onSelect={selectionMode ? handleMissionSelect : undefined}
                     selectionMode={selectionMode}
                     isRecentlyCompleted={isRecentlyCompleted}
                     isCustomOrderMode={isCustomOrderMode}
@@ -684,18 +616,6 @@ const MissionList = ({
           </div>
         </SortableContext>
       </DndContext>
-
-      {!selectionMode && selectedMission && (
-        <MissionDetailView
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onToggleComplete={handleToggleComplete}
-          onDeleteMission={handleDeleteMission}
-          onArchiveMission={handleArchiveMission}
-          onRestoreMission={handleRestoreMission}
-          onUpdateMission={handleUpdateMission}
-        />
-      )}
 
       {!selectionMode && showAddMission && (
         <AddMissionCard

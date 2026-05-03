@@ -124,7 +124,7 @@ const MissionCardFull = ({
     setActionRetry(() => handleDelete);
     try {
       await deleteMission(currentUser.uid, mission.id);
-      onMissionChanged?.();
+      onMissionChanged?.(mission.id, 'deleted');
       handleClose();
     } catch {
       setActionError("That mission didn't delete. Try again.");
@@ -136,7 +136,7 @@ const MissionCardFull = ({
     setActionRetry(() => handleArchive);
     try {
       await archiveMission(currentUser.uid, mission.id);
-      onMissionChanged?.();
+      onMissionChanged?.(mission.id, 'archived');
       handleClose();
     } catch {
       setActionError("That mission didn't archive. Try again.");
@@ -148,7 +148,7 @@ const MissionCardFull = ({
     setActionRetry(() => handleRestore);
     try {
       await restoreMission(currentUser.uid, mission.id);
-      onMissionChanged?.();
+      onMissionChanged?.(mission.id, 'restored');
       handleClose();
     } catch {
       setActionError("That mission didn't restore. Try again.");
@@ -166,7 +166,7 @@ const MissionCardFull = ({
   const handleMissionUpdate = (updatedMission) => {
     setMissionOverride(updatedMission);
     setIsEditing(false);
-    onMissionChanged?.();
+    onMissionChanged?.(mission.id, 'updated');
   };
 
   return createPortal(

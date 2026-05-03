@@ -4,12 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   completeMissionWithRecurrence,
   uncompleteMission,
-  deleteMission,
-  archiveMission,
-  updateMission,
 } from '../../services/missionService';
 import MissionCard from '../missions/MissionCard';
-import MissionDetailView from '../missions/MissionCardFull';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
 import './DayLookAheadModal.css';
@@ -22,7 +18,6 @@ const DayLookAheadModal = ({
 }) => {
   const { currentUser } = useAuth();
   const [localMissions, setLocalMissions] = useState(missions);
-  const [selectedMission, setSelectedMission] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [actionError, setActionError] = useState(null);
 
@@ -49,41 +44,11 @@ const DayLookAheadModal = ({
     }
   };
 
-  const handleViewDetails = (mission) => {
-    setSelectedMission(mission);
-    setShowAddMission(false);
-  };
-
-  const handleUpdateMission = async (updatedMission) => {
-    setLocalMissions(prev =>
-      prev.map(m => m.id === updatedMission.id ? updatedMission : m)
-    );
-    setSelectedMission(updatedMission);
+  const handleMissionChanged = (missionId, changeType) => {
+    if (changeType === 'deleted' || changeType === 'archived') {
+      setLocalMissions(prev => prev.filter(m => m.id !== missionId));
+    }
     onUpdate?.();
-  };
-
-  const handleDeleteMission = async (missionId) => {
-    try {
-      await deleteMission(currentUser.uid, missionId);
-      setLocalMissions(prev => prev.filter(m => m.id !== missionId));
-      setSelectedMission(null);
-      onUpdate?.();
-    } catch (err) {
-      console.error('Error deleting mission:', err);
-      setActionError("That mission didn't delete. Try again.");
-    }
-  };
-
-  const handleArchiveMission = async (missionId) => {
-    try {
-      await archiveMission(currentUser.uid, missionId);
-      setLocalMissions(prev => prev.filter(m => m.id !== missionId));
-      setSelectedMission(null);
-      onUpdate?.();
-    } catch (err) {
-      console.error('Error archiving mission:', err);
-      setActionError("That mission didn't archive. Try again.");
-    }
   };
 
   const handleMissionAdded = (newMission) => {
@@ -131,7 +96,7 @@ const DayLookAheadModal = ({
               key={m.id}
               mission={m}
               onToggleComplete={handleToggleComplete}
-              onViewDetails={handleViewDetails}
+              onMissionChanged={handleMissionChanged}
             />
           ))}
 
@@ -143,7 +108,7 @@ const DayLookAheadModal = ({
                   key={m.id}
                   mission={m}
                       onToggleComplete={handleToggleComplete}
-                  onViewDetails={handleViewDetails}
+                  onMissionChanged={handleMissionChanged}
                     />
               ))}
             </>
@@ -175,17 +140,6 @@ const DayLookAheadModal = ({
         )}
       </div>
 
-      {/* MissionCardFull — renders on top, same as rest of app */}
-      {selectedMission && (
-        <MissionDetailView
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onToggleComplete={handleToggleComplete}
-          onDeleteMission={handleDeleteMission}
-          onArchiveMission={handleArchiveMission}
-          onUpdateMission={handleUpdateMission}
-        />
-      )}
     </div>
   );
 };

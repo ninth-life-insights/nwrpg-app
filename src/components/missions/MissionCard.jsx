@@ -26,6 +26,7 @@ const MissionCard = ({
   mission,
   onToggleComplete,
   onMissionChanged,
+  onSelect,
   isRecentlyCompleted = false,
   selectionMode = false,
   isCustomOrderMode = false,
@@ -158,7 +159,13 @@ const MissionCard = ({
     )}
 
     {/* Content area */}
-    <div className="content-area" onClick={() => setViewingDetails(true)}>
+    <div className="content-area" onClick={() => {
+      if (selectionMode && onSelect) {
+        onSelect(mission);
+      } else if (!selectionMode) {
+        setViewingDetails(true);
+      }
+    }}>
         
         {/* Header with title and badges */}
         <div className="mission-header">

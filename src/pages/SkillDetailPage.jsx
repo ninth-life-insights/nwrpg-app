@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { getUserProfile, getSPProgressInLevel } from '../services/userService';
 import { getActiveMissions, getCompletedMissions } from '../services/missionService';
 import MissionCard from '../components/missions/MissionCard';
-import MissionDetailView from '../components/missions/MissionCardFull';
 import { completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -24,7 +23,6 @@ const SkillDetailPage = () => {
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
-  const [selectedMission, setSelectedMission] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -93,34 +91,10 @@ const SkillDetailPage = () => {
           setNewAchievements(result.newlyAwardedAchievements);
         }
       }
-      // Refresh everything
       await fetchData();
-      setSelectedMission(null);
     } catch (error) {
       console.error('Error toggling mission completion:', error);
       setActionError(isCurrentlyCompleted ? "That undo didn't go through. Try again." : "That mission didn't complete. Try again.");
-    }
-  };
-
-  const handleDeleteMission = async (missionId) => {
-    setActionError(null);
-    try {
-      const { deleteMission } = await import('../services/missionService');
-      await deleteMission(currentUser.uid, missionId);
-      setSelectedMission(null);
-      await fetchData();
-    } catch (error) {
-      console.error('Error deleting mission:', error);
-      setActionError("That mission didn't delete. Try again.");
-    }
-  };
-
-  const handleUpdateMission = (updatedMission) => {
-    setMissions((prev) =>
-      prev.map((m) => (m.id === updatedMission.id ? updatedMission : m))
-    );
-    if (selectedMission?.id === updatedMission.id) {
-      setSelectedMission(updatedMission);
     }
   };
 
@@ -186,21 +160,11 @@ const SkillDetailPage = () => {
               key={mission.id}
               mission={mission}
               onToggleComplete={handleToggleComplete}
-              onViewDetails={setSelectedMission}
+              onMissionChanged={fetchData}
             />
           ))
         )}
       </div>
-
-      {selectedMission && (
-        <MissionDetailView
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onToggleComplete={handleToggleComplete}
-          onDeleteMission={handleDeleteMission}
-          onUpdateMission={handleUpdateMission}
-        />
-      )}
 
       <AchievementToast
         achievements={newAchievements}

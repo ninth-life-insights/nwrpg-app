@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getActiveMissions, expireMission } from '../../services/missionService';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
-import MissionDetailView from '../missions/MissionCardFull';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
 import { withTimeout, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
@@ -18,8 +17,6 @@ const TaskArchivingStep = ({ onNext, onSkipToSummary }) => {
   const [actionError, setActionError] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [archivingIds, setArchivingIds] = useState(new Set());
-  const [selectedMission, setSelectedMission] = useState(null);
-
   const today = toDateString(new Date());
 
   const loadData = async () => {
@@ -143,7 +140,7 @@ const TaskArchivingStep = ({ onNext, onSkipToSummary }) => {
                       <MissionCardCondensed
                         mission={mission}
                         onToggleComplete={() => {}}
-                        onViewDetails={() => setSelectedMission(mission)}
+                        onMissionChanged={loadData}
                       />
                     </div>
                     <button
@@ -172,19 +169,6 @@ const TaskArchivingStep = ({ onNext, onSkipToSummary }) => {
         </StickyFooter>
       </div>
 
-      {selectedMission && (
-        <MissionDetailView
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onToggleComplete={() => {}}
-          onDeleteMission={() => {}}
-          onArchiveMission={(id) => {
-            setSelectedMission(null);
-            handleArchive(id);
-          }}
-          onUpdateMission={() => {}}
-        />
-      )}
     </>
   );
 };

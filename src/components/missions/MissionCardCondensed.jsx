@@ -1,5 +1,6 @@
 // src/components/missions/MissionCardCondensed.jsx
 import React, { useState, useEffect } from 'react';
+import MissionCardFull from './MissionCardFull';
 import Badge from '../ui/Badge';
 import {
   MISSION_STATUS,
@@ -17,13 +18,14 @@ import './MissionCardCondensed.css';
 const MissionCardCondensed = ({
   mission,
   onToggleComplete,
-  onViewDetails,
+  onMissionChanged,
 }) => {
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
   const [showXpBadge, setShowXpBadge] = useState(false);
+  const [viewingDetails, setViewingDetails] = useState(false);
 
   useEffect(() => {
     setShowXpBadge(isCompleted);
@@ -45,8 +47,9 @@ const MissionCardCondensed = ({
   };
 
   return (
+  <>
     <div className={`mission-card-condensed ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily' : ''}`}>
-      <div className="mcc-content" onClick={() => onViewDetails(mission)}>
+      <div className="mcc-content" onClick={() => setViewingDetails(true)}>
         <div className="mcc-row">
           <h3 className={`mcc-title ${isCompleted ? 'completed' : ''}`}>
             {mission.title}
@@ -85,6 +88,16 @@ const MissionCardCondensed = ({
         </svg>
       </button>
     </div>
+
+    {viewingDetails && (
+      <MissionCardFull
+        mission={mission}
+        onClose={() => setViewingDetails(false)}
+        onToggleComplete={onToggleComplete}
+        onMissionChanged={onMissionChanged}
+      />
+    )}
+  </>
   );
 };
 

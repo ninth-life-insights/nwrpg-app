@@ -1,10 +1,7 @@
 // src/components/quests/QuestMissionList.js
 
-import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from '../missions/MissionCard';
-import MissionDetailView from '../missions/MissionCardFull';
-import AddMissionCard from '../missions/AddMissionCard';
 import { useNotifications } from '../../contexts/NotificationContext';
 import {
   completeMissionWithRecurrence,
@@ -34,7 +31,7 @@ const SortableMissionCard = ({
   mission,
   isEditMode,
   onToggleComplete,
-  onViewDetails,
+  onMissionChanged,
   onRemove,
 }) => {
   const {
@@ -74,7 +71,7 @@ const SortableMissionCard = ({
           <MissionCard
             mission={mission}
             onToggleComplete={onToggleComplete}
-            onViewDetails={onViewDetails}
+            onMissionChanged={onMissionChanged}
           />
         </div>
 
@@ -103,9 +100,6 @@ const QuestMissionList = ({
 }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
-  const [selectedMission, setSelectedMission] = useState(null);
-  const [editingMission, setEditingMission] = useState(null);
-
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(TouchSensor, {
@@ -165,21 +159,6 @@ const QuestMissionList = ({
     }
   };
 
-  const handleViewDetails = (mission) => {
-    setSelectedMission(mission);
-  };
-
-  const handleEditMission = (mission) => {
-    setEditingMission(mission);
-  };
-
-  const handleUpdateMission = async (updatedMission) => {
-    if (onMissionUpdate) {
-      await onMissionUpdate();
-    }
-    setEditingMission(null);
-  };
-
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
@@ -230,31 +209,12 @@ const QuestMissionList = ({
               mission={mission}
               isEditMode={isEditMode}
               onToggleComplete={handleToggleComplete}
-              onViewDetails={handleViewDetails}
+              onMissionChanged={onMissionUpdate}
               onRemove={handleRemoveMission}
             />
           ))}
         </SortableContext>
       </DndContext>
-
-      {selectedMission && (
-        <MissionDetailView
-          mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
-          onToggleComplete={handleToggleComplete}
-          onUpdateMission={onMissionUpdate}
-          onEditMission={handleEditMission}
-        />
-      )}
-
-      {editingMission && (
-        <AddMissionCard
-          mode="edit"
-          initialMission={editingMission}
-          onUpdateMission={handleUpdateMission}
-          onCancel={() => setEditingMission(null)}
-        />
-      )}
     </div>
   );
 };
