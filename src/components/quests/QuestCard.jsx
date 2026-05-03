@@ -13,9 +13,11 @@ const QuestCard = ({
   onMissionToggleComplete,
   onMissionViewDetails,
   onRestore,
+  activeMissionCount,
 }) => {
   const navigate = useNavigate();
-  const progress = calculateQuestProgress(quest);
+  const displayTotal = activeMissionCount ?? quest.totalMissions;
+  const progress = calculateQuestProgress(quest, activeMissionCount);
 
   const handleViewFullQuest = (e) => {
     e.stopPropagation();
@@ -70,7 +72,7 @@ const QuestCard = ({
               <div className="progress-text">
                 <span className="progress-number">{quest.completedMissions}</span>
                 <span className="progress-divider">/</span>
-                <span className="progress-total">{quest.totalMissions}</span>
+                <span className="progress-total">{displayTotal}</span>
               </div>
             </div>
           </div>

@@ -77,17 +77,20 @@ export const createQuestTemplate = (overrides = {}) => {
 };
 
 // Calculate quest progress percentage
-export const calculateQuestProgress = (quest) => {
-  if (quest.totalMissions === 0) return 0;
-  return Math.round((quest.completedMissions / quest.totalMissions) * 100);
+// Pass activeMissionCount to exclude archived missions from the denominator
+export const calculateQuestProgress = (quest, activeMissionCount) => {
+  const total = activeMissionCount ?? quest.totalMissions;
+  if (total === 0) return 0;
+  return Math.round((quest.completedMissions / total) * 100);
 };
 
 // Get the next uncompleted mission in a quest
 export const getNextMission = (quest, missions) => {
-  // Find first mission in missionOrder that's not in completedMissionIds
   for (const missionId of quest.missionOrder) {
     if (!quest.completedMissionIds.includes(missionId)) {
-      const mission = missions.find(m => m.id === missionId);
+      const mission = missions.find(
+        m => m.id === missionId && m.status !== 'expired' && m.status !== 'deleted'
+      );
       if (mission) return mission;
     }
   }

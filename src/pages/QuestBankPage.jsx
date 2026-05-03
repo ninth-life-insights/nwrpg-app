@@ -222,12 +222,16 @@ const QuestBank = () => {
         ) : (
           quests.map(quest => {
             const nextMission = getNextMission(quest, missions);
+            const activeMissionCount = missions.filter(
+              m => m.questId === quest.id && m.status !== 'expired' && m.status !== 'deleted'
+            ).length;
 
             return (
               <QuestCard
                 key={quest.id}
                 quest={quest}
                 nextMission={nextMission}
+                activeMissionCount={activeMissionCount}
                 onMissionToggleComplete={handleMissionToggleComplete}
                 onMissionViewDetails={handleMissionViewDetails}
                 onRestore={includeArchived ? handleRestoreQuest : undefined}

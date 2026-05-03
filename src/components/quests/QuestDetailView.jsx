@@ -137,7 +137,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   };
 
   const handleCompleteQuest = async () => {
-    if (quest.completedMissions < quest.totalMissions) {
+    if (quest.completedMissions < missions.length) {
       setShowCompleteConfirm(true);
     } else {
       await completeQuestConfirmed();
@@ -304,7 +304,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     );
   }
 
-  const progress = calculateQuestProgress(quest);
+  const progress = calculateQuestProgress(quest, missions.length);
 
   const isCompleted = quest.status === 'completed';
 
@@ -384,7 +384,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
               ) : (
                 <>
                   <div className="quest-progress-badge">
-                    {quest.completedMissions}/{quest.totalMissions} missions
+                    {quest.completedMissions}/{missions.length} missions
                   </div>
                   <div className="progress-bar">
                     <div

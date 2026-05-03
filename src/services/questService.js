@@ -16,12 +16,13 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { checkAndAwardAchievements, awardPendingAchievement, unawardPendingAchievement } from './achievementService';
-import { 
-  QUEST_STATUS, 
+import {
+  QUEST_STATUS,
   createQuestTemplate,
   validateQuest,
   isQuestComplete
 } from '../types/Quests';
+import { MISSION_STATUS } from '../types/Mission';
 
 // Collection reference
 const getQuestsCollection = (userId) => {
@@ -287,6 +288,18 @@ export const reorderQuestMissions = async (userId, questId, newMissionOrder) => 
   return getQuest(userId, questId);
 };
 
+// Count missions in a quest that are still active or completed (i.e. not archived/expired/deleted)
+const getActiveMissionCount = async (userId, questId) => {
+  const missionsRef = collection(db, 'users', userId, 'missions');
+  const q = query(
+    missionsRef,
+    where('questId', '==', questId),
+    where('status', 'in', [MISSION_STATUS.ACTIVE, MISSION_STATUS.COMPLETED])
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.size;
+};
+
 // Update quest progress when a mission is completed/uncompleted
 export const updateQuestProgress = async (userId, questId, missionId, isCompleted) => {
   const quest = await getQuest(userId, questId);
@@ -307,9 +320,11 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
     completedMissionIds: updatedCompletedIds,
     completedMissions: updatedCompletedIds.length
   };
-  
-  // Auto-complete quest if all missions are done
-  if (updatedCompletedIds.length === quest.totalMissions &&
+
+  const activeMissionCount = await getActiveMissionCount(userId, questId);
+
+  // Auto-complete quest if all active (non-archived) missions are done
+  if (updatedCompletedIds.length === activeMissionCount && activeMissionCount > 0 &&
       quest.status === QUEST_STATUS.ACTIVE) {
     updates.status = QUEST_STATUS.COMPLETED;
     updates.completedAt = serverTimestamp();
@@ -334,9 +349,9 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
     }
   }
 
-  // Reopen quest if it was auto-completed but now has incomplete missions
+  // Reopen quest if it was auto-completed but now has incomplete active missions
   if (quest.status === QUEST_STATUS.COMPLETED &&
-      updatedCompletedIds.length < quest.totalMissions) {
+      updatedCompletedIds.length < activeMissionCount) {
     updates.status = QUEST_STATUS.ACTIVE;
     updates.completedAt = null;
 
