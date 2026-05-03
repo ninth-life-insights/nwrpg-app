@@ -123,7 +123,7 @@ const AddMissionCard = ({
       setFormData(getInitialFormData());
       setShowDueDateField(!!initialMission.dueDate);
       setShowSkillField(!!initialMission.skill);
-      setShowExpiryField(!!initialMission.expiryDate);
+      setShowExpiryField(false);
       setShowQuestField(!!initialMission.questId);
       setShowRoomField(!!initialMission.baseLocation);
     }
