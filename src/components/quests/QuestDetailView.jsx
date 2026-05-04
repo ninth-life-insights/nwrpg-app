@@ -548,6 +548,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
         <AddMissionCard
           onAddMission={handleAddMission}
           onCancel={() => setShowAddMission(false)}
+          defaultQuestId={questId}
         />
       )}
 

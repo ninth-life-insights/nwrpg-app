@@ -28,6 +28,7 @@ const AddMissionCard = ({
   initialDueDate = null,   // pre-fill dueDate in add mode (YYYY-MM-DD string)
   onUpdateMission,
   defaultRoomId = null,    // pre-assign mission to a room (silently)
+  defaultQuestId = null,   // pre-assign mission to a quest (silently)
   autoOpenField = null,    // field to auto-expand on mount (e.g. 'dueDate', 'skill', 'room')
 }) => {
   const { currentUser } = useAuth();
@@ -93,7 +94,7 @@ const AddMissionCard = ({
       priority: 'normal',
       pinned: false,
       isDailyMission: false,
-      questId: null,
+      questId: defaultQuestId || null,
       baseLocation: defaultRoomId || null,
     };
   };
@@ -103,7 +104,7 @@ const AddMissionCard = ({
   const [showDueDateField, setShowDueDateField] = useState((mode === 'edit' && !!initialMission?.dueDate) || !!initialDueDate || autoOpenField === 'dueDate');
   const [showSkillField, setShowSkillField] = useState(!!(mode === 'edit' && initialMission?.skill) || autoOpenField === 'skill');
   const [showExpiryField, setShowExpiryField] = useState(false);
-  const [showQuestField, setShowQuestField] = useState(mode === 'edit' && !!initialMission?.questId);
+  const [showQuestField, setShowQuestField] = useState((mode === 'edit' && !!initialMission?.questId) || !!defaultQuestId);
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quests, setQuests] = useState([]);
