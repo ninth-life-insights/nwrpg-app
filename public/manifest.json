@@ -9,8 +9,15 @@
     },
     {
       "src": "/assets/App-Icon/Nwrpg-icon-192.png",
-      "type": "any maskable",
-      "sizes": "192x192"
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/App-Icon/white-icon.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "monochrome"
     },
     {
       "src": "/assets/App-Icon/Nwrpg-icon-384.png",

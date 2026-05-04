@@ -1,6 +1,6 @@
 // src/components/ui/LevelUpModal.js
 import React, { useEffect, useRef } from 'react';
-import { LEVEL_UP_MESSAGES } from '@/data/levelUpFlavorText';
+import { LEVEL_UP_MESSAGES } from '../../data/levelUpFlavorText';
 import './LevelUpModal.css';
 
 const LevelUpModal = ({ newLevel, onClose }) => {
