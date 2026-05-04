@@ -127,135 +127,172 @@ const MissionFilterModal = ({
 
         {/* Filter Content */}
         <div className="filter-modal-content">
-          
-          {/* Sort Options */}
-          <div className="filter-section">
-            <h4>Sort By</h4>
-            <div className="sort-options">
-              <select 
-                value={filters.sortBy}
-                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                className="filter-select"
-              >
-                <option value="custom">Custom Order</option>
-                <option value="dueDate">Due Date</option>
-                <option value="createdAt">Created Date</option>
-                <option value="difficulty">Difficulty</option>
-                <option value="title">Alphabetical</option>
-              </select>
-              
-              <select 
-                value={filters.sortOrder}
-                onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
-                className="filter-select"
-              >
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-              </select>
+
+          {/* Sort — one row of two */}
+          <div className="filter-group">
+            <h3 className="filter-group-header">
+              Sort
+              {(filters.sortBy !== 'custom' || filters.sortOrder !== 'asc') && (
+                <span className="filter-active-dot-inline" />
+              )}
+            </h3>
+            <div className="filter-pair-row">
+              <div className="filter-section">
+                <h4>
+                  Sort by
+                  {filters.sortBy !== 'custom' && <span className="filter-active-dot-inline" />}
+                </h4>
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  className="filter-select full-width"
+                >
+                  <option value="custom">Custom Order</option>
+                  <option value="dueDate">Due Date</option>
+                  <option value="createdAt">Created Date</option>
+                  <option value="difficulty">Difficulty</option>
+                  <option value="title">Alphabetical</option>
+                </select>
+              </div>
+
+              <div className="filter-section">
+                <h4>
+                  Order
+                  {filters.sortOrder !== 'asc' && <span className="filter-active-dot-inline" />}
+                </h4>
+                <select
+                  value={filters.sortOrder}
+                  onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
+                  className="filter-select full-width"
+                >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Skill Filter */}
-          <div className="filter-section">
-            <h4>Filter by Skill</h4>
-            <select
-              value={filters.skillFilter}
-              onChange={(e) => handleFilterChange('skillFilter', e.target.value)}
-              className="filter-select full-width"
-            >
-              <option value="">Any</option>
-              <option value="__has_skill__">All skills</option>
-              {AVAILABLE_SKILLS.map(skill => (
-                <option key={skill} value={skill}>{skill}</option>
-              ))}
-            </select>
-          </div>
+          {/* Filter — 2×2 grid */}
+          <div className="filter-group">
+            <h3 className="filter-group-header">
+              Filter
+              {(filters.taskTypeFilter || filters.skillFilter || filters.roomFilter || filters.questFilter || filters.includeCompleted) && (
+                <span className="filter-active-dot-inline" />
+              )}
+            </h3>
+            <div className="filter-grid">
+              <div className="filter-section">
+                <h4>
+                  Task type
+                  {filters.taskTypeFilter && <span className="filter-active-dot-inline" />}
+                </h4>
+                <select
+                  value={filters.taskTypeFilter}
+                  onChange={(e) => handleFilterChange('taskTypeFilter', e.target.value)}
+                  className="filter-select full-width"
+                >
+                  <option value="">Any</option>
+                  <option value="unique">Standard</option>
+                  <option value="recurring">Recurring</option>
+                  <option value="evergreen">Evergreen</option>
+                </select>
+              </div>
 
-          {/* Room Filter */}
-          {rooms.length > 0 && (
-            <div className="filter-section">
-              <h4>Filter by Room</h4>
-              <select
-                value={filters.roomFilter}
-                onChange={(e) => handleFilterChange('roomFilter', e.target.value)}
-                className="filter-select full-width"
-              >
-                <option value="">Any</option>
-                <option value="__has_room__">All rooms</option>
-                {rooms.map(room => (
-                  <option key={room.id} value={room.id}>{room.name}</option>
-                ))}
-                <option value="__unassigned__">Unassigned</option>
-              </select>
-            </div>
-          )}
+              <div className="filter-section">
+                <h4>
+                  Skill
+                  {filters.skillFilter && <span className="filter-active-dot-inline" />}
+                </h4>
+                <select
+                  value={filters.skillFilter}
+                  onChange={(e) => handleFilterChange('skillFilter', e.target.value)}
+                  className="filter-select full-width"
+                >
+                  <option value="">Any</option>
+                  <option value="__has_skill__">All skills</option>
+                  {AVAILABLE_SKILLS.map(skill => (
+                    <option key={skill} value={skill}>{skill}</option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Task Type Filter */}
-          <div className="filter-section">
-            <h4>Filter by Task Type</h4>
-            <select
-              value={filters.taskTypeFilter}
-              onChange={(e) => handleFilterChange('taskTypeFilter', e.target.value)}
-              className="filter-select full-width"
-            >
-              <option value="">Any</option>
-              <option value="unique">Standard</option>
-              <option value="recurring">Recurring</option>
-              <option value="evergreen">Evergreen</option>
-            </select>
-          </div>
-
-          {/* Quest Filter */}
-          <div className="filter-section">
-            <h4>Filter by Quest</h4>
-            <select
-              value={filters.questFilter}
-              onChange={(e) => handleFilterChange('questFilter', e.target.value)}
-              className="filter-select full-width"
-            >
-              <option value="">Any</option>
-              <option value="__has_quest__">All quests</option>
-              <option value="__none__">No quest</option>
-              {quests
-                .filter(q => q.status !== 'deleted')
-                .map(q => (
-                  <option key={q.id} value={q.id}>{q.title}</option>
-                ))}
-            </select>
-          </div>
-
-          {/* Status Options */}
-          <div className="filter-section">
-            <h4>Status</h4>
-            <div className="checkbox-options">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={filters.includeCompleted}
-                  onChange={(e) => handleFilterChange('includeCompleted', e.target.checked)}
-                />
-                <span className="checkmark"></span>
-                Include completed missions
-              </label>
-
-              {/* Completion Date Range - Only show when includeCompleted is checked */}
-              {filters.includeCompleted && (
-                <div className="date-range-section">
-                  <label className="date-range-label">Completed within:</label>
+              {rooms.length > 0 && (
+                <div className="filter-section">
+                  <h4>
+                    Room
+                    {filters.roomFilter && <span className="filter-active-dot-inline" />}
+                  </h4>
                   <select
-                    value={filters.completedDateRange}
-                    onChange={(e) => handleFilterChange('completedDateRange', e.target.value)}
-                    className="filter-select date-range-select"
+                    value={filters.roomFilter}
+                    onChange={(e) => handleFilterChange('roomFilter', e.target.value)}
+                    className="filter-select full-width"
                   >
-                    <option value="today">Today</option>
-                    <option value="last7days">Last 7 days</option>
-                    <option value="last30days">Last 30 days</option>
-                    <option value="alltime">All time</option>
+                    <option value="">Any</option>
+                    <option value="__has_room__">All rooms</option>
+                    {rooms.map(room => (
+                      <option key={room.id} value={room.id}>{room.name}</option>
+                    ))}
+                    <option value="__unassigned__">Unassigned</option>
                   </select>
                 </div>
               )}
+
+              <div className="filter-section">
+                <h4>
+                  Quest
+                  {filters.questFilter && <span className="filter-active-dot-inline" />}
+                </h4>
+                <select
+                  value={filters.questFilter}
+                  onChange={(e) => handleFilterChange('questFilter', e.target.value)}
+                  className="filter-select full-width"
+                >
+                  <option value="">Any</option>
+                  <option value="__has_quest__">All quests</option>
+                  <option value="__none__">No quest</option>
+                  {quests
+                    .filter(q => q.status !== 'deleted')
+                    .map(q => (
+                      <option key={q.id} value={q.id}>{q.title}</option>
+                    ))}
+                </select>
+              </div>
             </div>
 
+            {/* Completed — full width below the grid */}
+            <div className="filter-section filter-section-completed">
+              <h4>
+                Completed
+                {filters.includeCompleted && <span className="filter-active-dot-inline" />}
+              </h4>
+              <div className="checkbox-options">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={filters.includeCompleted}
+                    onChange={(e) => handleFilterChange('includeCompleted', e.target.checked)}
+                  />
+                  <span className="checkmark"></span>
+                  Include completed
+                </label>
+
+                {filters.includeCompleted && (
+                  <div className="date-range-section">
+                    <label className="date-range-label">Within:</label>
+                    <select
+                      value={filters.completedDateRange}
+                      onChange={(e) => handleFilterChange('completedDateRange', e.target.value)}
+                      className="filter-select date-range-select"
+                    >
+                      <option value="today">Today</option>
+                      <option value="last7days">Last 7 days</option>
+                      <option value="last30days">Last 30 days</option>
+                      <option value="alltime">All time</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
         </div>

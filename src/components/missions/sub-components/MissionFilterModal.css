@@ -16,12 +16,15 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
   width: 100%;
-  max-width: 500px;
+  max-width: 560px;
   max-height: 92dvh;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   animation: sheetSlideUp 0.25s ease-out;
+  /* overflow: hidden is intentionally omitted here so that native <select>
+     dropdowns near the bottom edge of the modal can render upward into the
+     viewport without being clipped. The header/footer corners are handled
+     via their own border-radius instead. */
 }
 
 @keyframes sheetSlideUp {
@@ -52,6 +55,8 @@
   padding: 20px 24px;
   border-bottom: 1px solid #e9ecef;
   background: #f8f9fa;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  flex-shrink: 0;
 }
 
 .filter-modal-header h3 {
@@ -78,66 +83,111 @@
 
 /* Content */
 .filter-modal-content {
-  padding: 24px;
+  padding: 20px 24px 24px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   flex: 1;
+  /* Scrollable body ensures content is always reachable regardless of modal height */
 }
 
-.filter-section {
-  margin-bottom: 24px;
+/* Sort group + Filter group layout */
+.filter-group {
+  margin-bottom: 20px;
 }
 
-.filter-section:last-child {
+.filter-group:last-child {
   margin-bottom: 0;
 }
 
-.filter-section h4 {
+.filter-group-header {
   margin: 0 0 12px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #495057;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
 }
 
-/* Sort Options */
-.sort-options {
-  display: flex;
+/* Sort: one row of two selects */
+.filter-pair-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
+/* Filter: 2×2 grid */
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.filter-section {
+  margin-bottom: 0;
+}
+
+/* Completed sits below the grid with spacing */
+.filter-section-completed {
+  margin-top: 12px;
+}
+
+.filter-section h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Active filter indicator dot */
+.filter-active-dot-inline {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--color-primary, #6c63ff);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .filter-select {
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
+  padding: 8px 10px;
+  border: 1.5px solid #ced4da;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   background: white;
   color: #495057;
   cursor: pointer;
   transition: border-color 0.2s ease;
-  flex: 1;
+  width: 100%;
+  /* Allow browser to flip the option list upward when near viewport bottom */
+  position: relative;
 }
 
 .filter-select:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-}
-
-.filter-select.full-width {
-  width: 100%;
+  border-color: var(--color-primary, #6c63ff);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #6c63ff) 15%, transparent);
 }
 
 /* Checkbox Options */
 .checkbox-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: #495057;
   user-select: none;
 }
@@ -148,32 +198,32 @@
 }
 
 .checkmark {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid #ced4da;
   border-radius: 4px;
-  margin-right: 10px;
+  margin-right: 8px;
   position: relative;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .checkbox-label:hover .checkmark {
-  border-color: #007bff;
+  border-color: var(--color-primary, #6c63ff);
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark {
-  background: #007bff;
-  border-color: #007bff;
+  background: var(--color-primary, #6c63ff);
+  border-color: var(--color-primary, #6c63ff);
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
   content: '';
   position: absolute;
-  left: 5px;
+  left: 4px;
   top: 1px;
   width: 4px;
-  height: 8px;
+  height: 7px;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -197,21 +247,28 @@
 }
 
 .archive-link-btn.active {
-  color: #007bff;
+  color: var(--color-primary, #6c63ff);
   font-weight: 500;
 }
 
 .date-range-section {
-  padding-left: 28px;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  padding-left: 24px;
+  margin-top: 2px;
 }
 
 .date-range-label {
-  font-size: 13px;
-  color: #6c757d;
+  font-size: 12px;
+  color: #9ca3af;
   white-space: nowrap;
+}
+
+.date-range-select {
+  flex: 1;
+  min-width: 100px;
 }
 
 /* Footer */
@@ -219,9 +276,11 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 16px 24px 20px;
   border-top: 1px solid #e9ecef;
   background: #f8f9fa;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  flex-shrink: 0;
 }
 
 .filter-modal-footer-buttons {
@@ -241,12 +300,12 @@
 }
 
 .filter-btn.primary {
-  background: #007bff;
+  background: var(--color-primary, #6c63ff);
   color: white;
 }
 
 .filter-btn.primary:hover {
-  background: #0056b3;
+  filter: brightness(0.9);
   transform: translateY(-1px);
 }
 
@@ -262,47 +321,4 @@
 
 .filter-btn:active {
   transform: translateY(0);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .filter-modal {
-    width: 95%;
-    margin: 20px;
-  }
-  
-  .filter-modal-header {
-    padding: 16px 20px;
-  }
-  
-  .filter-modal-content {
-    padding: 20px;
-  }
-  
-  .filter-modal-footer {
-    padding: 16px 20px;
-  }
-
-  .filter-modal-footer-buttons {
-    flex-direction: column;
-  }
-  
-  .sort-options {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .filter-modal {
-    width: 98%;
-    margin: 10px;
-  }
-  
-  .filter-modal-header h3 {
-    font-size: 1.1rem;
-  }
-  
-  .filter-section {
-    margin-bottom: 20px;
-  }
 }
