@@ -1,0 +1,27 @@
+// src/data/levelUpFlavorText.js
+
+export const LEVEL_UP_MESSAGES = [
+    '- Another day, another dragon',
+    'Your wisdom grows, adventurer',
+    'Your spellbook is filling up.',
+    'You\'ve come far on this journey.',
+    'Time for a rest at the tavern? You\'ve earned it.',
+    'Your inner hero is showing...',
+    'Your party grows stronger.',
+    'You have weathered the chaos well.',
+    'The fog of war recedes, you know the terrain better now.',
+    'The bards will sing of this day.',
+    'That dungeon didn\'t know what hit it.',
+    'You are leading your party to greatness.',
+    'The treasure chest opens for those who show up.',
+    'As the prophecy foretold...',
+    'Mundane missions, legendary heroics.',
+    'Epic loot awaits.',
+    'Your kingdom is in good hands.',
+    'Your magical affinity grows.',
+    'Monsters? Vanquished.',
+    'Ain\'t no rest for the wicked awesome.',
+    'Another summit reached.',
+    'Epic is as epic does.',
+    'The laundry cowers before you.',
+  ];

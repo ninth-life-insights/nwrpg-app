@@ -1,8 +1,13 @@
 // src/components/ui/LevelUpModal.js
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { LEVEL_UP_MESSAGES } from '@/data/levelUpFlavorText';
 import './LevelUpModal.css';
 
 const LevelUpModal = ({ newLevel, onClose }) => {
+  const flavorText = useRef(
+    LEVEL_UP_MESSAGES[Math.floor(Math.random() * LEVEL_UP_MESSAGES.length)]
+  ).current;
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -30,9 +35,7 @@ const LevelUpModal = ({ newLevel, onClose }) => {
             <span className="level-up-number">{newLevel}</span>
           </div>
           <h2 className="level-up-heading">You reached level {newLevel}.</h2>
-          <p className="level-up-subtext">
-            One more level cleared. Keep it up.
-          </p>
+          <p className="level-up-subtext">{flavorText}</p>
         </div>
 
         <button className="level-up-close-btn" onClick={onClose}>
