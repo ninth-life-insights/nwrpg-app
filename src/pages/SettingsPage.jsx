@@ -25,7 +25,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
 
   const [prefs, setPrefs] = useState(null);
-  const [weekStartDay, setWeekStartDay] = useState(1); // default Monday
+  const [weekStartDay, setWeekStartDay] = useState(0); // default Sunday
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -41,9 +41,9 @@ const SettingsPage = () => {
         const stored = profile.weekStartDay;
         const dayNameMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
         const coerced = typeof stored === 'string'
-          ? (dayNameMap[stored.toLowerCase()] ?? 1)
+          ? (dayNameMap[stored.toLowerCase()] ?? 0)
           : Number(stored);
-        setWeekStartDay(Number.isFinite(coerced) ? coerced : 1);
+        setWeekStartDay(Number.isFinite(coerced) ? coerced : 0);
       }
     });
   }, [currentUser]);
