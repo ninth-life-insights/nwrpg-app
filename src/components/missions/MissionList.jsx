@@ -45,6 +45,7 @@ const MissionList = ({
   filters = {},
   searchQuery = '',
   onApplyFilters = null,
+  onResetFilters = null,
   selectionMode = false,
   onMissionSelect = null,
   selectedMissions = [],
@@ -520,12 +521,22 @@ const MissionList = ({
 
   if (displayMissions.length === 0) {
     const isArchiveView = missionType === 'expired';
+    const hasActiveFilters = !isArchiveView && (
+      searchQuery ||
+      memoizedFilters.skillFilter ||
+      memoizedFilters.roomFilter ||
+      memoizedFilters.taskTypeFilter ||
+      memoizedFilters.questFilter ||
+      memoizedFilters.includeCompleted
+    );
 
     const emptyMessage = isArchiveView
       ? "No archived missions."
-      : missionType === 'active'
-        ? "No active missions. Add your first mission to get started!"
-        : "No completed missions yet. Complete some active missions to see them here!";
+      : hasActiveFilters
+        ? "No missions match your current filters."
+        : missionType === 'active'
+          ? "No active missions. Add your first mission to get started!"
+          : "No completed missions yet. Complete some active missions to see them here!";
 
     return (
       <div>
@@ -535,6 +546,23 @@ const MissionList = ({
           color: '#666'
         }}>
           {emptyMessage}
+          {hasActiveFilters && onResetFilters && (
+            <div style={{ marginTop: '12px' }}>
+              <button
+                onClick={onResetFilters}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#007bff',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  padding: 0
+                }}
+              >
+                Reset filters
+              </button>
+            </div>
+          )}
           {isArchiveView && onApplyFilters && (
             <div style={{ marginTop: '12px' }}>
               <button

@@ -127,9 +127,23 @@ const MissionBank = () => {
   const handleApplyFilters = (newFilters) => {
     // Clear recently completed missions when filters change
     setRecentlyCompletedMissions([]);
-
     setFilters(newFilters);
+  };
 
+  const handleResetFilters = () => {
+    setRecentlyCompletedMissions([]);
+    setFilters({
+      sortBy: 'custom',
+      sortOrder: 'asc',
+      skillFilter: '',
+      includeCompleted: false,
+      showArchive: false,
+      completedDateRange: 'last7days',
+      roomFilter: '',
+      taskTypeFilter: '',
+      questFilter: ''
+    });
+    setSearchQuery('');
   };
 
   const getMissionType = () => {
@@ -216,6 +230,7 @@ const MissionBank = () => {
         filters={filters}
         searchQuery={searchQuery}
         onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
         recentlyCompletedMissions={recentlyCompletedMissions}
         onMissionCompletion={handleMissionCompletion}
         onMissionUncompletion={handleMissionUncompletion}
