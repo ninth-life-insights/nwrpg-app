@@ -53,7 +53,7 @@ export const isWithinCompletedDateRange = (mission, dateRange) => {
 };
 
 const FILTER_DEFAULTS = {
-  sortBy: 'dueDate',
+  sortBy: 'custom',
   sortOrder: 'asc',
   skillFilter: '',
   includeCompleted: false,
