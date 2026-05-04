@@ -34,6 +34,7 @@ const MissionCardFull = ({
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
   const [isEditing, setIsEditing] = useState(false);
+  const [editFocusField, setEditFocusField] = useState(null);
   const [showExpiryNote, setShowExpiryNote] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -155,17 +156,20 @@ const MissionCardFull = ({
     }
   };
 
-  const handleEditClick = () => {
+  const handleEditClick = (fieldHint) => {
+    setEditFocusField(fieldHint ?? null);
     setIsEditing(true);
   };
 
   const handleEditCancel = () => {
     setIsEditing(false);
+    setEditFocusField(null);
   };
 
   const handleMissionUpdate = (updatedMission) => {
     setMissionOverride(updatedMission);
     setIsEditing(false);
+    setEditFocusField(null);
     onMissionChanged?.(mission.id, 'updated');
   };
 
@@ -245,12 +249,12 @@ const MissionCardFull = ({
               {displayMission.description ? (
                 <div
                   className={`mission-description${isActive ? ' tappable' : ''}`}
-                  onClick={isActive ? handleEditClick : undefined}
+                  onClick={isActive ? () => handleEditClick('description') : undefined}
                 >
                   <p>{displayMission.description}</p>
                 </div>
               ) : isActive ? (
-                <button className="ghost-prompt" onClick={handleEditClick}>
+                <button className="ghost-prompt" onClick={() => handleEditClick('description')}>
                   <span className="material-icons">add</span>
                   Add description
                 </button>
@@ -276,7 +280,7 @@ const MissionCardFull = ({
               {roomName && (
                 <button
                   className={`badge-as-button${isActive ? ' tappable' : ''}`}
-                  onClick={isActive ? handleEditClick : undefined}
+                  onClick={isActive ? () => handleEditClick('room') : undefined}
                   disabled={!isActive}
                 >
                   <Badge variant="room" icon="home">{roomName}</Badge>
@@ -296,21 +300,21 @@ const MissionCardFull = ({
               )}
 
               {isActive && !dueDateInfo && (
-                <button className="ghost-prompt" onClick={handleEditClick}>
+                <button className="ghost-prompt" onClick={() => handleEditClick('dueDate')}>
                   <span className="material-icons">add</span>
                   Add due date
                 </button>
               )}
 
               {isActive && !displayMission.skill && (
-                <button className="ghost-prompt" onClick={handleEditClick}>
+                <button className="ghost-prompt" onClick={() => handleEditClick('skill')}>
                   <span className="material-icons">add</span>
                   Add skill
                 </button>
               )}
 
               {isActive && !roomName && (
-                <button className="ghost-prompt" onClick={handleEditClick}>
+                <button className="ghost-prompt" onClick={() => handleEditClick('room')}>
                   <span className="material-icons">add</span>
                   Add room
                 </button>
@@ -392,6 +396,7 @@ const MissionCardFull = ({
           initialMission={displayMission}
           onCancel={handleEditCancel}
           onUpdateMission={handleMissionUpdate}
+          autoOpenField={editFocusField}
         />
       )}
     </>,

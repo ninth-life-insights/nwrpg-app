@@ -28,6 +28,7 @@ const AddMissionCard = ({
   initialDueDate = null,   // pre-fill dueDate in add mode (YYYY-MM-DD string)
   onUpdateMission,
   defaultRoomId = null,    // pre-assign mission to a room (silently)
+  autoOpenField = null,    // field to auto-expand on mount (e.g. 'dueDate', 'skill', 'room')
 }) => {
   const { currentUser } = useAuth();
   
@@ -99,15 +100,15 @@ const AddMissionCard = ({
 
   const [formData, setFormData] = useState(getInitialFormData());
   const [errors, setErrors] = useState({});
-  const [showDueDateField, setShowDueDateField] = useState((mode === 'edit' && !!initialMission?.dueDate) || !!initialDueDate);
-  const [showSkillField, setShowSkillField] = useState(mode === 'edit' && initialMission?.skill);
+  const [showDueDateField, setShowDueDateField] = useState((mode === 'edit' && !!initialMission?.dueDate) || !!initialDueDate || autoOpenField === 'dueDate');
+  const [showSkillField, setShowSkillField] = useState(!!(mode === 'edit' && initialMission?.skill) || autoOpenField === 'skill');
   const [showExpiryField, setShowExpiryField] = useState(false);
   const [showQuestField, setShowQuestField] = useState(mode === 'edit' && !!initialMission?.questId);
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quests, setQuests] = useState([]);
   const { rooms } = useRooms();
-  const [showRoomField, setShowRoomField] = useState(mode === 'edit' && !!initialMission?.baseLocation);
+  const [showRoomField, setShowRoomField] = useState(!!(mode === 'edit' && !!initialMission?.baseLocation) || autoOpenField === 'room');
 
   // Load active quests on mount
   useEffect(() => {
@@ -121,11 +122,11 @@ const AddMissionCard = ({
   useEffect(() => {
     if (mode === 'edit' && initialMission) {
       setFormData(getInitialFormData());
-      setShowDueDateField(!!initialMission.dueDate);
-      setShowSkillField(!!initialMission.skill);
+      setShowDueDateField(!!initialMission.dueDate || autoOpenField === 'dueDate');
+      setShowSkillField(!!initialMission.skill || autoOpenField === 'skill');
       setShowExpiryField(false);
       setShowQuestField(!!initialMission.questId);
-      setShowRoomField(!!initialMission.baseLocation);
+      setShowRoomField(!!initialMission.baseLocation || autoOpenField === 'room');
     }
   }, [mode, initialMission]);
 
