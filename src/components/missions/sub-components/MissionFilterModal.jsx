@@ -52,19 +52,28 @@ export const isWithinCompletedDateRange = (mission, dateRange) => {
   }
 };
 
-const MissionFilterModal = ({ 
-  isOpen, 
-  onClose, 
-  currentFilters, 
-  onApplyFilters 
+const FILTER_DEFAULTS = {
+  sortBy: 'dueDate',
+  sortOrder: 'asc',
+  skillFilter: '',
+  includeCompleted: false,
+  showArchive: false,
+  completedDateRange: 'last7days',
+  roomFilter: '',
+  taskTypeFilter: '',
+  questFilter: ''
+};
+
+const MissionFilterModal = ({
+  isOpen,
+  onClose,
+  currentFilters,
+  onApplyFilters,
+  rooms = [],
+  quests = []
 }) => {
   const [filters, setFilters] = useState({
-    sortBy: 'dueDate',
-    sortOrder: 'asc',
-    skillFilter: '',
-    includeCompleted: false,
-    showArchive: false,
-    completedDateRange: 'last7days',
+    ...FILTER_DEFAULTS,
     ...currentFilters
   });
 
@@ -73,12 +82,7 @@ const MissionFilterModal = ({
   // Update local state when currentFilters prop changes
   useEffect(() => {
     setFilters({
-      sortBy: 'dueDate',
-      sortOrder: 'asc',
-      skillFilter: '',
-      includeCompleted: false,
-      showArchive: false,
-      completedDateRange: 'last7days',
+      ...FILTER_DEFAULTS,
       ...currentFilters
     });
   }, [currentFilters]);
@@ -99,16 +103,8 @@ const MissionFilterModal = ({
   };
 
   const handleReset = () => {
-    const defaultFilters = {
-      sortBy: 'dueDate',
-      sortOrder: 'asc',
-      skillFilter: '',
-      includeCompleted: false,
-      showArchive: false,
-      completedDateRange: 'last7days'
-    };
-    setFilters(defaultFilters);
-    onApplyFilters(defaultFilters);
+    setFilters(FILTER_DEFAULTS);
+    onApplyFilters(FILTER_DEFAULTS);
     onClose();
   };
 
@@ -162,7 +158,7 @@ const MissionFilterModal = ({
           {/* Skill Filter */}
           <div className="filter-section">
             <h4>Filter by Skill</h4>
-            <select 
+            <select
               value={filters.skillFilter}
               onChange={(e) => handleFilterChange('skillFilter', e.target.value)}
               className="filter-select full-width"
@@ -171,6 +167,57 @@ const MissionFilterModal = ({
               {AVAILABLE_SKILLS.map(skill => (
                 <option key={skill} value={skill}>{skill}</option>
               ))}
+            </select>
+          </div>
+
+          {/* Room Filter */}
+          {rooms.length > 0 && (
+            <div className="filter-section">
+              <h4>Filter by Room</h4>
+              <select
+                value={filters.roomFilter}
+                onChange={(e) => handleFilterChange('roomFilter', e.target.value)}
+                className="filter-select full-width"
+              >
+                <option value="">All Rooms</option>
+                {rooms.map(room => (
+                  <option key={room.id} value={room.id}>{room.name}</option>
+                ))}
+                <option value="__unassigned__">Unassigned</option>
+              </select>
+            </div>
+          )}
+
+          {/* Task Type Filter */}
+          <div className="filter-section">
+            <h4>Filter by Task Type</h4>
+            <select
+              value={filters.taskTypeFilter}
+              onChange={(e) => handleFilterChange('taskTypeFilter', e.target.value)}
+              className="filter-select full-width"
+            >
+              <option value="">All Types</option>
+              <option value="unique">Standard</option>
+              <option value="recurring">Recurring</option>
+              <option value="evergreen">Evergreen</option>
+            </select>
+          </div>
+
+          {/* Quest Filter */}
+          <div className="filter-section">
+            <h4>Filter by Quest</h4>
+            <select
+              value={filters.questFilter}
+              onChange={(e) => handleFilterChange('questFilter', e.target.value)}
+              className="filter-select full-width"
+            >
+              <option value="">All Quests</option>
+              <option value="__none__">No quest</option>
+              {quests
+                .filter(q => q.status !== 'deleted')
+                .map(q => (
+                  <option key={q.id} value={q.id}>{q.title}</option>
+                ))}
             </select>
           </div>
 

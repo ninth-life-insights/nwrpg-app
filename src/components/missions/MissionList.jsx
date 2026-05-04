@@ -43,6 +43,7 @@ const MissionList = ({
   showAddMission,
   onHideAddMission,
   filters = {},
+  searchQuery = '',
   onApplyFilters = null,
   selectionMode = false,
   onMissionSelect = null,
@@ -86,8 +87,15 @@ const MissionList = ({
     skillFilter: filters.skillFilter || '',
     includeCompleted: filters.includeCompleted || false,
     showArchive: filters.showArchive || false,
-    completedDateRange: filters.completedDateRange || 'last7days'
-  }), [filters.sortBy, filters.sortOrder, filters.skillFilter, filters.includeCompleted, filters.showArchive, filters.completedDateRange]);
+    completedDateRange: filters.completedDateRange || 'last7days',
+    roomFilter: filters.roomFilter || '',
+    taskTypeFilter: filters.taskTypeFilter || '',
+    questFilter: filters.questFilter || ''
+  }), [
+    filters.sortBy, filters.sortOrder, filters.skillFilter,
+    filters.includeCompleted, filters.showArchive, filters.completedDateRange,
+    filters.roomFilter, filters.taskTypeFilter, filters.questFilter
+  ]);
 
   const isCustomOrderMode = memoizedFilters.sortBy === 'custom';
 
@@ -104,9 +112,38 @@ const MissionList = ({
 
     // Apply skill filter
     if (filterSettings.skillFilter && filterSettings.skillFilter !== '') {
-      filteredMissions = filteredMissions.filter(mission => 
+      filteredMissions = filteredMissions.filter(mission =>
         mission.skill === filterSettings.skillFilter
       );
+    }
+
+    // Apply room filter
+    if (filterSettings.roomFilter) {
+      if (filterSettings.roomFilter === '__unassigned__') {
+        filteredMissions = filteredMissions.filter(mission => !mission.baseLocation);
+      } else {
+        filteredMissions = filteredMissions.filter(mission =>
+          mission.baseLocation === filterSettings.roomFilter
+        );
+      }
+    }
+
+    // Apply task type filter
+    if (filterSettings.taskTypeFilter) {
+      filteredMissions = filteredMissions.filter(mission =>
+        mission.dueType === filterSettings.taskTypeFilter
+      );
+    }
+
+    // Apply quest filter
+    if (filterSettings.questFilter) {
+      if (filterSettings.questFilter === '__none__') {
+        filteredMissions = filteredMissions.filter(mission => !mission.questId);
+      } else {
+        filteredMissions = filteredMissions.filter(mission =>
+          mission.questId === filterSettings.questFilter
+        );
+      }
     }
 
     // Apply completed date range filter
@@ -426,11 +463,21 @@ const MissionList = ({
   const getDisplayMissions = () => {
     const recentlyCompletedIds = recentlyCompletedMissions.map(mission => mission.id);
     const filteredMissions = missions.filter(mission => !recentlyCompletedIds.includes(mission.id));
-    
+
     if (missionType === 'active') {
-      return [...recentlyCompletedMissions, ...filteredMissions];
+      let visibleList = [...recentlyCompletedMissions, ...filteredMissions];
+      if (searchQuery && searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        visibleList = visibleList.filter(m => m.title?.toLowerCase().includes(q));
+      }
+      return visibleList;
     }
-    
+
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      return missions.filter(m => m.title?.toLowerCase().includes(q));
+    }
+
     return missions;
   };
 

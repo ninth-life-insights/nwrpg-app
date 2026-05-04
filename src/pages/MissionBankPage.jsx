@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import MissionList from '../components/missions/MissionList';
 import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
 import { getUserProfile } from '../services/userService';
+import { getRooms } from '../services/roomService';
+import { getAllQuests } from '../services/questService';
 import { useNavigate } from 'react-router-dom';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -21,8 +23,15 @@ const MissionBank = () => {
     skillFilter: '',
     includeCompleted: false,
     showArchive: false,
-    completedDateRange: 'last7days'
+    completedDateRange: 'last7days',
+    roomFilter: '',
+    taskTypeFilter: '',
+    questFilter: ''
   });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [rooms, setRooms] = useState([]);
+  const [quests, setQuests] = useState([]);
 
   // State to track recently completed missions
   const [recentlyCompletedMissions, setRecentlyCompletedMissions] = useState([]);
@@ -35,10 +44,11 @@ const MissionBank = () => {
     navigate('/home');
   };
 
-  // Load user profile when component mounts or user changes
+  // Load user profile, rooms, and quests when component mounts or user changes
   useEffect(() => {
     if (currentUser) {
       loadUserProfile();
+      loadFilterData();
     }
   }, [currentUser]);
 
@@ -53,6 +63,20 @@ const MissionBank = () => {
     } catch (err) {
       console.error('Error loading user profile:', err);
       setLoadError(getLoadErrorMessage(err, 'missions'));
+    }
+  };
+
+  const loadFilterData = async () => {
+    try {
+      const [roomData, questData] = await Promise.all([
+        getRooms(currentUser.uid),
+        getAllQuests(currentUser.uid)
+      ]);
+      setRooms(roomData || []);
+      setQuests(questData || []);
+    } catch (err) {
+      console.error('Error loading filter data:', err);
+      // Quiet failure — filters just won't populate
     }
   };
 
@@ -114,6 +138,17 @@ const MissionBank = () => {
     return 'active';
   };
 
+  const hasActiveFilters =
+    filters.sortBy !== 'custom' ||
+    filters.sortOrder !== 'asc' ||
+    filters.skillFilter !== '' ||
+    filters.includeCompleted !== false ||
+    filters.showArchive !== false ||
+    filters.roomFilter !== '' ||
+    filters.taskTypeFilter !== '' ||
+    filters.questFilter !== '' ||
+    searchQuery !== '';
+
   return (
     <div className="mission-bank-page">
       {/* Page Header */}
@@ -124,19 +159,20 @@ const MissionBank = () => {
           </button>
           <h1>Mission Bank</h1>
         </div>
-        
+
         <div className="header-actions">
           {/* Filter Button */}
           <button
             onClick={handleShowFilters}
-            className="filter-btn-header"
+            className={`filter-btn-header${hasActiveFilters ? ' filter-btn-active' : ''}`}
             title="Filter & Sort"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
             </svg>
+            {hasActiveFilters && <span className="filter-active-dot" />}
           </button>
-          
+
           {/* Add Mission Button */}
           <button
             onClick={handleShowAddMission}
@@ -145,6 +181,27 @@ const MissionBank = () => {
             + Add Mission
           </button>
         </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mission-bank-search">
+        <span className="material-icons search-icon">search</span>
+        <input
+          type="text"
+          className="mission-bank-search-input"
+          placeholder="Search missions..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button
+            className="search-clear-btn"
+            onClick={() => setSearchQuery('')}
+            aria-label="Clear search"
+          >
+            <span className="material-icons">close</span>
+          </button>
+        )}
       </div>
 
       {loadError && <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); loadUserProfile(); }} className="mission-bank-load-error" />}
@@ -157,6 +214,7 @@ const MissionBank = () => {
         onShowAddMission={handleShowAddMission}
         onHideAddMission={handleHideAddMission}
         filters={filters}
+        searchQuery={searchQuery}
         onApplyFilters={handleApplyFilters}
         recentlyCompletedMissions={recentlyCompletedMissions}
         onMissionCompletion={handleMissionCompletion}
@@ -170,6 +228,8 @@ const MissionBank = () => {
         onClose={handleHideFilters}
         currentFilters={filters}
         onApplyFilters={handleApplyFilters}
+        rooms={rooms}
+        quests={quests}
       />
 
       <AchievementToast

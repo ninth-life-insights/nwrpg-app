@@ -80,6 +80,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .filter-btn-header:hover {
@@ -91,6 +92,79 @@
 
 .filter-btn-header:active {
   transform: translateY(0);
+}
+
+.filter-btn-active {
+  border-color: var(--color-primary, #6c63ff);
+  color: var(--color-primary, #6c63ff);
+}
+
+.filter-active-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  background: var(--color-primary, #6c63ff);
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+}
+
+/* Search Bar */
+.mission-bank-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-white, #fff);
+  border: 1.5px solid var(--color-border, #dee2e6);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.mission-bank-search:focus-within {
+  border-color: var(--color-primary, #6c63ff);
+}
+
+.search-icon {
+  color: var(--color-text-light, #9ca3af);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.mission-bank-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--color-text-main, #2c3e50);
+  min-width: 0;
+}
+
+.mission-bank-search-input::placeholder {
+  color: var(--color-text-light, #9ca3af);
+}
+
+.search-clear-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-light, #9ca3af);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.search-clear-btn:hover {
+  color: var(--color-text-main, #2c3e50);
+}
+
+.search-clear-btn .material-icons {
+  font-size: 18px;
 }
 
 /* Add Mission Button */
