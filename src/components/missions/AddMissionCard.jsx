@@ -5,6 +5,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createMission, updateMission } from '../../services/missionService';
 import { getActiveQuests, addMissionToQuest, removeMissionFromQuest } from '../../services/questService';
 import { useRooms } from '../../contexts/RoomsContext';
+import { ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
+import { getUserProfile } from '../../services/userService';
 import Badge from '../ui/Badge';
 // import CompletionTypeSelector from './sub-components/CompletionTypeSelector'; // not yet fully implemented
 import RecurrenceSelector, { RECURRENCE_PATTERNS } from './sub-components/recurrenceSelector';
@@ -108,15 +110,19 @@ const AddMissionCard = ({
   const [skillSearch, setSkillSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quests, setQuests] = useState([]);
+  const [baseName, setBaseName] = useState('');
   const { rooms } = useRooms();
   const [showRoomField, setShowRoomField] = useState(!!(mode === 'edit' && !!initialMission?.baseLocation) || autoOpenField === 'room');
 
-  // Load active quests on mount
+  // Load active quests and base name on mount
   useEffect(() => {
     if (!currentUser) return;
     getActiveQuests(currentUser.uid)
       .then(setQuests)
       .catch(err => console.error('Could not load quests:', err));
+    getUserProfile(currentUser.uid)
+      .then(profile => setBaseName(profile?.baseName || ''))
+      .catch(() => {});
   }, [currentUser]);
 
   // Update form when initialMission changes (for edit mode)
@@ -722,7 +728,11 @@ const AddMissionCard = ({
                     disabled={isSubmitting}
                   >
                     <Badge variant="room" icon="home">
-                      {rooms.find(r => r.id === formData.baseLocation)?.name ?? 'Room'}
+                      {(() => {
+                        const room = rooms.find(r => r.id === formData.baseLocation);
+                        if (!room) return 'Room';
+                        return room.id === ENTIRE_BASE_ROOM_ID ? (baseName || room.name) : room.name;
+                      })()}
                     </Badge>
                   </button>
                   <button
@@ -747,7 +757,9 @@ const AddMissionCard = ({
                   >
                     <option value="" disabled>Select a room...</option>
                     {rooms.map(r => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
+                      <option key={r.id} value={r.id}>
+                        {r.id === ENTIRE_BASE_ROOM_ID ? (baseName || r.name) : r.name}
+                      </option>
                     ))}
                   </select>
                   <button
