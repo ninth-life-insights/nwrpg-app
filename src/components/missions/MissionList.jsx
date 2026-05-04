@@ -111,15 +111,21 @@ const MissionList = ({
     let filteredMissions = [...missionData];
 
     // Apply skill filter
-    if (filterSettings.skillFilter && filterSettings.skillFilter !== '') {
-      filteredMissions = filteredMissions.filter(mission =>
-        mission.skill === filterSettings.skillFilter
-      );
+    if (filterSettings.skillFilter) {
+      if (filterSettings.skillFilter === '__has_skill__') {
+        filteredMissions = filteredMissions.filter(mission => !!mission.skill);
+      } else {
+        filteredMissions = filteredMissions.filter(mission =>
+          mission.skill === filterSettings.skillFilter
+        );
+      }
     }
 
     // Apply room filter
     if (filterSettings.roomFilter) {
-      if (filterSettings.roomFilter === '__unassigned__') {
+      if (filterSettings.roomFilter === '__has_room__') {
+        filteredMissions = filteredMissions.filter(mission => !!mission.baseLocation);
+      } else if (filterSettings.roomFilter === '__unassigned__') {
         filteredMissions = filteredMissions.filter(mission => !mission.baseLocation);
       } else {
         filteredMissions = filteredMissions.filter(mission =>
@@ -137,7 +143,9 @@ const MissionList = ({
 
     // Apply quest filter
     if (filterSettings.questFilter) {
-      if (filterSettings.questFilter === '__none__') {
+      if (filterSettings.questFilter === '__has_quest__') {
+        filteredMissions = filteredMissions.filter(mission => !!mission.questId);
+      } else if (filterSettings.questFilter === '__none__') {
         filteredMissions = filteredMissions.filter(mission => !mission.questId);
       } else {
         filteredMissions = filteredMissions.filter(mission =>

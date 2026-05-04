@@ -163,7 +163,8 @@ const MissionFilterModal = ({
               onChange={(e) => handleFilterChange('skillFilter', e.target.value)}
               className="filter-select full-width"
             >
-              <option value="">All Skills</option>
+              <option value="">Any</option>
+              <option value="__has_skill__">All skills</option>
               {AVAILABLE_SKILLS.map(skill => (
                 <option key={skill} value={skill}>{skill}</option>
               ))}
@@ -179,7 +180,8 @@ const MissionFilterModal = ({
                 onChange={(e) => handleFilterChange('roomFilter', e.target.value)}
                 className="filter-select full-width"
               >
-                <option value="">All Rooms</option>
+                <option value="">Any</option>
+                <option value="__has_room__">All rooms</option>
                 {rooms.map(room => (
                   <option key={room.id} value={room.id}>{room.name}</option>
                 ))}
@@ -196,7 +198,7 @@ const MissionFilterModal = ({
               onChange={(e) => handleFilterChange('taskTypeFilter', e.target.value)}
               className="filter-select full-width"
             >
-              <option value="">All Types</option>
+              <option value="">Any</option>
               <option value="unique">Standard</option>
               <option value="recurring">Recurring</option>
               <option value="evergreen">Evergreen</option>
@@ -211,7 +213,8 @@ const MissionFilterModal = ({
               onChange={(e) => handleFilterChange('questFilter', e.target.value)}
               className="filter-select full-width"
             >
-              <option value="">All Quests</option>
+              <option value="">Any</option>
+              <option value="__has_quest__">All quests</option>
               <option value="__none__">No quest</option>
               {quests
                 .filter(q => q.status !== 'deleted')
