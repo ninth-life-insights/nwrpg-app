@@ -70,7 +70,8 @@ const MissionFilterModal = ({
   currentFilters,
   onApplyFilters,
   rooms = [],
-  quests = []
+  quests = [],
+  showArchiveToggle = true
 }) => {
   const [filters, setFilters] = useState({
     ...FILTER_DEFAULTS,
@@ -313,16 +314,18 @@ const MissionFilterModal = ({
               Apply Filters
             </button>
           </div>
-          <button
-            className={`archive-link-btn ${filters.showArchive ? 'active' : ''}`}
-            onClick={() => {
-              const next = { ...filters, showArchive: !filters.showArchive, includeCompleted: false };
-              onApplyFilters(next);
-              onClose();
-            }}
-          >
-            {filters.showArchive ? 'Back to missions →' : 'View archive →'}
-          </button>
+          {showArchiveToggle && (
+            <button
+              className={`archive-link-btn ${filters.showArchive ? 'active' : ''}`}
+              onClick={() => {
+                const next = { ...filters, showArchive: !filters.showArchive, includeCompleted: false };
+                onApplyFilters(next);
+                onClose();
+              }}
+            >
+              {filters.showArchive ? 'Back to missions →' : 'View archive →'}
+            </button>
+          )}
         </div>
 
       </div>

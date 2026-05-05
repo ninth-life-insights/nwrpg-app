@@ -578,6 +578,18 @@ const handleAddNewMission = async (missionData) => {
             </div>
 
             <div className="bank-search-bar">
+              <button
+                className={`bank-filter-btn${(bankFilters.skillFilter || bankFilters.roomFilter || bankFilters.taskTypeFilter || bankFilters.questFilter) ? ' bank-filter-btn--active' : ''}`}
+                onClick={() => setShowBankFilters(true)}
+                aria-label="Filter missions"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+                </svg>
+                {(bankFilters.skillFilter || bankFilters.roomFilter || bankFilters.taskTypeFilter || bankFilters.questFilter) && (
+                  <span className="bank-filter-dot" />
+                )}
+              </button>
               <span className="material-icons bank-search-icon">search</span>
               <input
                 type="text"
@@ -595,18 +607,6 @@ const handleAddNewMission = async (missionData) => {
                   <span className="material-icons">close</span>
                 </button>
               )}
-              <button
-                className={`bank-filter-btn${(bankFilters.skillFilter || bankFilters.roomFilter || bankFilters.taskTypeFilter || bankFilters.questFilter) ? ' bank-filter-btn--active' : ''}`}
-                onClick={() => setShowBankFilters(true)}
-                aria-label="Filter missions"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
-                </svg>
-                {(bankFilters.skillFilter || bankFilters.roomFilter || bankFilters.taskTypeFilter || bankFilters.questFilter) && (
-                  <span className="bank-filter-dot" />
-                )}
-              </button>
             </div>
 
             <div className="bank-mission-scroll">
@@ -630,6 +630,7 @@ const handleAddNewMission = async (missionData) => {
         onApplyFilters={applyBankFilters}
         rooms={bankRooms}
         quests={bankQuests}
+        showArchiveToggle={false}
       />
 
       {/* Date Picker Sheet */}
