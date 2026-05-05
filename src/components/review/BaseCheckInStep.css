@@ -1,122 +1,177 @@
 /* src/components/review/BaseCheckInStep.css */
 
-/* ── Room list wrapper ──────────────────────────────────────────── */
+/* ── Room grid ──────────────────────────────────────────────────── */
 
-.bci-room-list {
+.bci-room-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+/* ── Room card ──────────────────────────────────────────────────── */
+
+.bci-room-card {
   background: var(--color-bg-white);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
-
-/* ── Individual room row ────────────────────────────────────────── */
-
-.bci-room-row {
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  cursor: pointer;
+  transition: box-shadow var(--transition);
+  text-align: left;
+  min-width: 0;
 }
 
-.bci-room-row + .bci-room-row {
-  border-top: 1px solid var(--color-border);
+.bci-room-card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
-/* ── Top line: icon · name · cleanliness toggle ─────────────────── */
+/* ── Icon ───────────────────────────────────────────────────────── */
 
-.bci-room-top {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.bci-room-icon-wrap {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
+.bci-card-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 80px;
 }
 
-.bci-room-img {
-  width: 32px;
-  height: 32px;
+.bci-card-img {
+  width: 80px;
+  height: 80px;
   object-fit: contain;
-  border-radius: var(--radius-sm);
 }
 
-.bci-room-material-icon {
-  font-size: 24px;
+.bci-card-material-icon {
+  font-size: 52px;
   color: var(--color-text-medium);
 }
 
-.bci-room-name {
-  flex: 1;
+/* ── Room name ──────────────────────────────────────────────────── */
+
+.bci-card-room-name {
   font-size: var(--font-size-base);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-dark);
-  min-width: 0;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.bci-cleanliness-toggle {
+/* ── Cleanliness (mirrors RoomPage pattern) ─────────────────────── */
+
+.bci-card-cleanliness {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.bci-card-cleanliness-row {
   display: flex;
   align-items: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-  font-family: var(--font-family);
+  gap: var(--space-sm);
 }
 
-.bci-cleanliness-label {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
+.bci-card-bar-wrap {
+  flex: 1;
+  min-width: 0;
 }
 
-.bci-toggle-chevron {
-  font-size: 16px;
-  color: var(--color-text-light);
-}
-
-/* ── Cleanliness bar (always visible) ───────────────────────────── */
-
-.bci-bar-track {
-  width: 100%;
-  height: 4px;
+.bci-card-bar-track {
+  height: 10px;
   background: var(--color-border);
-  border-radius: 2px;
+  border-radius: 99px;
   overflow: hidden;
 }
 
-.bci-bar-fill {
+.bci-card-bar-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 99px;
   transition: width 0.3s ease, background-color 0.3s ease;
 }
 
-/* ── Slider ─────────────────────────────────────────────────────── */
+.bci-card-cleanliness-label {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.3s ease;
+}
 
-.bci-slider {
-  width: 100%;
-  accent-color: var(--color-primary);
+.bci-card-cleanliness-edit-btn {
+  background: none;
+  border: none;
   cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+  flex-shrink: 0;
+}
+
+.bci-card-cleanliness-edit-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.bci-card-cleanliness-edit-btn .material-icons {
+  font-size: 16px;
+}
+
+.bci-card-cleanliness-slider {
+  width: 100%;
+  height: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right,
+    #ef4444 0%,
+    #f97316 25%,
+    #eab308 50%,
+    #84cc16 75%,
+    #10b981 100%);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.bci-card-cleanliness-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.bci-card-cleanliness-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.bci-card-action-error {
+  font-size: 11px;
+  color: #ef4444;
   margin: 0;
 }
 
 /* ── Stats line ─────────────────────────────────────────────────── */
 
-.bci-stats-line {
-  font-size: var(--font-size-sm);
+.bci-card-stats-line {
+  font-size: 11px;
   color: var(--color-text-light);
   margin: 0;
+  line-height: 1.4;
 }
 
 .bci-stats-sep {
@@ -128,10 +183,11 @@
   font-weight: 600;
 }
 
-/* ── Inline save error ──────────────────────────────────────────── */
+/* ── Tap hint ───────────────────────────────────────────────────── */
 
-.bci-action-error {
-  font-size: var(--font-size-sm);
-  color: #ef4444;
+.bci-card-tap-hint {
+  font-size: 11px;
+  color: var(--color-text-placeholder);
   margin: 0;
+  margin-top: auto;
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRooms, updateRoomCleanliness } from '../../services/roomService';
 import { getAllMissions } from '../../services/missionService';
+import RoomDetailModal from '../base/RoomDetailModal';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
 import { withTimeout } from '../../utils/fetchWithTimeout';
@@ -44,7 +45,7 @@ const calcRoomStats = (roomId, missions) => {
   return { completedThisWeek, dueNextWeek, overdue };
 };
 
-const buildStatsLine = ({ completedThisWeek, dueNextWeek, overdue }) => {
+const buildStatsParts = ({ completedThisWeek, dueNextWeek, overdue }) => {
   const parts = [];
   if (completedThisWeek > 0) parts.push({ text: `${completedThisWeek} done`, overdue: false });
   if (dueNextWeek > 0) parts.push({ text: `${dueNextWeek} due next week`, overdue: false });
@@ -52,66 +53,82 @@ const buildStatsLine = ({ completedThisWeek, dueNextWeek, overdue }) => {
   return parts;
 };
 
-// ─── Room row ─────────────────────────────────────────────────────────────────
+// ─── Room card ────────────────────────────────────────────────────────────────
 
-const RoomCheckInRow = ({ room, stats, localCleanliness, actionError, onCleanlinessChange, onCleanlinessSave }) => {
+const RoomCheckInCard = ({
+  room,
+  stats,
+  localCleanliness,
+  actionError,
+  onCleanlinessChange,
+  onCleanlinessSave,
+  onOpenModal,
+}) => {
   const [showSlider, setShowSlider] = useState(false);
 
   const cleanlinessColor = CLEANLINESS_COLORS[localCleanliness];
   const cleanlinessLabel = CLEANLINESS_LABELS[localCleanliness];
   const cleanlinessPercent = (localCleanliness / 5) * 100;
-  const statsParts = buildStatsLine(stats);
+  const statsParts = buildStatsParts(stats);
+
+  const stopProp = (e) => e.stopPropagation();
 
   return (
-    <div className="bci-room-row">
-      <div className="bci-room-top">
-        <div className="bci-room-icon-wrap">
-          {isImageIcon(room.icon)
-            ? <img src={`/assets/Rooms/${room.icon}`} alt="" className="bci-room-img" />
-            : <span className="material-icons bci-room-material-icon">{room.icon}</span>
-          }
-        </div>
+    <div className="bci-room-card" onClick={onOpenModal} role="button" tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && onOpenModal()}
+    >
+      <div className="bci-card-icon-wrap">
+        {isImageIcon(room.icon)
+          ? <img src={`/assets/Rooms/${room.icon}`} alt="" className="bci-card-img" />
+          : <span className="material-icons bci-card-material-icon">{room.icon}</span>
+        }
+      </div>
 
-        <span className="bci-room-name">{room.name}</span>
+      <h3 className="bci-card-room-name">{room.name}</h3>
 
-        <button
-          className="bci-cleanliness-toggle"
-          onClick={() => setShowSlider(v => !v)}
-          aria-label="Adjust cleanliness"
-        >
-          <span className="bci-cleanliness-label" style={{ color: cleanlinessColor }}>
+      {/* Cleanliness — stops propagation so editing doesn't open the modal */}
+      <div className="bci-card-cleanliness" onClick={stopProp}>
+        <div className="bci-card-cleanliness-row">
+          <div className="bci-card-bar-wrap">
+            <div className="bci-card-bar-track">
+              <div
+                className="bci-card-bar-fill"
+                style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
+              />
+            </div>
+          </div>
+          <span className="bci-card-cleanliness-label" style={{ color: cleanlinessColor }}>
             {cleanlinessLabel}
           </span>
-          <span className="material-icons bci-toggle-chevron">
-            {showSlider ? 'expand_less' : 'expand_more'}
-          </span>
-        </button>
+          <button
+            className="bci-card-cleanliness-edit-btn"
+            onClick={() => setShowSlider(v => !v)}
+            aria-label="Adjust cleanliness"
+          >
+            <span className="material-icons">
+              {showSlider ? 'expand_less' : 'edit'}
+            </span>
+          </button>
+        </div>
+
+        {showSlider && (
+          <input
+            type="range"
+            min="1"
+            max="5"
+            value={localCleanliness}
+            onChange={e => onCleanlinessChange(room.id, parseInt(e.target.value))}
+            onMouseUp={() => onCleanlinessSave(room.id)}
+            onTouchEnd={() => onCleanlinessSave(room.id)}
+            className="bci-card-cleanliness-slider"
+          />
+        )}
+
+        {actionError && <p className="bci-card-action-error">{actionError}</p>}
       </div>
-
-      <div className="bci-bar-track">
-        <div
-          className="bci-bar-fill"
-          style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
-        />
-      </div>
-
-      {showSlider && (
-        <input
-          type="range"
-          min="1"
-          max="5"
-          value={localCleanliness}
-          onChange={e => onCleanlinessChange(room.id, parseInt(e.target.value))}
-          onMouseUp={() => onCleanlinessSave(room.id)}
-          onTouchEnd={() => onCleanlinessSave(room.id)}
-          className="bci-slider"
-        />
-      )}
-
-      {actionError && <p className="bci-action-error">{actionError}</p>}
 
       {statsParts.length > 0 && (
-        <p className="bci-stats-line">
+        <p className="bci-card-stats-line">
           {statsParts.map((part, i) => (
             <span key={i}>
               {i > 0 && <span className="bci-stats-sep"> · </span>}
@@ -120,6 +137,8 @@ const RoomCheckInRow = ({ room, stats, localCleanliness, actionError, onCleanlin
           ))}
         </p>
       )}
+
+      <p className="bci-card-tap-hint">Tap to view missions</p>
     </div>
   );
 };
@@ -134,6 +153,7 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
   const [loadError, setLoadError] = useState(null);
   const [cleanlinessMap, setCleanlinessMap] = useState({});
   const [actionErrors, setActionErrors] = useState({});
+  const [openRoomId, setOpenRoomId] = useState(null);
 
   const load = async () => {
     if (!currentUser) return;
@@ -185,6 +205,11 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
     }
   };
 
+  const handleModalClose = () => {
+    setOpenRoomId(null);
+    load();
+  };
+
   return (
     <div className="review-step">
       <div className="review-step-body">
@@ -203,9 +228,9 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
         )}
 
         {!loading && !loadError && (
-          <div className="bci-room-list">
+          <div className="bci-room-grid">
             {rooms.map(room => (
-              <RoomCheckInRow
+              <RoomCheckInCard
                 key={room.id}
                 room={room}
                 stats={calcRoomStats(room.id, allMissions)}
@@ -213,11 +238,19 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
                 actionError={actionErrors[room.id]}
                 onCleanlinessChange={handleCleanlinessChange}
                 onCleanlinessSave={handleCleanlinessSave}
+                onOpenModal={() => setOpenRoomId(room.id)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {openRoomId && (
+        <RoomDetailModal
+          roomId={openRoomId}
+          onClose={handleModalClose}
+        />
+      )}
 
       <StickyFooter>
         <button className="review-next-btn" onClick={onNext}>
