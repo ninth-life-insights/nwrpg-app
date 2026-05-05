@@ -116,26 +116,6 @@
   margin: 0;
 }
 
-/* ── Completed divider ──────────────────────────────────────────── */
-
-.rdm-completed-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  margin: var(--space-xl) 0 var(--space-md);
-  color: var(--color-text-light);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.rdm-completed-divider::before,
-.rdm-completed-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--color-border);
-}
-
 /* ── Sticky footer ──────────────────────────────────────────────── */
 
 .rdm-footer {

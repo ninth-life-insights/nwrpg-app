@@ -73,7 +73,6 @@ const RoomDetailModal = ({ roomId, onClose }) => {
   };
 
   const activeMissions = missions.filter(m => m.status === 'active');
-  const completedMissions = missions.filter(m => m.status === 'completed');
 
   const content = (
     <div className="rdm-overlay" onClick={onClose}>
@@ -105,8 +104,8 @@ const RoomDetailModal = ({ roomId, onClose }) => {
                 </div>
               )}
 
-              {activeMissions.length === 0 && completedMissions.length === 0 && (
-                <p className="rdm-empty">No missions for this room yet.</p>
+              {activeMissions.length === 0 && (
+                <p className="rdm-empty">No active missions for this room.</p>
               )}
 
               {activeMissions.map(mission => (
@@ -118,23 +117,6 @@ const RoomDetailModal = ({ roomId, onClose }) => {
                   hideRoomBadge
                 />
               ))}
-
-              {completedMissions.length > 0 && (
-                <>
-                  <div className="rdm-completed-divider">
-                    <span>Completed</span>
-                  </div>
-                  {completedMissions.map(mission => (
-                    <MissionCard
-                      key={mission.id}
-                      mission={mission}
-                      onToggleComplete={handleToggleComplete}
-                      onMissionChanged={fetchData}
-                      hideRoomBadge
-                    />
-                  ))}
-                </>
-              )}
             </>
           )}
         </div>
