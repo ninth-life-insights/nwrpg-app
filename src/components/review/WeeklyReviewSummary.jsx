@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { getUserProfile } from '../../services/userService';
 import { generateWeeklySnapshot } from '../../services/weeklyReviewService';
+import { getAllMissions } from '../../services/missionService';
+import { getRooms, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { formatWeekLabel } from '../../utils/weeklyReviewHelpers';
 import dayjs from 'dayjs';
 import './WeeklyReviewSummary.css';
@@ -50,7 +52,53 @@ const WeeklyReviewSummary = ({
   const [savingStory, setSavingStory] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [topRooms, setTopRooms] = useState([]);
   const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (!userId || !weekStart || !weekEnd) return;
+    let cancelled = false;
+
+    const loadRoomActivity = async () => {
+      try {
+        const [missions, rooms, profile] = await Promise.all([
+          getAllMissions(userId),
+          getRooms(userId),
+          getUserProfile(userId),
+        ]);
+
+        const baseName = profile?.baseName || '';
+        const roomNameMap = Object.fromEntries(
+          rooms.map(r => [
+            r.id,
+            r.id === ENTIRE_BASE_ROOM_ID ? (baseName || r.name) : r.name,
+          ])
+        );
+
+        const counts = {};
+        missions.forEach(m => {
+          if (!m.baseLocation || m.status !== 'completed' || !m.completedAt) return;
+          const completedDate = m.completedAt.toDate ? m.completedAt.toDate() : new Date(m.completedAt);
+          const dateStr = dayjs(completedDate).format('YYYY-MM-DD');
+          if (dateStr < weekStart || dateStr > weekEnd) return;
+          counts[m.baseLocation] = (counts[m.baseLocation] || 0) + 1;
+        });
+
+        const ranked = Object.entries(counts)
+          .filter(([roomId]) => roomNameMap[roomId])
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 3)
+          .map(([roomId, count]) => ({ roomId, name: roomNameMap[roomId], count }));
+
+        if (!cancelled) setTopRooms(ranked);
+      } catch (err) {
+        console.error('Error loading room activity for summary:', err);
+      }
+    };
+
+    loadRoomActivity();
+    return () => { cancelled = true; };
+  }, [userId, weekStart, weekEnd]);
 
   useEffect(() => {
     if (isEditingStory && textareaRef.current) {
@@ -270,6 +318,23 @@ const WeeklyReviewSummary = ({
                   <span className="quest-row-title">{quest.questTitle}</span>
                   <span className="quest-row-count">
                     {quest.missionsCompleted} mission{quest.missionsCompleted !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Base */}
+        {topRooms.length > 0 && (
+          <div className="daily-review-section">
+            <h3 className="daily-review-section-title">Base Activity</h3>
+            <div className="quests-list">
+              {topRooms.map(({ roomId, name, count }) => (
+                <div key={roomId} className="quest-row">
+                  <span className="quest-row-title">{name}</span>
+                  <span className="quest-row-count">
+                    {count} mission{count !== 1 ? 's' : ''}
                   </span>
                 </div>
               ))}
