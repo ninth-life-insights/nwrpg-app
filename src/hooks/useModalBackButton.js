@@ -37,9 +37,14 @@ export function useModalBackButton(isOpen, onClose) {
     // Using location.href keeps the URL identical so React Router won't navigate.
     history.pushState({ __modalSentinel: true }, '', location.href);
 
-    const handlePopState = () => {
+    const handlePopState = (event) => {
       if (ignoreNextPopState.current) {
         ignoreNextPopState.current = false;
+        return;
+      }
+      // If we've landed on another sentinel, this was triggered by a nested
+      // modal's cleanup calling history.back() — don't close this modal.
+      if (event.state && event.state.__modalSentinel) {
         return;
       }
       closedViaBack.current = true;

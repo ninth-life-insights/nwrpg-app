@@ -1,5 +1,5 @@
 // src/pages/EditDailyMissionsPage.js - UPDATED FOR SIMPLIFIED SYSTEM
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -74,7 +74,8 @@ const EditDailyMissionsPage = ({
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
-  useModalBackButton(showMissionBank, () => setShowMissionBank(false));
+  const closeMissionBank = useCallback(() => setShowMissionBank(false), []);
+  useModalBackButton(showMissionBank, closeMissionBank);
   const [bankSearchQuery, setBankSearchQuery] = useState('');
   const [bankFilters, setBankFilters] = useState({
     sortBy: 'custom', sortOrder: 'asc', skillFilter: '',
@@ -82,6 +83,8 @@ const EditDailyMissionsPage = ({
     roomFilter: '', taskTypeFilter: '', questFilter: ''
   });
   const [showBankFilters, setShowBankFilters] = useState(false);
+  const closeBankFilters = useCallback(() => setShowBankFilters(false), []);
+  const applyBankFilters = useCallback((f) => setBankFilters(f), []);
   const [bankRooms, setBankRooms] = useState([]);
   const [bankQuests, setBankQuests] = useState([]);
   const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
@@ -97,6 +100,18 @@ const EditDailyMissionsPage = ({
   useEffect(() => {
     loadExistingDailyMissions();
   }, [currentUser, targetDate]);
+
+  // Load filter data for the mission bank modal on mount
+  useEffect(() => {
+    if (!currentUser) return;
+    Promise.all([
+      getRooms(currentUser.uid),
+      getAllQuests(currentUser.uid)
+    ]).then(([rooms, quests]) => {
+      setBankRooms(rooms || []);
+      setBankQuests(quests || []);
+    }).catch(() => {});
+  }, [currentUser]);
 
   const loadExistingDailyMissions = async () => {
     if (!currentUser) return;
@@ -224,15 +239,6 @@ const handleAddNewMission = async (missionData) => {
     if (emptySlotIndex !== -1) {
       setCurrentSlotIndex(emptySlotIndex);
       setShowMissionBank(true);
-      if (bankRooms.length === 0 && bankQuests.length === 0) {
-        Promise.all([
-          getRooms(currentUser.uid),
-          getAllQuests(currentUser.uid)
-        ]).then(([rooms, quests]) => {
-          setBankRooms(rooms || []);
-          setBankQuests(quests || []);
-        }).catch(() => {});
-      }
     }
   };
 
@@ -619,9 +625,9 @@ const handleAddNewMission = async (missionData) => {
 
       <MissionFilterModal
         isOpen={showBankFilters}
-        onClose={() => setShowBankFilters(false)}
+        onClose={closeBankFilters}
         currentFilters={bankFilters}
-        onApplyFilters={(f) => setBankFilters(f)}
+        onApplyFilters={applyBankFilters}
         rooms={bankRooms}
         quests={bankQuests}
       />
