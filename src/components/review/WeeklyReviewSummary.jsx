@@ -296,6 +296,27 @@ const WeeklyReviewSummary = ({
           </div>
         )}
 
+        {/* Base */}
+        {topRooms.length > 0 && (
+          <div className="daily-review-section">
+            <h3 className="daily-review-section-title">Base Activity</h3>
+            <div className="wrs-room-grid">
+              {topRooms.map(({ roomId, name, icon, count }) => (
+                <div key={roomId} className="wrs-room-cell">
+                  <div className="wrs-room-icon">
+                    {icon.includes('.')
+                      ? <img src={`/assets/Rooms/${icon}`} alt="" className="wrs-room-img" />
+                      : <span className="material-icons wrs-room-material-icon">{icon}</span>
+                    }
+                  </div>
+                  <span className="wrs-room-name">{name}</span>
+                  <span className="wrs-room-count">{count} mission{count !== 1 ? 's' : ''}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Skills */}
         {snapshot.skillsUsed?.length > 0 && (
           <div className="daily-review-section">
@@ -328,26 +349,6 @@ const WeeklyReviewSummary = ({
           </div>
         )}
 
-        {/* Base */}
-        {topRooms.length > 0 && (
-          <div className="daily-review-section">
-            <h3 className="daily-review-section-title">Base Activity</h3>
-            <div className="wrs-room-grid">
-              {topRooms.map(({ roomId, name, icon, count }) => (
-                <div key={roomId} className="wrs-room-cell">
-                  <div className="wrs-room-icon">
-                    {icon.includes('.')
-                      ? <img src={`/assets/Rooms/${icon}`} alt="" className="wrs-room-img" />
-                      : <span className="material-icons wrs-room-material-icon">{icon}</span>
-                    }
-                  </div>
-                  <span className="wrs-room-name">{name}</span>
-                  <span className="wrs-room-count">{count} mission{count !== 1 ? 's' : ''}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
       </div>
 
