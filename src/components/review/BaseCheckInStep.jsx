@@ -1,8 +1,9 @@
 // src/components/review/BaseCheckInStep.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRooms, updateRoomCleanliness } from '../../services/roomService';
+import { getRooms, updateRoomCleanliness, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { getAllMissions } from '../../services/missionService';
+import { getUserProfile } from '../../services/userService';
 import RoomDetailModal from '../base/RoomDetailModal';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -149,6 +150,7 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
   const { currentUser } = useAuth();
   const [rooms, setRooms] = useState([]);
   const [allMissions, setAllMissions] = useState([]);
+  const [baseName, setBaseName] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [cleanlinessMap, setCleanlinessMap] = useState({});
@@ -160,14 +162,16 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
     setLoadError(null);
     setLoading(true);
     try {
-      const [roomData, missions] = await withTimeout(
+      const [roomData, missions, profile] = await withTimeout(
         Promise.all([
           getRooms(currentUser.uid),
           getAllMissions(currentUser.uid),
+          getUserProfile(currentUser.uid),
         ])
       );
       setRooms(roomData);
       setAllMissions(missions);
+      setBaseName(profile?.baseName || '');
       const initial = {};
       roomData.forEach(r => { initial[r.id] = r.cleanliness || 3; });
       setCleanlinessMap(initial);
@@ -227,18 +231,23 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
           <p className="review-step-loading">Loading your base...</p>
         )}
 
-        {!loading && !loadError && rooms.map(room => (
-          <RoomCheckInCard
-            key={room.id}
-            room={room}
-            stats={calcRoomStats(room.id, allMissions)}
-            localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
-            actionError={actionErrors[room.id]}
-            onCleanlinessChange={handleCleanlinessChange}
-            onCleanlinessSave={handleCleanlinessSave}
-            onOpenModal={() => setOpenRoomId(room.id)}
-          />
-        ))}
+        {!loading && !loadError && rooms.map(room => {
+          const displayName = room.id === ENTIRE_BASE_ROOM_ID
+            ? (baseName || room.name)
+            : room.name;
+          return (
+            <RoomCheckInCard
+              key={room.id}
+              room={{ ...room, name: displayName }}
+              stats={calcRoomStats(room.id, allMissions)}
+              localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
+              actionError={actionErrors[room.id]}
+              onCleanlinessChange={handleCleanlinessChange}
+              onCleanlinessSave={handleCleanlinessSave}
+              onOpenModal={() => setOpenRoomId(room.id)}
+            />
+          );
+        })}
       </div>
 
       {openRoomId && (

@@ -2,8 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRoom } from '../../services/roomService';
+import { getRoom, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import { getUserProfile } from '../../services/userService';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -13,6 +14,7 @@ import './RoomDetailModal.css';
 const RoomDetailModal = ({ roomId, onClose }) => {
   const { currentUser } = useAuth();
   const [room, setRoom] = useState(null);
+  const [roomTitle, setRoomTitle] = useState('');
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -24,10 +26,11 @@ const RoomDetailModal = ({ roomId, onClose }) => {
     setLoadError(null);
     setLoading(true);
     try {
-      const [roomData, allMissions] = await withTimeout(
+      const [roomData, allMissions, profile] = await withTimeout(
         Promise.all([
           getRoom(currentUser.uid, roomId),
           getAllMissions(currentUser.uid),
+          getUserProfile(currentUser.uid),
         ])
       );
       if (!roomData) {
@@ -38,6 +41,11 @@ const RoomDetailModal = ({ roomId, onClose }) => {
         m => m.baseLocation === roomId && m.status !== 'deleted'
       );
       setRoom(roomData);
+      setRoomTitle(
+        roomId === ENTIRE_BASE_ROOM_ID
+          ? (profile?.baseName || roomData.name)
+          : roomData.name
+      );
       setMissions(roomMissions);
     } catch (err) {
       console.error('Error fetching room data:', err);
@@ -80,7 +88,7 @@ const RoomDetailModal = ({ roomId, onClose }) => {
 
         {/* Sticky header */}
         <div className="rdm-header">
-          <h2 className="rdm-title">{room?.name ?? 'Room'}</h2>
+          <h2 className="rdm-title">{roomTitle || room?.name || 'Room'}</h2>
           <button className="rdm-close-btn" onClick={onClose} aria-label="Close">
             <span className="material-icons">close</span>
           </button>
