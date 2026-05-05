@@ -35,18 +35,24 @@ export function useModalBackButton(isOpen, onClose) {
 
     // Push a sentinel entry at the same URL so back button has something to pop.
     // Using location.href keeps the URL identical so React Router won't navigate.
+    console.log('[useModalBackButton] OPEN — pushing sentinel. url:', location.href, 'history.length:', history.length, 'current state:', JSON.stringify(history.state));
     history.pushState({ __modalSentinel: true }, '', location.href);
+    console.log('[useModalBackButton] sentinel pushed. history.length now:', history.length);
 
     const handlePopState = (event) => {
+      console.log('[useModalBackButton] popstate fired. event.state:', JSON.stringify(event.state), 'ignoreNext:', ignoreNextPopState.current, 'url:', location.href);
       if (ignoreNextPopState.current) {
         ignoreNextPopState.current = false;
+        console.log('[useModalBackButton] ignoring (own cleanup back)');
         return;
       }
       // If we've landed on another sentinel, this was triggered by a nested
       // modal's cleanup calling history.back() — don't close this modal.
       if (event.state && event.state.__modalSentinel) {
+        console.log('[useModalBackButton] ignoring (landed on nested sentinel)');
         return;
       }
+      console.log('[useModalBackButton] closing modal via back');
       closedViaBack.current = true;
       onClose();
     };
@@ -54,12 +60,16 @@ export function useModalBackButton(isOpen, onClose) {
     window.addEventListener('popstate', handlePopState);
 
     return () => {
+      console.log('[useModalBackButton] CLEANUP. closedViaBack:', closedViaBack.current, 'url:', location.href, 'history.length:', history.length, 'state:', JSON.stringify(history.state));
       window.removeEventListener('popstate', handlePopState);
       if (!closedViaBack.current) {
         // Modal was closed via UI — remove the sentinel entry we pushed.
         // Since the URL doesn't change, React Router won't treat this as navigation.
+        console.log('[useModalBackButton] calling history.back() to remove sentinel');
         ignoreNextPopState.current = true;
         history.back();
+      } else {
+        console.log('[useModalBackButton] closed via back — no history.back() needed');
       }
     };
   }, [isOpen, onClose]);
