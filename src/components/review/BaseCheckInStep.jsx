@@ -219,8 +219,7 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
       <div className="review-step-body">
         <h2 className="review-step-heading">Base Check-In</h2>
         <p className="review-step-subtext">
-          Take a moment to walk through each room and see how things are holding up.
-          Updating cleanliness ratings now helps keep your weekly picture accurate.
+          Take a moment to assess your base and plan for the upcoming week.
         </p>
 
         {loadError && (
