@@ -44,48 +44,55 @@ const calcRoomStats = (roomId, missions) => {
   return { completedThisWeek, dueNextWeek, overdue };
 };
 
-// ─── Room card ────────────────────────────────────────────────────────────────
+const buildStatsLine = ({ completedThisWeek, dueNextWeek, overdue }) => {
+  const parts = [];
+  if (completedThisWeek > 0) parts.push({ text: `${completedThisWeek} done`, overdue: false });
+  if (dueNextWeek > 0) parts.push({ text: `${dueNextWeek} due next week`, overdue: false });
+  if (overdue > 0) parts.push({ text: `${overdue} overdue`, overdue: true });
+  return parts;
+};
 
-const RoomCheckInCard = ({ room, stats, localCleanliness, actionError, onCleanlinessChange, onCleanlinessSave }) => {
+// ─── Room row ─────────────────────────────────────────────────────────────────
+
+const RoomCheckInRow = ({ room, stats, localCleanliness, actionError, onCleanlinessChange, onCleanlinessSave }) => {
   const [showSlider, setShowSlider] = useState(false);
 
   const cleanlinessColor = CLEANLINESS_COLORS[localCleanliness];
   const cleanlinessLabel = CLEANLINESS_LABELS[localCleanliness];
   const cleanlinessPercent = (localCleanliness / 5) * 100;
+  const statsParts = buildStatsLine(stats);
 
   return (
-    <div className="bci-room-card">
-      <div className="bci-room-header">
-        <div className="bci-room-icon">
+    <div className="bci-room-row">
+      <div className="bci-room-top">
+        <div className="bci-room-icon-wrap">
           {isImageIcon(room.icon)
-            ? <img src={`/assets/Rooms/${room.icon}`} alt={room.name} className="bci-room-icon-img" />
-            : <span className="material-icons">{room.icon}</span>
+            ? <img src={`/assets/Rooms/${room.icon}`} alt="" className="bci-room-img" />
+            : <span className="material-icons bci-room-material-icon">{room.icon}</span>
           }
         </div>
-        <span className="bci-room-name">{room.name}</span>
-      </div>
 
-      <div className="bci-cleanliness-row">
-        <div className="bci-cleanliness-bar-wrap">
-          <div className="bci-cleanliness-bar-track">
-            <div
-              className="bci-cleanliness-bar-fill"
-              style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
-            />
-          </div>
-        </div>
-        <span className="bci-cleanliness-label" style={{ color: cleanlinessColor }}>
-          {cleanlinessLabel}
-        </span>
+        <span className="bci-room-name">{room.name}</span>
+
         <button
-          className="bci-cleanliness-edit-btn"
+          className="bci-cleanliness-toggle"
           onClick={() => setShowSlider(v => !v)}
           aria-label="Adjust cleanliness"
         >
-          <span className="material-icons">
-            {showSlider ? 'expand_less' : 'edit'}
+          <span className="bci-cleanliness-label" style={{ color: cleanlinessColor }}>
+            {cleanlinessLabel}
+          </span>
+          <span className="material-icons bci-toggle-chevron">
+            {showSlider ? 'expand_less' : 'expand_more'}
           </span>
         </button>
+      </div>
+
+      <div className="bci-bar-track">
+        <div
+          className="bci-bar-fill"
+          style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
+        />
       </div>
 
       {showSlider && (
@@ -97,28 +104,22 @@ const RoomCheckInCard = ({ room, stats, localCleanliness, actionError, onCleanli
           onChange={e => onCleanlinessChange(room.id, parseInt(e.target.value))}
           onMouseUp={() => onCleanlinessSave(room.id)}
           onTouchEnd={() => onCleanlinessSave(room.id)}
-          className="bci-cleanliness-slider"
+          className="bci-slider"
         />
       )}
 
-      {actionError && (
-        <p className="bci-action-error">{actionError}</p>
-      )}
+      {actionError && <p className="bci-action-error">{actionError}</p>}
 
-      <div className="bci-stats-grid">
-        <div className="bci-stat">
-          <div className="bci-stat-number">{stats.completedThisWeek}</div>
-          <div className="bci-stat-label">Done This Week</div>
-        </div>
-        <div className="bci-stat">
-          <div className="bci-stat-number">{stats.dueNextWeek}</div>
-          <div className="bci-stat-label">Due Next Week</div>
-        </div>
-        <div className={`bci-stat ${stats.overdue > 0 ? 'bci-stat--overdue' : ''}`}>
-          <div className="bci-stat-number">{stats.overdue}</div>
-          <div className="bci-stat-label">Overdue</div>
-        </div>
-      </div>
+      {statsParts.length > 0 && (
+        <p className="bci-stats-line">
+          {statsParts.map((part, i) => (
+            <span key={i}>
+              {i > 0 && <span className="bci-stats-sep"> · </span>}
+              <span className={part.overdue ? 'bci-stats-overdue' : ''}>{part.text}</span>
+            </span>
+          ))}
+        </p>
+      )}
     </div>
   );
 };
@@ -201,17 +202,21 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
           <p className="review-step-loading">Loading your base...</p>
         )}
 
-        {!loading && !loadError && rooms.map(room => (
-          <RoomCheckInCard
-            key={room.id}
-            room={room}
-            stats={calcRoomStats(room.id, allMissions)}
-            localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
-            actionError={actionErrors[room.id]}
-            onCleanlinessChange={handleCleanlinessChange}
-            onCleanlinessSave={handleCleanlinessSave}
-          />
-        ))}
+        {!loading && !loadError && (
+          <div className="bci-room-list">
+            {rooms.map(room => (
+              <RoomCheckInRow
+                key={room.id}
+                room={room}
+                stats={calcRoomStats(room.id, allMissions)}
+                localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
+                actionError={actionErrors[room.id]}
+                onCleanlinessChange={handleCleanlinessChange}
+                onCleanlinessSave={handleCleanlinessSave}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <StickyFooter>

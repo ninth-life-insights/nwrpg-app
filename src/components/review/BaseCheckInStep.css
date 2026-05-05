@@ -1,156 +1,137 @@
 /* src/components/review/BaseCheckInStep.css */
 
-/* ── Room card ──────────────────────────────────────────────────── */
+/* ── Room list wrapper ──────────────────────────────────────────── */
 
-.bci-room-card {
+.bci-room-list {
   background: var(--color-bg-white);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: var(--space-lg);
+  overflow: hidden;
+}
+
+/* ── Individual room row ────────────────────────────────────────── */
+
+.bci-room-row {
+  padding: var(--space-md) var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
-/* ── Header row ─────────────────────────────────────────────────── */
-
-.bci-room-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
+.bci-room-row + .bci-room-row {
+  border-top: 1px solid var(--color-border);
 }
 
-.bci-room-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+/* ── Top line: icon · name · cleanliness toggle ─────────────────── */
 
-.bci-room-icon .material-icons {
-  font-size: 20px;
-  color: white;
-}
-
-.bci-room-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-.bci-room-name {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-text-dark);
-}
-
-/* ── Cleanliness row ────────────────────────────────────────────── */
-
-.bci-cleanliness-row {
+.bci-room-top {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
 }
 
-.bci-cleanliness-bar-wrap {
+.bci-room-icon-wrap {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bci-room-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+
+.bci-room-material-icon {
+  font-size: 24px;
+  color: var(--color-text-medium);
+}
+
+.bci-room-name {
   flex: 1;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-dark);
   min-width: 0;
-}
-
-.bci-cleanliness-bar-track {
-  width: 100%;
-  height: 8px;
-  background: var(--color-border);
-  border-radius: 4px;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.bci-cleanliness-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease, background-color 0.3s ease;
+.bci-cleanliness-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  font-family: var(--font-family);
 }
 
 .bci-cleanliness-label {
   font-size: var(--font-size-sm);
   font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-.bci-cleanliness-edit-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+.bci-toggle-chevron {
+  font-size: 16px;
   color: var(--color-text-light);
-  transition: color var(--transition);
-  flex-shrink: 0;
 }
 
-.bci-cleanliness-edit-btn:hover {
-  color: var(--color-text-medium);
+/* ── Cleanliness bar (always visible) ───────────────────────────── */
+
+.bci-bar-track {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-.bci-cleanliness-edit-btn .material-icons {
-  font-size: 18px;
+.bci-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease, background-color 0.3s ease;
 }
 
 /* ── Slider ─────────────────────────────────────────────────────── */
 
-.bci-cleanliness-slider {
+.bci-slider {
   width: 100%;
   accent-color: var(--color-primary);
   cursor: pointer;
+  margin: 0;
 }
 
-/* ── Inline action error ────────────────────────────────────────── */
+/* ── Stats line ─────────────────────────────────────────────────── */
+
+.bci-stats-line {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.bci-stats-sep {
+  color: var(--color-border);
+}
+
+.bci-stats-overdue {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ── Inline save error ──────────────────────────────────────────── */
 
 .bci-action-error {
   font-size: var(--font-size-sm);
   color: #ef4444;
   margin: 0;
-}
-
-/* ── Stats grid ─────────────────────────────────────────────────── */
-
-.bci-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-border);
-}
-
-.bci-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.bci-stat-number {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-dark);
-  line-height: 1;
-}
-
-.bci-stat-label {
-  font-size: 11px;
-  color: var(--color-text-light);
-  text-align: center;
-  line-height: 1.3;
-}
-
-.bci-stat--overdue .bci-stat-number {
-  color: #ef4444;
 }
