@@ -8,6 +8,7 @@ import {
   hasPermission,
   showNotification,
   msUntil,
+  checkAndFirePlanYourDayAlert,
   checkAndFireDueTodayAlert,
   // checkAndFireOverdueAlert,
 } from '../services/notificationService';
@@ -40,12 +41,9 @@ export const NotificationProvider = ({ children }) => {
     clearAllScheduled();
     if (!prefs?.enabled || !hasPermission()) return;
 
-    if (prefs.planYourDay?.enabled) {
+    if (prefs.planYourDay?.enabled && currentUser) {
       const id = setTimeout(
-        () => showNotification('Ready to plan your day?', {
-          body: "Your next mission awaits",
-          url: '/edit-daily-missions',
-        }),
+        () => checkAndFirePlanYourDayAlert(currentUser.uid),
         msUntil(prefs.planYourDay.hour, prefs.planYourDay.minute)
       );
       scheduledTimerIds.current.push(id);
@@ -53,7 +51,7 @@ export const NotificationProvider = ({ children }) => {
 
     if (prefs.reviewYourDay?.enabled) {
       const id = setTimeout(
-        () => showNotification('Today&apos;s tale is ready', {
+        () => showNotification('Today\'s tale is ready', {
           body: 'Read how your adventure unfolded',
           url: '/daily-review',
         }),

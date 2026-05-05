@@ -1,6 +1,7 @@
 // src/services/notificationService.js
 // Pure browser Notification API calls — no Firestore, no React.
 import { getActiveMissions } from './missionService';
+import { hasDailyMissionsForToday } from './dailyMissionService';
 import { isMissionDueToday, isMissionOverdue } from '../utils/dateHelpers';
 
 const ICON = '/assets/App-Icon/Nwrpg-icon-192.png';
@@ -49,6 +50,27 @@ export const msUntil = (hour, minute) => {
     target.setDate(target.getDate() + 1);
   }
   return target.getTime() - now.getTime();
+};
+
+// Fire the "plan your day" notification, with content depending on whether
+// daily missions have already been set for today.
+export const checkAndFirePlanYourDayAlert = async (userId) => {
+  try {
+    const hasMissions = await hasDailyMissionsForToday(userId);
+    if (hasMissions) {
+      await showNotification('Ready to adventure?', {
+        body: 'Your daily missions are set',
+        url: '/home',
+      });
+    } else {
+      await showNotification('Ready to plan your day?', {
+        body: 'Your next mission awaits',
+        url: '/edit-daily-missions',
+      });
+    }
+  } catch (error) {
+    console.warn('checkAndFirePlanYourDayAlert failed:', error);
+  }
 };
 
 // Query active missions and fire a notification if any are due today
