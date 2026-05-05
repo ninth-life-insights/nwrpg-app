@@ -78,6 +78,56 @@
 /* The wrs-stats class is a hook for any future overrides.
    The weekly summary reuses .daily-review-stats from DailyReviewPage.css. */
 
+/* ── Base activity grid ──────────────────────────────────────── */
+
+.wrs-room-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.wrs-room-cell {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  text-align: center;
+}
+
+.wrs-room-icon {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wrs-room-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.wrs-room-material-icon {
+  font-size: 36px;
+  color: var(--color-text-medium);
+}
+
+.wrs-room-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  line-height: 1.2;
+}
+
+.wrs-room-count {
+  font-size: 11px;
+  color: var(--color-text-light);
+}
+
 /* Third stat cell uses indigo (distinct from daily's amber) */
 .wrs-stats .stat-card:nth-child(3)::before {
   background: #7c3aed;
