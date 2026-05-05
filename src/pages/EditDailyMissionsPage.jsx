@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 // Component imports
 import AddMissionCard from '../components/missions/AddMissionCard';
 import MissionList from '../components/missions/MissionList';
+import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
 import Badge from '../components/ui/Badge';
 
 // Service imports - UPDATED for simplified system
@@ -14,6 +15,8 @@ import {
   getCompletedMissions,
   createMission
 } from '../services/missionService';
+import { getRooms } from '../services/roomService';
+import { getAllQuests } from '../services/questService';
 
 // UPDATED: Import from separate daily mission service
 import {
@@ -72,6 +75,15 @@ const EditDailyMissionsPage = ({
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
   useModalBackButton(showMissionBank, () => setShowMissionBank(false));
+  const [bankSearchQuery, setBankSearchQuery] = useState('');
+  const [bankFilters, setBankFilters] = useState({
+    sortBy: 'custom', sortOrder: 'asc', skillFilter: '',
+    includeCompleted: false, showArchive: false, completedDateRange: 'last7days',
+    roomFilter: '', taskTypeFilter: '', questFilter: ''
+  });
+  const [showBankFilters, setShowBankFilters] = useState(false);
+  const [bankRooms, setBankRooms] = useState([]);
+  const [bankQuests, setBankQuests] = useState([]);
   const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
@@ -212,6 +224,15 @@ const handleAddNewMission = async (missionData) => {
     if (emptySlotIndex !== -1) {
       setCurrentSlotIndex(emptySlotIndex);
       setShowMissionBank(true);
+      if (bankRooms.length === 0 && bankQuests.length === 0) {
+        Promise.all([
+          getRooms(currentUser.uid),
+          getAllQuests(currentUser.uid)
+        ]).then(([rooms, quests]) => {
+          setBankRooms(rooms || []);
+          setBankQuests(quests || []);
+        }).catch(() => {});
+      }
     }
   };
 
@@ -549,15 +570,61 @@ const handleAddNewMission = async (missionData) => {
                 ×
               </button>
             </div>
-            <MissionList
-              selectionMode={true}
-              onMissionSelect={(mission) => handleMissionSelect(mission)}
-              selectedMissions={dailyMissions.filter(m => m !== null)}
-              maxSelections={3}
-            />
+
+            <div className="bank-search-bar">
+              <span className="material-icons bank-search-icon">search</span>
+              <input
+                type="text"
+                className="bank-search-input"
+                placeholder="Search missions..."
+                value={bankSearchQuery}
+                onChange={(e) => setBankSearchQuery(e.target.value)}
+              />
+              {bankSearchQuery && (
+                <button
+                  className="bank-search-clear"
+                  onClick={() => setBankSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  <span className="material-icons">close</span>
+                </button>
+              )}
+              <button
+                className={`bank-filter-btn${(bankFilters.skillFilter || bankFilters.roomFilter || bankFilters.taskTypeFilter || bankFilters.questFilter) ? ' bank-filter-btn--active' : ''}`}
+                onClick={() => setShowBankFilters(true)}
+                aria-label="Filter missions"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+                </svg>
+                {(bankFilters.skillFilter || bankFilters.roomFilter || bankFilters.taskTypeFilter || bankFilters.questFilter) && (
+                  <span className="bank-filter-dot" />
+                )}
+              </button>
+            </div>
+
+            <div className="bank-mission-scroll">
+              <MissionList
+                selectionMode={true}
+                onMissionSelect={(mission) => handleMissionSelect(mission)}
+                selectedMissions={dailyMissions.filter(m => m !== null)}
+                maxSelections={3}
+                filters={bankFilters}
+                searchQuery={bankSearchQuery}
+              />
+            </div>
           </div>
         </div>
       )}
+
+      <MissionFilterModal
+        isOpen={showBankFilters}
+        onClose={() => setShowBankFilters(false)}
+        currentFilters={bankFilters}
+        onApplyFilters={(f) => setBankFilters(f)}
+        rooms={bankRooms}
+        quests={bankQuests}
+      />
 
       {/* Date Picker Sheet */}
       {!isModal && showDatePicker && (

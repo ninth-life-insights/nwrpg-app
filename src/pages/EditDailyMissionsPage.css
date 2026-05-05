@@ -356,9 +356,17 @@
   width: 100%;
   max-width: 500px;
   max-height: 80vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   position: relative;
   animation: slideUp 0.2s ease-out;
+}
+
+.bank-mission-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .modal-header {
@@ -398,6 +406,93 @@
 .close-btn:hover {
   background: var(--color-error);
   color: white;
+}
+
+/* Bank search + filter bar */
+.bank-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-sm) var(--space-xl);
+  background: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.bank-search-icon {
+  color: var(--color-text-light, #9ca3af);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.bank-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--color-text-main);
+  min-width: 0;
+}
+
+.bank-search-input::placeholder {
+  color: var(--color-text-light, #9ca3af);
+}
+
+.bank-search-clear {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-light, #9ca3af);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.bank-search-clear:hover {
+  color: var(--color-text-main);
+}
+
+.bank-search-clear .material-icons {
+  font-size: 16px;
+}
+
+.bank-filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  background: var(--color-bg-main);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.bank-filter-btn:hover {
+  background: var(--color-border);
+}
+
+.bank-filter-btn--active {
+  border-color: var(--color-primary, #6c63ff);
+  color: var(--color-primary, #6c63ff);
+}
+
+.bank-filter-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-primary, #6c63ff);
+  border-radius: 50%;
+  border: 1.5px solid var(--color-bg-white);
 }
 
 /* Selection Mode Styles */
