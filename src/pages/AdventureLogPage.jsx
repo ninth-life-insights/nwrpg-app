@@ -132,9 +132,24 @@ const AdventureLogPage = () => {
   const allEntries = useMemo(() => {
     const snapshotEntries = snapshots.map(s => ({ ...s, type: 'snapshot' }));
     const placeholderEntries = placeholders.map(p => ({ ...p, type: 'placeholder' }));
-    const weeklyEntries = weeklySnapshots.map(w => ({ ...w, type: 'weekly', date: w.weekStart }));
+
+    // Use weekEnd as the grouping date so the card lands in the same month
+    // as the week's latest entries. Sort key is weekStart - 1 day so the
+    // card sinks below all daily entries from that week in the descending list.
+    const weeklyEntries = weeklySnapshots.map(w => {
+      const weekEnd = w.weekEnd ?? w.weekStart;
+      const d = new Date(weekEnd + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      const sortKey = d.toISOString().slice(0, 10);
+      return { ...w, type: 'weekly', date: weekEnd, _sortKey: sortKey };
+    });
+
     return [...snapshotEntries, ...placeholderEntries, ...weeklyEntries]
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => {
+        const ka = a._sortKey ?? a.date;
+        const kb = b._sortKey ?? b.date;
+        return kb.localeCompare(ka);
+      });
   }, [snapshots, placeholders, weeklySnapshots]);
 
   // Apply filters
