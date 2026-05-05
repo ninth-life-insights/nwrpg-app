@@ -2,7 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats } from '../services/roomService';
+import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../services/roomService';
+import { getUserProfile } from '../services/userService';
 import { useRooms } from '../contexts/RoomsContext';
 import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
 import MissionCard from '../components/missions/MissionCard';
@@ -25,6 +26,7 @@ const RoomPage = () => {
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
+  const [baseName, setBaseName] = useState('');
   const [missions, setMissions] = useState([]);
   const [stats, setStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
   const [loading, setLoading] = useState(true);
@@ -74,17 +76,21 @@ const RoomPage = () => {
     setIsLoadingSlow(false);
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [roomData, allMissions] = await withTimeout(
-        Promise.all([
-          getRoom(currentUser.uid, roomId),
-          getAllMissions(currentUser.uid),
-        ])
-      );
+      const fetchList = [
+        getRoom(currentUser.uid, roomId),
+        getAllMissions(currentUser.uid),
+      ];
+      if (roomId === ENTIRE_BASE_ROOM_ID) {
+        fetchList.push(getUserProfile(currentUser.uid));
+      }
+      const [roomData, allMissions, profile] = await withTimeout(Promise.all(fetchList));
 
       if (!roomData) {
         setLoadError("This room doesn't exist.");
         return;
       }
+
+      if (profile) setBaseName(profile.baseName || '');
 
       const roomMissions = allMissions.filter(
         m => m.baseLocation === roomId && m.status !== 'deleted'
@@ -220,7 +226,7 @@ const RoomPage = () => {
         </button>
         <h1 className="room-page-title">{room.name}</h1>
 
-        {room.canDelete ? (
+        {(room.canDelete || roomId === ENTIRE_BASE_ROOM_ID) ? (
           <div className="room-page-menu-wrap" ref={menuRef}>
             <button
               className="room-page-menu-btn"
@@ -238,15 +244,17 @@ const RoomPage = () => {
                       onClick={() => { setShowMenu(false); setShowEditRoom(true); }}
                     >
                       <span className="material-icons">edit</span>
-                      Edit Room
+                      Edit {roomId === ENTIRE_BASE_ROOM_ID ? 'Base' : 'Room'}
                     </button>
-                    <button
-                      className="room-page-dropdown-item room-page-dropdown-item--delete"
-                      onClick={() => setShowDeleteConfirm(true)}
-                    >
-                      <span className="material-icons">delete</span>
-                      Delete Room
-                    </button>
+                    {room.canDelete && (
+                      <button
+                        className="room-page-dropdown-item room-page-dropdown-item--delete"
+                        onClick={() => setShowDeleteConfirm(true)}
+                      >
+                        <span className="material-icons">delete</span>
+                        Delete Room
+                      </button>
+                    )}
                   </>
                 ) : (
                   <div className="room-page-delete-confirm">
@@ -380,12 +388,14 @@ const RoomPage = () => {
         />
       )}
 
-      {/* Edit Room modal */}
+      {/* Edit Room / Base modal */}
       {showEditRoom && (
         <AddRoomModal
           onClose={() => setShowEditRoom(false)}
           onRoomAdded={handleRoomUpdated}
           editRoom={room}
+          isBaseRoom={roomId === ENTIRE_BASE_ROOM_ID}
+          baseName={roomId === ENTIRE_BASE_ROOM_ID ? baseName : undefined}
         />
       )}
 

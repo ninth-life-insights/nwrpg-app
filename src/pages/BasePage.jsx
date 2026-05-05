@@ -1,10 +1,10 @@
 // src/pages/BasePage.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getRooms, getAllRoomStats, ENTIRE_BASE_ROOM_ID } from '../services/roomService';
+import { getAllRoomStats, initializeEntireBaseRoom, ENTIRE_BASE_ROOM_ID } from '../services/roomService';
 import { getAllMissions } from '../services/missionService';
-import { getUserProfile, updateUserProfile } from '../services/userService';
+import { getUserProfile } from '../services/userService';
 import RoomCard from '../components/base/RoomCard';
 import AddRoomModal from '../components/base/AddRoomModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -20,11 +20,8 @@ const BasePage = () => {
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
+  const [showBaseIconModal, setShowBaseIconModal] = useState(false);
   const [baseName, setBaseName] = useState('');
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editNameValue, setEditNameValue] = useState('');
-  const [saveNameError, setSaveNameError] = useState(null);
-  const nameInputRef = useRef(null);
 
   const fetchRoomsAndStats = async () => {
     if (!currentUser) return;
@@ -37,6 +34,7 @@ const BasePage = () => {
     setIsLoadingSlow(false);
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
+      await initializeEntireBaseRoom(currentUser.uid);
       const [missions, profile] = await withTimeout(
         Promise.all([
           getAllMissions(currentUser.uid),
@@ -70,31 +68,6 @@ const BasePage = () => {
     setShowAddRoomModal(true);
   };
 
-  const handleStartEditName = () => {
-    setEditNameValue(baseName);
-    setIsEditingName(true);
-    setSaveNameError(null);
-    setTimeout(() => nameInputRef.current?.focus(), 50);
-  };
-
-  const handleCancelEditName = () => {
-    setIsEditingName(false);
-    setSaveNameError(null);
-  };
-
-  const handleSaveName = async () => {
-    const trimmed = editNameValue.trim();
-    setSaveNameError(null);
-    try {
-      await updateUserProfile(currentUser.uid, { baseName: trimmed });
-      setBaseName(trimmed);
-      setIsEditingName(false);
-    } catch (err) {
-      console.error('Error saving base name:', err);
-      setSaveNameError("That name didn't save. Try again.");
-    }
-  };
-
   const handleRoomAdded = async () => {
     setShowAddRoomModal(false);
     await fetchRoomsAndStats();
@@ -112,6 +85,14 @@ const BasePage = () => {
   }
 
   const hasCustomRooms = rooms.length > 1; // More than just "Entire Base"
+
+  const entireBaseRoom = rooms.find(r => r.id === ENTIRE_BASE_ROOM_ID);
+  const baseIconUnset = !entireBaseRoom || entireBaseRoom.icon === 'home';
+
+  const otherRooms = roomStats.filter(r => r.id !== ENTIRE_BASE_ROOM_ID);
+  const avgCleanliness = otherRooms.length > 0
+    ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
+    : 3;
 
   return (
     <div className="base-page-container">
@@ -132,12 +113,22 @@ const BasePage = () => {
         />
       )}
 
+      {/* First-time base setup banner */}
+      {baseIconUnset && (
+        <div className="base-setup-banner">
+          <p className="base-setup-banner-text">Give your base a look — set a name and choose an icon.</p>
+          <button className="base-setup-banner-btn" onClick={() => setShowBaseIconModal(true)}>
+            Get started →
+          </button>
+        </div>
+      )}
+
       {/* Rooms Grid */}
       <div className="rooms-grid">
         {roomStats.map((room) => {
           const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
           const displayRoom = isEntireBase
-            ? { ...room, name: baseName || room.name }
+            ? { ...room, name: baseName || room.name, cleanliness: avgCleanliness }
             : room;
 
           return (
@@ -145,32 +136,13 @@ const BasePage = () => {
               <RoomCard
                 room={displayRoom}
                 stats={room.stats}
-                onClick={() => handleRoomClick(room.roomId)}
+                onClick={() => handleRoomClick(room.roomId || room.id)}
               />
-              {isEntireBase && (
-                isEditingName ? (
-                  <div className="base-name-edit">
-                    <input
-                      ref={nameInputRef}
-                      className="base-name-input"
-                      value={editNameValue}
-                      onChange={e => setEditNameValue(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') handleCancelEditName(); }}
-                      placeholder="Name your base..."
-                      maxLength={40}
-                    />
-                    <div className="base-name-edit-actions">
-                      {saveNameError && <span className="base-name-error">{saveNameError}</span>}
-                      <button className="base-name-cancel" onClick={handleCancelEditName}>Cancel</button>
-                      <button className="base-name-save" onClick={handleSaveName}>Save</button>
-                    </div>
-                  </div>
-                ) : (
-                  <button className="base-rename-btn" onClick={handleStartEditName}>
-                    <span className="material-icons">edit</span>
-                    {baseName ? 'Rename' : 'Add nickname'}
-                  </button>
-                )
+              {isEntireBase && baseIconUnset && (
+                <button className="base-look-btn" onClick={() => setShowBaseIconModal(true)}>
+                  <span className="material-icons">photo</span>
+                  Choose base look
+                </button>
               )}
             </div>
           );
@@ -194,6 +166,17 @@ const BasePage = () => {
         <AddRoomModal
           onClose={() => setShowAddRoomModal(false)}
           onRoomAdded={handleRoomAdded}
+        />
+      )}
+
+      {/* Base icon + nickname setup modal */}
+      {showBaseIconModal && entireBaseRoom && (
+        <AddRoomModal
+          onClose={() => setShowBaseIconModal(false)}
+          onRoomAdded={() => { setShowBaseIconModal(false); fetchRoomsAndStats(); }}
+          editRoom={entireBaseRoom}
+          isBaseRoom={true}
+          baseName={baseName}
         />
       )}
     </div>
