@@ -74,71 +74,71 @@ const RoomCheckInCard = ({
   const stopProp = (e) => e.stopPropagation();
 
   return (
-    <div className="bci-room-card" onClick={onOpenModal} role="button" tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && onOpenModal()}
-    >
-      <div className="bci-card-icon-wrap">
+    <div className="bci-room-card" onClick={onOpenModal}>
+      {/* Left icon column — spans full card height */}
+      <div className="bci-card-icon-col">
         {isImageIcon(room.icon)
           ? <img src={`/assets/Rooms/${room.icon}`} alt="" className="bci-card-img" />
           : <span className="material-icons bci-card-material-icon">{room.icon}</span>
         }
       </div>
 
-      <h3 className="bci-card-room-name">{room.name}</h3>
+      {/* Right content */}
+      <div className="bci-card-content">
+        <h3 className="bci-card-room-name">{room.name}</h3>
 
-      {/* Cleanliness — stops propagation so editing doesn't open the modal */}
-      <div className="bci-card-cleanliness" onClick={stopProp}>
-        <div className="bci-card-cleanliness-row">
-          <div className="bci-card-bar-wrap">
-            <div className="bci-card-bar-track">
-              <div
-                className="bci-card-bar-fill"
-                style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
-              />
+        {/* Cleanliness — stops propagation so editing doesn't open the modal */}
+        <div className="bci-card-cleanliness" onClick={stopProp}>
+          <div className="bci-card-cleanliness-row">
+            <div className="bci-card-bar-wrap">
+              <div className="bci-card-bar-track">
+                <div
+                  className="bci-card-bar-fill"
+                  style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
+                />
+              </div>
             </div>
-          </div>
-          <span className="bci-card-cleanliness-label" style={{ color: cleanlinessColor }}>
-            {cleanlinessLabel}
-          </span>
-          <button
-            className="bci-card-cleanliness-edit-btn"
-            onClick={() => setShowSlider(v => !v)}
-            aria-label="Adjust cleanliness"
-          >
-            <span className="material-icons">
-              {showSlider ? 'expand_less' : 'edit'}
+            <span className="bci-card-cleanliness-label" style={{ color: cleanlinessColor }}>
+              {cleanlinessLabel}
             </span>
-          </button>
+            <button
+              className="bci-card-cleanliness-edit-btn"
+              onClick={() => setShowSlider(v => !v)}
+              aria-label="Adjust cleanliness"
+            >
+              <span className="material-icons">
+                {showSlider ? 'expand_less' : 'edit'}
+              </span>
+            </button>
+          </div>
+
+          {showSlider && (
+            <input
+              type="range"
+              min="1"
+              max="5"
+              value={localCleanliness}
+              onChange={e => onCleanlinessChange(room.id, parseInt(e.target.value))}
+              onMouseUp={() => onCleanlinessSave(room.id)}
+              onTouchEnd={() => onCleanlinessSave(room.id)}
+              className="bci-card-cleanliness-slider"
+            />
+          )}
+
+          {actionError && <p className="bci-card-action-error">{actionError}</p>}
         </div>
 
-        {showSlider && (
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={localCleanliness}
-            onChange={e => onCleanlinessChange(room.id, parseInt(e.target.value))}
-            onMouseUp={() => onCleanlinessSave(room.id)}
-            onTouchEnd={() => onCleanlinessSave(room.id)}
-            className="bci-card-cleanliness-slider"
-          />
+        {statsParts.length > 0 && (
+          <p className="bci-card-stats-line">
+            {statsParts.map((part, i) => (
+              <span key={i}>
+                {i > 0 && <span className="bci-stats-sep"> · </span>}
+                <span className={part.overdue ? 'bci-stats-overdue' : ''}>{part.text}</span>
+              </span>
+            ))}
+          </p>
         )}
-
-        {actionError && <p className="bci-card-action-error">{actionError}</p>}
       </div>
-
-      {statsParts.length > 0 && (
-        <p className="bci-card-stats-line">
-          {statsParts.map((part, i) => (
-            <span key={i}>
-              {i > 0 && <span className="bci-stats-sep"> · </span>}
-              <span className={part.overdue ? 'bci-stats-overdue' : ''}>{part.text}</span>
-            </span>
-          ))}
-        </p>
-      )}
-
-      <p className="bci-card-tap-hint">Tap to view missions</p>
     </div>
   );
 };
@@ -227,22 +227,18 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
           <p className="review-step-loading">Loading your base...</p>
         )}
 
-        {!loading && !loadError && (
-          <div className="bci-room-grid">
-            {rooms.map(room => (
-              <RoomCheckInCard
-                key={room.id}
-                room={room}
-                stats={calcRoomStats(room.id, allMissions)}
-                localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
-                actionError={actionErrors[room.id]}
-                onCleanlinessChange={handleCleanlinessChange}
-                onCleanlinessSave={handleCleanlinessSave}
-                onOpenModal={() => setOpenRoomId(room.id)}
-              />
-            ))}
-          </div>
-        )}
+        {!loading && !loadError && rooms.map(room => (
+          <RoomCheckInCard
+            key={room.id}
+            room={room}
+            stats={calcRoomStats(room.id, allMissions)}
+            localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
+            actionError={actionErrors[room.id]}
+            onCleanlinessChange={handleCleanlinessChange}
+            onCleanlinessSave={handleCleanlinessSave}
+            onOpenModal={() => setOpenRoomId(room.id)}
+          />
+        ))}
       </div>
 
       {openRoomId && (

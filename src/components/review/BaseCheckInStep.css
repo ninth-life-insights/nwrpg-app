@@ -1,55 +1,57 @@
 /* src/components/review/BaseCheckInStep.css */
 
-/* ── Room grid ──────────────────────────────────────────────────── */
-
-.bci-room-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-}
-
-/* ── Room card ──────────────────────────────────────────────────── */
+/* ── Room card — horizontal layout ─────────────────────────────── */
 
 .bci-room-card {
   background: var(--color-bg-white);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: var(--space-md);
   display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
+  flex-direction: row;
+  overflow: hidden;
   cursor: pointer;
   transition: box-shadow var(--transition);
-  text-align: left;
-  min-width: 0;
 }
 
 .bci-room-card:hover {
   box-shadow: var(--shadow-hover);
 }
 
-/* ── Icon ───────────────────────────────────────────────────────── */
+/* ── Left icon column — spans full card height ──────────────────── */
 
-.bci-card-icon-wrap {
+.bci-card-icon-col {
+  width: 88px;
+  flex-shrink: 0;
+  background: var(--color-bg-main);
+  border-right: 1px solid var(--color-border-yellow);
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 80px;
 }
 
 .bci-card-img {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 
 .bci-card-material-icon {
-  font-size: 52px;
+  font-size: 48px;
   color: var(--color-text-medium);
 }
 
-/* ── Room name ──────────────────────────────────────────────────── */
+/* ── Right content area ─────────────────────────────────────────── */
+
+.bci-card-content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-md) var(--space-md) var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  justify-content: center;
+}
 
 .bci-card-room-name {
   font-size: var(--font-size-base);
@@ -61,7 +63,7 @@
   white-space: nowrap;
 }
 
-/* ── Cleanliness (mirrors RoomPage pattern) ─────────────────────── */
+/* ── Cleanliness (mirrors RoomPage) ─────────────────────────────── */
 
 .bci-card-cleanliness {
   display: flex;
@@ -98,6 +100,8 @@
   font-weight: 700;
   white-space: nowrap;
   flex-shrink: 0;
+  min-width: 60px;
+  text-align: right;
   transition: color 0.3s ease;
 }
 
@@ -141,22 +145,22 @@
 .bci-card-cleanliness-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: white;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .bci-card-cleanliness-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: white;
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .bci-card-action-error {
@@ -168,7 +172,7 @@
 /* ── Stats line ─────────────────────────────────────────────────── */
 
 .bci-card-stats-line {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-light);
   margin: 0;
   line-height: 1.4;
@@ -181,13 +185,4 @@
 .bci-stats-overdue {
   color: #ef4444;
   font-weight: 600;
-}
-
-/* ── Tap hint ───────────────────────────────────────────────────── */
-
-.bci-card-tap-hint {
-  font-size: 11px;
-  color: var(--color-text-placeholder);
-  margin: 0;
-  margin-top: auto;
 }

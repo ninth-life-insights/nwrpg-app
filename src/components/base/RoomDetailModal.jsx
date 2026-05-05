@@ -7,7 +7,6 @@ import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
-import { useModalBackButton } from '../../hooks/useModalBackButton';
 import { withTimeout } from '../../utils/fetchWithTimeout';
 import './RoomDetailModal.css';
 
@@ -27,8 +26,6 @@ const RoomDetailModal = ({ roomId, onClose }) => {
   const [showSlider, setShowSlider] = useState(false);
   const [localCleanliness, setLocalCleanliness] = useState(3);
   const [showAddMission, setShowAddMission] = useState(false);
-
-  useModalBackButton(true, onClose);
 
   const fetchData = useCallback(async () => {
     if (!currentUser) return;
