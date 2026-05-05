@@ -94,172 +94,18 @@
 .rdm-body {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: var(--space-xl);
+  padding: var(--space-sm) var(--space-lg);
 }
 
 .rdm-loading {
   font-size: var(--font-size-base);
   color: var(--color-text-light);
-  padding: var(--space-xl);
+  padding: var(--space-xl) 0;
   margin: 0;
 }
 
-/* ── Hero image ─────────────────────────────────────────────────── */
-
-.rdm-hero-img {
-  display: block;
-  width: 120px;
-  height: 120px;
-  object-fit: contain;
-  margin: var(--space-lg) auto var(--space-sm);
-}
-
-/* ── Stats + cleanliness card ───────────────────────────────────── */
-
-.rdm-stats-card {
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  margin: var(--space-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-}
-
-.rdm-cleanliness {
-  padding: var(--space-lg) var(--space-lg) 0;
-}
-
-.rdm-cleanliness-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.rdm-cleanliness-bar-wrap {
-  flex: 1;
-}
-
-.rdm-cleanliness-bar-track {
-  height: 10px;
-  background: var(--color-border);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.rdm-cleanliness-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.3s ease, background-color 0.3s ease;
-}
-
-.rdm-cleanliness-label {
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  white-space: nowrap;
-  min-width: 72px;
-  text-align: right;
-  transition: color 0.3s ease;
-}
-
-.rdm-cleanliness-edit-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-light);
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: var(--radius-sm);
-  transition: color var(--transition);
-  flex-shrink: 0;
-}
-
-.rdm-cleanliness-edit-btn:hover {
-  color: var(--color-text-dark);
-}
-
-.rdm-cleanliness-edit-btn .material-icons {
-  font-size: 20px;
-}
-
-.rdm-cleanliness-slider {
-  width: 100%;
-  margin-top: var(--space-md);
-  height: 12px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: linear-gradient(to right,
-    #ef4444 0%,
-    #f97316 25%,
-    #eab308 50%,
-    #84cc16 75%,
-    #10b981 100%);
-  border-radius: 6px;
-  outline: none;
-  cursor: pointer;
-}
-
-.rdm-cleanliness-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: white;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.rdm-cleanliness-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: white;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.rdm-stat-line {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-light);
-  margin: var(--space-md) var(--space-lg) var(--space-lg);
-}
-
-/* ── Missions section ───────────────────────────────────────────── */
-
-.rdm-missions {
-  padding: 0 var(--space-lg);
-}
-
-.rdm-missions-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: var(--space-xl) 0 var(--space-sm);
-}
-
-.rdm-missions-title {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-text-dark);
-  margin: 0;
-}
-
-.rdm-add-btn {
-  background: none;
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-primary);
-  cursor: pointer;
-  transition: background var(--transition);
-}
-
-.rdm-add-btn:hover {
-  background: rgba(59, 130, 246, 0.06);
+.rdm-action-error-wrap {
+  padding: var(--space-sm) 0;
 }
 
 .rdm-empty {
@@ -269,6 +115,8 @@
   padding: var(--space-xl) 0;
   margin: 0;
 }
+
+/* ── Completed divider ──────────────────────────────────────────── */
 
 .rdm-completed-divider {
   display: flex;
@@ -286,4 +134,32 @@
   flex: 1;
   height: 1px;
   background: var(--color-border);
+}
+
+/* ── Sticky footer ──────────────────────────────────────────────── */
+
+.rdm-footer {
+  flex-shrink: 0;
+  padding: var(--space-md) var(--space-lg) var(--space-xl);
+  background: var(--color-bg-main);
+  border-top: 1px solid var(--color-border);
+}
+
+.rdm-add-btn {
+  display: block;
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-family: var(--font-family);
+}
+
+.rdm-add-btn:hover {
+  background: var(--color-primary-hover, #1d4ed8);
 }
