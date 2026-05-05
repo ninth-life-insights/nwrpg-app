@@ -27,6 +27,12 @@ export function useModalBackButton(isOpen, onClose) {
   // history.back(), then the re-mounted effect registers a new listener which
   // would otherwise catch that popstate and close the modal spuriously.
   const ignoreNextPopState = useRef(false);
+  // Keep onClose in a ref so it's always current without being a dep.
+  // Without this, an inline-arrow onClose prop causes the effect to re-run on
+  // every parent re-render (including React Router's own popstate responses),
+  // producing a 3rd effect cycle that calls history.back() at the wrong position.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -54,7 +60,7 @@ export function useModalBackButton(isOpen, onClose) {
       }
       console.log('[useModalBackButton] closing modal via back');
       closedViaBack.current = true;
-      onClose();
+      onCloseRef.current();
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -72,5 +78,5 @@ export function useModalBackButton(isOpen, onClose) {
         console.log('[useModalBackButton] closed via back — no history.back() needed');
       }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]); // onClose intentionally excluded — kept current via onCloseRef
 }
