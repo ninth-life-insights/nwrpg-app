@@ -64,7 +64,6 @@ const BasePage = () => {
   };
 
   const handleAddRoom = () => {
-    console.log('[BasePage] handleAddRoom clicked. history.length:', history.length, 'state:', JSON.stringify(history.state), 'url:', location.href);
     setShowAddRoomModal(true);
   };
 

@@ -22,36 +22,35 @@ import { useEffect, useRef } from 'react';
  */
 export function useModalBackButton(isOpen, onClose) {
   const closedViaBack = useRef(false);
-  // Saved so cleanup can restore history to the pre-sentinel state synchronously.
-  const prevState = useRef(null);
   // Keep onClose in a ref so it's always current without being a dep.
   // Without this, an inline-arrow onClose prop causes the effect to re-run on
-  // every parent re-render (including React Router's own popstate responses),
-  // producing extra effect cycles that call history.back() at the wrong position.
+  // every parent re-render, producing extra effect cycles at the wrong history position.
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  // Deferred history.back() timer. Deferring one macrotask lets React StrictMode's
+  // synchronous cleanup→remount cancel it before it fires, so no phantom history
+  // entries accumulate and hardware back always closes the modal cleanly.
+  const cleanupTimer = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return;
 
     closedViaBack.current = false;
-    prevState.current = history.state;
 
-    // Push a sentinel entry at the same URL so back button has something to pop.
-    // Using location.href keeps the URL identical so React Router won't navigate.
-    console.log('[useModalBackButton] OPEN — pushing sentinel. url:', location.href, 'history.length:', history.length, 'current state:', JSON.stringify(history.state));
-    history.pushState({ __modalSentinel: true }, '', location.href);
-    console.log('[useModalBackButton] sentinel pushed. history.length now:', history.length);
+    if (cleanupTimer.current !== null) {
+      // StrictMode re-run: a deferred sentinel removal is pending. Cancel it
+      // and adopt the existing sentinel rather than pushing a second one.
+      clearTimeout(cleanupTimer.current);
+      cleanupTimer.current = null;
+    } else {
+      // Fresh open: push a sentinel at the same URL so the back button has
+      // something to consume without navigating away.
+      history.pushState({ __modalSentinel: true }, '', location.href);
+    }
 
     const handlePopState = (event) => {
-      console.log('[useModalBackButton] popstate fired. event.state:', JSON.stringify(event.state), 'url:', location.href);
-      // If we've landed on another sentinel, this was triggered by a nested
-      // modal's cleanup — don't close this modal.
-      if (event.state && event.state.__modalSentinel) {
-        console.log('[useModalBackButton] ignoring (landed on nested sentinel)');
-        return;
-      }
-      console.log('[useModalBackButton] closing modal via back');
+      // A nested modal's deferred back() landed us on another sentinel — ignore.
+      if (event.state && event.state.__modalSentinel) return;
       closedViaBack.current = true;
       onCloseRef.current();
     };
@@ -59,16 +58,16 @@ export function useModalBackButton(isOpen, onClose) {
     window.addEventListener('popstate', handlePopState);
 
     return () => {
-      console.log('[useModalBackButton] CLEANUP. closedViaBack:', closedViaBack.current, 'url:', location.href, 'history.length:', history.length, 'state:', JSON.stringify(history.state));
       window.removeEventListener('popstate', handlePopState);
       if (!closedViaBack.current) {
-        // Modal was closed via UI — replace the sentinel with the saved pre-push
-        // state. replaceState is synchronous and fires no popstate, so there is
-        // no async race and React Router is not disturbed.
-        console.log('[useModalBackButton] replaceState to remove sentinel. restoring:', JSON.stringify(prevState.current));
-        history.replaceState(prevState.current, '', location.href);
-      } else {
-        console.log('[useModalBackButton] closed via back — sentinel already consumed');
+        // Defer history.back() by one macrotask. StrictMode's cleanup→remount
+        // is synchronous, so the remount will cancel this timer before it fires.
+        // A real UI close has no following remount, so the timer fires and pops
+        // the sentinel with no phantom entries and no async race.
+        cleanupTimer.current = setTimeout(() => {
+          cleanupTimer.current = null;
+          if (history.state?.__modalSentinel) history.back();
+        }, 0);
       }
     };
   }, [isOpen]); // onClose intentionally excluded — kept current via onCloseRef
