@@ -36,17 +36,37 @@ export const getUserProfile = async (userId) => {
     
     if (docSnap.exists()) {
       const data = docSnap.data();
-      // One-time correction: recompute level/currentXP from totalXP using current formula
+      const updates = {};
+      const correctedData = { ...data };
+
+      // Recompute level/currentXP from totalXP using current formula
       if (data.totalXP != null) {
         const correctLevel = calculateLevelFromXP(data.totalXP);
         const correctProgress = getXPProgressInLevel(data.totalXP, correctLevel);
         if (data.level !== correctLevel || data.currentXP !== correctProgress.current) {
-          await updateDoc(userRef, {
-            level: correctLevel,
-            currentXP: correctProgress.current,
-          });
-          return { ...data, level: correctLevel, currentXP: correctProgress.current };
+          updates.level = correctLevel;
+          updates.currentXP = correctProgress.current;
+          correctedData.level = correctLevel;
+          correctedData.currentXP = correctProgress.current;
         }
+      }
+
+      // Recompute skill levels from totalSP using current formula
+      if (data.skills) {
+        const correctedSkills = { ...data.skills };
+        for (const [skillName, skill] of Object.entries(data.skills)) {
+          const correctLevel = getSkillLevelFromTotalSP(skill.totalSP);
+          if (skill.level !== correctLevel) {
+            updates[`skills.${skillName}`] = { ...skill, level: correctLevel };
+            correctedSkills[skillName] = { ...skill, level: correctLevel };
+          }
+        }
+        correctedData.skills = correctedSkills;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await updateDoc(userRef, updates);
+        return correctedData;
       }
       return data;
     } else {
@@ -190,17 +210,52 @@ export const updateUserProfile = async (userId, updates) => {
 
 // ─── SP / Skill helpers ───────────────────────────────────────────────────────
 
-const SP_PER_SKILL_LEVEL = 40;
+// SP required to reach a given skill level: 20 → 30 → 45 → 68 → 100 (cap)
+export const getSPRequiredForLevel = (level) => {
+  if (level <= 1) return 0;
+  if (level === 2) return 20;
+  if (level === 3) return 30;
 
-export const getSkillLevelFromTotalSP = (totalSP) => {
-  return Math.floor(totalSP / SP_PER_SKILL_LEVEL) + 1;
+  let spRequired = 30;
+  for (let i = 3; i < level; i++) {
+    spRequired = Math.min(Math.round(spRequired * 1.5), 100);
+  }
+  return spRequired;
 };
 
-// Mirrors getXPProgressInLevel — returns progress within the current skill level
+// Total SP needed to reach a given skill level from scratch
+export const getTotalSPForLevel = (level) => {
+  let total = 0;
+  for (let i = 2; i <= level; i++) {
+    total += getSPRequiredForLevel(i);
+  }
+  return total;
+};
+
+// Calculate skill level from total SP accumulated
+export const getSkillLevelFromTotalSP = (totalSP) => {
+  let level = 1;
+  let spAccumulated = 0;
+
+  while (spAccumulated <= totalSP) {
+    level++;
+    const spForNextLevel = getSPRequiredForLevel(level);
+    spAccumulated += spForNextLevel;
+
+    if (spAccumulated > totalSP) {
+      return level - 1;
+    }
+  }
+
+  return level;
+};
+
+// Returns progress within the current skill level
 export const getSPProgressInLevel = (totalSP) => {
   const level = getSkillLevelFromTotalSP(totalSP);
-  const current = totalSP % SP_PER_SKILL_LEVEL;
-  const required = SP_PER_SKILL_LEVEL;
+  const spForPreviousLevels = getTotalSPForLevel(level);
+  const current = totalSP - spForPreviousLevels;
+  const required = getSPRequiredForLevel(level + 1);
   return {
     current,
     required,
