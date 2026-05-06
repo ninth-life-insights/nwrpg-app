@@ -522,6 +522,25 @@ export const restoreMission = async (userId, missionId) => {
   }
 };
 
+// Toggle a mission's exclusion from today's daily story.
+// Sets excludeFromDailyStory to the given date string, or clears it if already set.
+// Returns true if the mission is now excluded, false if it's now included.
+export const toggleMissionStoryExclusion = async (userId, missionId, dateString) => {
+  try {
+    const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    const snap = await getDoc(missionRef);
+    if (!snap.exists()) throw new Error('Mission not found');
+    const isCurrentlyExcluded = snap.data().excludeFromDailyStory === dateString;
+    await updateDoc(missionRef, {
+      excludeFromDailyStory: isCurrentlyExcluded ? null : dateString,
+    });
+    return !isCurrentlyExcluded;
+  } catch (error) {
+    console.error('Error toggling mission story exclusion:', error);
+    throw error;
+  }
+};
+
 // Batch update multiple missions' custom sort orders
 export const batchUpdateMissionOrders = async (userId, updates) => {
   try {

@@ -9,12 +9,15 @@ import {
   hasSkill,
   canCompleteMission
 } from '../../types/Mission';
-import { 
+import {
   formatForUser,
   isMissionDueToday,
   isMissionOverdue,
-  isMissionDueTomorrow
- } from '../../utils/dateHelpers';
+  isMissionDueTomorrow,
+  toDateString,
+} from '../../utils/dateHelpers';
+import { useAuth } from '../../contexts/AuthContext';
+import { toggleMissionStoryExclusion } from '../../services/missionService';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -35,12 +38,14 @@ const MissionCard = ({
   hideQuestIndicator = false,
 }) => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
   const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
+  const [excludeLoading, setExcludeLoading] = useState(false);
   
   // Drag and drop setup
   const {
@@ -112,6 +117,27 @@ const MissionCard = ({
 
   const dueDateInfo = getDueDateInfo();
   const completionInfo = getCompletionTypeInfo();
+
+  const today = toDateString(new Date());
+  const completedDate = isCompleted && mission.completedAt
+    ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
+    : null;
+  const isCompletedToday = completedDate === today;
+  const isExcluded = isCompletedToday && mission.excludeFromDailyStory === today;
+
+  const handleToggleExclusion = async (e) => {
+    e.stopPropagation();
+    if (excludeLoading || !currentUser) return;
+    setExcludeLoading(true);
+    try {
+      await toggleMissionStoryExclusion(currentUser.uid, mission.id, today);
+      if (onMissionChanged) onMissionChanged();
+    } catch (err) {
+      console.error('Failed to toggle story exclusion:', err);
+    } finally {
+      setExcludeLoading(false);
+    }
+  };
 
   const handleToggleComplete = (e) => {
     e.stopPropagation();
@@ -258,6 +284,16 @@ const MissionCard = ({
               </div>
             )}
           </div>
+        )}
+
+        {isCompletedToday && !selectionMode && !isCustomOrderMode && (
+          <button
+            className={`story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
+            onClick={handleToggleExclusion}
+            disabled={excludeLoading}
+          >
+            {isExcluded ? '✓ Excluded from today\'s story' : 'Exclude from today\'s story'}
+          </button>
         )}
       </div>
 

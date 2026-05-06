@@ -357,7 +357,27 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
     taskAge: getTaskAgeLabel(event.missionCreatedAt),
   }));
 
-  // 3. Aggregate stats
+  // 3. Fetch mission docs to check which ones have been excluded from the story
+  const missionExclusionMap = {};
+  try {
+    await Promise.all(
+      events.map(async (event) => {
+        const missionRef = doc(db, 'users', userId, 'missions', event.missionId);
+        const snap = await getDoc(missionRef);
+        if (snap.exists()) {
+          missionExclusionMap[event.missionId] = snap.data().excludeFromDailyStory ?? null;
+        }
+      })
+    );
+  } catch (err) {
+    console.warn('Could not fetch mission exclusion flags for story generation:', err);
+  }
+
+  const completedMissionsForStory = completedMissions.filter(
+    m => missionExclusionMap[m.missionId] !== date
+  );
+
+  // 4. Aggregate stats
   const missionsCompleted = events.length;
   const xpEarned = events.reduce((sum, e) => sum + (e.xpEarned || 0), 0);
   const spEarned = events.reduce((sum, e) => sum + (e.spEarned || 0), 0);
@@ -456,7 +476,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   // 7. Generate the AI story
   const storyData = {
     displayName: displayName || profile?.displayName || 'You',
-    completedMissions,
+    completedMissions: completedMissionsForStory,
     dailyMissionsCompleted,
     dailyMissionsTotal,
     allDailyMissionsDone: dailyMissionsTotal > 0 && dailyMissionsCompleted === dailyMissionsTotal,
