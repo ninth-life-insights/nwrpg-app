@@ -11,6 +11,19 @@ import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './SkillDetailPage.css';
 
+const SKILL_HINTS = {
+  'Caregiving': 'And yes, self-care counts too.',
+  'Healing Arts': 'Boo-boo kisser, fever checker, mystery rash diagnoser. WebMD wishes it were you.',
+  'Cleaning & Organizing': 'You clear the dungeon. The dungeon resets overnight. You clear it again.',
+  'Crafting (DIY, Repairs, etc.)': 'Half skill, half YouTube tutorial, half sheer stubbornness.',
+  'Foraging (Shopping, Deals, etc.)': 'The ancient art of coupon lore and clearance rack divination.',
+  'Strategy & Tactics': 'Planning is your superpower. Flexibility is your backup superpower.',
+  'Diplomacy & Negotiation': "Your thank-you notes could mend nations.",
+  'Culinary Arts': 'Feeding a family three times a day, every day, forever. No big deal.',
+  'Finances': 'Mastering the way of the budget.',
+  'Fitness': 'Toddler to carry around not included.',
+};
+
 const SkillDetailPage = () => {
   const { skillName } = useParams();
   const decodedSkillName = decodeURIComponent(skillName);
@@ -141,7 +154,7 @@ const SkillDetailPage = () => {
           />
         </div>
         <p className="skill-detail-hint">
-          Complete missions tagged with this skill to earn SP.
+          {SKILL_HINTS[decodedSkillName] ?? 'Complete missions tagged with this skill to earn SP.'}
         </p>
       </div>
 

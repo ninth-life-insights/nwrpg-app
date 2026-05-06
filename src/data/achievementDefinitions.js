@@ -147,7 +147,7 @@ const ACHIEVEMENTS = [
   {
     id: 'hard_25',
     name: 'Unbreakable',
-    description: 'Complete 25 hard missions. Nothing phases you.',
+    description: 'Complete 25 hard missions.',
     category: ACHIEVEMENT_CATEGORIES.HARD_MISSIONS,
     badgeColor: 'red',
     badgeIcon: 'military_tech',
@@ -265,7 +265,7 @@ const ACHIEVEMENTS = [
   {
     id: 'midnight_1',
     name: "Hard Day's Knight",
-    description: 'Complete a mission between midnight and 4am. The quest never sleeps.',
+    description: 'Complete a mission between midnight and 4am.',
     category: ACHIEVEMENT_CATEGORIES.QUIRKY,
     badgeColor: 'slate',
     badgeIcon: 'nights_stay',
@@ -276,7 +276,7 @@ const ACHIEVEMENTS = [
   {
     id: 'midnight_5',
     name: 'Night Owl',
-    description: 'Complete 5 missions after midnight. Rest is for other adventurers.',
+    description: 'Complete 5 missions after midnight.',
     category: ACHIEVEMENT_CATEGORIES.QUIRKY,
     badgeColor: 'slate',
     badgeIcon: 'nights_stay',
