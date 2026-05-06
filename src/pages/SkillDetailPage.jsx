@@ -11,8 +11,6 @@ import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './SkillDetailPage.css';
 
-const SP_PER_SKILL_LEVEL = 50;
-
 const SkillDetailPage = () => {
   const { skillName } = useParams();
   const decodedSkillName = decodeURIComponent(skillName);
@@ -133,7 +131,7 @@ const SkillDetailPage = () => {
         <div className="skill-detail-level-row">
           <span className="skill-detail-level-label">Level {level}</span>
           <span className="skill-detail-sp-label">
-            {totalSP > 0 ? `${progress.current} / ${SP_PER_SKILL_LEVEL} SP` : 'No SP yet'}
+            {totalSP > 0 ? `${progress.current} / ${progress.required} SP` : 'No SP yet'}
           </span>
         </div>
         <div className="skill-detail-track">

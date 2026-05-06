@@ -8,8 +8,6 @@ import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import './SkillsPage.css';
 
-const SP_PER_SKILL_LEVEL = 40;
-
 const SkillsPage = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -111,7 +109,7 @@ const SkillsPage = () => {
                   )}
                 </div>
                 <span className="skill-card-sp">
-                  {hasProgress ? `${skill.progress.current} / ${SP_PER_SKILL_LEVEL} SP` : '—'}
+                  {hasProgress ? `${skill.progress.current} / ${skill.progress.required} SP` : '—'}
                 </span>
               </div>
 
