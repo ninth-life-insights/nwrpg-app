@@ -364,19 +364,22 @@ const MissionList = ({
   };
 
   const handleMissionSelect = (mission) => {
+    console.log('[MissionList] handleMissionSelect called. mission:', mission?.title, 'selectionMode:', selectionMode, 'onMissionSelect defined:', !!onMissionSelect);
     if (!selectionMode || !onMissionSelect) return;
-    
+
     const isSelected = selectedMissions.some(selected => selected.id === mission.id);
-    
+
     if (isSelected) {
+      console.log('[MissionList] mission already selected, ignoring');
       return;
     }
-    
+
     if (maxSelections && selectedMissions.length >= maxSelections) {
       alert(`You can only select up to ${maxSelections} missions.`);
       return;
     }
-    
+
+    console.log('[MissionList] calling onMissionSelect for:', mission?.title);
     onMissionSelect(mission);
   };
 

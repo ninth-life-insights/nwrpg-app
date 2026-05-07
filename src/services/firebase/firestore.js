@@ -3,11 +3,9 @@ import {
     doc, 
     addDoc, 
     updateDoc, 
-    deleteDoc, 
     getDoc, 
     getDocs, 
     query, 
-    where, 
     orderBy,
     onSnapshot
   } from 'firebase/firestore';
@@ -47,10 +45,12 @@ import {
     const missionsRef = collection(db, 'users', userId, 'missions');
     const q = query(missionsRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    return querySnapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      .filter(mission => mission.status !== 'deleted');
   };
   
   // Real-time listeners
@@ -58,10 +58,12 @@ import {
     const missionsRef = collection(db, 'users', userId, 'missions');
     const q = query(missionsRef, orderBy('createdAt', 'desc'));
     return onSnapshot(q, (querySnapshot) => {
-      const missions = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const missions = querySnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        .filter(mission => mission.status !== 'deleted');
       callback(missions);
     });
   };

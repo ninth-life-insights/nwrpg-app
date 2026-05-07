@@ -74,8 +74,15 @@ const EditDailyMissionsPage = ({
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
-  const closeMissionBank = useCallback(() => setShowMissionBank(false), []);
+  const closeMissionBank = useCallback(() => {
+    console.log('[EditDailyMissionsPage] closeMissionBank called (back button triggered)');
+    setShowMissionBank(false);
+  }, []);
   useModalBackButton(showMissionBank, closeMissionBank);
+
+  useEffect(() => {
+    console.log('[EditDailyMissionsPage] showMissionBank changed to:', showMissionBank);
+  }, [showMissionBank]);
   const [bankSearchQuery, setBankSearchQuery] = useState('');
   const [bankFilters, setBankFilters] = useState({
     sortBy: 'custom', sortOrder: 'asc', skillFilter: '',
@@ -203,12 +210,13 @@ const handleAddNewMission = async (missionData) => {
 
   // Handle selecting a mission for a slot
  const handleMissionSelect = (mission, slotIndex = currentSlotIndex) => {
-
+  console.log('[EditDailyMissionsPage] handleMissionSelect called. mission:', mission?.title, 'slotIndex:', slotIndex, 'currentSlotIndex state:', currentSlotIndex);
   const newDailyMissions = [...dailyMissions];
   newDailyMissions[slotIndex] = mission;
   setDailyMissions(newDailyMissions);
   setShowAddMission(false);
   setShowMissionBank(false);
+  console.log('[EditDailyMissionsPage] handleMissionSelect done — setShowMissionBank(false) called');
 };
 
   // Handle removing a mission from a slot
@@ -236,6 +244,7 @@ const handleAddNewMission = async (missionData) => {
   // Handle choose from bank button
   const handleChooseFromBank = () => {
     const emptySlotIndex = dailyMissions.findIndex(mission => mission === null);
+    console.log('[EditDailyMissionsPage] handleChooseFromBank called. dailyMissions:', dailyMissions.map(m => m?.title ?? null), 'emptySlotIndex:', emptySlotIndex);
     if (emptySlotIndex !== -1) {
       setCurrentSlotIndex(emptySlotIndex);
       setShowMissionBank(true);

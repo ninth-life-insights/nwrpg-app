@@ -186,7 +186,9 @@ const MissionCard = ({
 
     {/* Content area */}
     <div className="content-area" onClick={() => {
+      console.log('[MissionCard] content-area clicked. selectionMode:', selectionMode, 'onSelect defined:', !!onSelect, 'mission:', mission?.title);
       if (selectionMode && onSelect) {
+        console.log('[MissionCard] calling onSelect for:', mission?.title);
         onSelect(mission);
       } else if (!selectionMode) {
         setViewingDetails(true);
@@ -286,7 +288,7 @@ const MissionCard = ({
           </div>
         )}
 
-        {isCompletedToday && !selectionMode && !isCustomOrderMode && (
+        {isCompletedToday && !selectionMode && (
           <button
             className={`story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
             onClick={handleToggleExclusion}

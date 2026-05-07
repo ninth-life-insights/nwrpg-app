@@ -27,7 +27,12 @@ const getAchievementsRef = (userId) =>
 export const getAwardedAchievements = async (userId) => {
   const snap = await getDocs(getAchievementsRef(userId));
   const map = new Map();
-  snap.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
+  snap.docs.forEach(d => {
+    const data = d.data();
+    if (data.status !== 'deleted') {
+      map.set(d.id, { id: d.id, ...data });
+    }
+  });
   return map;
 };
 
@@ -38,7 +43,7 @@ export const getAwardedAchievements = async (userId) => {
 export const getAchievementsAwardedOnDate = async (userId, date) => {
   const ref = getAchievementsRef(userId);
   const snap = await getDocs(query(ref, where('awardedDate', '==', date)));
-  return snap.docs.map(d => {
+  return snap.docs.filter(d => d.data().status !== 'deleted').map(d => {
     const data = d.data();
     if (data.isCustom) {
       return { id: d.id, ...data, isAwarded: true };

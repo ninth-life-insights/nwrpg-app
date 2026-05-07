@@ -133,10 +133,12 @@ export const getAllMissions = async (userId) => {
     const missionsRef = getUserMissionsRef(userId);
     const q = query(missionsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    return snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      .filter(mission => mission.status !== MISSION_STATUS.DELETED);
   } catch (error) {
     console.error('Error getting all missions:', error);
     throw error;
@@ -464,10 +466,12 @@ export const getRecurringMissionInstances = async (userId, parentMissionId) => {
     );
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    return snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      .filter(mission => mission.status !== MISSION_STATUS.DELETED);
   } catch (error) {
     console.error('Error getting recurring mission instances:', error);
     throw error;

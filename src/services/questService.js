@@ -7,7 +7,6 @@ import {
   getDocs,
   addDoc, 
   updateDoc, 
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -75,10 +74,12 @@ export const getAllQuests = async (userId) => {
   const q = query(questsRef, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
   
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+  return snapshot.docs
+    .map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    .filter(quest => quest.status !== QUEST_STATUS.DELETED);
 };
 
 // Get quests by status
