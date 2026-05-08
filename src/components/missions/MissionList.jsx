@@ -18,7 +18,11 @@ import {
   addDailyMissionStatus 
 } from '../../services/dailyMissionService';
 
-import { isWithinCompletedDateRange } from './sub-components/MissionFilterModal';
+import {
+  applyMissionFiltersAndSort,
+  getMissionListDisplayMissions,
+  normalizeMissionListFilters
+} from '../../utils/missionListFilters';
 
 // Drag and drop imports
 import {
@@ -82,17 +86,7 @@ const MissionList = ({
     })
   );
 
-  const memoizedFilters = useMemo(() => ({
-    sortBy: filters.sortBy || 'custom',
-    sortOrder: filters.sortOrder || 'asc',
-    skillFilter: filters.skillFilter || '',
-    includeCompleted: filters.includeCompleted || false,
-    showArchive: filters.showArchive || false,
-    completedDateRange: filters.completedDateRange || 'last7days',
-    roomFilter: filters.roomFilter || '',
-    taskTypeFilter: filters.taskTypeFilter || '',
-    questFilter: filters.questFilter || ''
-  }), [
+  const memoizedFilters = useMemo(() => normalizeMissionListFilters(filters), [
     filters.sortBy, filters.sortOrder, filters.skillFilter,
     filters.includeCompleted, filters.showArchive, filters.completedDateRange,
     filters.roomFilter, filters.taskTypeFilter, filters.questFilter
@@ -107,142 +101,6 @@ const MissionList = ({
       loadMissions();
     }
   }, [currentUser, missionType, memoizedFilters]);
-
-  const applyFiltersAndSort = (missionData, filterSettings) => {
-    let filteredMissions = [...missionData];
-
-    // Apply skill filter
-    if (filterSettings.skillFilter) {
-      if (filterSettings.skillFilter === '__has_skill__') {
-        filteredMissions = filteredMissions.filter(mission => !!mission.skill);
-      } else {
-        filteredMissions = filteredMissions.filter(mission =>
-          mission.skill === filterSettings.skillFilter
-        );
-      }
-    }
-
-    // Apply room filter
-    if (filterSettings.roomFilter) {
-      if (filterSettings.roomFilter === '__has_room__') {
-        filteredMissions = filteredMissions.filter(mission => !!mission.baseLocation);
-      } else if (filterSettings.roomFilter === '__unassigned__') {
-        filteredMissions = filteredMissions.filter(mission => !mission.baseLocation);
-      } else {
-        filteredMissions = filteredMissions.filter(mission =>
-          mission.baseLocation === filterSettings.roomFilter
-        );
-      }
-    }
-
-    // Apply task type filter
-    if (filterSettings.taskTypeFilter) {
-      filteredMissions = filteredMissions.filter(mission =>
-        mission.dueType === filterSettings.taskTypeFilter
-      );
-    }
-
-    // Apply quest filter
-    if (filterSettings.questFilter) {
-      if (filterSettings.questFilter === '__has_quest__') {
-        filteredMissions = filteredMissions.filter(mission => !!mission.questId);
-      } else if (filterSettings.questFilter === '__none__') {
-        filteredMissions = filteredMissions.filter(mission => !mission.questId);
-      } else {
-        filteredMissions = filteredMissions.filter(mission =>
-          mission.questId === filterSettings.questFilter
-        );
-      }
-    }
-
-    // Apply completed date range filter
-    if (filterSettings.includeCompleted && filterSettings.completedDateRange) {
-      filteredMissions = filteredMissions.filter(mission => {
-        if (mission.status !== 'completed') {
-          return true;
-        }
-        return isWithinCompletedDateRange(mission, filterSettings.completedDateRange);
-      });
-    }
-
-    // Sort missions
-    filteredMissions.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (filterSettings.sortBy) {
-        case 'custom':
-          // Custom order: missions with customSortOrder first, then new missions at top (by createdAt desc)
-          const aHasOrder = a.customSortOrder !== null && a.customSortOrder !== undefined;
-          const bHasOrder = b.customSortOrder !== null && b.customSortOrder !== undefined;
-          
-          if (aHasOrder && bHasOrder) {
-            comparison = a.customSortOrder - b.customSortOrder;
-          } else if (aHasOrder) {
-            comparison = 1; // a has order, goes after b (new missions at top)
-          } else if (bHasOrder) {
-            comparison = -1; // b has order, a goes before (new missions at top)
-          } else {
-            // Both are new, sort by creation date (newest first)
-            const aCreated = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-            const bCreated = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-            comparison = bCreated - aCreated; // Descending for new missions
-          }
-          break;
-          
-        case 'dueDate':
-          const aDate = a.dueDate ? (a.dueDate.toDate ? a.dueDate.toDate() : new Date(a.dueDate)) : null;
-          const bDate = b.dueDate ? (b.dueDate.toDate ? b.dueDate.toDate() : new Date(b.dueDate)) : null;
-          
-          if (!aDate && !bDate) {
-            const aCreated = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-            const bCreated = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-            comparison = aCreated - bCreated;
-          } else if (!aDate) {
-            comparison = 1;
-          } else if (!bDate) {
-            comparison = -1;
-          } else {
-            comparison = aDate - bDate;
-          }
-          break;
-          
-        case 'createdAt':
-          const aCreated = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-          const bCreated = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-          comparison = aCreated - bCreated;
-          break;
-          
-        case 'difficulty':
-          const difficultyOrder = { 'easy': 1, 'medium': 2, 'hard': 3 };
-          comparison = (difficultyOrder[a.difficulty] || 2) - (difficultyOrder[b.difficulty] || 2);
-          break;
-          
-        case 'title':
-          comparison = a.title.localeCompare(b.title);
-          break;
-          
-        default:
-          const aDateDefault = a.dueDate ? (a.dueDate.toDate ? a.dueDate.toDate() : new Date(a.dueDate)) : null;
-          const bDateDefault = b.dueDate ? (b.dueDate.toDate ? b.dueDate.toDate() : new Date(b.dueDate)) : null;
-          
-          if (!aDateDefault && !bDateDefault) {
-            const aCreatedDefault = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-            const bCreatedDefault = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-            comparison = aCreatedDefault - bCreatedDefault;
-          } else if (!aDateDefault) {
-            comparison = 1;
-          } else if (!bDateDefault) {
-            comparison = -1;
-          } else {
-            comparison = aDateDefault - bDateDefault;
-          }
-      }
-      
-      return filterSettings.sortOrder === 'desc' ? -comparison : comparison;
-    });
-
-    return filteredMissions;
-  };
 
   const loadMissions = async () => {
     try {
@@ -278,7 +136,7 @@ const MissionList = ({
       }
       
       const missionsWithDailyStatus = await addDailyMissionStatus(currentUser.uid, missionData);
-      const processedMissions = applyFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
+      const processedMissions = applyMissionFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
       setMissions(processedMissions);
     } catch (err) {
       console.error('Error loading missions:', err);
@@ -472,28 +330,12 @@ const MissionList = ({
     }
   };
 
-  const getDisplayMissions = () => {
-    const recentlyCompletedIds = recentlyCompletedMissions.map(mission => mission.id);
-    const filteredMissions = missions.filter(mission => !recentlyCompletedIds.includes(mission.id));
-
-    if (missionType === 'active') {
-      let visibleList = [...recentlyCompletedMissions, ...filteredMissions];
-      if (searchQuery && searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        visibleList = visibleList.filter(m => m.title?.toLowerCase().includes(q));
-      }
-      return visibleList;
-    }
-
-    if (searchQuery && searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      return missions.filter(m => m.title?.toLowerCase().includes(q));
-    }
-
-    return missions;
-  };
-
-  const displayMissions = getDisplayMissions();
+  const displayMissions = getMissionListDisplayMissions({
+    missions,
+    missionType,
+    recentlyCompletedMissions,
+    searchQuery
+  });
 
   if (loading) {
     return (
