@@ -163,7 +163,9 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
       xpAwarded: xpAwarded,
-      completedAt: serverTimestamp()
+      completedAt: serverTimestamp(),
+      excludeFromStory: false,
+      excludeFromDailyStory: null
     });
 
     const xpResult = await addXP(userId, xpAwarded);
@@ -275,6 +277,8 @@ export const uncompleteMission = async (userId, missionId) => {
       completedAt: null,
       uncompletedAt: serverTimestamp(),
       xpAwarded: null, // Clear the stored XP
+      excludeFromStory: false,
+      excludeFromDailyStory: null,
     });
 
     if (xpToRemove > 0) {
@@ -526,17 +530,18 @@ export const restoreMission = async (userId, missionId) => {
   }
 };
 
-// Toggle a mission's exclusion from today's daily story.
-// Sets excludeFromDailyStory to the given date string, or clears it if already set.
-// Returns true if the mission is now excluded, false if it's now included.
-export const toggleMissionStoryExclusion = async (userId, missionId, dateString) => {
+// Toggle whether a completed mission should be used as material for generated story text.
+// XP, SP, activity logs, and review totals still count normally.
+export const toggleMissionStoryExclusion = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     const snap = await getDoc(missionRef);
     if (!snap.exists()) throw new Error('Mission not found');
-    const isCurrentlyExcluded = snap.data().excludeFromDailyStory === dateString;
+    const isCurrentlyExcluded = snap.data().excludeFromStory === true;
     await updateDoc(missionRef, {
-      excludeFromDailyStory: isCurrentlyExcluded ? null : dateString,
+      excludeFromStory: !isCurrentlyExcluded,
+      excludeFromDailyStory: null,
+      updatedAt: serverTimestamp()
     });
     return !isCurrentlyExcluded;
   } catch (error) {

@@ -123,14 +123,14 @@ const MissionCard = ({
     ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
     : null;
   const isCompletedToday = completedDate === today;
-  const isExcluded = isCompletedToday && mission.excludeFromDailyStory === today;
+  const isExcluded = isCompletedToday && mission.excludeFromStory === true;
 
   const handleToggleExclusion = async (e) => {
     e.stopPropagation();
     if (excludeLoading || !currentUser) return;
     setExcludeLoading(true);
     try {
-      await toggleMissionStoryExclusion(currentUser.uid, mission.id, today);
+      await toggleMissionStoryExclusion(currentUser.uid, mission.id);
       if (onMissionChanged) onMissionChanged();
     } catch (err) {
       console.error('Failed to toggle story exclusion:', err);
@@ -292,7 +292,7 @@ const MissionCard = ({
             onClick={handleToggleExclusion}
             disabled={excludeLoading}
           >
-            {isExcluded ? '✓ Excluded from today\'s story' : 'Exclude from today\'s story'}
+            {isExcluded ? 'In XP only' : 'Leave out of today\'s story'}
           </button>
         )}
       </div>

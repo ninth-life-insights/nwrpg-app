@@ -20,7 +20,12 @@ import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from
 import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { deleteMission, archiveMission, restoreMission } from '../../services/missionService';
+import {
+  deleteMission,
+  archiveMission,
+  restoreMission,
+  toggleMissionStoryExclusion
+} from '../../services/missionService';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({
@@ -40,10 +45,15 @@ const MissionCardFull = ({
   const [actionError, setActionError] = useState(null);
   const [actionRetry, setActionRetry] = useState(null);
   const [missionOverride, setMissionOverride] = useState(null);
+  const [excludeLoading, setExcludeLoading] = useState(false);
   const actionsMenuRef = useRef(null);
 
   const displayMission = missionOverride
-    ? { ...missionOverride, status: mission.status, xpAwarded: mission.xpAwarded }
+    ? {
+        ...missionOverride,
+        status: mission.status,
+        xpAwarded: mission.xpAwarded
+      }
     : mission;
 
   const roomName = displayMission.baseLocation ? roomsMap[displayMission.baseLocation]?.name ?? null : null;
@@ -119,6 +129,11 @@ const MissionCardFull = ({
   const isCompleted = displayMission.status === MISSION_STATUS.COMPLETED;
   const isActive = displayMission.status === MISSION_STATUS.ACTIVE;
   const isExpired = displayMission.status === MISSION_STATUS.EXPIRED;
+  const completedDate = isCompleted && displayMission.completedAt
+    ? toDateString(displayMission.completedAt.toDate?.() ?? new Date(displayMission.completedAt))
+    : null;
+  const isCompletedToday = completedDate === today;
+  const isExcludedFromStory = isCompletedToday && displayMission.excludeFromStory === true;
 
   const handleDelete = async () => {
     setActionError(null);
@@ -153,6 +168,25 @@ const MissionCardFull = ({
       handleClose();
     } catch {
       setActionError("That mission didn't restore. Try again.");
+    }
+  };
+
+  const handleToggleStoryExclusion = async () => {
+    if (excludeLoading || !currentUser) return;
+    setActionError(null);
+    setActionRetry(() => handleToggleStoryExclusion);
+    setExcludeLoading(true);
+    try {
+      const isNowExcluded = await toggleMissionStoryExclusion(currentUser.uid, mission.id);
+      setMissionOverride(prev => ({
+        ...(prev ?? displayMission),
+        excludeFromStory: isNowExcluded
+      }));
+      onMissionChanged?.(mission.id, 'updated');
+    } catch {
+      setActionError("That mission's story setting didn't save. Try again.");
+    } finally {
+      setExcludeLoading(false);
     }
   };
 
@@ -369,6 +403,15 @@ const MissionCardFull = ({
               <ErrorMessage message={actionError} onRetry={actionRetry} />
             )}
             <div className="mission-actions">
+              {isCompletedToday && (
+                <button
+                  onClick={handleToggleStoryExclusion}
+                  className={`action-button story-exclusion-button ${isExcludedFromStory ? 'excluded' : ''}`}
+                  disabled={excludeLoading}
+                >
+                  {isExcludedFromStory ? 'In XP only' : "Leave out of today's story"}
+                </button>
+              )}
               {isExpired ? (
                 <button
                   onClick={handleRestore}

@@ -10,8 +10,11 @@ import {
   formatForUser,
   isMissionDueToday,
   isMissionOverdue,
-  isMissionDueTomorrow
+  isMissionDueTomorrow,
+  toDateString
 } from '../../utils/dateHelpers';
+import { useAuth } from '../../contexts/AuthContext';
+import { toggleMissionStoryExclusion } from '../../services/missionService';
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardCondensed.css';
 
@@ -20,12 +23,14 @@ const MissionCardCondensed = ({
   onToggleComplete,
   onMissionChanged,
 }) => {
+  const { currentUser } = useAuth();
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
+  const [excludeLoading, setExcludeLoading] = useState(false);
 
   useEffect(() => {
     setShowXpBadge(isCompleted);
@@ -40,10 +45,30 @@ const MissionCardCondensed = ({
   };
 
   const dueDateInfo = getDueDateInfo();
+  const today = toDateString(new Date());
+  const completedDate = isCompleted && mission.completedAt
+    ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
+    : null;
+  const isCompletedToday = completedDate === today;
+  const isExcluded = isCompletedToday && mission.excludeFromStory === true;
 
   const handleToggleComplete = (e) => {
     e.stopPropagation();
     onToggleComplete(mission.id, isCompleted, mission.xpReward, mission.spReward);
+  };
+
+  const handleToggleExclusion = async (e) => {
+    e.stopPropagation();
+    if (excludeLoading || !currentUser) return;
+    setExcludeLoading(true);
+    try {
+      await toggleMissionStoryExclusion(currentUser.uid, mission.id);
+      onMissionChanged?.();
+    } catch (err) {
+      console.error('Failed to toggle story exclusion:', err);
+    } finally {
+      setExcludeLoading(false);
+    }
   };
 
   return (
@@ -70,6 +95,15 @@ const MissionCardCondensed = ({
             )}
           </div>
         </div>
+        {isCompletedToday && (
+          <button
+            className={`mcc-story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
+            onClick={handleToggleExclusion}
+            disabled={excludeLoading}
+          >
+            {isExcluded ? 'In XP only' : "Leave out of today's story"}
+          </button>
+        )}
       </div>
 
       <button

@@ -357,7 +357,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
     taskAge: getTaskAgeLabel(event.missionCreatedAt),
   }));
 
-  // 3. Fetch mission docs to check which ones have been excluded from the story
+  // 3. Fetch mission docs to check which ones have been excluded from the written story
   const missionExclusionMap = {};
   try {
     await Promise.all(
@@ -365,7 +365,9 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
         const missionRef = doc(db, 'users', userId, 'missions', event.missionId);
         const snap = await getDoc(missionRef);
         if (snap.exists()) {
-          missionExclusionMap[event.missionId] = snap.data().excludeFromDailyStory ?? null;
+          const data = snap.data();
+          missionExclusionMap[event.missionId] =
+            data.excludeFromStory === true || data.excludeFromDailyStory === date;
         }
       })
     );
@@ -374,7 +376,10 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   }
 
   const completedMissionsForStory = completedMissions.filter(
-    m => missionExclusionMap[m.missionId] !== date
+    m => !missionExclusionMap[m.missionId]
+  );
+  const eventsForStory = events.filter(
+    event => !missionExclusionMap[event.missionId]
   );
 
   // 4. Aggregate stats
@@ -384,6 +389,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
 
   // Daily missions completed today — read from activity log events
   const dailyMissionsCompleted = events.filter(e => e.isDailyMission).length;
+  const dailyMissionsCompletedForStory = eventsForStory.filter(e => e.isDailyMission).length;
 
   // For dailyMissionsTotal: read the daily config directly.
   // Total = missions in today's config that were completed today
@@ -416,6 +422,18 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   });
   const skillsUsed = Object.values(skillMap);
 
+  const skillMapForStory = {};
+  eventsForStory.forEach(e => {
+    if (e.skillName) {
+      if (!skillMapForStory[e.skillName]) {
+        skillMapForStory[e.skillName] = { name: e.skillName, spEarned: 0, missionsCompleted: 0 };
+      }
+      skillMapForStory[e.skillName].spEarned += e.spEarned || 0;
+      skillMapForStory[e.skillName].missionsCompleted += 1;
+    }
+  });
+  const skillsUsedForStory = Object.values(skillMapForStory);
+
   // Quests advanced today
   const questMap = {};
   events.forEach(e => {
@@ -432,12 +450,35 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   });
   const questsAdvanced = Object.values(questMap);
 
+  const questMapForStory = {};
+  eventsForStory.forEach(e => {
+    if (e.questId) {
+      if (!questMapForStory[e.questId]) {
+        questMapForStory[e.questId] = {
+          questId: e.questId,
+          questTitle: e.questTitle || 'Unnamed Quest',
+          missionsCompleted: 0,
+        };
+      }
+      questMapForStory[e.questId].missionsCompleted += 1;
+    }
+  });
+  const questsAdvancedForStory = Object.values(questMapForStory);
+
   // Level-up events
   const levelUps = events
     .filter(e => e.leveledUp && e.newLevel)
     .map(e => ({ newLevel: e.newLevel }));
 
   const skillLevelUps = events
+    .filter(e => e.skillLeveledUp && e.newSkillLevel)
+    .map(e => ({ skillName: e.skillLevelUpName, newLevel: e.newSkillLevel }));
+
+  const levelUpsForStory = eventsForStory
+    .filter(e => e.leveledUp && e.newLevel)
+    .map(e => ({ newLevel: e.newLevel }));
+
+  const skillLevelUpsForStory = eventsForStory
     .filter(e => e.skillLeveledUp && e.newSkillLevel)
     .map(e => ({ skillName: e.skillLevelUpName, newLevel: e.newSkillLevel }));
 
@@ -477,14 +518,14 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   const storyData = {
     displayName: displayName || profile?.displayName || 'You',
     completedMissions: completedMissionsForStory,
-    dailyMissionsCompleted,
+    dailyMissionsCompleted: dailyMissionsCompletedForStory,
     dailyMissionsTotal,
-    allDailyMissionsDone: dailyMissionsTotal > 0 && dailyMissionsCompleted === dailyMissionsTotal,
-    xpEarned,
-    levelUps,
-    skillLevelUps,
-    skillsUsed,
-    questsAdvanced,
+    allDailyMissionsDone: dailyMissionsTotal > 0 && dailyMissionsCompletedForStory === dailyMissionsTotal,
+    xpEarned: eventsForStory.reduce((sum, e) => sum + (e.xpEarned || 0), 0),
+    levelUps: levelUpsForStory,
+    skillLevelUps: skillLevelUpsForStory,
+    skillsUsed: skillsUsedForStory,
+    questsAdvanced: questsAdvancedForStory,
     encounters,
     rollingAverages,
   };
@@ -493,7 +534,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   let aiStory = (!forceNewStory && existingAiStory) ? existingAiStory : null;
   let aiStoryGeneratedAt = (!forceNewStory && existingAiStory) ? existingAiStoryGeneratedAt : null;
 
-  if (missionsCompleted > 0 && (forceNewStory || !existingAiStory)) {
+  if ((eventsForStory.length > 0 || encounters.length > 0) && (forceNewStory || !existingAiStory)) {
     try {
       aiStory = await withTimeout(generateDailyStory(storyData), AI_TIMEOUT_MS);
       aiStoryGeneratedAt = new Date().toISOString();
