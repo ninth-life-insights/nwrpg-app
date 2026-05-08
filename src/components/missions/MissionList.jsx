@@ -461,6 +461,21 @@ const MissionList = ({
                 <div
                   key={mission.id}
                   className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''} ${isRecentlyCompleted ? 'recently-completed' : ''}`}
+                  onClick={() => {
+                    if (!selectionMode) return;
+                    console.log('[MissionList] selection wrapper clicked. mission:', mission?.title, 'isSelected:', isSelected);
+                    handleMissionSelect(mission);
+                  }}
+                  onKeyDown={(e) => {
+                    if (!selectionMode) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      console.log('[MissionList] selection wrapper keyboard select. mission:', mission?.title, 'key:', e.key);
+                      handleMissionSelect(mission);
+                    }
+                  }}
+                  role={selectionMode ? 'button' : undefined}
+                  tabIndex={selectionMode ? 0 : undefined}
                   style={{
                     position: 'relative',
                     ...(selectionMode && {
