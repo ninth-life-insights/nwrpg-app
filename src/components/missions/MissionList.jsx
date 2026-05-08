@@ -222,13 +222,11 @@ const MissionList = ({
   };
 
   const handleMissionSelect = (mission) => {
-    console.log('[MissionList] handleMissionSelect called. mission:', mission?.title, 'selectionMode:', selectionMode, 'onMissionSelect defined:', !!onMissionSelect);
     if (!selectionMode || !onMissionSelect) return;
 
     const isSelected = selectedMissions.some(selected => selected.id === mission.id);
 
     if (isSelected) {
-      console.log('[MissionList] mission already selected, ignoring');
       return;
     }
 
@@ -237,7 +235,6 @@ const MissionList = ({
       return;
     }
 
-    console.log('[MissionList] calling onMissionSelect for:', mission?.title);
     onMissionSelect(mission);
   };
 
@@ -463,14 +460,12 @@ const MissionList = ({
                   className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''} ${isRecentlyCompleted ? 'recently-completed' : ''}`}
                   onClick={() => {
                     if (!selectionMode) return;
-                    console.log('[MissionList] selection wrapper clicked. mission:', mission?.title, 'isSelected:', isSelected);
                     handleMissionSelect(mission);
                   }}
                   onKeyDown={(e) => {
                     if (!selectionMode) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      console.log('[MissionList] selection wrapper keyboard select. mission:', mission?.title, 'key:', e.key);
                       handleMissionSelect(mission);
                     }
                   }}
