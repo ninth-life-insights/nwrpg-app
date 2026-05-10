@@ -95,7 +95,6 @@
 .mcc-story-exclusion-chip {
   display: inline-flex;
   align-items: center;
-  margin-top: var(--space-xs);
   padding: 3px 10px;
   border-radius: 999px;
   border: 1px dashed #9ca3af;

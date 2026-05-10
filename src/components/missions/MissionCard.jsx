@@ -211,6 +211,16 @@ const MissionCard = ({
           
           <div className="badges">
 
+            {isCompletedToday && !selectionMode && (
+              <button
+                className={`story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
+                onClick={handleToggleExclusion}
+                disabled={excludeLoading}
+              >
+                {isExcluded ? 'In XP only' : 'Leave out of today\'s story'}
+              </button>
+            )}
+
             {mission.isDailyMission && !hideDailyBadge && (
               <Badge variant="daily">Daily</Badge>
             )}
@@ -286,15 +296,6 @@ const MissionCard = ({
           </div>
         )}
 
-        {isCompletedToday && !selectionMode && (
-          <button
-            className={`story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
-            onClick={handleToggleExclusion}
-            disabled={excludeLoading}
-          >
-            {isExcluded ? 'In XP only' : 'Leave out of today\'s story'}
-          </button>
-        )}
       </div>
 
       {/* Action button - completion toggle */}

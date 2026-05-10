@@ -83,27 +83,30 @@ const MissionCardCondensed = ({
             {showXpBadge && mission.xpAwarded && (
               <span className="mcc-xp-badge">+{mission.xpAwarded} XP</span>
             )}
-            {isRecurring && (
-              <Badge variant="recurrence">{recurrenceText}</Badge>
-            )}
-            {dueDateInfo && (
-              <Badge variant={`due-${dueDateInfo.status}`}>{dueDateInfo.display}</Badge>
-            )}
-            <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
-            {missionHasSkill && (
-              <Badge variant="skill">{mission.skill}</Badge>
+            {isCompletedToday ? (
+              <button
+                className={`mcc-story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
+                onClick={handleToggleExclusion}
+                disabled={excludeLoading}
+              >
+                {isExcluded ? 'In XP only' : "Leave out of today's story"}
+              </button>
+            ) : (
+              <>
+                {isRecurring && (
+                  <Badge variant="recurrence">{recurrenceText}</Badge>
+                )}
+                {dueDateInfo && (
+                  <Badge variant={`due-${dueDateInfo.status}`}>{dueDateInfo.display}</Badge>
+                )}
+                <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
+                {missionHasSkill && (
+                  <Badge variant="skill">{mission.skill}</Badge>
+                )}
+              </>
             )}
           </div>
         </div>
-        {isCompletedToday && (
-          <button
-            className={`mcc-story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
-            onClick={handleToggleExclusion}
-            disabled={excludeLoading}
-          >
-            {isExcluded ? 'In XP only' : "Leave out of today's story"}
-          </button>
-        )}
       </div>
 
       <button
