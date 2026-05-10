@@ -173,7 +173,7 @@ const MissionList = ({
         }
 
         if (completedMission && onMissionCompletion) {
-          const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded };
+          const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded, completedAt: new Date() };
           onMissionCompletion(updatedMission);
         }
 
