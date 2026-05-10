@@ -176,14 +176,14 @@ const MissionCardFull = ({
     setActionError(null);
     setActionRetry(() => handleToggleStoryExclusion);
     setExcludeLoading(true);
+    const newExcluded = !displayMission.excludeFromStory;
+    setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: newExcluded }));
     try {
       const isNowExcluded = await toggleMissionStoryExclusion(currentUser.uid, mission.id);
-      setMissionOverride(prev => ({
-        ...(prev ?? displayMission),
-        excludeFromStory: isNowExcluded
-      }));
+      setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: isNowExcluded }));
       onMissionChanged?.(mission.id, 'updated');
     } catch {
+      setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: !newExcluded }));
       setActionError("That mission's story setting didn't save. Try again.");
     } finally {
       setExcludeLoading(false);

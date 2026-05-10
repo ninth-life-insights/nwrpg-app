@@ -46,6 +46,7 @@ const MissionCard = ({
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
   const [excludeLoading, setExcludeLoading] = useState(false);
+  const [excludedFromStory, setExcludedFromStory] = useState(mission.excludeFromStory === true);
   
   // Drag and drop setup
   const {
@@ -71,14 +72,8 @@ const MissionCard = ({
   const isEvergreen = isEvergreenMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
 
-  // Handle XP badge display
-  useEffect(() => {
-    if (isCompleted || isRecentlyCompleted) {
-      setShowXpBadge(true);
-    } else {
-      setShowXpBadge(false);
-    }
-  }, [isCompleted, isRecentlyCompleted]);
+  useEffect(() => { setShowXpBadge(isCompleted || isRecentlyCompleted); }, [isCompleted, isRecentlyCompleted]);
+  useEffect(() => { setExcludedFromStory(mission.excludeFromStory === true); }, [mission.excludeFromStory]);
   
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -123,16 +118,19 @@ const MissionCard = ({
     ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
     : null;
   const isCompletedToday = completedDate === today;
-  const isExcluded = isCompletedToday && mission.excludeFromStory === true;
+  const isExcluded = isCompletedToday && excludedFromStory;
 
   const handleToggleExclusion = async (e) => {
     e.stopPropagation();
     if (excludeLoading || !currentUser) return;
     setExcludeLoading(true);
+    const newExcluded = !excludedFromStory;
+    setExcludedFromStory(newExcluded);
     try {
       await toggleMissionStoryExclusion(currentUser.uid, mission.id);
       if (onMissionChanged) onMissionChanged();
     } catch (err) {
+      setExcludedFromStory(!newExcluded);
       console.error('Failed to toggle story exclusion:', err);
     } finally {
       setExcludeLoading(false);
