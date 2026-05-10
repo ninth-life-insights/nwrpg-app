@@ -164,8 +164,7 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
       status: MISSION_STATUS.COMPLETED,
       xpAwarded: xpAwarded,
       completedAt: serverTimestamp(),
-      excludeFromStory: false,
-      excludeFromDailyStory: null
+      excludeFromStory: false
     });
 
     const xpResult = await addXP(userId, xpAwarded);
@@ -278,7 +277,6 @@ export const uncompleteMission = async (userId, missionId) => {
       uncompletedAt: serverTimestamp(),
       xpAwarded: null, // Clear the stored XP
       excludeFromStory: false,
-      excludeFromDailyStory: null,
     });
 
     if (xpToRemove > 0) {
@@ -540,7 +538,6 @@ export const toggleMissionStoryExclusion = async (userId, missionId) => {
     const isCurrentlyExcluded = snap.data().excludeFromStory === true;
     await updateDoc(missionRef, {
       excludeFromStory: !isCurrentlyExcluded,
-      excludeFromDailyStory: null,
       updatedAt: serverTimestamp()
     });
     return !isCurrentlyExcluded;

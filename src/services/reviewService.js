@@ -367,7 +367,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
         if (snap.exists()) {
           const data = snap.data();
           missionExclusionMap[event.missionId] =
-            data.excludeFromStory === true || data.excludeFromDailyStory === date;
+            data.excludeFromStory === true;
         }
       })
     );
