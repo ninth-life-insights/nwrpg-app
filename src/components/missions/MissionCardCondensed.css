@@ -88,7 +88,7 @@
   overflow: hidden;
 }
 
-.mission-card-condensed.completed .mcc-badges {
+.mission-card-condensed.completed .mcc-badges > *:not(.mcc-story-exclusion-chip) {
   opacity: 0.6;
 }
 
@@ -97,9 +97,9 @@
   align-items: center;
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px dashed #9ca3af;
+  border: 1px dashed #6b7280;
   background: transparent;
-  color: #6b7280;
+  color: #374151;
   font-size: 0.7rem;
   font-family: var(--font-family);
   cursor: pointer;

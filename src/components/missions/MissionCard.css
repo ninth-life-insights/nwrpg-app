@@ -252,9 +252,9 @@
   align-items: center;
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px dashed #9ca3af;
+  border: 1px dashed #6b7280;
   background: transparent;
-  color: #9ca3af;
+  color: #374151;
   font-size: 0.7rem;
   font-family: var(--font-family);
   cursor: pointer;
