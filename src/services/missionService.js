@@ -1,15 +1,16 @@
 // services/missionService.js
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  getDocs, 
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  getDocs,
   getDoc,
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp 
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { MISSION_STATUS } from '../types/Mission';
@@ -163,7 +164,7 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
       xpAwarded: xpAwarded,
-      completedAt: serverTimestamp(),
+      completedAt: Timestamp.fromDate(new Date()),
       excludeFromStory: false
     });
 
