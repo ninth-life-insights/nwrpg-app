@@ -181,7 +181,6 @@ const MissionCardFull = ({
     try {
       const isNowExcluded = await toggleMissionStoryExclusion(currentUser.uid, mission.id);
       setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: isNowExcluded }));
-      onMissionChanged?.(mission.id, 'updated');
     } catch {
       setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: !newExcluded }));
       setActionError("That mission's story setting didn't save. Try again.");
@@ -405,6 +404,7 @@ const MissionCardFull = ({
             <div className="mission-actions">
               {isCompletedToday && (
                 <button
+                  type="button"
                   onClick={handleToggleStoryExclusion}
                   className={`action-button story-exclusion-button ${isExcludedFromStory ? 'excluded' : ''}`}
                   disabled={excludeLoading}

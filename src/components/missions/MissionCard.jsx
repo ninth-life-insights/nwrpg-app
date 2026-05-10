@@ -128,7 +128,6 @@ const MissionCard = ({
     setExcludedFromStory(newExcluded);
     try {
       await toggleMissionStoryExclusion(currentUser.uid, mission.id);
-      if (onMissionChanged) onMissionChanged();
     } catch (err) {
       setExcludedFromStory(!newExcluded);
       console.error('Failed to toggle story exclusion:', err);
@@ -211,6 +210,7 @@ const MissionCard = ({
 
             {isCompletedToday && !selectionMode && (
               <button
+                type="button"
                 className={`story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
                 onClick={handleToggleExclusion}
                 disabled={excludeLoading}

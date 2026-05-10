@@ -65,7 +65,6 @@ const MissionCardCondensed = ({
     setExcludedFromStory(newExcluded);
     try {
       await toggleMissionStoryExclusion(currentUser.uid, mission.id);
-      onMissionChanged?.();
     } catch (err) {
       setExcludedFromStory(!newExcluded);
       console.error('Failed to toggle story exclusion:', err);
@@ -88,6 +87,7 @@ const MissionCardCondensed = ({
             )}
             {isCompletedToday ? (
               <button
+                type="button"
                 className={`mcc-story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
                 onClick={handleToggleExclusion}
                 disabled={excludeLoading}
