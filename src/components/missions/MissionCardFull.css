@@ -345,9 +345,15 @@
 
 .action-button.story-exclusion-button.excluded {
   border-style: solid;
-  border-color: #d97706;
-  background: rgba(217, 119, 6, 0.08);
-  color: #92400e;
+  border-color: #374151;
+  background: #374151;
+  color: white;
+}
+
+.action-button.story-exclusion-button.excluded:hover:not(:disabled) {
+  border-color: #991b1b;
+  background: #991b1b;
+  color: white;
 }
 
 .action-button.story-exclusion-button:disabled {

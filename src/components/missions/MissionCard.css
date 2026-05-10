@@ -268,9 +268,15 @@
 
 .story-exclusion-chip.excluded {
   border-style: solid;
-  border-color: #d97706;
-  background: rgba(217, 119, 6, 0.08);
-  color: #92400e;
+  border-color: #374151;
+  background: #374151;
+  color: white;
+}
+
+.story-exclusion-chip.excluded:hover:not(:disabled) {
+  border-color: #991b1b;
+  background: #991b1b;
+  color: white;
 }
 
 .story-exclusion-chip:disabled {

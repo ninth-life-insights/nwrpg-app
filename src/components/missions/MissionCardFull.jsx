@@ -409,7 +409,7 @@ const MissionCardFull = ({
                   className={`action-button story-exclusion-button ${isExcludedFromStory ? 'excluded' : ''}`}
                   disabled={excludeLoading}
                 >
-                  {isExcludedFromStory ? 'In XP only' : "Leave out of today's story"}
+                  {isExcludedFromStory ? 'Left out ✓' : "Leave out of today's story"}
                 </button>
               )}
               {isExpired ? (

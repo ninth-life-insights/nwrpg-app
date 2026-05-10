@@ -89,7 +89,7 @@ const MissionCardCondensed = ({
                 onClick={handleToggleExclusion}
                 disabled={excludeLoading}
               >
-                {isExcluded ? 'In XP only' : "Leave out of today's story"}
+                {isExcluded ? 'Left out ✓' : "Leave out of today's story"}
               </button>
             ) : (
               <>
