@@ -135,6 +135,8 @@ const MissionCardCondensed = ({
         onClose={() => setViewingDetails(false)}
         onToggleComplete={onToggleComplete}
         onMissionChanged={onMissionChanged}
+        onExclusionToggled={(val) => setExcludedFromStory(val)}
+        excludedFromStory={excludedFromStory}
       />
     )}
   </>

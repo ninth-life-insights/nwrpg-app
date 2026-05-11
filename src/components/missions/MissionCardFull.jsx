@@ -33,6 +33,8 @@ const MissionCardFull = ({
   onClose,
   onToggleComplete,
   onMissionChanged,
+  onExclusionToggled,
+  excludedFromStory,
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -44,7 +46,12 @@ const MissionCardFull = ({
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [actionRetry, setActionRetry] = useState(null);
-  const [missionOverride, setMissionOverride] = useState(null);
+  const [missionOverride, setMissionOverride] = useState(() => {
+    if (excludedFromStory !== undefined && excludedFromStory !== mission.excludeFromStory) {
+      return { ...mission, excludeFromStory: excludedFromStory };
+    }
+    return null;
+  });
   const [excludeLoading, setExcludeLoading] = useState(false);
   const actionsMenuRef = useRef(null);
 
@@ -178,11 +185,14 @@ const MissionCardFull = ({
     setExcludeLoading(true);
     const newExcluded = !displayMission.excludeFromStory;
     setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: newExcluded }));
+    onExclusionToggled?.(newExcluded);
     try {
       const isNowExcluded = await toggleMissionStoryExclusion(currentUser.uid, mission.id);
       setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: isNowExcluded }));
+      onExclusionToggled?.(isNowExcluded);
     } catch {
       setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: !newExcluded }));
+      onExclusionToggled?.(!newExcluded);
       setActionError("That mission's story setting didn't save. Try again.");
     } finally {
       setExcludeLoading(false);
