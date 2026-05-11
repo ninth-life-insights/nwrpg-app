@@ -1,5 +1,5 @@
 // src/components/missions/MissionCardCondensed.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import MissionCardFull from './MissionCardFull';
 import Badge from '../ui/Badge';
 import {
@@ -28,10 +28,23 @@ const MissionCardCondensed = ({
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
+  const titleRef = useRef(null);
+  const [titleMinWidth, setTitleMinWidth] = useState(150);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
   const [excludeLoading, setExcludeLoading] = useState(false);
   const [excludedFromStory, setExcludedFromStory] = useState(mission.excludeFromStory === true);
+
+  useLayoutEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const cs = window.getComputedStyle(el);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const textWidth = Math.ceil(ctx.measureText(mission.title).width) + 2;
+    setTitleMinWidth(Math.min(textWidth, 150));
+  }, [mission.title]);
 
   useEffect(() => { setShowXpBadge(isCompleted); }, [isCompleted]);
   useEffect(() => { setExcludedFromStory(mission.excludeFromStory === true); }, [mission.excludeFromStory]);
@@ -78,7 +91,11 @@ const MissionCardCondensed = ({
     <div className={`mission-card-condensed ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily' : ''}`}>
       <div className="mcc-content" onClick={() => setViewingDetails(true)}>
         <div className="mcc-row">
-          <h3 className={`mcc-title ${isCompleted ? 'completed' : ''}`}>
+          <h3
+            ref={titleRef}
+            className={`mcc-title ${isCompleted ? 'completed' : ''}`}
+            style={{ minWidth: titleMinWidth }}
+          >
             {mission.title}
           </h3>
           <div className="mcc-badges">
