@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Component imports
 import AddMissionCard from '../components/missions/AddMissionCard';
+import MissionCardFull from '../components/missions/MissionCardFull';
 import MissionList from '../components/missions/MissionList';
 import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
 import Badge from '../components/ui/Badge';
@@ -13,7 +14,9 @@ import Badge from '../components/ui/Badge';
 import {
   getActiveMissions,
   getCompletedMissions,
-  createMission
+  createMission,
+  completeMissionWithRecurrence,
+  uncompleteMission,
 } from '../services/missionService';
 import { getRooms } from '../services/roomService';
 import { getAllQuests } from '../services/questService';
@@ -98,6 +101,7 @@ const EditDailyMissionsPage = ({
   const [currentConfig, setCurrentConfig] = useState(null);
   // True only when a previously-saved plan was found for targetDate on load
   const [hasSavedPlan, setHasSavedPlan] = useState(false);
+  const [selectedMission, setSelectedMission] = useState(null);
 
   // Reload whenever the target date changes
   useEffect(() => {
@@ -218,6 +222,43 @@ const handleAddNewMission = async (missionData) => {
     const newDailyMissions = [...dailyMissions];
     newDailyMissions[slotIndex] = null;
     setDailyMissions(newDailyMissions);
+  };
+
+  const handleMissionCardToggleComplete = async (missionId, isCurrentlyCompleted) => {
+    try {
+      if (isCurrentlyCompleted) {
+        await uncompleteMission(currentUser.uid, missionId);
+      } else {
+        await completeMissionWithRecurrence(currentUser.uid, missionId);
+      }
+      const [active, completed] = await Promise.all([
+        getActiveMissions(currentUser.uid),
+        getCompletedMissions(currentUser.uid),
+      ]);
+      const updated = [...active, ...completed].find(m => m.id === missionId);
+      if (updated) {
+        setDailyMissions(prev => prev.map(m => m?.id === missionId ? updated : m));
+        setSelectedMission(updated);
+      }
+    } catch (err) {
+      console.error('Error toggling mission complete:', err);
+    }
+  };
+
+  const handleMissionCardChanged = async (missionId, action) => {
+    setSelectedMission(null);
+    if (action === 'deleted' || action === 'archived') {
+      setDailyMissions(prev => prev.map(m => m?.id === missionId ? null : m));
+    } else if (action === 'updated') {
+      const [active, completed] = await Promise.all([
+        getActiveMissions(currentUser.uid),
+        getCompletedMissions(currentUser.uid),
+      ]);
+      const updated = [...active, ...completed].find(m => m.id === missionId);
+      if (updated) {
+        setDailyMissions(prev => prev.map(m => m?.id === missionId ? updated : m));
+      }
+    }
   };
 
   // Handle clicking empty slot
@@ -431,7 +472,11 @@ const handleAddNewMission = async (missionData) => {
               const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
 
             return (
-              <div className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}>
+              <div
+                className={`mission-slot-filled ${isMissionCompleted(mission) ? 'completed' : ''}`}
+                onClick={() => setSelectedMission(mission)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="mission-info">
                   <h3 className={`mission-title ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.title}</h3>
                   <p className={`mission-description ${isMissionCompleted(mission) ? 'completed' : ''}`}>{mission.description}</p>
@@ -473,7 +518,7 @@ const handleAddNewMission = async (missionData) => {
                 </div>
                 <button
                   className="remove-mission-btn"
-                  onClick={() => handleRemoveMission(index)}
+                  onClick={(e) => { e.stopPropagation(); handleRemoveMission(index); }}
                   title="Remove mission"
                   disabled={saving}
                 >
@@ -634,6 +679,16 @@ const handleAddNewMission = async (missionData) => {
         quests={bankQuests}
         showArchiveToggle={false}
       />
+
+      {/* Mission detail view */}
+      {selectedMission && (
+        <MissionCardFull
+          mission={selectedMission}
+          onClose={() => setSelectedMission(null)}
+          onToggleComplete={handleMissionCardToggleComplete}
+          onMissionChanged={handleMissionCardChanged}
+        />
+      )}
 
       {/* Date Picker Sheet */}
       {!isModal && showDatePicker && (
