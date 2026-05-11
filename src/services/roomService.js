@@ -216,8 +216,10 @@ export const getRoomStats = async (roomId, missions) => {
     const oneWeekFromNow = new Date();
     oneWeekFromNow.setDate(now.getDate() + 7);
     
+    const activeMissions = roomMissions.filter(m => m.status !== 'completed' && m.status !== 'deleted');
+
     const stats = {
-      total: roomMissions.length,
+      total: activeMissions.length,
       dueThisWeek: 0,
       overdue: 0
     };
