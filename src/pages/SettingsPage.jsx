@@ -124,7 +124,7 @@ const SettingsPage = () => {
       {character && (
         <section className="settings-section">
           <h2 className="settings-section-title">Character</h2>
-          <div className="settings-character-preview">
+          <button className="settings-character-preview" onClick={() => navigate('/edit-character')}>
             <img
               src={`/assets/Avatars/Party-Leader/small/${character.class.toLowerCase().replace(/\s+/g, '-')}-${character.color}-sm.png`}
               alt={character.class}
@@ -135,11 +135,11 @@ const SettingsPage = () => {
               <span className="settings-character-name">{character.name}</span>
               <span className="settings-character-title">{character.title}</span>
             </div>
-            <button className="settings-edit-btn" onClick={() => navigate('/edit-character')}>
+            <span className="settings-character-edit-hint">
               Edit
               <span className="material-icons-outlined">chevron_right</span>
-            </button>
-          </div>
+            </span>
+          </button>
         </section>
       )}
 
