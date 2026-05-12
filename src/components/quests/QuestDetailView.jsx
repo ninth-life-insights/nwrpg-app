@@ -17,12 +17,11 @@ import {
   completeQuest,
   archiveQuest,
   updateQuestStatus,
-  addMissionToQuest,
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
 import { createCustomAchievement, unawardPendingAchievement } from '../../services/achievementService';
-import { getAllMissions, updateMission } from '../../services/missionService';
+import { getAllMissions } from '../../services/missionService';
 import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
 import { formatForUserLong } from '../../utils/dateHelpers';
@@ -198,9 +197,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const handleAddMission = async (missionData) => {
     setActionError(null);
     try {
-      const { id: missionId } = missionData;
-      await updateMission(currentUser.uid, missionId, { questId });
-      await addMissionToQuest(currentUser.uid, questId, missionId);
+      console.log('[QuestDetailView] handleAddMission called with missionId:', missionData.id, '| refreshing quest data');
       await loadQuestData();
       setShowAddMission(false);
     } catch (err) {

@@ -347,10 +347,15 @@ const AddMissionCard = ({
           throw new Error('Failed to create mission: No ID returned');
         }
 
+        console.log('[AddMissionCard] Created mission:', missionId, '| formData.questId:', formData.questId);
+
         if (formData.questId) {
+          console.log('[AddMissionCard] Calling addMissionToQuest:', formData.questId, missionId);
           await addMissionToQuest(currentUser.uid, formData.questId, missionId);
+          console.log('[AddMissionCard] addMissionToQuest complete');
         }
 
+        console.log('[AddMissionCard] Calling onAddMission callback');
         onAddMission({
           ...missionData,
           id: missionId,
