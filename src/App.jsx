@@ -6,7 +6,6 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { RoomsProvider } from './contexts/RoomsContext';
 import { QuestsProvider } from './contexts/QuestsContext';
 import { Navigate } from 'react-router-dom';
-import Login from './components/auth/Login';
 import './App.css';
 
 import LandingPage from './pages/LandingPage';
@@ -28,6 +27,7 @@ import BasePage from './pages/BasePage';
 import RoomPage from './pages/RoomPage';
 import AchievementsPage from './pages/AchievementsPage';
 import SettingsPage from './pages/SettingsPage';
+import EditCharacterPage from './pages/EditCharacterPage';
 import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import WeeklyLogDetailPage from './pages/WeeklyLogDetailPage';
 
@@ -56,11 +56,8 @@ function PublicRoute({ children }) {
 
 
 function AppContent() {
-  const { currentUser, logout } = useAuth();
-  
   return (
     <div className="App">
-      <button onClick={logout}>Logout</button>
       <Routes>
         <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/log-in" element={<PublicRoute><LoginPage /></PublicRoute>} />
@@ -82,6 +79,7 @@ function AppContent() {
         <Route path="/adventure-log/:date" element={<ProtectedRoute><AdventureLogDetailPage /></ProtectedRoute>} />
         <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        <Route path="/edit-character" element={<ProtectedRoute><EditCharacterPage /></ProtectedRoute>} />
       </Routes>
     </div>
   );
