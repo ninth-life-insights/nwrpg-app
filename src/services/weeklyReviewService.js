@@ -69,7 +69,7 @@ export const generateWeeklySnapshot = async (
   weekStart,
   weekEnd,
   displayName,
-  { forceNewStory = false } = {}
+  { forceNewStory = false, storyStyle = 'balanced' } = {}
 ) => {
   try {
     // 1. Fetch all activity log events in the date range
@@ -217,6 +217,7 @@ export const generateWeeklySnapshot = async (
           skillsUsed,
           questsAdvanced,
           dailyBreakdown,
+          storyStyle,
         };
         aiStory = await withTimeout(generateWeeklyStory(storyData), AI_TIMEOUT_MS);
         aiStoryGeneratedAt = new Date().toISOString();
@@ -353,6 +354,7 @@ export const generateWeeklyStory = async (data) => {
       skillsUsed,
       questsAdvanced,
       dailyBreakdown,
+      storyStyle = 'balanced',
     } = data;
 
     // Format the week range for context
@@ -413,7 +415,8 @@ ${topQuests.length > 0 ? `\nMost active quests: ${topQuests.join(', ')}` : ''}
 
 Write the weekly chronicle entry.`.trim();
 
-    const systemPrompt = `You write the weekly chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her week — not informing her of what happened, because she was there.
+    const systemPromptByStyle = {
+      'balanced': `You write the weekly chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her week — not informing her of what happened, because she was there.
 
 Your job is to find the arc of the week. Look for: recurring patterns across days, a quest that made real progress, a tough patch followed by a recovery, the contrast between a quiet day and a busy one. The week has a shape — find it.
 
@@ -428,7 +431,35 @@ Rules:
 - Never use the word "adventurer"
 - Look for common threads across multiple days, not just a list of each day
 - If there was a hard day followed by a strong comeback, that's the story
-- Under 200 words`;
+- Under 200 words`,
+
+      'high-fantasy': `You write the weekly chronicle in the Grand Book of Deeds for a hero of the realm. Her tasks are missions; her projects are quests; her home is her base of operations. You are the keeper of her saga, recording the arc of the week for posterity.
+
+Find the shape of the week — the campaign arc. Look for: a quest that advanced significantly, a day where the hero pushed through despite the odds, a pattern of effort that reveals character. Level-ups and skill advances are major story beats. Encounters are battles won.
+
+Use the language of the game naturally: missions, quests, XP, skill levels, the base. The tone is epic but grounded — this hero's deeds are real, and they matter.
+
+Rules:
+- 5–7 sentences
+- Second person ("You...")
+- No exclamation points
+- Treat level-ups and skill-ups as turning points in the arc
+- Look for the week's campaign arc, not just a day-by-day recap
+- Under 200 words`,
+
+      'plain': `You write a brief weekly reflection for a mom looking back on her week. Her tasks are tasks. Her projects are projects. You are writing a warm, honest summary of how the week went — not a list, but a short note about what the week actually meant.
+
+Find the shape of the week. Look for: a day that set the tone, a project that made real progress, a hard patch and what came after it. The week has a story — find it.
+
+Rules:
+- 5–7 sentences
+- Second person ("You...")
+- No exclamation points
+- No RPG framing, fantasy vocabulary, or game metaphors — plain conversational language only
+- Look for common threads across days, not just a day-by-day recap
+- Under 200 words`,
+    };
+    const systemPrompt = systemPromptByStyle[storyStyle] ?? systemPromptByStyle['balanced'];
 
     const response = await fetch('/api/anthropic', {
       method: 'POST',

@@ -45,6 +45,7 @@ const WeeklyReviewSummary = ({
   userId,
   weekStart,
   weekEnd,
+  storyStyle = 'balanced',
 }) => {
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [isEditingStory, setIsEditingStory] = useState(false);
@@ -156,7 +157,7 @@ const WeeklyReviewSummary = ({
     try {
       const profile = await getUserProfile(userId);
       const displayName = profile?.displayName || 'You';
-      const newSnapshot = await generateWeeklySnapshot(userId, weekStart, weekEnd, displayName, { forceNewStory: true });
+      const newSnapshot = await generateWeeklySnapshot(userId, weekStart, weekEnd, displayName, { forceNewStory: true, storyStyle });
       onRegenerateStory?.(newSnapshot.aiStory);
     } catch (err) {
       console.error('Error regenerating weekly story:', err);

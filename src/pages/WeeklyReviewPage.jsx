@@ -29,6 +29,7 @@ const WeeklyReviewPage = () => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
+  const [storyStyle, setStoryStyle] = useState('balanced');
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [sessionAchievements, setSessionAchievements] = useState([]);
@@ -67,8 +68,10 @@ const WeeklyReviewPage = () => {
       const weekEndStr = weekInfo.reviewedWeekEnd.format('YYYY-MM-DD');
       const profile = await getUserProfile(currentUser.uid);
       const displayName = profile?.displayName || 'You';
+      const style = profile?.storyStyle || 'balanced';
+      setStoryStyle(style);
       const result = await withTimeout(
-        generateWeeklySnapshot(currentUser.uid, weekStartStr, weekEndStr, displayName)
+        generateWeeklySnapshot(currentUser.uid, weekStartStr, weekEndStr, displayName, { storyStyle: style })
       );
       setSnapshot(result);
     } catch (err) {
@@ -193,6 +196,7 @@ const WeeklyReviewPage = () => {
               userId={currentUser.uid}
               weekStart={weekInfo?.reviewedWeekStart.format('YYYY-MM-DD')}
               weekEnd={weekInfo?.reviewedWeekEnd.format('YYYY-MM-DD')}
+              storyStyle={storyStyle}
             />
           </>
         )}

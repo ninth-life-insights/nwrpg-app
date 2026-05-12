@@ -328,7 +328,7 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
  * @param {string} displayName - Used in the AI story prompt
  * @returns {object} The snapshot data that was written
  */
-export const generateDailySnapshot = async (userId, dateString, displayName, { forceNewStory = false } = {}) => {
+export const generateDailySnapshot = async (userId, dateString, displayName, { forceNewStory = false, storyStyle = 'balanced' } = {}) => {
   try {
   const date = dateString || toDateString(new Date());
 
@@ -528,6 +528,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
     questsAdvanced: questsAdvancedForStory,
     encounters,
     rollingAverages,
+    storyStyle,
   };
 
   // Reuse existing story unless forced or none exists yet
@@ -610,6 +611,7 @@ export const generateDailyStory = async (data) => {
     questsAdvanced,
     encounters = [],
     rollingAverages = null,
+    storyStyle = 'balanced',
   } = data;
 
   // Build mission list for prompt — task age is the key signal for the AI
@@ -677,7 +679,8 @@ ${baselineBlock ? `\n${baselineBlock}` : ''}
 
 Write the entry.`.trim();
 
-  const systemPrompt = `You write the daily chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her day for posterity — not informing her of what happened, because she was there.
+  const systemPromptByStyle = {
+    'balanced': `You write the daily chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her day for posterity — not informing her of what happened, because she was there.
 
 Your job is to find what was actually interesting about today and say something true about it. One or two things, not everything. Let the rest stay implied. Use language and metaphor to do the heavy lifting — a good image is worth three explanatory sentences.
 
@@ -693,7 +696,33 @@ Rules:
 - No exclamation points
 - Never use the word "adventurer"
 - If nothing dramatic happened, say something true about what ordinary days are actually for
-- Under 120 words`;
+- Under 120 words`,
+
+    'high-fantasy': `You write the daily chronicle in the Grand Book of Deeds for a hero of the realm. Her tasks are missions accepted and completed; her projects are quests; her home is her base of operations. XP is earned, skills grow, levels are reached. You are the keeper of her saga.
+
+Find what was heroic about today — even in the small battles. Level-ups and skill advances are worthy of note. Lean into the language of the game: missions, quests, XP, skill levels, the base. Encounters are ambushes, interruptions, unexpected events that tested her resolve.
+
+The writing should feel like a fantasy game log written by a narrator who takes every action seriously, however mundane.
+
+Rules:
+- 3–5 sentences
+- Second person ("You...")
+- No exclamation points
+- Treat level-ups and skill advances as significant story beats
+- Under 120 words`,
+
+    'plain': `You write a brief daily reflection for a mom reviewing her day. Her tasks are tasks. Her projects are projects. You are writing a warm, honest summary — not a list, but a short personal note about what actually mattered.
+
+Find one or two things worth saying. Be real, not performative. If it was productive, say why it felt that way. If it was hard, acknowledge it without flinching. If it was ordinary, say something true about what ordinary days are actually for.
+
+Rules:
+- 3–5 sentences
+- Second person ("You...")
+- No exclamation points
+- No RPG framing, fantasy vocabulary, or game metaphors — plain conversational language only
+- Under 120 words`,
+  };
+  const systemPrompt = systemPromptByStyle[storyStyle] ?? systemPromptByStyle['balanced'];
 
   const response = await fetch('/api/anthropic', {
     method: 'POST',

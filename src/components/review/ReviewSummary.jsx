@@ -12,6 +12,7 @@ const ReviewSummary = ({
   onRegenerateStory, // optional: called with new story text after regeneration
   userId,            // required when onRegenerateStory is provided
   date,              // required when onRegenerateStory is provided
+  storyStyle = 'balanced',
   doneLabel = 'Done',
   newAchievements = [],
 }) => {
@@ -71,7 +72,7 @@ const ReviewSummary = ({
     try {
       const profile = await getUserProfile(userId);
       const displayName = profile?.displayName || 'You';
-      const newSnapshot = await generateDailySnapshot(userId, date, displayName, { forceNewStory: true });
+      const newSnapshot = await generateDailySnapshot(userId, date, displayName, { forceNewStory: true, storyStyle });
       onRegenerateStory(newSnapshot.aiStory);
     } catch (err) {
       console.error('Error regenerating story:', err);

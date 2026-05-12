@@ -29,6 +29,7 @@ const SettingsPage = () => {
   const [prefs, setPrefs] = useState(null);
   const [character, setCharacter] = useState(null);
   const [weekStartDay, setWeekStartDay] = useState(0); // default Sunday
+  const [storyStyle, setStoryStyle] = useState('balanced');
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -48,6 +49,7 @@ const SettingsPage = () => {
           : Number(stored);
         setWeekStartDay(Number.isFinite(coerced) ? coerced : 0);
       }
+      if (profile?.storyStyle) setStoryStyle(profile.storyStyle);
     });
     getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
       if (snap.exists()) setCharacter(snap.data().character ?? null);
@@ -92,7 +94,7 @@ const SettingsPage = () => {
     try {
       await Promise.all([
         saveNotificationPrefs(currentUser.uid, prefs),
-        updateUserProfile(currentUser.uid, { weekStartDay }),
+        updateUserProfile(currentUser.uid, { weekStartDay, storyStyle }),
       ]);
       await refreshSchedule();
       setSaved(true);
@@ -282,6 +284,31 @@ const SettingsPage = () => {
             {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
           </button>
         </StickyFooter>
+      </section>
+
+      <section className="settings-section">
+        <h2 className="settings-section-title">Review Stories</h2>
+        <div className="settings-row-label-group">
+          <span className="settings-label">Chronicle style</span>
+          <span className="settings-hint">Controls the tone of your daily and weekly summaries</span>
+        </div>
+        <div className="settings-style-picker" role="group" aria-label="Chronicle style">
+          {[
+            { value: 'plain', label: 'Plain', hint: 'No game framing' },
+            { value: 'balanced', label: 'Balanced', hint: 'Light RPG flavour' },
+            { value: 'high-fantasy', label: 'Epic', hint: 'Full fantasy mode' },
+          ].map(({ value, label, hint }) => (
+            <button
+              key={value}
+              type="button"
+              className={`settings-style-option${storyStyle === value ? ' settings-style-option--active' : ''}`}
+              onClick={() => setStoryStyle(value)}
+            >
+              <span className="settings-style-option-label">{label}</span>
+              <span className="settings-style-option-hint">{hint}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="settings-section">

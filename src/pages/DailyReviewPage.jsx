@@ -46,6 +46,7 @@ const DailyReviewPage = () => {
   const [loadError, setLoadError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [storyStyle, setStoryStyle] = useState('balanced');
 
   const today = toDateString(new Date());
 
@@ -113,7 +114,9 @@ const DailyReviewPage = () => {
         ])
       );
       const displayName = profile?.displayName || 'You';
-      const result = await generateDailySnapshot(currentUser.uid, today, displayName);
+      const style = profile?.storyStyle || 'balanced';
+      setStoryStyle(style);
+      const result = await generateDailySnapshot(currentUser.uid, today, displayName, { storyStyle: style });
       // Attach encounters to snapshot for display (they're stored separately in Firestore)
       setSnapshot({ ...result, encounters });
       setTodayAchievements(earnedToday);
@@ -226,6 +229,7 @@ const DailyReviewPage = () => {
               onRegenerateStory={(newStory) => setSnapshot(prev => ({ ...prev, aiStory: newStory, aiStoryGenerated: true }))}
               userId={currentUser.uid}
               date={today}
+              storyStyle={storyStyle}
               newAchievements={todayAchievements}
             />
           </>
