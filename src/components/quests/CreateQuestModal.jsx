@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import Badge from '../ui/Badge';
-import { createQuest, addMissionToQuest, updateQuest } from '../../services/questService';
+import { createQuest, updateQuest } from '../../services/questService';
 import { createMission } from '../../services/missionService';
 import { createCustomAchievement } from '../../services/achievementService';
 import { QUEST_DIFFICULTY } from '../../types/Quests';

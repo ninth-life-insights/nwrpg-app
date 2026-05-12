@@ -194,10 +194,9 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     }
   };
 
-  const handleAddMission = async (missionData) => {
+  const handleAddMission = async () => {
     setActionError(null);
     try {
-      console.log('[QuestDetailView] handleAddMission called with missionId:', missionData.id, '| refreshing quest data');
       await loadQuestData();
       setShowAddMission(false);
     } catch (err) {
