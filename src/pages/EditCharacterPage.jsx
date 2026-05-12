@@ -6,8 +6,11 @@ import { useNavigate } from 'react-router-dom';
 
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
+import ClassCarousel from '../components/character/ClassCarousel';
+import ColorPicker from '../components/character/ColorPicker';
+import { CHARACTER_CLASSES, CHARACTER_COLORS, generateRandomCharacter } from '../data/characterData';
 import { updateThemeColor } from '../utils/themeUtils';
-import { PARTY_LEADER_TITLES } from '../data/partyLeaderTitles';
+import '../components/character/CharacterForm.css';
 import './EditCharacterPage.css';
 
 const EditCharacterPage = () => {
@@ -22,15 +25,6 @@ const EditCharacterPage = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const classes = ['Knight', 'Sorceress', 'Ranger', 'Storm Tamer', 'Entrepreneur', 'Vacationer'];
-  const colors = [
-    { name: 'blue', value: '#3b82f6' },
-    { name: 'green', value: '#10b981' },
-    { name: 'purple', value: '#8b5cf6' },
-    { name: 'pink', value: '#ec4899' },
-    { name: 'red', value: '#ef4444' },
-  ];
-
   useEffect(() => {
     if (!currentUser) return;
     getDoc(doc(db, 'users', currentUser.uid))
@@ -40,7 +34,7 @@ const EditCharacterPage = () => {
           if (character) {
             setName(character.name || '');
             setTitle(character.title || '');
-            const classIndex = classes.indexOf(character.class);
+            const classIndex = CHARACTER_CLASSES.indexOf(character.class);
             setSelectedClass(classIndex !== -1 ? classIndex : 0);
             setSelectedColor(character.color || 'blue');
             updateThemeColor(character.color || 'blue');
@@ -50,23 +44,16 @@ const EditCharacterPage = () => {
       .catch(() => setLoadError("Couldn't load your character. Try refreshing."));
   }, [currentUser]);
 
-  const getAvatar = (className, colorName) => {
-    const classSlug = className.toLowerCase().replace(/\s+/g, '-');
-    return `/assets/Avatars/Party-Leader/small/${classSlug}-${colorName}-sm.png`;
-  };
-
   const handleColorChange = (colorName) => {
     setSelectedColor(colorName);
     updateThemeColor(colorName);
   };
 
   const autoGenerate = () => {
-    const randomTitle = PARTY_LEADER_TITLES[Math.floor(Math.random() * PARTY_LEADER_TITLES.length)];
+    const { title: randomTitle, classIndex, color } = generateRandomCharacter();
     setTitle(randomTitle);
-    const randomClass = Math.floor(Math.random() * classes.length);
-    setSelectedClass(randomClass);
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    handleColorChange(randomColor.name);
+    setSelectedClass(classIndex);
+    handleColorChange(color);
   };
 
   const handleSave = async () => {
@@ -79,7 +66,7 @@ const EditCharacterPage = () => {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         'character.name': name.trim(),
         'character.title': title.trim(),
-        'character.class': classes[selectedClass],
+        'character.class': CHARACTER_CLASSES[selectedClass],
         'character.color': selectedColor,
         updatedAt: serverTimestamp(),
       });
@@ -128,42 +115,19 @@ const EditCharacterPage = () => {
           </div>
 
           <label className="section-label">Class:</label>
-          <div className="class-carousel">
-            <div className="class-container">
-              <div className="class-slides">
-                {classes.map((className, index) => (
-                  <div
-                    key={index}
-                    className={`class-slide ${index === selectedClass ? 'selected' : ''}`}
-                    onClick={() => setSelectedClass(index)}
-                  >
-                    <div className="class-avatar-placeholder">
-                      <img
-                        src={getAvatar(className, selectedColor)}
-                        alt={`${className} ${selectedColor}`}
-                        className="class-avatar-image"
-                        onError={e => { e.target.style.display = 'none'; }}
-                      />
-                      <span className="class-name with-avatar">{className}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <ClassCarousel
+            classes={CHARACTER_CLASSES}
+            selectedClass={selectedClass}
+            onSelectClass={setSelectedClass}
+            selectedColor={selectedColor}
+          />
 
           <label className="section-label">Appearance:</label>
-          <div className="color-grid">
-            {colors.map(color => (
-              <button
-                key={color.name}
-                type="button"
-                onClick={() => handleColorChange(color.name)}
-                className={`color-option ${selectedColor === color.name ? 'selected' : ''}`}
-                style={{ backgroundColor: color.value }}
-              />
-            ))}
-          </div>
+          <ColorPicker
+            colors={CHARACTER_COLORS}
+            selectedColor={selectedColor}
+            onSelectColor={handleColorChange}
+          />
 
           <div className="auto-generate-section">
             <button type="button" onClick={autoGenerate} className="auto-generate-btn">
