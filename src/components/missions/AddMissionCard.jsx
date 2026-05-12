@@ -723,7 +723,10 @@ const AddMissionCard = ({
                 <div className="selected-skill-inline">
                   <button
                     type="button"
-                    onClick={() => setShowRoomField(true)}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, baseLocation: null }));
+                      setShowRoomField(true);
+                    }}
                     className="skill-badge-button"
                     disabled={isSubmitting}
                   >
