@@ -244,3 +244,86 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* Character section */
+.settings-character-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.settings-character-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.settings-character-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-character-name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.settings-character-title {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+}
+
+.settings-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  padding: var(--space-xs);
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.settings-edit-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.settings-edit-btn .material-icons-outlined {
+  font-size: 18px;
+}
+
+/* Account section */
+.settings-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+  text-align: right;
+  word-break: break-all;
+}
+
+.settings-logout-btn {
+  width: 100%;
+  padding: var(--space-md);
+  background: none;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: var(--space-xs);
+}
+
+.settings-logout-btn:hover {
+  background: #fef2f2;
+}

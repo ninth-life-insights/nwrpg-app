@@ -1,8 +1,10 @@
 // src/pages/SettingsPage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { db } from '../services/firebase/config';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
 import { getUserProfile, updateUserProfile } from '../services/userService';
@@ -20,11 +22,12 @@ const parseTime = (value) => {
 };
 
 const SettingsPage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const { refreshSchedule } = useNotifications();
   const navigate = useNavigate();
 
   const [prefs, setPrefs] = useState(null);
+  const [character, setCharacter] = useState(null);
   const [weekStartDay, setWeekStartDay] = useState(0); // default Sunday
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
@@ -46,7 +49,14 @@ const SettingsPage = () => {
         setWeekStartDay(Number.isFinite(coerced) ? coerced : 0);
       }
     });
+    getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
+      if (snap.exists()) setCharacter(snap.data().character ?? null);
+    });
   }, [currentUser]);
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const handleMasterToggle = async () => {
     const turningOn = !prefs.enabled;
@@ -110,6 +120,28 @@ const SettingsPage = () => {
         </button>
         <h1 className="settings-title">Settings</h1>
       </header>
+
+      {character && (
+        <section className="settings-section">
+          <h2 className="settings-section-title">Character</h2>
+          <div className="settings-character-preview">
+            <img
+              src={`/assets/Avatars/Party-Leader/small/${character.class.toLowerCase().replace(/\s+/g, '-')}-${character.color}-sm.png`}
+              alt={character.class}
+              className="settings-character-avatar"
+              onError={e => { e.target.style.display = 'none'; }}
+            />
+            <div className="settings-character-info">
+              <span className="settings-character-name">{character.name}</span>
+              <span className="settings-character-title">{character.title}</span>
+            </div>
+            <button className="settings-edit-btn" onClick={() => navigate('/edit-character')}>
+              Edit
+              <span className="material-icons-outlined">chevron_right</span>
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="settings-section">
         <h2 className="settings-section-title">Notifications</h2>
@@ -250,6 +282,17 @@ const SettingsPage = () => {
             {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
           </button>
         </StickyFooter>
+      </section>
+
+      <section className="settings-section">
+        <h2 className="settings-section-title">Account</h2>
+        <div className="settings-row">
+          <span className="settings-label">Email</span>
+          <span className="settings-value">{currentUser?.email}</span>
+        </div>
+        <button className="settings-logout-btn" onClick={handleLogout}>
+          Log out
+        </button>
       </section>
     </div>
   );
