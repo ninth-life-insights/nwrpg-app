@@ -39,22 +39,55 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.auto-generate-section {
-  margin: 30px var(--space-md) var(--space-md);
+/* Icon-only shuffle button inline with the Title input */
+.title-shuffle-btn {
+  background: none;
+  border: none;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-light);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  transition: var(--transition);
+  margin-bottom: var(--space-md);
 }
 
-.auto-generate-btn {
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border);
+.title-shuffle-btn:hover {
+  color: var(--color-text-medium);
+}
+
+.title-shuffle-btn .material-icons-outlined {
+  font-size: 20px;
+}
+
+/* Text + icon button below the color picker */
+.look-shuffle-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-sm);
+}
+
+.look-shuffle-btn {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
-  width: 200px;
-  height: 32px;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
   cursor: pointer;
-  font-size: 16px;
   transition: var(--transition);
 }
 
-.auto-generate-btn:hover {
-  box-shadow: var(--shadow-hover);
-  transform: scale(1.1);
+.look-shuffle-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.look-shuffle-btn .material-icons-outlined {
+  font-size: 16px;
 }

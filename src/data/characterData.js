@@ -15,8 +15,10 @@ export const getAvatarImage = (className, colorName) => {
   return `/assets/Avatars/Party-Leader/small/${classSlug}-${colorName}-sm.png`;
 };
 
-export const generateRandomCharacter = () => ({
-  title:      PARTY_LEADER_TITLES[Math.floor(Math.random() * PARTY_LEADER_TITLES.length)],
+export const generateRandomTitle = () =>
+  PARTY_LEADER_TITLES[Math.floor(Math.random() * PARTY_LEADER_TITLES.length)];
+
+export const generateRandomLook = () => ({
   classIndex: Math.floor(Math.random() * CHARACTER_CLASSES.length),
   color:      CHARACTER_COLORS[Math.floor(Math.random() * CHARACTER_COLORS.length)].name,
 });

@@ -8,7 +8,7 @@ import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
 import ClassCarousel from '../components/character/ClassCarousel';
 import ColorPicker from '../components/character/ColorPicker';
-import { CHARACTER_CLASSES, CHARACTER_COLORS, generateRandomCharacter } from '../data/characterData';
+import { CHARACTER_CLASSES, CHARACTER_COLORS, generateRandomTitle, generateRandomLook } from '../data/characterData';
 import { updateThemeColor } from '../utils/themeUtils';
 import '../components/character/CharacterForm.css';
 import './EditCharacterPage.css';
@@ -49,9 +49,12 @@ const EditCharacterPage = () => {
     updateThemeColor(colorName);
   };
 
-  const autoGenerate = () => {
-    const { title: randomTitle, classIndex, color } = generateRandomCharacter();
-    setTitle(randomTitle);
+  const shuffleTitle = () => {
+    setTitle(generateRandomTitle());
+  };
+
+  const shuffleLook = () => {
+    const { classIndex, color } = generateRandomLook();
     setSelectedClass(classIndex);
     handleColorChange(color);
   };
@@ -112,6 +115,9 @@ const EditCharacterPage = () => {
               className="character-input"
               placeholder="Enter your RPG title"
             />
+            <button type="button" className="title-shuffle-btn" onClick={shuffleTitle} title="Random title">
+              <span className="material-icons-outlined">sync</span>
+            </button>
           </div>
 
           <label className="section-label">Class:</label>
@@ -129,9 +135,10 @@ const EditCharacterPage = () => {
             onSelectColor={handleColorChange}
           />
 
-          <div className="auto-generate-section">
-            <button type="button" onClick={autoGenerate} className="auto-generate-btn">
-              🎲 Auto-Generate
+          <div className="look-shuffle-row">
+            <button type="button" className="look-shuffle-btn" onClick={shuffleLook}>
+              <span className="material-icons-outlined">sync</span>
+              Shuffle look
             </button>
           </div>
         </div>
