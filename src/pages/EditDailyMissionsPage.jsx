@@ -63,7 +63,6 @@ const EditDailyMissionsPage = ({
   onComplete = null,
   showNavigation = true,
   initialTargetDate = null,  // pre-set the date (YYYY-MM-DD); defaults to today when null
-  allowPartialSave = false,  // when true, allow saving with 1–2 missions instead of requiring 3
 }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -295,12 +294,8 @@ const handleAddNewMission = async (missionData) => {
 
   const validMissions = dailyMissions.filter(mission => mission !== null);
 
-    const minRequired = allowPartialSave ? 1 : 3;
-    if (validMissions.length < minRequired) {
-      setError(allowPartialSave
-        ? 'Add at least one mission to save your plan.'
-        : 'Please select exactly 3 missions for your daily missions.'
-      );
+    if (validMissions.length < 1) {
+      setError('Add at least one mission to save your plan.');
       return;
     }
 
@@ -350,9 +345,7 @@ const handleAddNewMission = async (missionData) => {
 
   // Check if enough slots are filled to save
   const allSlotsFilled = dailyMissions.every(mission => mission !== null);
-  const canSave = allowPartialSave
-    ? dailyMissions.some(mission => mission !== null)
-    : allSlotsFilled;
+  const canSave = dailyMissions.some(mission => mission !== null);
 
   // Show loading state
   if (loading) {
@@ -602,9 +595,7 @@ const handleAddNewMission = async (missionData) => {
           </button>
 
           {!canSave && (
-            <p className="requirements-text">
-              {allowPartialSave ? 'Add at least one mission to save.' : 'Fill all 3 slots to set your daily missions'}
-            </p>
+            <p className="requirements-text">Add at least one mission to save.</p>
           )}
         </div>
       ) : (
@@ -618,9 +609,7 @@ const handleAddNewMission = async (missionData) => {
           </button>
 
           {!canSave && (
-            <p className="requirements-text">
-              {allowPartialSave ? 'Add at least one mission to save.' : 'Fill all 3 slots to set your daily missions'}
-            </p>
+            <p className="requirements-text">Add at least one mission to save.</p>
           )}
         </div>
       )}

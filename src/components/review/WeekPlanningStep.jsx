@@ -95,7 +95,6 @@ const DayCard = ({
       {showPlanModal && (
         <EditDailyMissionsModal
           initialTargetDate={dateStr}
-          allowPartialSave
           onClose={() => {
             setShowPlanModal(false);
             onPlanSaved?.();
