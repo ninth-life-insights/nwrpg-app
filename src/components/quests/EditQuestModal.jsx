@@ -91,7 +91,7 @@ const EditQuestModal = ({ isOpen, onClose, quest, onQuestUpdated }) => {
       
       onClose();
     } catch (error) {
-      console.error('Error updating quest:', error);
+      console.error('Error updating quest:', erPleaseror);
       setErrors({ submit: "Your quest wasn't updated. Try again." });
     } finally {
       setIsSubmitting(false);

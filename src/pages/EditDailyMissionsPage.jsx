@@ -82,9 +82,10 @@ const EditDailyMissionsPage = ({
   }, []);
   useModalBackButton(showMissionBank, closeMissionBank);
 
+  const [allActiveMissions, setAllActiveMissions] = useState([]);
   const [bankSearchQuery, setBankSearchQuery] = useState('');
   const [bankFilters, setBankFilters] = useState({
-    sortBy: 'custom', sortOrder: 'asc', skillFilter: '',
+    sortBy: 'dueDate', sortOrder: 'asc', skillFilter: '',
     includeCompleted: false, showArchive: false, completedDateRange: 'last7days',
     roomFilter: '', taskTypeFilter: '', questFilter: ''
   });
@@ -130,39 +131,39 @@ const EditDailyMissionsPage = ({
     setLoading(true);
     setError('');
     setDailyMissions([null, null, null]);
+    setAllActiveMissions([]);
     setHasSavedPlan(false);
     setIsLoadingSlow(false);
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
 
     try {
       await withTimeout((async () => {
-        let missionIds = null;
+        // Fetch config/history and active missions in parallel
+        const [missionIds, activeMissions] = await Promise.all([
+          (async () => {
+            if (targetDate === today) {
+              const config = await getDailyMissionsConfig(currentUser.uid);
+              setCurrentConfig(config);
+              return (config && config.setForDate === today && config.missionIds?.length > 0)
+                ? config.missionIds : null;
+            } else {
+              setCurrentConfig(null);
+              const history = await getDailyMissionsForDate(currentUser.uid, targetDate);
+              return history?.selectedMissionIds?.length > 0 ? history.selectedMissionIds : null;
+            }
+          })(),
+          getActiveMissions(currentUser.uid),
+        ]);
 
-        if (targetDate === today) {
-          // Today: use config as the source of truth (existing logic)
-          const config = await getDailyMissionsConfig(currentUser.uid);
-          setCurrentConfig(config);
-
-          if (config && config.setForDate === today && config.missionIds?.length > 0) {
-            missionIds = config.missionIds;
-          }
-        } else {
-          // Future date: load from dailyHistory
-          setCurrentConfig(null);
-          const history = await getDailyMissionsForDate(currentUser.uid, targetDate);
-          if (history?.selectedMissionIds?.length > 0) {
-            missionIds = history.selectedMissionIds;
-          }
-        }
+        setAllActiveMissions(activeMissions);
 
         // Track whether a saved plan exists for this date (used for "Set" vs "Update" label)
         setHasSavedPlan(missionIds != null);
 
         if (missionIds) {
-          const [activeMissions, completedMissions] = await Promise.all([
-            getActiveMissions(currentUser.uid),
-            getCompletedMissions ? getCompletedMissions(currentUser.uid) : Promise.resolve([])
-          ]);
+          // Also fetch completed missions — slots may contain pre-completed missions
+          const completedMissions = getCompletedMissions
+            ? await getCompletedMissions(currentUser.uid) : [];
 
           const allMissions = [...activeMissions, ...completedMissions];
 
@@ -370,6 +371,13 @@ const handleAddNewMission = async (missionData) => {
     ? (currentConfig && currentConfig.setForDate === today && currentConfig.missionIds?.length > 0)
     : hasSavedPlan;
 
+  const selectedIds = new Set(dailyMissions.filter(Boolean).map(m => m.id));
+  const dueSoonCount = isTargetToday
+    ? allActiveMissions.filter(m =>
+        (isMissionOverdue(m) || isMissionDueToday(m)) && !selectedIds.has(m.id)
+      ).length
+    : 0;
+
   // Human-readable date for the header pill
   const targetDateDisplay = isTargetToday
     ? `Today — ${fromDateString(targetDate).format('ddd, MMM D')}`
@@ -565,6 +573,11 @@ const handleAddNewMission = async (missionData) => {
           disabled={allSlotsFilled || saving}
         >
           📋 Choose from Mission Bank
+          {dueSoonCount > 0 && (
+            <span className="bank-btn-due-soon-hint">
+              {dueSoonCount} mission{dueSoonCount !== 1 ? 's' : ''} need attention
+            </span>
+          )}
         </button>
       </div>
 
