@@ -788,11 +788,15 @@
   display: none; /* Hide if any remain */
 }
 
+.action-btn--with-hint {
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal;
+}
+
 .bank-btn-due-soon-hint {
-  display: block;
   font-size: 11px;
   font-weight: 600;
   color: #ea580c;
-  margin-top: 2px;
   letter-spacing: 0.01em;
 }

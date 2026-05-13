@@ -568,7 +568,7 @@ const handleAddNewMission = async (missionData) => {
         </button>
 
         <button
-          className="action-btn secondary"
+          className={`action-btn secondary${dueSoonCount > 0 ? ' action-btn--with-hint' : ''}`}
           onClick={handleChooseFromBank}
           disabled={allSlotsFilled || saving}
         >
