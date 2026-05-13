@@ -372,11 +372,22 @@ const handleAddNewMission = async (missionData) => {
     : hasSavedPlan;
 
   const selectedIds = new Set(dailyMissions.filter(Boolean).map(m => m.id));
-  const dueSoonCount = isTargetToday
-    ? allActiveMissions.filter(m =>
-        (isMissionOverdue(m) || isMissionDueToday(m)) && !selectedIds.has(m.id)
-      ).length
-    : 0;
+  const unselectedActive = allActiveMissions.filter(m => !selectedIds.has(m.id));
+  const overdueCount = isTargetToday ? unselectedActive.filter(isMissionOverdue).length : 0;
+  const dueTodayCount = isTargetToday ? unselectedActive.filter(isMissionDueToday).length : 0;
+  const dueTomorrowCount = isTargetToday ? unselectedActive.filter(isMissionDueTomorrow).length : 0;
+
+  const bankHint = (() => {
+    if (overdueCount > 0 && dueTodayCount > 0)
+      return `${overdueCount} overdue · ${dueTodayCount} due today`;
+    if (overdueCount > 0)
+      return `${overdueCount} overdue`;
+    if (dueTodayCount > 0)
+      return `${dueTodayCount} due today`;
+    if (dueTomorrowCount > 0)
+      return `${dueTomorrowCount} due tomorrow`;
+    return null;
+  })();
 
   // Human-readable date for the header pill
   const targetDateDisplay = isTargetToday
@@ -568,15 +579,13 @@ const handleAddNewMission = async (missionData) => {
         </button>
 
         <button
-          className={`action-btn secondary${dueSoonCount > 0 ? ' action-btn--with-hint' : ''}`}
+          className={`action-btn secondary${bankHint ? ' action-btn--with-hint' : ''}`}
           onClick={handleChooseFromBank}
           disabled={allSlotsFilled || saving}
         >
           📋 Choose from Mission Bank
-          {dueSoonCount > 0 && (
-            <span className="bank-btn-due-soon-hint">
-              {dueSoonCount} mission{dueSoonCount !== 1 ? 's' : ''} need attention
-            </span>
+          {bankHint && (
+            <span className="bank-btn-due-soon-hint">{bankHint}</span>
           )}
         </button>
       </div>
