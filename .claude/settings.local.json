@@ -8,7 +8,8 @@
       "Bash(grep -E \"\\\\.\\(js|json\\)$\")",
       "Bash(grep -E \"\\\\.\\(js|jsx\\)$\")",
       "Bash(xargs basename *)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(grep -E \"\\\\.\\(js|jsx|ts|tsx\\)$\")"
     ]
   }
 }
