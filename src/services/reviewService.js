@@ -505,11 +505,20 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
     encounters = await getEncountersForDate(userId, date);
   } catch { /* non-fatal — story still generates without encounters */ }
 
-  // 6a. Fetch rolling averages from prior 30 snapshots (non-fatal)
+  // 6a. Fetch rolling averages and recent stories from prior 30 snapshots (non-fatal)
   let rollingAverages = null;
+  let previousStories = null;
   try {
     const recentSnapshots = await getRecentSnapshots(userId, date, 30);
     rollingAverages = computeRollingAverages(recentSnapshots);
+    const recentWithStory = recentSnapshots
+      .filter(s => s.userEditedStory || s.aiStory)
+      .slice(0, 3);
+    if (recentWithStory.length > 0) {
+      previousStories = recentWithStory
+        .map((s, i) => `${i + 1}. "${s.userEditedStory || s.aiStory}"`)
+        .join('\n');
+    }
   } catch (err) {
     console.warn('Could not fetch rolling averages:', err);
   }
@@ -529,6 +538,7 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
     encounters,
     rollingAverages,
     storyStyle,
+    previousStories,
   };
 
   // Reuse existing story unless forced or none exists yet
@@ -612,6 +622,7 @@ export const generateDailyStory = async (data) => {
     encounters = [],
     rollingAverages = null,
     storyStyle = 'balanced',
+    previousStories = null,
   } = data;
 
   // Build mission list for prompt — task age is the key signal for the AI
@@ -682,20 +693,25 @@ Write the entry.`.trim();
   const systemPromptByStyle = {
     'balanced': `You write the daily chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her day for posterity — not informing her of what happened, because she was there.
 
-Your job is to find what was actually interesting about today and say something true about it. One or two things, not everything. Let the rest stay implied. Use language and metaphor to do the heavy lifting — a good image is worth three explanatory sentences.
+Your job is to find what was actually interesting or meaningful about today and say something true about it. One or two things, not everything. Let the rest stay implied. Use language and metaphor to do the heavy lifting — but reach past the obvious image. Laundry is not Sisyphus. Cleaning is not a battle. Find the angle that is specific to this day, not the one that fits any day like it.
 
 Write in a voice inspired by Terry Pratchett: warm, a little wry, takes mundane things completely seriously, finds the human truth in small moments. Whimsy is welcome. Embellishment is welcome. If a line is clever but not true, cut it.
 
-Vary how you open — sometimes lead with the task itself, sometimes the feeling around it, sometimes an observation about time or habit or what things cost. On the other hand, identify real triumphs and give those the weight they deserve.
+When a day was genuinely productive, let that land — don't philosophize it into smallness. A person who got a lot done deserves a chronicle that knows it. On the other hand, if it was ordinary, find what the ordinary day was quietly building toward, not just what it cost.
 
-If there were unexpected encounters, weave them in naturally — they are the texture of the day, not a footnote. An interruption that swallowed an afternoon is more interesting than a mission that went smoothly.
+Vary how you open — sometimes lead with the task itself, sometimes the feeling around it, sometimes an observation about time or habit or what things cost. If there were unexpected encounters, weave them in naturally — they are the texture of the day, not a footnote.
+
+${previousStories ? `Here are the last several daily chronicles you have written for this player:
+
+${previousStories}
+
+Do not reuse the opening structure, central metaphor, or dominant image from any of these entries. If one opened with a reflection on time, open differently. If one used a specific image (weather, weight, light, architecture, etc.), find a different one.` : ''}
 
 Rules:
 - 3–5 sentences
 - Second person ("You...")
 - No exclamation points
 - Never use the word "adventurer"
-- If nothing dramatic happened, say something true about what ordinary days are actually for
 - Under 120 words`,
 
     'high-fantasy': `You write the daily chronicle in the Grand Book of Deeds for a hero of the realm. Her tasks are missions accepted and completed; her projects are quests; her home is her base of operations. XP is earned, skills grow, levels are reached. You are the keeper of her saga.
