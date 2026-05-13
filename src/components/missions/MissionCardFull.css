@@ -138,6 +138,14 @@
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.due-date-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
   margin-bottom: var(--space-xl);
 }
 
@@ -359,19 +367,6 @@
 .action-button.story-exclusion-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.reschedule-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-
-.reschedule-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-medium);
-  white-space: nowrap;
 }
 
 .reschedule-btns {

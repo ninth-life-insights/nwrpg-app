@@ -330,12 +330,6 @@ const MissionCardFull = ({
                 <Badge variant="evergreen">Evergreen</Badge>
               )}
 
-              {dueDateInfo && (
-                <Badge variant={`due-${dueDateInfo.status}`}>
-                  {dueDateInfo.display}
-                </Badge>
-              )}
-
               {roomName && (
                 <button
                   className={`badge-as-button${isActive ? ' tappable' : ''}`}
@@ -379,6 +373,21 @@ const MissionCardFull = ({
                 </button>
               )}
             </div>
+
+            {/* Due Date Row */}
+            {dueDateInfo && (
+              <div className="due-date-row">
+                <Badge variant={`due-${dueDateInfo.status}`}>
+                  {dueDateInfo.display}
+                </Badge>
+                {isMissionOverdue(displayMission) && isActive && (
+                  <div className="reschedule-btns">
+                    <button className="reschedule-btn" onClick={() => handleReschedule(today)}>Today</button>
+                    <button className="reschedule-btn" onClick={() => handleReschedule(tomorrow)}>Tomorrow</button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Scheduled Daily Dates */}
             {futureScheduledDates.length > 0 && (
@@ -428,19 +437,6 @@ const MissionCardFull = ({
               <ErrorMessage message={actionError} onRetry={actionRetry} />
             )}
             <div className="mission-actions">
-              {isMissionOverdue(displayMission) && isActive && (
-                <div className="reschedule-actions">
-                  <span className="reschedule-label">Reschedule to</span>
-                  <div className="reschedule-btns">
-                    <button className="reschedule-btn" onClick={() => handleReschedule(today)}>
-                      Today
-                    </button>
-                    <button className="reschedule-btn" onClick={() => handleReschedule(tomorrow)}>
-                      Tomorrow
-                    </button>
-                  </div>
-                </div>
-              )}
               {isCompletedToday && (
                 <button
                   type="button"
