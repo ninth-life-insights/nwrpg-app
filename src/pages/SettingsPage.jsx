@@ -294,7 +294,7 @@ const SettingsPage = () => {
         </div>
         <div className="settings-style-picker" role="group" aria-label="Chronicle style">
           {[
-            { value: 'plain', label: 'Plain', hint: 'Clear and simple' },
+            { value: 'plain', label: 'Minimal', hint: 'Clear and simple' },
             { value: 'balanced', label: 'Balanced', hint: 'Light RPG flavor' },
             { value: 'high-fantasy', label: 'Epic', hint: 'Full fantasy mode' },
           ].map(({ value, label, hint }) => (
