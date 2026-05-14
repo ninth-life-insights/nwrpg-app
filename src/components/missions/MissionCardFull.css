@@ -71,7 +71,7 @@
 }
 
 .mission-detail-content {
-  padding: 0 var(--space-xl) var(--space-xl) var(--space-xl);
+  padding: var(--space-lg) var(--space-xl) var(--space-xl) var(--space-xl);
 }
 
 .daily-mission-header {
@@ -102,8 +102,8 @@
 .mission-title-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
+  gap: var(--space-sm);
+  margin-bottom: 28px;
 }
 
 .mission-detail-title {
@@ -138,7 +138,6 @@
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
-  margin-bottom: var(--space-xs);
 }
 
 .mission-title-with-date .badge {
@@ -156,8 +155,8 @@
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
-  margin-top: var(--space-sm);
-  margin-bottom: var(--space-xl);
+  margin-top: var(--space-md);
+  margin-bottom: 28px;
 }
 
 .status-badge-inline {
