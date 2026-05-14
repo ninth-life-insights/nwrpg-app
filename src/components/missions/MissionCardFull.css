@@ -133,22 +133,22 @@
   margin: 0;
 }
 
-.due-date-row {
+.mission-title-with-date {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
-  padding: var(--space-lg) 0;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
 }
 
-.due-date-row .badge {
-  font-size: 14px;
-  padding: var(--space-sm) var(--space-md);
+.mission-title-with-date .badge {
+  font-size: 13px;
+  padding: var(--space-xs) var(--space-sm);
+  flex-shrink: 0;
 }
 
-.due-date-row .badge .badge-icon .material-icons {
-  font-size: 14px;
+.mission-title-with-date .badge .badge-icon .material-icons {
+  font-size: 13px;
 }
 
 .mission-badges {
@@ -156,6 +156,7 @@
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
+  margin-top: var(--space-sm);
   margin-bottom: var(--space-xl);
 }
 

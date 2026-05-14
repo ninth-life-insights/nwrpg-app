@@ -298,12 +298,25 @@ const MissionCardFull = ({
 
             {/* Title + Description */}
             <div className="mission-title-section">
-              <h2
-                className={`mission-detail-title ${isCompleted ? 'completed' : ''}${isActive ? ' tappable' : ''}`}
-                onClick={isActive ? handleEditClick : undefined}
-              >
-                {displayMission.title}
-              </h2>
+              <div className="mission-title-with-date">
+                <h2
+                  className={`mission-detail-title ${isCompleted ? 'completed' : ''}${isActive ? ' tappable' : ''}`}
+                  onClick={isActive ? handleEditClick : undefined}
+                >
+                  {displayMission.title}
+                </h2>
+                {dueDateInfo && (
+                  <Badge variant={`due-${dueDateInfo.status}`}>
+                    {dueDateInfo.display}
+                  </Badge>
+                )}
+                {isMissionOverdue(displayMission) && isActive && (
+                  <div className="reschedule-btns">
+                    <button className="reschedule-btn" onClick={() => handleReschedule(today)}>Move to Today</button>
+                    <button className="reschedule-btn" onClick={() => handleReschedule(tomorrow)}>Move to Tomorrow</button>
+                  </div>
+                )}
+              </div>
 
               {displayMission.description ? (
                 <div
@@ -319,30 +332,6 @@ const MissionCardFull = ({
                 </button>
               ) : null}
             </div>
-
-            {/* Due Date Row */}
-            {(dueDateInfo || isActive) && (
-              <div className="due-date-row">
-                {dueDateInfo ? (
-                  <>
-                    <Badge variant={`due-${dueDateInfo.status}`}>
-                      {dueDateInfo.display}
-                    </Badge>
-                    {isMissionOverdue(displayMission) && isActive && (
-                      <div className="reschedule-btns">
-                        <button className="reschedule-btn" onClick={() => handleReschedule(today)}>Move to Today</button>
-                        <button className="reschedule-btn" onClick={() => handleReschedule(tomorrow)}>Move to Tomorrow</button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <button className="ghost-prompt" onClick={() => handleEditClick('dueDate')}>
-                    <span className="material-icons">add</span>
-                    Add due date
-                  </button>
-                )}
-              </div>
-            )}
 
             {/* Badges */}
             <div className="mission-badges">
@@ -374,6 +363,13 @@ const MissionCardFull = ({
 
               {displayMission.skill && (
                 <Badge variant="skill">Skill: {displayMission.skill}</Badge>
+              )}
+
+              {isActive && !dueDateInfo && (
+                <button className="ghost-prompt" onClick={() => handleEditClick('dueDate')}>
+                  <span className="material-icons">add</span>
+                  Add due date
+                </button>
               )}
 
               {isActive && !displayMission.skill && (
