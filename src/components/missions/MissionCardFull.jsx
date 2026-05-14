@@ -25,7 +25,6 @@ import {
   archiveMission,
   restoreMission,
   toggleMissionStoryExclusion,
-  updateMission,
 } from '../../services/missionService';
 import './MissionCardFull.css';
 
@@ -128,7 +127,6 @@ const MissionCardFull = ({
   const expiryDisplay = displayMission.expiryDate ? formatForUserLong(displayMission.expiryDate) : null;
   const completedDisplay = formatTimestamp(displayMission.completedAt);
   const today = toDateString(new Date());
-  const tomorrow = toDateString(new Date(Date.now() + 86400000));
   const futureScheduledDates = (displayMission.scheduledDates ?? [])
     .filter(d => d >= today)
     .sort();
@@ -198,20 +196,6 @@ const MissionCardFull = ({
       setActionError("That mission's story setting didn't save. Try again.");
     } finally {
       setExcludeLoading(false);
-    }
-  };
-
-  const handleReschedule = async (newDate) => {
-    const previousDate = displayMission.dueDate;
-    setActionError(null);
-    setActionRetry(() => () => handleReschedule(newDate));
-    setMissionOverride(prev => ({ ...(prev ?? displayMission), dueDate: newDate }));
-    try {
-      await updateMission(currentUser.uid, mission.id, { dueDate: newDate });
-      onMissionChanged?.(mission.id, 'updated');
-    } catch {
-      setMissionOverride(prev => ({ ...(prev ?? displayMission), dueDate: previousDate }));
-      setActionError("That mission didn't reschedule. Try again.");
     }
   };
 
@@ -309,12 +293,6 @@ const MissionCardFull = ({
                   <Badge variant={`due-${dueDateInfo.status}`}>
                     {dueDateInfo.display}
                   </Badge>
-                )}
-                {isMissionOverdue(displayMission) && isActive && (
-                  <div className="reschedule-btns">
-                    <button className="reschedule-btn" onClick={() => handleReschedule(today)}>Move to Today</button>
-                    <button className="reschedule-btn" onClick={() => handleReschedule(tomorrow)}>Move to Tomorrow</button>
-                  </div>
                 )}
               </div>
 

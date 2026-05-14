@@ -379,31 +379,6 @@
   cursor: not-allowed;
 }
 
-.reschedule-btns {
-  display: flex;
-  gap: var(--space-sm);
-}
-
-.reschedule-btn {
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: #ea580c;
-  background: #fff7ed;
-  border: 1.5px solid #fed7aa;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.reschedule-btn:hover {
-  background: #ffedd5;
-  border-color: #ea580c;
-}
-
-.reschedule-btn:active {
-  transform: scale(0.97);
-}
 
 .info-icon {
   font-size: 0.8em;
