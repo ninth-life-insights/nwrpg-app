@@ -31,6 +31,7 @@ import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/
 import { isMissionOverdue, isMissionDueToday } from '../utils/dateHelpers';
 import { getWeeklyReviewInfo } from '../utils/weeklyReviewHelpers';
 import { getWeeklySnapshot } from '../services/weeklyReviewService';
+import { getRoom, ENTIRE_BASE_ROOM_ID } from '../services/roomService';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -49,6 +50,7 @@ const HomePage = () => {
   const [baseStats, setBaseStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
   const [urgentMissionCount, setUrgentMissionCount] = useState(0);
   const [baseName, setBaseName] = useState('');
+  const [baseIcon, setBaseIcon] = useState('home');
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [weeklyReviewEligible, setWeeklyReviewEligible] = useState(false);
@@ -132,11 +134,12 @@ const HomePage = () => {
       setIsLoadingSlow(false);
       const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
-        const [userDoc, profile, allMissions] = await withTimeout(
+        const [userDoc, profile, allMissions, entireBaseRoom] = await withTimeout(
           Promise.all([
             getDoc(doc(db, 'users', currentUser.uid)),
             getUserProfile(currentUser.uid),
             getAllMissions(currentUser.uid),
+            getRoom(currentUser.uid, ENTIRE_BASE_ROOM_ID).catch(() => null),
           ])
         );
         if (userDoc.exists()) {
@@ -144,6 +147,7 @@ const HomePage = () => {
         }
         setUserProfile(profile);
         setBaseName(profile?.baseName || '');
+        if (entireBaseRoom?.icon) setBaseIcon(entireBaseRoom.icon);
 
         // Compute base stats across all room-assigned active missions
         const now = new Date();
@@ -440,7 +444,10 @@ const HomePage = () => {
           </div>
           <button className="home-base-widget" onClick={() => navigate('/base')}>
             <div className="home-base-widget-header">
-              <span className="material-icons">home</span>
+              {baseIcon.includes('.')
+                ? <img src={`/assets/Rooms/${baseIcon}`} alt="Base" className="home-base-widget-icon-img" />
+                : <span className="material-icons">{baseIcon}</span>
+              }
               <span className="home-base-widget-title">{baseName || 'Base'}</span>
             </div>
             <div className="home-base-stats">
