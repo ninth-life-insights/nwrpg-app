@@ -442,28 +442,30 @@ const HomePage = () => {
               Achievements
             </button>
           </div>
-          <button className="home-base-widget" onClick={() => navigate('/base')}>
-            <div className="home-base-widget-header">
-              {baseIcon.includes('.')
-                ? <img src={`/assets/Rooms/${baseIcon}`} alt="Base" className="home-base-widget-icon-img" />
-                : <span className="material-icons">{baseIcon}</span>
-              }
-              <span className="home-base-widget-title">{baseName || 'Base'}</span>
-            </div>
-            <div className="home-base-stats">
-              <div className="home-base-stat">
-                <span className="home-base-stat-number">{baseStats.total}</span>
-                <span className="home-base-stat-label">Tasks</span>
+          <button className={`home-base-widget${baseIcon.includes('.') ? ' home-base-widget--has-image' : ''}`} onClick={() => navigate('/base')}>
+            {baseIcon.includes('.') && (
+              <img src={`/assets/Rooms/${baseIcon}`} alt="Base" className="home-base-widget-icon-img" />
+            )}
+            <div className="home-base-widget-content">
+              <div className="home-base-widget-header">
+                {!baseIcon.includes('.') && <span className="material-icons">{baseIcon}</span>}
+                <span className="home-base-widget-title">{baseName || 'Base'}</span>
               </div>
-              <div className="home-base-stat">
-                <span className="home-base-stat-number">{baseStats.dueThisWeek}</span>
-                <span className="home-base-stat-label">This Week</span>
-              </div>
-              <div className="home-base-stat">
-                <span className={`home-base-stat-number${baseStats.overdue > 0 ? ' home-base-stat-number--late' : ''}`}>
-                  {baseStats.overdue}
-                </span>
-                <span className="home-base-stat-label">Late</span>
+              <div className="home-base-stats">
+                <div className="home-base-stat">
+                  <span className="home-base-stat-number">{baseStats.total}</span>
+                  <span className="home-base-stat-label">Tasks</span>
+                </div>
+                <div className="home-base-stat">
+                  <span className="home-base-stat-number">{baseStats.dueThisWeek}</span>
+                  <span className="home-base-stat-label">Week</span>
+                </div>
+                <div className="home-base-stat">
+                  <span className={`home-base-stat-number${baseStats.overdue > 0 ? ' home-base-stat-number--late' : ''}`}>
+                    {baseStats.overdue}
+                  </span>
+                  <span className="home-base-stat-label">Late</span>
+                </div>
               </div>
             </div>
           </button>
