@@ -461,19 +461,21 @@
 }
 
 .home-base-widget--has-image {
-  position: relative;
+  display: flex;
+  flex-direction: row;
+  padding: 0;
   overflow: hidden;
   text-align: left;
-  padding-left: calc(60px + var(--space-sm));
 }
 
 .home-base-widget-icon-img {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 60px;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  align-self: center;
   object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-left: var(--space-sm);
 }
 
 .home-base-widget-content {
@@ -484,7 +486,10 @@
 }
 
 .home-base-widget--has-image .home-base-widget-content {
-  justify-content: center;
+  align-self: center;
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-sm);
   gap: var(--space-xs);
 }
 
