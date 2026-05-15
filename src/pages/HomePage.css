@@ -461,19 +461,19 @@
 }
 
 .home-base-widget--has-image {
-  flex-direction: row;
-  padding: 0;
+  position: relative;
   overflow: hidden;
-  align-items: stretch;
   text-align: left;
+  padding-left: calc(60px + var(--space-sm));
 }
 
 .home-base-widget-icon-img {
-  width: 56px;
-  flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 60px;
   object-fit: cover;
-  align-self: stretch;
-  display: block;
 }
 
 .home-base-widget-content {
@@ -481,12 +481,11 @@
   flex-direction: column;
   justify-content: space-between;
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
 }
 
 .home-base-widget--has-image .home-base-widget-content {
-  padding: var(--space-sm);
+  justify-content: center;
+  gap: var(--space-xs);
 }
 
 .home-base-widget-header {
