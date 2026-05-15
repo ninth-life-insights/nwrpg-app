@@ -28,6 +28,7 @@ import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import { isMissionOverdue, isMissionDueToday } from '../utils/dateHelpers';
 import { getWeeklyReviewInfo } from '../utils/weeklyReviewHelpers';
 import { getWeeklySnapshot } from '../services/weeklyReviewService';
 import './HomePage.css';
@@ -46,6 +47,7 @@ const HomePage = () => {
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
   const [baseStats, setBaseStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
+  const [urgentMissionCount, setUrgentMissionCount] = useState(0);
   const [baseName, setBaseName] = useState('');
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -157,6 +159,11 @@ const HomePage = () => {
           }
         });
         setBaseStats({ total: bTotal, dueThisWeek: bDueThisWeek, overdue: bOverdue });
+
+        const urgent = allMissions.filter(m =>
+          m.status === 'active' && (isMissionOverdue(m) || isMissionDueToday(m))
+        ).length;
+        setUrgentMissionCount(urgent);
 
         await fetchDailyMissions();
 
@@ -412,6 +419,7 @@ const HomePage = () => {
           <button className="action-button secondary" onClick={MissionBankClick}>
             <span className="material-icons-light">assignment</span>
             Mission Bank
+            {urgentMissionCount > 0 && <span className="notification-dot" />}
           </button>
         </div>
 
