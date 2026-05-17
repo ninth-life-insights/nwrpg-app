@@ -25,8 +25,8 @@
 }
 
 .room-icon {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,7 +40,7 @@
 }
 
 .room-icon .material-icons {
-  font-size: 24px;
+  font-size: 30px;
   color: white;
 }
 
@@ -87,12 +87,16 @@
   line-height: 1.1;
 }
 
-.stat-number.stat-zero {
+.stat-item.stat-zero .stat-number {
   color: var(--color-text-placeholder);
   font-weight: 500;
 }
 
-.stat-number.stat-late {
+.stat-item.stat-zero .stat-label {
+  color: var(--color-text-placeholder);
+}
+
+.stat-item.stat-late .stat-number {
   color: var(--color-error);
 }
 

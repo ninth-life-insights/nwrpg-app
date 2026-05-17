@@ -32,16 +32,16 @@ const RoomCard = ({ room, stats, onClick }) => {
       </div>
 
       <div className="room-stats-grid">
-        <div className="stat-item">
-          <div className={`stat-number${stats.total === 0 ? ' stat-zero' : ''}`}>{stats.total}</div>
+        <div className={`stat-item${stats.total === 0 ? ' stat-zero' : ''}`}>
+          <div className="stat-number">{stats.total}</div>
           <div className="stat-label">Tasks</div>
         </div>
-        <div className="stat-item">
-          <div className={`stat-number${stats.dueThisWeek === 0 ? ' stat-zero' : ''}`}>{stats.dueThisWeek}</div>
+        <div className={`stat-item${stats.dueThisWeek === 0 ? ' stat-zero' : ''}`}>
+          <div className="stat-number">{stats.dueThisWeek}</div>
           <div className="stat-label">This Week</div>
         </div>
-        <div className="stat-item">
-          <div className={`stat-number${stats.overdue > 0 ? ' stat-late' : ' stat-zero'}`}>{stats.overdue}</div>
+        <div className={`stat-item${stats.overdue > 0 ? ' stat-late' : ' stat-zero'}`}>
+          <div className="stat-number">{stats.overdue}</div>
           <div className="stat-label">Late</div>
         </div>
       </div>
