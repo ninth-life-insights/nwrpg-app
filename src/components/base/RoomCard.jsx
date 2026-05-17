@@ -31,6 +31,18 @@ const RoomCard = ({ room, stats, onClick }) => {
         <h3 className="room-name">{room.name}</h3>
       </div>
 
+      <div className="cleanliness-section">
+        <div className="cleanliness-bar-container">
+          <div
+            className="cleanliness-bar-fill"
+            style={{
+              width: `${cleanlinessPercentage}%`,
+              backgroundColor: cleanlinessColor
+            }}
+          />
+        </div>
+      </div>
+
       <div className="room-stats-grid">
         <div className={`stat-item${stats.total === 0 ? ' stat-zero' : ''}`}>
           <div className="stat-number">{stats.total}</div>
@@ -43,18 +55,6 @@ const RoomCard = ({ room, stats, onClick }) => {
         <div className={`stat-item${stats.overdue > 0 ? ' stat-late' : ' stat-zero'}`}>
           <div className="stat-number">{stats.overdue}</div>
           <div className="stat-label">Late</div>
-        </div>
-      </div>
-
-      <div className="cleanliness-section">
-        <div className="cleanliness-bar-container">
-          <div 
-            className="cleanliness-bar-fill"
-            style={{ 
-              width: `${cleanlinessPercentage}%`,
-              backgroundColor: cleanlinessColor
-            }}
-          />
         </div>
       </div>
     </div>

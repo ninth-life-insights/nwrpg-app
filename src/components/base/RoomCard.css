@@ -70,7 +70,6 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
-  margin-bottom: 10px;
 }
 
 .stat-item {
@@ -108,7 +107,7 @@
 }
 
 .cleanliness-section {
-  margin-top: 8px;
+  margin-bottom: 10px;
 }
 
 .cleanliness-bar-container {
