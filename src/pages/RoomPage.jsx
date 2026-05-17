@@ -378,14 +378,12 @@ const RoomPage = () => {
           >
             All
           </button>
-          {entireBaseTaggedCount > 0 && (
-            <button
-              className={`room-page-chip${selectedRoomChip === ENTIRE_BASE_ROOM_ID ? ' room-page-chip--active' : ''}`}
-              onClick={() => setSelectedRoomChip(ENTIRE_BASE_ROOM_ID)}
-            >
-              {baseName || 'Whole Home'} <span className="room-page-chip-count">{entireBaseTaggedCount}</span>
-            </button>
-          )}
+          <button
+            className={`room-page-chip${selectedRoomChip === ENTIRE_BASE_ROOM_ID ? ' room-page-chip--active' : ''}`}
+            onClick={() => setSelectedRoomChip(ENTIRE_BASE_ROOM_ID)}
+          >
+            {baseName || 'Whole Home'} <span className="room-page-chip-count">{entireBaseTaggedCount}</span>
+          </button>
           {chipRooms.map(c => (
             <button
               key={c.id}

@@ -339,8 +339,14 @@
 }
 
 .room-page-chip--active {
-  background: var(--color-text-dark);
-  border-color: var(--color-text-dark);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-bg-white);
+}
+
+.room-page-chip--active:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
   color: var(--color-bg-white);
 }
 
@@ -351,7 +357,7 @@
 }
 
 .room-page-chip--active .room-page-chip-count {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .room-page-missions-header {
