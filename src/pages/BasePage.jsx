@@ -1,27 +1,68 @@
 // src/pages/BasePage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useRooms } from '../contexts/RoomsContext';
 import { useNavigate } from 'react-router-dom';
-import { getAllRoomStats, initializeEntireBaseRoom, ENTIRE_BASE_ROOM_ID } from '../services/roomService';
+import {
+  getAllRoomStats,
+  initializeEntireBaseRoom,
+  reorderRooms,
+  ENTIRE_BASE_ROOM_ID,
+} from '../services/roomService';
 import { getAllMissions } from '../services/missionService';
 import { getUserProfile } from '../services/userService';
 import RoomCard from '../components/base/RoomCard';
 import AddRoomModal from '../components/base/AddRoomModal';
+import RoomSortModal from '../components/base/RoomSortModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import { applyRoomSort, ROOM_SORT_DEFAULT } from '../utils/roomListHelpers';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+
 import './BasePage.css';
 
 const BasePage = () => {
   const { currentUser } = useAuth();
+  const { refreshRooms } = useRooms();
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [roomStats, setRoomStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [reorderError, setReorderError] = useState(null);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
   const [showBaseIconModal, setShowBaseIconModal] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [sortBy, setSortBy] = useState(ROOM_SORT_DEFAULT);
   const [baseName, setBaseName] = useState('');
+
+  const sensors = useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const fetchRoomsAndStats = async () => {
     if (!currentUser) return;
@@ -72,6 +113,43 @@ const BasePage = () => {
     await fetchRoomsAndStats();
   };
 
+  const isCustomOrderMode = sortBy === 'custom';
+  const hasActiveSort = sortBy !== ROOM_SORT_DEFAULT;
+
+  const displayRooms = useMemo(
+    () => applyRoomSort(roomStats, sortBy),
+    [roomStats, sortBy]
+  );
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    if (active.id === ENTIRE_BASE_ROOM_ID || over.id === ENTIRE_BASE_ROOM_ID) return;
+    if (!isCustomOrderMode) return;
+
+    const oldIndex = displayRooms.findIndex(r => r.id === active.id);
+    const newIndex = displayRooms.findIndex(r => r.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(displayRooms, oldIndex, newIndex);
+
+    // Optimistic update — re-apply order field locally so the custom sort matches.
+    const reorderedWithOrder = reordered.map((r, idx) => ({ ...r, order: idx }));
+    setRoomStats(reorderedWithOrder);
+    setRooms(reorderedWithOrder);
+    setReorderError(null);
+
+    try {
+      await reorderRooms(currentUser.uid, reordered.map(r => r.id));
+      // Sync RoomsContext so AddMissionCard's room dropdown reflects the new order.
+      await refreshRooms();
+    } catch (err) {
+      console.error('Error reordering rooms:', err);
+      setReorderError("That reorder didn't save.");
+      await fetchRoomsAndStats();
+    }
+  };
+
   if (loading) {
     return (
       <div className="base-page-container">
@@ -96,16 +174,37 @@ const BasePage = () => {
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="base-page-title">Your Base</h1>
-        <button className="base-page-add-room-btn" onClick={handleAddRoom}>
-          <span className="material-icons">add</span>
-          Room
-        </button>
+        <div className="base-page-header-actions">
+          <button
+            className={`base-page-sort-btn${hasActiveSort ? ' active' : ''}`}
+            onClick={() => setShowSortModal(true)}
+            title="Sort rooms"
+            aria-label="Sort rooms"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+            </svg>
+            {hasActiveSort && <span className="base-page-sort-dot" />}
+          </button>
+          <button className="base-page-add-room-btn" onClick={handleAddRoom}>
+            <span className="material-icons">add</span>
+            Room
+          </button>
+        </div>
       </header>
 
       {loadError && (
         <ErrorMessage
           message={loadError}
           onRetry={() => { setLoadError(null); fetchRoomsAndStats(); }}
+          className="base-load-error"
+        />
+      )}
+
+      {reorderError && (
+        <ErrorMessage
+          message={reorderError}
+          onRetry={() => { setReorderError(null); fetchRoomsAndStats(); }}
           className="base-load-error"
         />
       )}
@@ -121,42 +220,55 @@ const BasePage = () => {
       )}
 
       {/* Rooms Grid */}
-      <div className="rooms-grid">
-        {roomStats.map((room) => {
-          const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
-          const displayRoom = isEntireBase
-            ? { ...room, name: baseName || room.name }
-            : room;
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={displayRooms.map(r => r.id)}
+          strategy={rectSortingStrategy}
+          disabled={!isCustomOrderMode}
+        >
+          <div className="rooms-grid">
+            {displayRooms.map((room) => {
+              const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
+              const displayRoom = isEntireBase
+                ? { ...room, name: baseName || room.name }
+                : room;
 
-          return (
-            <div key={room.roomId} className="room-card-slot">
-              <RoomCard
-                room={displayRoom}
-                stats={room.stats}
-                onClick={() => handleRoomClick(room.roomId || room.id)}
-              />
-              {isEntireBase && baseIconUnset && (
-                <button className="base-look-btn" onClick={() => setShowBaseIconModal(true)}>
-                  <span className="material-icons">photo</span>
-                  Choose base look
-                </button>
-              )}
-            </div>
-          );
-        })}
+              return (
+                <div key={room.roomId || room.id} className="room-card-slot">
+                  <RoomCard
+                    room={displayRoom}
+                    stats={room.stats}
+                    onClick={() => handleRoomClick(room.roomId || room.id)}
+                    isCustomOrderMode={isCustomOrderMode}
+                  />
+                  {isEntireBase && baseIconUnset && (
+                    <button className="base-look-btn" onClick={() => setShowBaseIconModal(true)}>
+                      <span className="material-icons">photo</span>
+                      Choose base look
+                    </button>
+                  )}
+                </div>
+              );
+            })}
 
-        {/* First-room empty state — header button handles all other adds */}
-        {!hasCustomRooms && (
-          <div className="room-card-slot">
-            <div className="add-room-card" onClick={handleAddRoom}>
-              <div className="add-room-icon">
-                <span className="material-icons">add</span>
+            {/* First-room empty state — header button handles all other adds */}
+            {!hasCustomRooms && (
+              <div className="room-card-slot">
+                <div className="add-room-card" onClick={handleAddRoom}>
+                  <div className="add-room-icon">
+                    <span className="material-icons">add</span>
+                  </div>
+                  <div className="add-room-label">Add your first room</div>
+                </div>
               </div>
-              <div className="add-room-label">Add your first room</div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add Room Modal */}
       {showAddRoomModal && (
@@ -176,6 +288,14 @@ const BasePage = () => {
           baseName={baseName}
         />
       )}
+
+      {/* Sort Modal */}
+      <RoomSortModal
+        isOpen={showSortModal}
+        onClose={() => setShowSortModal(false)}
+        currentSortBy={sortBy}
+        onApply={setSortBy}
+      />
     </div>
   );
 };

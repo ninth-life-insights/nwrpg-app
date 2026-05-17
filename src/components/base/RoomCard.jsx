@@ -1,9 +1,31 @@
 // src/components/base/RoomCard.js
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import './RoomCard.css';
 
 const isImageIcon = (icon) => icon && icon.includes('.');
 
-const RoomCard = ({ room, stats, onClick }) => {
+const RoomCard = ({ room, stats, onClick, isCustomOrderMode = false }) => {
+  const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: room.id,
+    disabled: !isCustomOrderMode || isEntireBase,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   // Calculate cleanliness color (1=red, 5=green)
   const getCleanlinessColor = (cleanliness) => {
     const colors = {
@@ -19,8 +41,35 @@ const RoomCard = ({ room, stats, onClick }) => {
   const cleanlinessColor = getCleanlinessColor(room.cleanliness);
   const cleanlinessPercentage = (room.cleanliness / 5) * 100;
 
+  const showDragHandle = isCustomOrderMode && !isEntireBase;
+
   return (
-    <div className="room-card" onClick={onClick}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`room-card${isDragging ? ' dragging' : ''}`}
+      onClick={onClick}
+      {...attributes}
+    >
+      {showDragHandle && (
+        <div
+          className="room-card-drag-handle"
+          onClick={(e) => e.stopPropagation()}
+          {...listeners}
+          style={{ touchAction: 'none' }}
+          aria-label="Drag to reorder room"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="9" cy="6" r="1.5"/>
+            <circle cx="9" cy="12" r="1.5"/>
+            <circle cx="9" cy="18" r="1.5"/>
+            <circle cx="15" cy="6" r="1.5"/>
+            <circle cx="15" cy="12" r="1.5"/>
+            <circle cx="15" cy="18" r="1.5"/>
+          </svg>
+        </div>
+      )}
+
       <div className="room-card-header">
         <div className="room-icon">
           {isImageIcon(room.icon)
