@@ -206,55 +206,72 @@ export const deleteRoom = async (userId, roomId) => {
   }
 };
 
+// Compute task-count stats from a given mission subset
+const computeStatsFromMissions = (missionsSubset) => {
+  const now = new Date();
+  const oneWeekFromNow = new Date();
+  oneWeekFromNow.setDate(now.getDate() + 7);
+
+  const activeMissions = missionsSubset.filter(m => m.status !== 'completed' && m.status !== 'deleted');
+
+  const stats = {
+    total: activeMissions.length,
+    dueThisWeek: 0,
+    overdue: 0
+  };
+
+  missionsSubset.forEach(mission => {
+    if (mission.dueDate) {
+      const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
+
+      if (dueDate < now && mission.status !== 'completed') {
+        stats.overdue++;
+      } else if (dueDate <= oneWeekFromNow && mission.status !== 'completed') {
+        stats.dueThisWeek++;
+      }
+    }
+  });
+
+  return stats;
+};
+
 // Get room statistics (task counts)
 export const getRoomStats = async (roomId, missions) => {
   try {
-    // Filter missions for this room
     const roomMissions = missions.filter(m => m.baseLocation === roomId);
-    
-    const now = new Date();
-    const oneWeekFromNow = new Date();
-    oneWeekFromNow.setDate(now.getDate() + 7);
-    
-    const activeMissions = roomMissions.filter(m => m.status !== 'completed' && m.status !== 'deleted');
-
-    const stats = {
-      total: activeMissions.length,
-      dueThisWeek: 0,
-      overdue: 0
-    };
-    
-    roomMissions.forEach(mission => {
-      if (mission.dueDate) {
-        const dueDate = mission.dueDate.toDate ? mission.dueDate.toDate() : new Date(mission.dueDate);
-        
-        if (dueDate < now && mission.status !== 'completed') {
-          stats.overdue++;
-        } else if (dueDate <= oneWeekFromNow && mission.status !== 'completed') {
-          stats.dueThisWeek++;
-        }
-      }
-    });
-    
-    return stats;
+    return computeStatsFromMissions(roomMissions);
   } catch (error) {
     console.error('Error getting room stats:', error);
     return { total: 0, dueThisWeek: 0, overdue: 0 };
   }
 };
 
-// Get stats for all rooms
+// Get stats for all rooms.
+// Entire Base is overridden with an aggregate: counts roll up missions tagged to
+// any room (including entire-base itself), cleanliness is the average of other rooms.
 export const getAllRoomStats = async (userId, missions) => {
   try {
     const rooms = await getRooms(userId);
-    
+
     const statsPromises = rooms.map(async (room) => ({
       roomId: room.id,
       ...room,
       stats: await getRoomStats(room.id, missions)
     }));
-    
-    return await Promise.all(statsPromises);
+
+    const roomsWithStats = await Promise.all(statsPromises);
+
+    const otherRooms = roomsWithStats.filter(r => r.id !== ENTIRE_BASE_ROOM_ID);
+    const aggregateStats = computeStatsFromMissions(missions.filter(m => m.baseLocation));
+    const avgCleanliness = otherRooms.length > 0
+      ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
+      : 3;
+
+    return roomsWithStats.map(r =>
+      r.id === ENTIRE_BASE_ROOM_ID
+        ? { ...r, stats: aggregateStats, cleanliness: avgCleanliness, aggregatedRoomCount: otherRooms.length }
+        : r
+    );
   } catch (error) {
     console.error('Error getting all room stats:', error);
     throw error;

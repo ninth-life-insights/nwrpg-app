@@ -9,7 +9,9 @@
       "Bash(grep -E \"\\\\.\\(js|jsx\\)$\")",
       "Bash(xargs basename *)",
       "Bash(git log *)",
-      "Bash(grep -E \"\\\\.\\(js|jsx|ts|tsx\\)$\")"
+      "Bash(grep -E \"\\\\.\\(js|jsx|ts|tsx\\)$\")",
+      "Bash(grep -E \"\\\\.\\(jsx|js\\)$\")",
+      "Bash(grep -E \"\\\\.js$|\\\\.jsx$\")"
     ]
   }
 }

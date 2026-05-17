@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import './MissionFilterModal.css';
 import { AVAILABLE_SKILLS } from '../../../data/Skills';
 import { useModalBackButton } from '../../../hooks/useModalBackButton';
+import { ENTIRE_BASE_ROOM_ID } from '../../../services/roomService';
 
 const FILTER_DEFAULTS = {
   sortBy: 'custom',
@@ -24,7 +25,8 @@ const MissionFilterModal = ({
   onApplyFilters,
   rooms = [],
   quests = [],
-  showArchiveToggle = true
+  showArchiveToggle = true,
+  baseName = ''
 }) => {
   const [filters, setFilters] = useState({
     ...FILTER_DEFAULTS,
@@ -184,7 +186,9 @@ const MissionFilterModal = ({
                     <option value="">Any</option>
                     <option value="__has_room__">All rooms</option>
                     {rooms.map(room => (
-                      <option key={room.id} value={room.id}>{room.name}</option>
+                      <option key={room.id} value={room.id}>
+                        {room.id === ENTIRE_BASE_ROOM_ID && baseName ? baseName : room.name}
+                      </option>
                     ))}
                     <option value="__unassigned__">Unassigned</option>
                   </select>

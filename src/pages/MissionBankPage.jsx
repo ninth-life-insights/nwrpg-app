@@ -245,6 +245,7 @@ const MissionBank = () => {
         onApplyFilters={handleApplyFilters}
         rooms={rooms}
         quests={quests}
+        baseName={userProfile?.baseName || ''}
       />
 
       <AchievementToast

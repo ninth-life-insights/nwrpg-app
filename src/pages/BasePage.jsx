@@ -88,11 +88,6 @@ const BasePage = () => {
   const entireBaseRoom = rooms.find(r => r.id === ENTIRE_BASE_ROOM_ID);
   const baseIconUnset = !entireBaseRoom || entireBaseRoom.icon === 'home';
 
-  const otherRooms = roomStats.filter(r => r.id !== ENTIRE_BASE_ROOM_ID);
-  const avgCleanliness = otherRooms.length > 0
-    ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
-    : 3;
-
   return (
     <div className="base-page-container">
       {/* Header */}
@@ -130,7 +125,7 @@ const BasePage = () => {
         {roomStats.map((room) => {
           const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
           const displayRoom = isEntireBase
-            ? { ...room, name: baseName || room.name, cleanliness: avgCleanliness }
+            ? { ...room, name: baseName || room.name }
             : room;
 
           return (
