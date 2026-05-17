@@ -301,6 +301,59 @@
   padding: 0 var(--space-lg);
 }
 
+/* Per-room chip filter row (Entire Base only) */
+.room-page-chips {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  padding: 0 var(--space-lg) var(--space-md);
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+  scrollbar-width: none;
+}
+
+.room-page-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.room-page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+
+.room-page-chip:hover {
+  border-color: var(--color-border-yellow);
+  color: var(--color-text-dark);
+}
+
+.room-page-chip--active {
+  background: var(--color-text-dark);
+  border-color: var(--color-text-dark);
+  color: var(--color-bg-white);
+}
+
+.room-page-chip-count {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.room-page-chip--active .room-page-chip-count {
+  opacity: 0.85;
+}
+
 .room-page-missions-header {
   display: flex;
   align-items: center;

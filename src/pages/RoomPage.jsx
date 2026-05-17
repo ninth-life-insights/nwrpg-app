@@ -22,7 +22,7 @@ const isImageIcon = (icon) => icon && icon.includes('.');
 const RoomPage = () => {
   const { roomId } = useParams();
   const { currentUser } = useAuth();
-  const { refreshRooms } = useRooms();
+  const { rooms: allRooms, refreshRooms } = useRooms();
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
@@ -33,6 +33,9 @@ const RoomPage = () => {
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
+  const [selectedRoomChip, setSelectedRoomChip] = useState('all');
+
+  const isEntireBase = roomId === ENTIRE_BASE_ROOM_ID;
 
   // Three-dot menu
   const [showMenu, setShowMenu] = useState(false);
@@ -92,8 +95,9 @@ const RoomPage = () => {
 
       if (profile) setBaseName(profile.baseName || '');
 
-      const roomMissions = allMissions.filter(
-        m => m.baseLocation === roomId && m.status !== 'deleted'
+      const roomMissions = allMissions.filter(m =>
+        m.status !== 'deleted' &&
+        (roomId === ENTIRE_BASE_ROOM_ID ? !!m.baseLocation : m.baseLocation === roomId)
       );
       const roomStats = await getRoomStats(roomId, allMissions);
 
@@ -206,11 +210,38 @@ const RoomPage = () => {
     );
   }
 
-  const activeMissions = missions.filter(m => m.status === 'active');
-  const completedMissions = missions.filter(m => m.status === 'completed');
-  const cleanlinessColor = CLEANLINESS_COLORS[localCleanliness];
-  const cleanlinessLabel = CLEANLINESS_LABELS[localCleanliness];
-  const cleanlinessPercent = (localCleanliness / 5) * 100;
+  // On Entire Base, apply the chip filter on top of the room-tagged set
+  const chipFiltered = isEntireBase && selectedRoomChip !== 'all'
+    ? missions.filter(m => m.baseLocation === selectedRoomChip)
+    : missions;
+
+  const activeMissions = chipFiltered.filter(m => m.status === 'active');
+  const completedMissions = chipFiltered.filter(m => m.status === 'completed');
+
+  // For Entire Base, display the aggregate cleanliness (avg of other rooms) since
+  // its own stored value is unused. Slider is hidden in this case (see below).
+  const otherRooms = isEntireBase ? allRooms.filter(r => r.id !== ENTIRE_BASE_ROOM_ID) : [];
+  const aggregateCleanliness = otherRooms.length > 0
+    ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
+    : 3;
+  const displayCleanliness = isEntireBase ? aggregateCleanliness : localCleanliness;
+  const cleanlinessColor = CLEANLINESS_COLORS[displayCleanliness];
+  const cleanlinessLabel = CLEANLINESS_LABELS[displayCleanliness];
+  const cleanlinessPercent = (displayCleanliness / 5) * 100;
+
+  // Chip data: room id, label, count of room-tagged missions for that room within current `missions`
+  const chipRooms = isEntireBase
+    ? allRooms
+        .filter(r => r.id !== ENTIRE_BASE_ROOM_ID)
+        .map(r => ({
+          id: r.id,
+          name: r.name,
+          count: missions.filter(m => m.baseLocation === r.id && m.status === 'active').length
+        }))
+    : [];
+  const entireBaseTaggedCount = isEntireBase
+    ? missions.filter(m => m.baseLocation === ENTIRE_BASE_ROOM_ID && m.status === 'active').length
+    : 0;
 
   const statLine = stats.total === 0
     ? 'No missions yet'
@@ -306,18 +337,20 @@ const RoomPage = () => {
             <span className="room-page-cleanliness-label" style={{ color: cleanlinessColor }}>
               {cleanlinessLabel}
             </span>
-            <button
-              className="room-page-cleanliness-edit-btn"
-              onClick={() => setShowSlider(v => !v)}
-              aria-label="Adjust cleanliness"
-            >
-              <span className="material-icons">
-                {showSlider ? 'expand_less' : 'edit'}
-              </span>
-            </button>
+            {!isEntireBase && (
+              <button
+                className="room-page-cleanliness-edit-btn"
+                onClick={() => setShowSlider(v => !v)}
+                aria-label="Adjust cleanliness"
+              >
+                <span className="material-icons">
+                  {showSlider ? 'expand_less' : 'edit'}
+                </span>
+              </button>
+            )}
           </div>
 
-          {showSlider && (
+          {!isEntireBase && showSlider && (
             <input
               type="range"
               min="1"
@@ -336,6 +369,35 @@ const RoomPage = () => {
         {actionError && <ErrorMessage message={actionError} />}
       </div>
 
+      {/* Per-room chip filter (Entire Base only) */}
+      {isEntireBase && chipRooms.length > 0 && (
+        <div className="room-page-chips">
+          <button
+            className={`room-page-chip${selectedRoomChip === 'all' ? ' room-page-chip--active' : ''}`}
+            onClick={() => setSelectedRoomChip('all')}
+          >
+            All
+          </button>
+          {entireBaseTaggedCount > 0 && (
+            <button
+              className={`room-page-chip${selectedRoomChip === ENTIRE_BASE_ROOM_ID ? ' room-page-chip--active' : ''}`}
+              onClick={() => setSelectedRoomChip(ENTIRE_BASE_ROOM_ID)}
+            >
+              {baseName || 'Whole Home'} <span className="room-page-chip-count">{entireBaseTaggedCount}</span>
+            </button>
+          )}
+          {chipRooms.map(c => (
+            <button
+              key={c.id}
+              className={`room-page-chip${selectedRoomChip === c.id ? ' room-page-chip--active' : ''}`}
+              onClick={() => setSelectedRoomChip(c.id)}
+            >
+              {c.name} <span className="room-page-chip-count">{c.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Missions section */}
       <div className="room-page-missions">
         <div className="room-page-missions-header">
@@ -349,7 +411,13 @@ const RoomPage = () => {
         </div>
 
         {activeMissions.length === 0 && completedMissions.length === 0 && (
-          <p className="room-page-empty">No missions for this room yet.</p>
+          <p className="room-page-empty">
+            {isEntireBase
+              ? (selectedRoomChip === 'all'
+                  ? 'No missions across the home yet.'
+                  : 'No missions for that room yet.')
+              : 'No missions for this room yet.'}
+          </p>
         )}
 
         {activeMissions.map(mission => (
@@ -358,7 +426,7 @@ const RoomPage = () => {
             mission={mission}
             onToggleComplete={handleToggleComplete}
             onMissionChanged={fetchData}
-            hideRoomBadge={true}
+            hideRoomBadge={!isEntireBase || selectedRoomChip !== 'all'}
           />
         ))}
 
@@ -385,6 +453,7 @@ const RoomPage = () => {
           onAddMission={handleMissionAdded}
           onCancel={() => setShowAddMission(false)}
           defaultRoomId={roomId}
+          autoOpenField={isEntireBase ? 'room' : null}
         />
       )}
 

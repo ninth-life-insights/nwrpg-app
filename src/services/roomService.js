@@ -235,10 +235,13 @@ const computeStatsFromMissions = (missionsSubset) => {
   return stats;
 };
 
-// Get room statistics (task counts)
+// Get room statistics (task counts).
+// Entire Base aggregates: counts any mission with a truthy baseLocation.
 export const getRoomStats = async (roomId, missions) => {
   try {
-    const roomMissions = missions.filter(m => m.baseLocation === roomId);
+    const roomMissions = roomId === ENTIRE_BASE_ROOM_ID
+      ? missions.filter(m => m.baseLocation)
+      : missions.filter(m => m.baseLocation === roomId);
     return computeStatsFromMissions(roomMissions);
   } catch (error) {
     console.error('Error getting room stats:', error);
@@ -247,8 +250,8 @@ export const getRoomStats = async (roomId, missions) => {
 };
 
 // Get stats for all rooms.
-// Entire Base is overridden with an aggregate: counts roll up missions tagged to
-// any room (including entire-base itself), cleanliness is the average of other rooms.
+// Entire Base cleanliness is overridden with the average of other rooms;
+// counts already aggregate via getRoomStats.
 export const getAllRoomStats = async (userId, missions) => {
   try {
     const rooms = await getRooms(userId);
@@ -262,14 +265,13 @@ export const getAllRoomStats = async (userId, missions) => {
     const roomsWithStats = await Promise.all(statsPromises);
 
     const otherRooms = roomsWithStats.filter(r => r.id !== ENTIRE_BASE_ROOM_ID);
-    const aggregateStats = computeStatsFromMissions(missions.filter(m => m.baseLocation));
     const avgCleanliness = otherRooms.length > 0
       ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
       : 3;
 
     return roomsWithStats.map(r =>
       r.id === ENTIRE_BASE_ROOM_ID
-        ? { ...r, stats: aggregateStats, cleanliness: avgCleanliness, aggregatedRoomCount: otherRooms.length }
+        ? { ...r, cleanliness: avgCleanliness, aggregatedRoomCount: otherRooms.length }
         : r
     );
   } catch (error) {
