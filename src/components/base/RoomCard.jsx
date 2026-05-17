@@ -24,7 +24,7 @@ const RoomCard = ({ room, stats, onClick }) => {
       <div className="room-card-header">
         <div className="room-icon">
           {isImageIcon(room.icon)
-            ? <img src={`/assets/Rooms/${room.icon}`} alt={room.name} className="room-icon-img" />
+            ? <img src={`/assets/Rooms/${room.icon}`} alt={room.name} className="room-card-icon-img" />
             : <span className="material-icons">{room.icon}</span>
           }
         </div>
@@ -33,15 +33,15 @@ const RoomCard = ({ room, stats, onClick }) => {
 
       <div className="room-stats-grid">
         <div className="stat-item">
-          <div className="stat-number">{stats.total}</div>
+          <div className={`stat-number${stats.total === 0 ? ' stat-zero' : ''}`}>{stats.total}</div>
           <div className="stat-label">Tasks</div>
         </div>
         <div className="stat-item">
-          <div className="stat-number">{stats.dueThisWeek}</div>
+          <div className={`stat-number${stats.dueThisWeek === 0 ? ' stat-zero' : ''}`}>{stats.dueThisWeek}</div>
           <div className="stat-label">This Week</div>
         </div>
         <div className="stat-item">
-          <div className="stat-number">{stats.overdue}</div>
+          <div className={`stat-number${stats.overdue > 0 ? ' stat-late' : ' stat-zero'}`}>{stats.overdue}</div>
           <div className="stat-label">Late</div>
         </div>
       </div>

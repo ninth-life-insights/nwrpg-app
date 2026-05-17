@@ -101,7 +101,10 @@ const BasePage = () => {
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="base-page-title">Your Base</h1>
-        <div className="base-page-header-spacer" />
+        <button className="base-page-add-room-btn" onClick={handleAddRoom}>
+          <span className="material-icons">add</span>
+          Room
+        </button>
       </header>
 
       {loadError && (
@@ -147,17 +150,17 @@ const BasePage = () => {
           );
         })}
 
-        {/* Add Room Card */}
-        <div className="room-card-slot">
-          <div className="add-room-card" onClick={handleAddRoom}>
-            <div className="add-room-icon">
-              <span className="material-icons">add</span>
-            </div>
-            {!hasCustomRooms && (
+        {/* First-room empty state — header button handles all other adds */}
+        {!hasCustomRooms && (
+          <div className="room-card-slot">
+            <div className="add-room-card" onClick={handleAddRoom}>
+              <div className="add-room-icon">
+                <span className="material-icons">add</span>
+              </div>
               <div className="add-room-label">Add your first room</div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Add Room Modal */}
