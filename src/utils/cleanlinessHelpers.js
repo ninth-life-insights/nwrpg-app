@@ -12,6 +12,22 @@ export const CLEANLINESS_COLORS = {
   5: '#10b981',
 };
 
+// Build segments for the Entire Base segmented bar. Sorted lowest cleanliness
+// first (red → green) with stale rooms at the end since their last-known value
+// may no longer reflect reality.
+export const buildCleanlinessSegments = (rooms) => {
+  return rooms
+    .map(r => ({
+      id: r.id,
+      cleanliness: r.cleanliness || 3,
+      stale: isCleanlinessStale(r),
+    }))
+    .sort((a, b) => {
+      if (a.stale !== b.stale) return a.stale ? 1 : -1;
+      return a.cleanliness - b.cleanliness;
+    });
+};
+
 const toDate = (ts) => {
   if (!ts) return null;
   if (ts.toDate) return ts.toDate();

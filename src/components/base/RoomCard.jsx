@@ -7,6 +7,7 @@ import {
   CLEANLINESS_STALE_COLOR,
   CLEANLINESS_COLORS,
 } from '../../utils/cleanlinessHelpers';
+import CleanlinessSegmentedBar from './CleanlinessSegmentedBar';
 import './RoomCard.css';
 
 const isImageIcon = (icon) => icon && icon.includes('.');
@@ -79,19 +80,7 @@ const RoomCard = ({ room, stats, onClick, isCustomOrderMode = false }) => {
 
       <div className="cleanliness-section">
         {isEntireBase ? (
-          <div className="cleanliness-bar-container cleanliness-bar-segmented">
-            {segments.length > 0 ? segments.map(seg => (
-              <div
-                key={seg.id}
-                className="cleanliness-bar-segment"
-                style={{
-                  backgroundColor: seg.stale ? CLEANLINESS_STALE_COLOR : CLEANLINESS_COLORS[seg.cleanliness],
-                }}
-              />
-            )) : (
-              <div className="cleanliness-bar-segment cleanliness-bar-segment--empty" />
-            )}
-          </div>
+          <CleanlinessSegmentedBar segments={segments} />
         ) : (
           <div className="cleanliness-bar-container">
             <div

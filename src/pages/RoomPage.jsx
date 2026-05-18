@@ -15,8 +15,10 @@ import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/
 import {
   isCleanlinessStale,
   getCleanlinessStaleLabel,
+  buildCleanlinessSegments,
   CLEANLINESS_STALE_COLOR,
 } from '../utils/cleanlinessHelpers';
+import CleanlinessSegmentedBar from '../components/base/CleanlinessSegmentedBar';
 import './RoomPage.css';
 
 const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs Help', 3: 'Holding Steady', 4: 'Clean', 5: 'Spotless' };
@@ -225,20 +227,18 @@ const RoomPage = () => {
   const activeMissions = chipFiltered.filter(m => m.status === 'active');
   const completedMissions = chipFiltered.filter(m => m.status === 'completed');
 
-  // For Entire Base, display the aggregate cleanliness (avg of other rooms) since
-  // its own stored value is unused. Slider is hidden in this case (see below).
+  // Entire Base shows a segmented bar (one slice per non-base room) instead
+  // of a single fill, since aggregating cleanliness into one value is misleading.
   const otherRooms = isEntireBase ? allRooms.filter(r => r.id !== ENTIRE_BASE_ROOM_ID) : [];
-  const aggregateCleanliness = otherRooms.length > 0
-    ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
-    : 3;
-  const displayCleanliness = isEntireBase ? aggregateCleanliness : localCleanliness;
+  const segments = isEntireBase ? buildCleanlinessSegments(otherRooms) : null;
+
   // Stale = user hasn't checked this room recently. Treat as fresh once the
   // user has dragged the slider away from the saved value in this session.
   const hasDraftChange = !isEntireBase && room && localCleanliness !== room.cleanliness;
   const showAsStale = !isEntireBase && !hasDraftChange && isCleanlinessStale(room);
-  const cleanlinessColor = showAsStale ? CLEANLINESS_STALE_COLOR : CLEANLINESS_COLORS[displayCleanliness];
-  const cleanlinessLabel = showAsStale ? getCleanlinessStaleLabel(room) : CLEANLINESS_LABELS[displayCleanliness];
-  const cleanlinessPercent = (displayCleanliness / 5) * 100;
+  const cleanlinessColor = showAsStale ? CLEANLINESS_STALE_COLOR : CLEANLINESS_COLORS[localCleanliness];
+  const cleanlinessLabel = showAsStale ? getCleanlinessStaleLabel(room) : CLEANLINESS_LABELS[localCleanliness];
+  const cleanlinessPercent = (localCleanliness / 5) * 100;
 
   // Chip data: room id, label, count of room-tagged missions for that room within current `missions`
   const chipRooms = isEntireBase
@@ -336,42 +336,46 @@ const RoomPage = () => {
         )}
 
         <div className="room-page-cleanliness">
-          <div className="room-page-cleanliness-row">
-            <div className="room-page-cleanliness-bar-wrap">
-              <div className="room-page-cleanliness-bar-track">
-                <div
-                  className="room-page-cleanliness-bar-fill"
-                  style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
-                />
-              </div>
-            </div>
-            <span className="room-page-cleanliness-label" style={{ color: cleanlinessColor }}>
-              {cleanlinessLabel}
-            </span>
-            {!isEntireBase && (
-              <button
-                className="room-page-cleanliness-edit-btn"
-                onClick={() => setShowSlider(v => !v)}
-                aria-label="Adjust cleanliness"
-              >
-                <span className="material-icons">
-                  {showSlider ? 'expand_less' : 'edit'}
+          {isEntireBase ? (
+            <CleanlinessSegmentedBar segments={segments} className="room-page-segmented-bar" />
+          ) : (
+            <>
+              <div className="room-page-cleanliness-row">
+                <div className="room-page-cleanliness-bar-wrap">
+                  <div className="room-page-cleanliness-bar-track">
+                    <div
+                      className="room-page-cleanliness-bar-fill"
+                      style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
+                    />
+                  </div>
+                </div>
+                <span className="room-page-cleanliness-label" style={{ color: cleanlinessColor }}>
+                  {cleanlinessLabel}
                 </span>
-              </button>
-            )}
-          </div>
+                <button
+                  className="room-page-cleanliness-edit-btn"
+                  onClick={() => setShowSlider(v => !v)}
+                  aria-label="Adjust cleanliness"
+                >
+                  <span className="material-icons">
+                    {showSlider ? 'expand_less' : 'edit'}
+                  </span>
+                </button>
+              </div>
 
-          {!isEntireBase && showSlider && (
-            <input
-              type="range"
-              min="1"
-              max="5"
-              value={localCleanliness}
-              onChange={handleCleanlinessChange}
-              onMouseUp={handleCleanlinessSave}
-              onTouchEnd={handleCleanlinessSave}
-              className="room-page-cleanliness-slider"
-            />
+              {showSlider && (
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  value={localCleanliness}
+                  onChange={handleCleanlinessChange}
+                  onMouseUp={handleCleanlinessSave}
+                  onTouchEnd={handleCleanlinessSave}
+                  className="room-page-cleanliness-slider"
+                />
+              )}
+            </>
           )}
         </div>
 

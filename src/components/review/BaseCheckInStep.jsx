@@ -8,7 +8,8 @@ import RoomDetailModal from '../base/RoomDetailModal';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
 import { withTimeout } from '../../utils/fetchWithTimeout';
-import { CLEANLINESS_STALE_COLOR } from '../../utils/cleanlinessHelpers';
+import { CLEANLINESS_STALE_COLOR, buildCleanlinessSegments } from '../../utils/cleanlinessHelpers';
+import CleanlinessSegmentedBar from '../base/CleanlinessSegmentedBar';
 import dayjs from 'dayjs';
 import './BaseCheckInStep.css';
 
@@ -62,6 +63,7 @@ const RoomCheckInCard = ({
   stats,
   localCleanliness,
   isReviewedInSession,
+  segments,
   actionError,
   onCleanlinessChange,
   onCleanlinessSave,
@@ -97,9 +99,13 @@ const RoomCheckInCard = ({
       <div className="bci-card-content">
         <h3 className="bci-card-room-name">{room.name}</h3>
 
-        {/* Entire Base is an aggregate — no editable cleanliness controls.
-            Segmented-bar visualization comes in a follow-up. */}
-        {!isEntireBase && (
+        {isEntireBase ? (
+          /* Aggregate view — segmented bar (one slice per non-base room).
+             No editable controls since cleanliness isn't directly editable. */
+          <div className="bci-card-cleanliness">
+            <CleanlinessSegmentedBar segments={segments || []} className="bci-card-segmented-bar" />
+          </div>
+        ) : (
           <div className="bci-card-cleanliness" onClick={stopProp}>
             <div className="bci-card-cleanliness-row">
               <input
@@ -288,9 +294,11 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
         )}
 
         {!loading && !loadError && rooms.map(room => {
-          const displayName = room.id === ENTIRE_BASE_ROOM_ID
-            ? (baseName || room.name)
-            : room.name;
+          const isThisEntireBase = room.id === ENTIRE_BASE_ROOM_ID;
+          const displayName = isThisEntireBase ? (baseName || room.name) : room.name;
+          const segments = isThisEntireBase
+            ? buildCleanlinessSegments(rooms.filter(r => r.id !== ENTIRE_BASE_ROOM_ID))
+            : null;
           return (
             <RoomCheckInCard
               key={room.id}
@@ -298,6 +306,7 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
               stats={calcRoomStats(room.id, allMissions)}
               localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
               isReviewedInSession={reviewedIds.has(room.id)}
+              segments={segments}
               actionError={actionErrors[room.id]}
               onCleanlinessChange={handleCleanlinessChange}
               onCleanlinessSave={handleCleanlinessSave}

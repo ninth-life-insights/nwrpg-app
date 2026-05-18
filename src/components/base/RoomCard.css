@@ -165,22 +165,6 @@
   transition: all 0.3s ease;
 }
 
-/* Entire Base segmented bar — one slice per non-base room */
-.cleanliness-bar-segmented {
-  display: flex;
-  gap: 1px;
-}
-
-.cleanliness-bar-segment {
-  flex: 1;
-  height: 100%;
-  min-width: 0;
-}
-
-.cleanliness-bar-segment--empty {
-  background: #e5e7eb;
-}
-
 /* Add Room Card (Ghost Card) — first-run empty state only */
 .add-room-card {
   background: transparent;

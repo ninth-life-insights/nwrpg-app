@@ -109,6 +109,12 @@
   background: var(--color-border, #e5e7eb);
 }
 
+/* Entire Base variant — match the slider's height/shape on non-base cards. */
+.bci-card-segmented-bar {
+  height: 10px;
+  border-radius: 6px;
+}
+
 .bci-card-footer-row {
   display: flex;
   align-items: center;

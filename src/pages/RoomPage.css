@@ -213,6 +213,13 @@
   overflow: hidden;
 }
 
+/* Entire Base variant — taller, pill-shaped to match the single-fill bar's
+   visual weight on this page. */
+.room-page-segmented-bar {
+  height: 10px;
+  border-radius: 99px;
+}
+
 .room-page-cleanliness-bar-fill {
   height: 100%;
   border-radius: 99px;
