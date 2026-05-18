@@ -11,8 +11,12 @@ export const applyRoomSort = (rooms, sortBy = ROOM_SORT_DEFAULT) => {
     case 'name':
       sorted = [...others].sort((a, b) => a.name.localeCompare(b.name));
       break;
-    case 'tasks':
-      sorted = [...others].sort((a, b) => (b.stats?.total ?? 0) - (a.stats?.total ?? 0));
+    case 'overdue':
+      sorted = [...others].sort((a, b) => {
+        const overdueDiff = (b.stats?.overdue ?? 0) - (a.stats?.overdue ?? 0);
+        if (overdueDiff !== 0) return overdueDiff;
+        return (b.stats?.total ?? 0) - (a.stats?.total ?? 0);
+      });
       break;
     case 'cleanliness':
       sorted = [...others].sort((a, b) => (a.cleanliness ?? 3) - (b.cleanliness ?? 3));

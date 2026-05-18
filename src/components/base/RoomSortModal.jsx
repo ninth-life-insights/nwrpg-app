@@ -6,10 +6,10 @@ import './RoomSortModal.css';
 const SORT_DEFAULT = 'custom';
 
 const SORT_OPTIONS = [
-  { value: 'custom',      label: 'Custom order',    sub: 'Drag to reorder' },
-  { value: 'name',        label: 'Name A–Z' },
-  { value: 'tasks',       label: 'Most tasks first' },
-  { value: 'cleanliness', label: 'Dirtiest first' },
+  { value: 'custom',      label: 'Custom Order',  sub: 'Drag to reorder' },
+  { value: 'name',        label: 'Name',          sub: 'A–Z' },
+  { value: 'overdue',     label: 'Overdue Tasks', sub: 'Most first' },
+  { value: 'cleanliness', label: 'Cleanliness',   sub: 'Lowest first' },
 ];
 
 const RoomSortModal = ({ isOpen, onClose, currentSortBy, onApply }) => {
@@ -27,11 +27,14 @@ const RoomSortModal = ({ isOpen, onClose, currentSortBy, onApply }) => {
   };
 
   const handleReset = () => {
+    setSortBy(SORT_DEFAULT);
     onApply(SORT_DEFAULT);
     onClose();
   };
 
   if (!isOpen) return null;
+
+  const isActive = sortBy !== SORT_DEFAULT;
 
   return createPortal(
     <div className="room-sort-overlay" onClick={onClose}>
@@ -48,7 +51,10 @@ const RoomSortModal = ({ isOpen, onClose, currentSortBy, onApply }) => {
         </div>
 
         <div className="room-sort-content">
-          <h4 className="room-sort-group-header">Sort by</h4>
+          <h4 className="room-sort-group-header">
+            Sort by
+            {isActive && <span className="room-sort-active-dot-inline" />}
+          </h4>
           <div className="room-sort-options">
             {SORT_OPTIONS.map(opt => (
               <label
@@ -70,7 +76,7 @@ const RoomSortModal = ({ isOpen, onClose, currentSortBy, onApply }) => {
         </div>
 
         <div className="room-sort-footer">
-          <button className="room-sort-btn secondary" onClick={handleReset}>Reset</button>
+          <button className="room-sort-btn secondary" onClick={handleReset}>Reset to Default</button>
           <button className="room-sort-btn primary" onClick={handleApply}>Apply</button>
         </div>
 
