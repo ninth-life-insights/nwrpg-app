@@ -41,7 +41,7 @@ const BASE_ICONS = [
   { value: 'Room-base-baba-yaga.png', label: "Baba Yaga's Hut" },
 ];
 
-const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs help', 3: 'Workable', 4: 'Clean', 5: 'Spotless' };
+const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs Help', 3: 'Holding Steady', 4: 'Clean', 5: 'Spotless' };
 const CLEANLINESS_COLORS = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#10b981' };
 
 const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null, isBaseRoom = false, baseName = '' }) => {
