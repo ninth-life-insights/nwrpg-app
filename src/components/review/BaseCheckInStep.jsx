@@ -117,30 +117,31 @@ const RoomCheckInCard = ({
               </span>
             </div>
 
-            {showConfirmBtn && (
-              <div className="bci-card-cleanliness-footer">
-                <button
-                  className="bci-card-confirm-btn"
-                  onClick={() => onConfirm(room.id)}
-                >
-                  {confirmLabel}
-                </button>
-              </div>
-            )}
-
             {actionError && <p className="bci-card-action-error">{actionError}</p>}
           </div>
         )}
 
-        {statsParts.length > 0 && (
-          <p className="bci-card-stats-line">
-            {statsParts.map((part, i) => (
-              <span key={i}>
-                {i > 0 && <span className="bci-stats-sep"> · </span>}
-                <span className={part.overdue ? 'bci-stats-overdue' : ''}>{part.text}</span>
-              </span>
-            ))}
-          </p>
+        {(statsParts.length > 0 || showConfirmBtn) && (
+          <div className="bci-card-footer-row" onClick={stopProp}>
+            {statsParts.length > 0 && (
+              <p className="bci-card-stats-line">
+                {statsParts.map((part, i) => (
+                  <span key={i}>
+                    {i > 0 && <span className="bci-stats-sep"> · </span>}
+                    <span className={part.overdue ? 'bci-stats-overdue' : ''}>{part.text}</span>
+                  </span>
+                ))}
+              </p>
+            )}
+            {showConfirmBtn && (
+              <button
+                className="bci-card-confirm-btn"
+                onClick={() => onConfirm(room.id)}
+              >
+                {confirmLabel}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
