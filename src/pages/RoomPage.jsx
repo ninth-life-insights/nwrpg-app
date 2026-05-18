@@ -254,9 +254,10 @@ const RoomPage = () => {
     ? missions.filter(m => m.baseLocation === ENTIRE_BASE_ROOM_ID && m.status === 'active').length
     : 0;
 
+  const scope = isEntireBase ? ' across all rooms' : '';
   const statLine = stats.total === 0
-    ? 'No missions yet'
-    : `${stats.total} mission${stats.total !== 1 ? 's' : ''}${stats.overdue > 0 ? ` · ${stats.overdue} late` : ''}`;
+    ? `No missions${scope} yet`
+    : `${stats.total} mission${stats.total !== 1 ? 's' : ''}${scope}${stats.overdue > 0 ? ` · ${stats.overdue} late` : ''}`;
 
   return (
     <div className="room-page">
