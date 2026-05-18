@@ -175,17 +175,6 @@
   background: #e5e7eb;
 }
 
-.cleanliness-summary {
-  margin: 6px 0 0;
-  font-size: 11px;
-  line-height: 1.3;
-  color: #666;
-}
-
-.cleanliness-summary-sep {
-  color: var(--color-border, #e5e7eb);
-}
-
 /* Add Room Card (Ghost Card) — first-run empty state only */
 .add-room-card {
   background: transparent;
