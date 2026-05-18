@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { getRooms } from '../services/roomService';
+import { logError } from '../utils/errorBuffer';
 
 const RoomsContext = createContext(null);
 
@@ -18,9 +19,14 @@ export const RoomsProvider = ({ children }) => {
 
   const fetchRooms = useCallback(async () => {
     if (!currentUser) return;
-    const data = await getRooms(currentUser.uid);
-    setRooms(data);
-    setRoomsMap(Object.fromEntries(data.map(r => [r.id, r])));
+    try {
+      const data = await getRooms(currentUser.uid);
+      setRooms(data);
+      setRoomsMap(Object.fromEntries(data.map(r => [r.id, r])));
+    } catch (err) {
+      console.error('fetchRooms failed:', err);
+      logError('rooms-fetch', err);
+    }
   }, [currentUser]);
 
   useEffect(() => {
