@@ -12,6 +12,11 @@ import AddRoomModal from '../components/base/AddRoomModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import AchievementToast from '../components/achievements/AchievementToast';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import {
+  isCleanlinessStale,
+  getCleanlinessStaleLabel,
+  CLEANLINESS_STALE_COLOR,
+} from '../utils/cleanlinessHelpers';
 import './RoomPage.css';
 
 const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs Help', 3: 'Holding Steady', 4: 'Clean', 5: 'Spotless' };
@@ -225,8 +230,12 @@ const RoomPage = () => {
     ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
     : 3;
   const displayCleanliness = isEntireBase ? aggregateCleanliness : localCleanliness;
-  const cleanlinessColor = CLEANLINESS_COLORS[displayCleanliness];
-  const cleanlinessLabel = CLEANLINESS_LABELS[displayCleanliness];
+  // Stale = user hasn't checked this room recently. Treat as fresh once the
+  // user has dragged the slider away from the saved value in this session.
+  const hasDraftChange = !isEntireBase && room && localCleanliness !== room.cleanliness;
+  const showAsStale = !isEntireBase && !hasDraftChange && isCleanlinessStale(room);
+  const cleanlinessColor = showAsStale ? CLEANLINESS_STALE_COLOR : CLEANLINESS_COLORS[displayCleanliness];
+  const cleanlinessLabel = showAsStale ? getCleanlinessStaleLabel(room) : CLEANLINESS_LABELS[displayCleanliness];
   const cleanlinessPercent = (displayCleanliness / 5) * 100;
 
   // Chip data: room id, label, count of room-tagged missions for that room within current `missions`

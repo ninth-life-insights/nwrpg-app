@@ -33,6 +33,7 @@ export const initializeEntireBaseRoom = async (userId) => {
         icon: 'home', // Material icon name
         order: 0,
         cleanliness: 3, // Default to middle cleanliness
+        cleanlinessUpdatedAt: serverTimestamp(),
         isDefault: true,
         canDelete: false,
         createdAt: serverTimestamp()
@@ -63,6 +64,7 @@ export const createRoom = async (userId, roomData) => {
       icon: roomData.icon || 'room',
       order: maxOrder + 1,
       cleanliness: roomData.cleanliness || 3,
+      cleanlinessUpdatedAt: serverTimestamp(),
       isDefault: false,
       canDelete: true,
       createdAt: serverTimestamp()
@@ -126,12 +128,23 @@ export const updateRoom = async (userId, roomId, updates) => {
     if (roomData.isDefault && (updates.name || updates.canDelete !== undefined)) {
       throw new Error('Cannot modify protected fields on default rooms');
     }
-    
-    await updateDoc(roomRef, {
+
+    const finalUpdates = {
       ...updates,
       updatedAt: serverTimestamp()
-    });
-    
+    };
+
+    // Only stamp cleanlinessUpdatedAt when the value actually changes —
+    // editing name/icon alone shouldn't reset the freshness clock.
+    if (
+      updates.cleanliness !== undefined &&
+      updates.cleanliness !== roomData.cleanliness
+    ) {
+      finalUpdates.cleanlinessUpdatedAt = serverTimestamp();
+    }
+
+    await updateDoc(roomRef, finalUpdates);
+
     return { success: true };
   } catch (error) {
     console.error('Error updating room:', error);

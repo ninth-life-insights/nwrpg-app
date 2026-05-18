@@ -8,6 +8,11 @@ import RoomDetailModal from '../base/RoomDetailModal';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
 import { withTimeout } from '../../utils/fetchWithTimeout';
+import {
+  isCleanlinessStale,
+  getCleanlinessStaleLabel,
+  CLEANLINESS_STALE_COLOR,
+} from '../../utils/cleanlinessHelpers';
 import dayjs from 'dayjs';
 import './BaseCheckInStep.css';
 
@@ -67,8 +72,11 @@ const RoomCheckInCard = ({
 }) => {
   const [showSlider, setShowSlider] = useState(false);
 
-  const cleanlinessColor = CLEANLINESS_COLORS[localCleanliness];
-  const cleanlinessLabel = CLEANLINESS_LABELS[localCleanliness];
+  const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID;
+  const hasDraftChange = localCleanliness !== room.cleanliness;
+  const showAsStale = !isEntireBase && !hasDraftChange && isCleanlinessStale(room);
+  const cleanlinessColor = showAsStale ? CLEANLINESS_STALE_COLOR : CLEANLINESS_COLORS[localCleanliness];
+  const cleanlinessLabel = showAsStale ? getCleanlinessStaleLabel(room) : CLEANLINESS_LABELS[localCleanliness];
   const cleanlinessPercent = (localCleanliness / 5) * 100;
   const statsParts = buildStatsParts(stats);
 

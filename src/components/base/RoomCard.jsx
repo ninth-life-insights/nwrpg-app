@@ -2,6 +2,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
+import { isCleanlinessStale, CLEANLINESS_STALE_COLOR } from '../../utils/cleanlinessHelpers';
 import './RoomCard.css';
 
 const isImageIcon = (icon) => icon && icon.includes('.');
@@ -38,7 +39,8 @@ const RoomCard = ({ room, stats, onClick, isCustomOrderMode = false }) => {
     return colors[cleanliness] || colors[3];
   };
 
-  const cleanlinessColor = getCleanlinessColor(room.cleanliness);
+  const stale = !isEntireBase && isCleanlinessStale(room);
+  const cleanlinessColor = stale ? CLEANLINESS_STALE_COLOR : getCleanlinessColor(room.cleanliness);
   const cleanlinessPercentage = (room.cleanliness / 5) * 100;
 
   const showDragHandle = isCustomOrderMode && !isEntireBase;
