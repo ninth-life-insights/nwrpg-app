@@ -44,7 +44,7 @@ const RoomCard = ({ room, stats, onClick, isCustomOrderMode = false }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`room-card${isDragging ? ' dragging' : ''}`}
+      className={`room-card${isDragging ? ' dragging' : ''}${isEntireBase ? ' entire-base' : ''}`}
       onClick={onClick}
       {...attributes}
     >

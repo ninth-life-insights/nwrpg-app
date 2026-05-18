@@ -15,6 +15,12 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Entire Base — subtle framed treatment to distinguish from peer rooms. */
+.room-card.entire-base {
+  border: 2px solid var(--color-border-yellow);
+  padding: 8px 10px 10px; /* compensate for 2px border so content aligns with peers */
+}
+
 .room-card.dragging {
   opacity: 0.7;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
