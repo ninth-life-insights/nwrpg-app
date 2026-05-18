@@ -12,6 +12,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase/config';
+import { isCleanlinessStale } from '../utils/cleanlinessHelpers';
 
 // Special room ID for "Entire Base"
 export const ENTIRE_BASE_ROOM_ID = 'entire-base';
@@ -298,9 +299,18 @@ export const getAllRoomStats = async (userId, missions) => {
       ? Math.round(otherRooms.reduce((sum, r) => sum + (r.cleanliness || 3), 0) / otherRooms.length)
       : 3;
 
+    // Segments for the Entire Base segmented bar — one entry per room in
+    // display order. Component renders each as a colored slice (or grey if
+    // stale).
+    const segments = otherRooms.map(r => ({
+      id: r.id,
+      cleanliness: r.cleanliness || 3,
+      stale: isCleanlinessStale(r),
+    }));
+
     return roomsWithStats.map(r =>
       r.id === ENTIRE_BASE_ROOM_ID
-        ? { ...r, cleanliness: avgCleanliness, aggregatedRoomCount: otherRooms.length }
+        ? { ...r, cleanliness: avgCleanliness, aggregatedRoomCount: otherRooms.length, segments }
         : r
     );
   } catch (error) {
