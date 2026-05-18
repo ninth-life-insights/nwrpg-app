@@ -267,7 +267,7 @@ const RoomPage = () => {
         <button className="room-page-back-btn" onClick={() => navigate('/base')}>
           <span className="material-icons">arrow_back</span>
         </button>
-        <h1 className="room-page-title">{room.name}</h1>
+        <h1 className="room-page-title">{isEntireBase ? (baseName || room.name) : room.name}</h1>
 
         {(room.canDelete || roomId === ENTIRE_BASE_ROOM_ID) ? (
           <div className="room-page-menu-wrap" ref={menuRef}>
