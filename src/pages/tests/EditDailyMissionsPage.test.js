@@ -1,7 +1,7 @@
 // src/pages/__tests__/EditDailyMissionsPage.test.js
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import EditDailyMissionsPage from '../EditDailyMissionsPage';
+import EditDailyMissionsPage from '../missions/EditDailyMissionsPage';
 
 // Mock the auth context
 jest.mock('../../contexts/AuthContext', () => ({

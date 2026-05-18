@@ -8,28 +8,28 @@ import { QuestsProvider } from './contexts/QuestsContext';
 import { Navigate } from 'react-router-dom';
 import './App.css';
 
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LogInPage';
-import SignupPage from './pages/SignupPage';
-import CharacterCreationPage from './pages/CharacterCreationPage';
+import LandingPage from './pages/auth/LandingPage';
+import LoginPage from './pages/auth/LogInPage';
+import SignupPage from './pages/auth/SignupPage';
+import CharacterCreationPage from './pages/character/CharacterCreationPage';
 
 import HomePage from './pages/HomePage';
-import EditDailyMissionsPage from './pages/EditDailyMissionsPage';
-import DailyReviewPage from './pages/DailyReviewPage';
-import AdventureLogPage from './pages/AdventureLogPage';
-import AdventureLogDetailPage from './pages/AdventureLogDetailPage';
-import MissionBankPage from './pages/MissionBankPage';
-import QuestBank from './pages/QuestBankPage';
+import EditDailyMissionsPage from './pages/missions/EditDailyMissionsPage';
+import DailyReviewPage from './pages/reviews/DailyReviewPage';
+import AdventureLogPage from './pages/reviews/AdventureLogPage';
+import AdventureLogDetailPage from './pages/reviews/AdventureLogDetailPage';
+import MissionBankPage from './pages/missions/MissionBankPage';
+import QuestBank from './pages/quests/QuestBankPage';
 import QuestDetailView from './components/quests/QuestDetailView';
-import SkillsPage from './pages/SkillsPage';
-import SkillDetailPage from './pages/SkillDetailPage';
-import BasePage from './pages/BasePage';
-import RoomPage from './pages/RoomPage';
+import SkillsPage from './pages/skills/SkillsPage';
+import SkillDetailPage from './pages/skills/SkillDetailPage';
+import BasePage from './pages/base/BasePage';
+import RoomPage from './pages/base/RoomPage';
 import AchievementsPage from './pages/AchievementsPage';
 import SettingsPage from './pages/SettingsPage';
-import EditCharacterPage from './pages/EditCharacterPage';
-import WeeklyReviewPage from './pages/WeeklyReviewPage';
-import WeeklyLogDetailPage from './pages/WeeklyLogDetailPage';
+import EditCharacterPage from './pages/character/EditCharacterPage';
+import WeeklyReviewPage from './pages/reviews/WeeklyReviewPage';
+import WeeklyLogDetailPage from './pages/reviews/WeeklyLogDetailPage';
 
 
 

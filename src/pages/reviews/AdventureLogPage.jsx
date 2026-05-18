@@ -1,19 +1,19 @@
 // src/pages/AdventureLogPage.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { getUserProfile } from '../services/userService';
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserProfile } from '../../services/userService';
 import {
   getAllDailySnapshots,
   getDatesWithActivity,
   generateDailySnapshot,
-} from '../services/reviewService';
-import AdventureLogCard from '../components/review/AdventureLogCard';
-import WeeklyAdventureLogCard from '../components/review/WeeklyAdventureLogCard';
-import AdventureLogFilterModal, { DEFAULT_FILTERS } from '../components/review/AdventureLogFilterModal';
-import { getAllWeeklySnapshots } from '../services/weeklyReviewService';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+} from '../../services/reviewService';
+import AdventureLogCard from '../../components/review/AdventureLogCard';
+import WeeklyAdventureLogCard from '../../components/review/WeeklyAdventureLogCard';
+import AdventureLogFilterModal, { DEFAULT_FILTERS } from '../../components/review/AdventureLogFilterModal';
+import { getAllWeeklySnapshots } from '../../services/weeklyReviewService';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import './AdventureLogPage.css';
 
 // Format "2026-04" → "April 2026"

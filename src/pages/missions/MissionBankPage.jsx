@@ -1,15 +1,15 @@
 // src/pages/MissionBank.js - UPDATED FOR SIMPLIFIED DAILY MISSIONS
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import MissionList from '../components/missions/MissionList';
-import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
-import { getUserProfile } from '../services/userService';
-import { getRooms } from '../services/roomService';
-import { getAllQuests } from '../services/questService';
+import { useAuth } from '../../contexts/AuthContext';
+import MissionList from '../../components/missions/MissionList';
+import MissionFilterModal from '../../components/missions/sub-components/MissionFilterModal';
+import { getUserProfile } from '../../services/userService';
+import { getRooms } from '../../services/roomService';
+import { getAllQuests } from '../../services/questService';
 import { useNavigate } from 'react-router-dom';
-import AchievementToast from '../components/achievements/AchievementToast';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import AchievementToast from '../../components/achievements/AchievementToast';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import './MissionBankPage.css';
 
 const MissionBank = () => {

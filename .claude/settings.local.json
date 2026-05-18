@@ -12,7 +12,8 @@
       "Bash(grep -E \"\\\\.\\(js|jsx|ts|tsx\\)$\")",
       "Bash(grep -E \"\\\\.\\(jsx|js\\)$\")",
       "Bash(grep -E \"\\\\.js$|\\\\.jsx$\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git mv *)"
     ]
   }
 }

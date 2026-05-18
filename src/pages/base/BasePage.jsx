@@ -1,22 +1,22 @@
 // src/pages/BasePage.js
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useRooms } from '../contexts/RoomsContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRooms } from '../../contexts/RoomsContext';
 import { useNavigate } from 'react-router-dom';
 import {
   getAllRoomStats,
   initializeEntireBaseRoom,
   reorderRooms,
   ENTIRE_BASE_ROOM_ID,
-} from '../services/roomService';
-import { getAllMissions } from '../services/missionService';
-import { getUserProfile } from '../services/userService';
-import RoomCard from '../components/base/RoomCard';
-import AddRoomModal from '../components/base/AddRoomModal';
-import RoomSortModal from '../components/base/RoomSortModal';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { applyRoomSort, ROOM_SORT_DEFAULT } from '../utils/roomListHelpers';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+} from '../../services/roomService';
+import { getAllMissions } from '../../services/missionService';
+import { getUserProfile } from '../../services/userService';
+import RoomCard from '../../components/base/RoomCard';
+import AddRoomModal from '../../components/base/AddRoomModal';
+import RoomSortModal from '../../components/base/RoomSortModal';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { applyRoomSort, ROOM_SORT_DEFAULT } from '../../utils/roomListHelpers';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 
 import {
   DndContext,

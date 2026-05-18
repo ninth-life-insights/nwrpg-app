@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Login from '../components/auth/Login';
-import '../components/auth/Auth.css';
+import Login from '../../components/auth/Login';
+import '../../components/auth/Auth.css';
 
 const LoginPage = () => {
     return (

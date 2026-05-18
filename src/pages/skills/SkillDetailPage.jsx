@@ -1,14 +1,14 @@
 // src/pages/SkillDetailPage.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { getUserProfile, getSPProgressInLevel } from '../services/userService';
-import { getActiveMissions, getCompletedMissions } from '../services/missionService';
-import MissionCard from '../components/missions/MissionCard';
-import { completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
-import AchievementToast from '../components/achievements/AchievementToast';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserProfile, getSPProgressInLevel } from '../../services/userService';
+import { getActiveMissions, getCompletedMissions } from '../../services/missionService';
+import MissionCard from '../../components/missions/MissionCard';
+import { completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import AchievementToast from '../../components/achievements/AchievementToast';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import './SkillDetailPage.css';
 
 const SKILL_HINTS = {

@@ -1,31 +1,31 @@
 // src/pages/DailyReviewPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { getUserProfile } from '../services/userService';
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserProfile } from '../../services/userService';
 import {
   generateDailySnapshot,
   updateSnapshotStory,
   getEncountersForDate,
-} from '../services/reviewService';
+} from '../../services/reviewService';
 import {
   getTodaysDailyMissions,
-} from '../services/dailyMissionService';
+} from '../../services/dailyMissionService';
 import {
   completeMissionWithRecurrence,
   uncompleteMission,
-} from '../services/missionService';
-import { getAchievementsAwardedOnDate } from '../services/achievementService';
-import LevelUpModal from '../components/ui/LevelUpModal';
-import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
-import AchievementToast from '../components/achievements/AchievementToast';
-import DailyMissionsStep from '../components/review/DailyMissionsStep';
-import OtherMissionsStep from '../components/review/OtherMissionsStep';
-import EncountersStep from '../components/review/EncountersStep';
-import ReviewSummary from '../components/review/ReviewSummary';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
-import { toDateString } from '../utils/dateHelpers';
+} from '../../services/missionService';
+import { getAchievementsAwardedOnDate } from '../../services/achievementService';
+import LevelUpModal from '../../components/ui/LevelUpModal';
+import SkillLevelUpModal from '../../components/ui/SkillLevelUpModal';
+import AchievementToast from '../../components/achievements/AchievementToast';
+import DailyMissionsStep from '../../components/review/DailyMissionsStep';
+import OtherMissionsStep from '../../components/review/OtherMissionsStep';
+import EncountersStep from '../../components/review/EncountersStep';
+import ReviewSummary from '../../components/review/ReviewSummary';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { toDateString } from '../../utils/dateHelpers';
 import './DailyReviewPage.css';
 
 const TOTAL_STEPS = 4;

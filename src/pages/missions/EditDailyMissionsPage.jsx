@@ -1,14 +1,14 @@
 // src/pages/EditDailyMissionsPage.js - UPDATED FOR SIMPLIFIED SYSTEM
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 // Component imports
-import AddMissionCard from '../components/missions/AddMissionCard';
-import MissionCardFull from '../components/missions/MissionCardFull';
-import MissionList from '../components/missions/MissionList';
-import MissionFilterModal from '../components/missions/sub-components/MissionFilterModal';
-import Badge from '../components/ui/Badge';
+import AddMissionCard from '../../components/missions/AddMissionCard';
+import MissionCardFull from '../../components/missions/MissionCardFull';
+import MissionList from '../../components/missions/MissionList';
+import MissionFilterModal from '../../components/missions/sub-components/MissionFilterModal';
+import Badge from '../../components/ui/Badge';
 
 // Service imports - UPDATED for simplified system
 import {
@@ -17,9 +17,9 @@ import {
   createMission,
   completeMissionWithRecurrence,
   uncompleteMission,
-} from '../services/missionService';
-import { getRooms } from '../services/roomService';
-import { getAllQuests } from '../services/questService';
+} from '../../services/missionService';
+import { getRooms } from '../../services/roomService';
+import { getAllQuests } from '../../services/questService';
 
 // UPDATED: Import from separate daily mission service
 import {
@@ -29,9 +29,9 @@ import {
   getDailyMissionsForDate,
   planDailyMissionsForDate,
   syncScheduledDatesOnMissions,
-} from '../services/dailyMissionService';
+} from '../../services/dailyMissionService';
 
-import { useQuests } from '../contexts/QuestsContext';
+import { useQuests } from '../../contexts/QuestsContext';
 
 // Date helpers
 import {
@@ -41,21 +41,21 @@ import {
   toDateString,
   formatForUser,
   fromDateString,
-} from '../utils/dateHelpers';
+} from '../../utils/dateHelpers';
 
 import { isRecurringMission,
   getRecurrenceDisplayText
-} from '../utils/recurrenceHelpers';
+} from '../../utils/recurrenceHelpers';
 
-import { hasSkill } from '../types/Mission';
+import { hasSkill } from '../../types/Mission';
 
 // Mission helpers
 import {
   isMissionCompleted
-} from '../utils/missionHelpers';
+} from '../../utils/missionHelpers';
 
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
-import { useModalBackButton } from '../hooks/useModalBackButton';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './EditDailyMissionsPage.css';
 
 const EditDailyMissionsPage = ({

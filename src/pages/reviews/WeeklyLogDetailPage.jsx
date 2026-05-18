@@ -1,16 +1,16 @@
 // src/pages/WeeklyLogDetailPage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   getWeeklySnapshot,
   generateWeeklySnapshot,
   updateWeeklySnapshotStory,
-} from '../services/weeklyReviewService';
-import WeeklyReviewSummary from '../components/review/WeeklyReviewSummary';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { formatWeekLabel } from '../utils/weeklyReviewHelpers';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+} from '../../services/weeklyReviewService';
+import WeeklyReviewSummary from '../../components/review/WeeklyReviewSummary';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { formatWeekLabel } from '../../utils/weeklyReviewHelpers';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import dayjs from 'dayjs';
 import './WeeklyLogDetailPage.css';
 

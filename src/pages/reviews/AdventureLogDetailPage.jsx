@@ -1,15 +1,15 @@
 // src/pages/AdventureLogDetailPage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   getDailySnapshot,
   updateSnapshotStory,
   getEncountersForDate,
-} from '../services/reviewService';
-import ReviewSummary from '../components/review/ReviewSummary';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+} from '../../services/reviewService';
+import ReviewSummary from '../../components/review/ReviewSummary';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import './AdventureLogDetailPage.css';
 
 // Format "2026-04-09" → "Wednesday, Apr 9, 2026"

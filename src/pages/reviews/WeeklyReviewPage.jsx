@@ -1,20 +1,20 @@
 // src/pages/WeeklyReviewPage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { getUserProfile } from '../services/userService';
-import { getWeeklySnapshot, generateWeeklySnapshot, updateWeeklySnapshotStory } from '../services/weeklyReviewService';
-import { getWeeklyReviewInfo } from '../utils/weeklyReviewHelpers';
-import LevelUpModal from '../components/ui/LevelUpModal';
-import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
-import AchievementToast from '../components/achievements/AchievementToast';
-import BaseCheckInStep from '../components/review/BaseCheckInStep';
-import QuestGroomingStep from '../components/review/QuestGroomingStep';
-import WeekPlanningStep from '../components/review/WeekPlanningStep';
-import TaskArchivingStep from '../components/review/TaskArchivingStep';
-import WeeklyReviewSummary from '../components/review/WeeklyReviewSummary';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import { withTimeout } from '../utils/fetchWithTimeout';
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserProfile } from '../../services/userService';
+import { getWeeklySnapshot, generateWeeklySnapshot, updateWeeklySnapshotStory } from '../../services/weeklyReviewService';
+import { getWeeklyReviewInfo } from '../../utils/weeklyReviewHelpers';
+import LevelUpModal from '../../components/ui/LevelUpModal';
+import SkillLevelUpModal from '../../components/ui/SkillLevelUpModal';
+import AchievementToast from '../../components/achievements/AchievementToast';
+import BaseCheckInStep from '../../components/review/BaseCheckInStep';
+import QuestGroomingStep from '../../components/review/QuestGroomingStep';
+import WeekPlanningStep from '../../components/review/WeekPlanningStep';
+import TaskArchivingStep from '../../components/review/TaskArchivingStep';
+import WeeklyReviewSummary from '../../components/review/WeeklyReviewSummary';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { withTimeout } from '../../utils/fetchWithTimeout';
 import './WeeklyReviewPage.css';
 
 const TOTAL_STEPS = 5;

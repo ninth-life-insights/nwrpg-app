@@ -1,24 +1,24 @@
 // src/pages/RoomPage.jsx
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../services/roomService';
-import { getUserProfile } from '../services/userService';
-import { useRooms } from '../contexts/RoomsContext';
-import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../services/missionService';
-import MissionCard from '../components/missions/MissionCard';
-import AddMissionCard from '../components/missions/AddMissionCard';
-import AddRoomModal from '../components/base/AddRoomModal';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import AchievementToast from '../components/achievements/AchievementToast';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import { useAuth } from '../../contexts/AuthContext';
+import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
+import { getUserProfile } from '../../services/userService';
+import { useRooms } from '../../contexts/RoomsContext';
+import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import MissionCard from '../../components/missions/MissionCard';
+import AddMissionCard from '../../components/missions/AddMissionCard';
+import AddRoomModal from '../../components/base/AddRoomModal';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import AchievementToast from '../../components/achievements/AchievementToast';
+import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import {
   isCleanlinessStale,
   getCleanlinessStaleLabel,
   buildCleanlinessSegments,
   CLEANLINESS_STALE_COLOR,
-} from '../utils/cleanlinessHelpers';
-import CleanlinessSegmentedBar from '../components/base/CleanlinessSegmentedBar';
+} from '../../utils/cleanlinessHelpers';
+import CleanlinessSegmentedBar from '../../components/base/CleanlinessSegmentedBar';
 import './RoomPage.css';
 
 const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs Help', 3: 'Holding Steady', 4: 'Clean', 5: 'Spotless' };

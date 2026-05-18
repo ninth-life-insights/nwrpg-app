@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
-import { useAuth } from '../contexts/AuthContext';
-import { db } from '../services/firebase/config';
+import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
 
-import ErrorMessage from '../components/ui/ErrorMessage';
-import StickyFooter from '../components/ui/StickyFooter';
-import ClassCarousel from '../components/character/ClassCarousel';
-import ColorPicker from '../components/character/ColorPicker';
-import { CHARACTER_CLASSES, CHARACTER_COLORS, generateRandomTitle, generateRandomLook } from '../data/characterData';
-import { updateThemeColor } from '../utils/themeUtils';
-import '../components/character/CharacterForm.css';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import StickyFooter from '../../components/ui/StickyFooter';
+import ClassCarousel from '../../components/character/ClassCarousel';
+import ColorPicker from '../../components/character/ColorPicker';
+import { CHARACTER_CLASSES, CHARACTER_COLORS, generateRandomTitle, generateRandomLook } from '../../data/characterData';
+import { updateThemeColor } from '../../utils/themeUtils';
+import '../../components/character/CharacterForm.css';
 import './CharacterCreationPage.css';
 
 const CharacterCreationPage = () => {

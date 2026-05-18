@@ -1,6 +1,6 @@
 // src/components/missions/EditDailyMissionsModal.js
 import React from 'react';
-import EditDailyMissionsPage from '../../pages/EditDailyMissionsPage';
+import EditDailyMissionsPage from '../../pages/missions/EditDailyMissionsPage';
 import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './EditDailyMissionsModal.css';
 
