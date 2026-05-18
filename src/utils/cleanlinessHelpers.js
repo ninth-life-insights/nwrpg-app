@@ -1,7 +1,7 @@
 // src/utils/cleanlinessHelpers.js
 import dayjs from 'dayjs';
 
-export const CLEANLINESS_STALE_DAYS = 10;
+export const CLEANLINESS_STALE_DAYS = 0;
 export const CLEANLINESS_STALE_COLOR = '#9ca3af';
 
 const toDate = (ts) => {

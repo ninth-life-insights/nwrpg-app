@@ -158,10 +158,26 @@ export const updateRoomCleanliness = async (userId, roomId, cleanliness) => {
     if (cleanliness < 1 || cleanliness > 5) {
       throw new Error('Cleanliness must be between 1 and 5');
     }
-    
+
     return await updateRoom(userId, roomId, { cleanliness });
   } catch (error) {
     console.error('Error updating room cleanliness:', error);
+    throw error;
+  }
+};
+
+// Confirm cleanliness without changing the value — re-stamps the freshness
+// timestamp. Used when the user reviews a room and the value is still accurate.
+export const confirmRoomCleanliness = async (userId, roomId) => {
+  try {
+    const roomRef = doc(db, 'users', userId, 'rooms', roomId);
+    await updateDoc(roomRef, {
+      cleanlinessUpdatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error confirming room cleanliness:', error);
     throw error;
   }
 };

@@ -1,7 +1,7 @@
 // src/components/review/BaseCheckInStep.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRooms, updateRoomCleanliness, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
+import { getRooms, updateRoomCleanliness, confirmRoomCleanliness, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { getAllMissions } from '../../services/missionService';
 import { getUserProfile } from '../../services/userService';
 import RoomDetailModal from '../base/RoomDetailModal';
@@ -11,6 +11,7 @@ import { withTimeout } from '../../utils/fetchWithTimeout';
 import {
   isCleanlinessStale,
   getCleanlinessStaleLabel,
+  daysSinceCleanlinessUpdate,
   CLEANLINESS_STALE_COLOR,
 } from '../../utils/cleanlinessHelpers';
 import dayjs from 'dayjs';
@@ -68,17 +69,29 @@ const RoomCheckInCard = ({
   actionError,
   onCleanlinessChange,
   onCleanlinessSave,
+  onConfirm,
   onOpenModal,
 }) => {
-  const [showSlider, setShowSlider] = useState(false);
-
   const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID;
   const hasDraftChange = localCleanliness !== room.cleanliness;
   const showAsStale = !isEntireBase && !hasDraftChange && isCleanlinessStale(room);
   const cleanlinessColor = showAsStale ? CLEANLINESS_STALE_COLOR : CLEANLINESS_COLORS[localCleanliness];
   const cleanlinessLabel = showAsStale ? getCleanlinessStaleLabel(room) : CLEANLINESS_LABELS[localCleanliness];
-  const cleanlinessPercent = (localCleanliness / 5) * 100;
   const statsParts = buildStatsParts(stats);
+
+  // Last-checked text — always visible for non-Entire-Base so the user can
+  // judge whether the saved value is current. Stale label already says this;
+  // suppress to avoid duplication.
+  const daysAgo = !isEntireBase ? daysSinceCleanlinessUpdate(room) : null;
+  let lastCheckedText = null;
+  if (!isEntireBase && !showAsStale && daysAgo !== null) {
+    if (daysAgo < 1) lastCheckedText = 'Checked today';
+    else if (daysAgo === 1) lastCheckedText = 'Checked 1 day ago';
+    else lastCheckedText = `Checked ${daysAgo} days ago`;
+  }
+
+  const showConfirmBtn = !isEntireBase && !hasDraftChange;
+  const confirmLabel = `Still ${CLEANLINESS_LABELS[room.cleanliness] || ''}`.trim();
 
   const stopProp = (e) => e.stopPropagation();
 
@@ -99,29 +112,6 @@ const RoomCheckInCard = ({
         {/* Cleanliness — stops propagation so editing doesn't open the modal */}
         <div className="bci-card-cleanliness" onClick={stopProp}>
           <div className="bci-card-cleanliness-row">
-            <div className="bci-card-bar-wrap">
-              <div className="bci-card-bar-track">
-                <div
-                  className="bci-card-bar-fill"
-                  style={{ width: `${cleanlinessPercent}%`, backgroundColor: cleanlinessColor }}
-                />
-              </div>
-            </div>
-            <span className="bci-card-cleanliness-label" style={{ color: cleanlinessColor }}>
-              {cleanlinessLabel}
-            </span>
-            <button
-              className="bci-card-cleanliness-edit-btn"
-              onClick={() => setShowSlider(v => !v)}
-              aria-label="Adjust cleanliness"
-            >
-              <span className="material-icons">
-                {showSlider ? 'expand_less' : 'edit'}
-              </span>
-            </button>
-          </div>
-
-          {showSlider && (
             <input
               type="range"
               min="1"
@@ -132,6 +122,25 @@ const RoomCheckInCard = ({
               onTouchEnd={() => onCleanlinessSave(room.id)}
               className="bci-card-cleanliness-slider"
             />
+            <span className="bci-card-cleanliness-label" style={{ color: cleanlinessColor }}>
+              {cleanlinessLabel}
+            </span>
+          </div>
+
+          {(lastCheckedText || showConfirmBtn) && (
+            <div className="bci-card-cleanliness-footer">
+              {lastCheckedText && (
+                <span className="bci-card-last-checked">{lastCheckedText}</span>
+              )}
+              {showConfirmBtn && (
+                <button
+                  className="bci-card-confirm-btn"
+                  onClick={() => onConfirm(room.id)}
+                >
+                  {confirmLabel}
+                </button>
+              )}
+            </div>
           )}
 
           {actionError && <p className="bci-card-action-error">{actionError}</p>}
@@ -217,6 +226,26 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
     }
   };
 
+  const handleConfirm = async (roomId) => {
+    setActionErrors(prev => ({ ...prev, [roomId]: null }));
+    // Optimistic: bump local cleanlinessUpdatedAt so the card immediately
+    // reflects "Checked today" and hides the confirm button.
+    const now = new Date();
+    setRooms(prev => prev.map(r =>
+      r.id === roomId ? { ...r, cleanlinessUpdatedAt: now } : r
+    ));
+    try {
+      await confirmRoomCleanliness(currentUser.uid, roomId);
+    } catch (err) {
+      console.error('Error confirming cleanliness:', err);
+      setActionErrors(prev => ({
+        ...prev,
+        [roomId]: "That confirmation didn't save. Try again.",
+      }));
+      load();
+    }
+  };
+
   const handleModalClose = () => {
     setOpenRoomId(null);
     load();
@@ -251,6 +280,7 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
               actionError={actionErrors[room.id]}
               onCleanlinessChange={handleCleanlinessChange}
               onCleanlinessSave={handleCleanlinessSave}
+              onConfirm={handleConfirm}
               onOpenModal={() => setOpenRoomId(room.id)}
             />
           );
