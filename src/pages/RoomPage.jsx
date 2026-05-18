@@ -133,7 +133,9 @@ const RoomPage = () => {
     setActionError(null);
     try {
       await updateRoomCleanliness(currentUser.uid, roomId, localCleanliness);
-      setRoom(prev => ({ ...prev, cleanliness: localCleanliness }));
+      // Mirror the server-side timestamp bump locally so staleness state
+      // updates immediately instead of waiting for a refetch.
+      setRoom(prev => ({ ...prev, cleanliness: localCleanliness, cleanlinessUpdatedAt: new Date() }));
     } catch (error) {
       console.error('Error updating cleanliness:', error);
       setActionError("That cleanliness update didn't save. Try again.");

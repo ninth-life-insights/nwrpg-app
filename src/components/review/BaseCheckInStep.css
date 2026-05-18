@@ -102,6 +102,11 @@
   border-radius: 6px;
   outline: none;
   cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.bci-card-cleanliness-slider.stale {
+  background: var(--color-border, #e5e7eb);
 }
 
 .bci-card-cleanliness-footer {
