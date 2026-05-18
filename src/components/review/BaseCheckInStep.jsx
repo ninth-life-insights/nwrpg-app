@@ -8,12 +8,7 @@ import RoomDetailModal from '../base/RoomDetailModal';
 import StickyFooter from '../ui/StickyFooter';
 import ErrorMessage from '../ui/ErrorMessage';
 import { withTimeout } from '../../utils/fetchWithTimeout';
-import {
-  isCleanlinessStale,
-  getCleanlinessStaleLabel,
-  daysSinceCleanlinessUpdate,
-  CLEANLINESS_STALE_COLOR,
-} from '../../utils/cleanlinessHelpers';
+import { CLEANLINESS_STALE_COLOR } from '../../utils/cleanlinessHelpers';
 import dayjs from 'dayjs';
 import './BaseCheckInStep.css';
 
@@ -66,6 +61,7 @@ const RoomCheckInCard = ({
   room,
   stats,
   localCleanliness,
+  isReviewedInSession,
   actionError,
   onCleanlinessChange,
   onCleanlinessSave,
@@ -74,20 +70,15 @@ const RoomCheckInCard = ({
 }) => {
   const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID;
   const hasDraftChange = localCleanliness !== room.cleanliness;
-  const showAsStale = !isEntireBase && !hasDraftChange && isCleanlinessStale(room);
-  const cleanlinessColor = showAsStale ? CLEANLINESS_STALE_COLOR : CLEANLINESS_COLORS[localCleanliness];
-  const cleanlinessLabel = showAsStale ? getCleanlinessStaleLabel(room) : CLEANLINESS_LABELS[localCleanliness];
+
+  // Visual state is driven solely by session-review state. Global cleanliness
+  // staleness is irrelevant inside the check-in — every room starts grey
+  // until the user touches it in this open session.
+  const cleanlinessColor = isReviewedInSession ? CLEANLINESS_COLORS[localCleanliness] : CLEANLINESS_STALE_COLOR;
+  const cleanlinessLabel = CLEANLINESS_LABELS[localCleanliness];
   const statsParts = buildStatsParts(stats);
 
-  // Footer (last-checked + confirm button) only shows after a full day has
-  // elapsed since the last update. Hides right after drag-save or "Still X"
-  // click so the disappearance acts as visible feedback.
-  const daysAgo = !isEntireBase ? daysSinceCleanlinessUpdate(room) : null;
-  const showFooter = !isEntireBase && !hasDraftChange && daysAgo !== null && daysAgo >= 1;
-  let lastCheckedText = null;
-  if (showFooter && !showAsStale) {
-    lastCheckedText = daysAgo === 1 ? 'Checked 1 day ago' : `Checked ${daysAgo} days ago`;
-  }
+  const showConfirmBtn = !isEntireBase && !hasDraftChange && !isReviewedInSession;
   const confirmLabel = `Still ${CLEANLINESS_LABELS[room.cleanliness] || ''}`.trim();
 
   const stopProp = (e) => e.stopPropagation();
@@ -119,18 +110,15 @@ const RoomCheckInCard = ({
                 onChange={e => onCleanlinessChange(room.id, parseInt(e.target.value))}
                 onMouseUp={() => onCleanlinessSave(room.id)}
                 onTouchEnd={() => onCleanlinessSave(room.id)}
-                className={`bci-card-cleanliness-slider${showAsStale ? ' stale' : ''}`}
+                className={`bci-card-cleanliness-slider${isReviewedInSession ? '' : ' stale'}`}
               />
               <span className="bci-card-cleanliness-label" style={{ color: cleanlinessColor }}>
                 {cleanlinessLabel}
               </span>
             </div>
 
-            {showFooter && (
+            {showConfirmBtn && (
               <div className="bci-card-cleanliness-footer">
-                {lastCheckedText && (
-                  <span className="bci-card-last-checked">{lastCheckedText}</span>
-                )}
                 <button
                   className="bci-card-confirm-btn"
                   onClick={() => onConfirm(room.id)}
@@ -171,6 +159,27 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
   const [cleanlinessMap, setCleanlinessMap] = useState({});
   const [actionErrors, setActionErrors] = useState({});
   const [openRoomId, setOpenRoomId] = useState(null);
+  // Session-only: which rooms the user has touched in this open check-in.
+  // Empty on mount — every room starts grey regardless of global freshness.
+  const [reviewedIds, setReviewedIds] = useState(() => new Set());
+
+  const markReviewed = (roomId) => {
+    setReviewedIds(prev => {
+      if (prev.has(roomId)) return prev;
+      const next = new Set(prev);
+      next.add(roomId);
+      return next;
+    });
+  };
+
+  const unmarkReviewed = (roomId) => {
+    setReviewedIds(prev => {
+      if (!prev.has(roomId)) return prev;
+      const next = new Set(prev);
+      next.delete(roomId);
+      return next;
+    });
+  };
 
   const load = async () => {
     if (!currentUser) return;
@@ -208,13 +217,18 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
     const room = rooms.find(r => r.id === roomId);
     if (!room) return;
     const value = cleanlinessMap[roomId];
-    if (value === room.cleanliness) return;
 
     setActionErrors(prev => ({ ...prev, [roomId]: null }));
+    // Optimistically mark reviewed so the card flips colorful immediately.
+    markReviewed(roomId);
     try {
-      await updateRoomCleanliness(currentUser.uid, roomId, value);
-      // Bump cleanlinessUpdatedAt locally too — server stamps it, but without
-      // mirroring locally the card briefly re-renders as stale.
+      // Any slider release counts as a review. If the value actually changed,
+      // update it; otherwise just confirm freshness.
+      if (value !== room.cleanliness) {
+        await updateRoomCleanliness(currentUser.uid, roomId, value);
+      } else {
+        await confirmRoomCleanliness(currentUser.uid, roomId);
+      }
       const now = new Date();
       setRooms(prev => prev.map(r =>
         r.id === roomId ? { ...r, cleanliness: value, cleanlinessUpdatedAt: now } : r
@@ -226,13 +240,14 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
         [roomId]: "That cleanliness update didn't save. Try again.",
       }));
       setCleanlinessMap(prev => ({ ...prev, [roomId]: room.cleanliness }));
+      unmarkReviewed(roomId);
     }
   };
 
   const handleConfirm = async (roomId) => {
     setActionErrors(prev => ({ ...prev, [roomId]: null }));
-    // Optimistic: bump local cleanlinessUpdatedAt so the card immediately
-    // reflects "Checked today" and hides the confirm button.
+    // Optimistic: mark reviewed so the card flips colorful immediately.
+    markReviewed(roomId);
     const now = new Date();
     setRooms(prev => prev.map(r =>
       r.id === roomId ? { ...r, cleanlinessUpdatedAt: now } : r
@@ -245,6 +260,7 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
         ...prev,
         [roomId]: "That confirmation didn't save. Try again.",
       }));
+      unmarkReviewed(roomId);
       load();
     }
   };
@@ -280,6 +296,7 @@ const BaseCheckInStep = ({ onNext, onSkipToSummary }) => {
               room={{ ...room, name: displayName }}
               stats={calcRoomStats(room.id, allMissions)}
               localCleanliness={cleanlinessMap[room.id] ?? room.cleanliness ?? 3}
+              isReviewedInSession={reviewedIds.has(room.id)}
               actionError={actionErrors[room.id]}
               onCleanlinessChange={handleCleanlinessChange}
               onCleanlinessSave={handleCleanlinessSave}

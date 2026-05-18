@@ -117,11 +117,6 @@
   margin-top: 2px;
 }
 
-.bci-card-last-checked {
-  font-size: 11px;
-  color: var(--color-text-light);
-}
-
 .bci-card-confirm-btn {
   background: none;
   border: none;
