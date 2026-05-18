@@ -209,16 +209,6 @@ const BasePage = () => {
         />
       )}
 
-      {/* First-time base setup banner */}
-      {baseIconUnset && (
-        <div className="base-setup-banner">
-          <p className="base-setup-banner-text">Give your base a look — set a name and choose an icon.</p>
-          <button className="base-setup-banner-btn" onClick={() => setShowBaseIconModal(true)}>
-            Get started →
-          </button>
-        </div>
-      )}
-
       {/* Rooms Grid */}
       <DndContext
         sensors={sensors}
