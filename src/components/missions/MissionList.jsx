@@ -21,8 +21,10 @@ import {
 import {
   applyMissionFiltersAndSort,
   getMissionListDisplayMissions,
+  groupMissionsByDueDate,
   normalizeMissionListFilters
 } from '../../utils/missionListFilters';
+import './MissionList.css';
 
 // Drag and drop imports
 import {
@@ -416,6 +418,114 @@ const MissionList = ({
     );
   }
 
+  // Grouped view kicks in only when the user has explicitly chosen to sort by
+  // due date — that's the context where "Overdue / Today / This Week / Later"
+  // bucketing helps. Other sorts stay flat. Selection mode is always flat.
+  const isDueDateGrouped = memoizedFilters.sortBy === 'dueDate' && !selectionMode;
+  const dueDateGroups = isDueDateGrouped ? groupMissionsByDueDate(displayMissions) : [];
+
+  const renderMissionItem = (mission, index, options = {}) => {
+    const { applyRecentMargin = true } = options;
+    const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
+    const isRecentlyCompleted = recentlyCompletedMissions.some(completed => completed.id === mission.id);
+
+    return (
+      <div
+        key={mission.id}
+        className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''} ${isRecentlyCompleted ? 'recently-completed' : ''}`}
+        onClick={() => {
+          if (!selectionMode) return;
+          handleMissionSelect(mission);
+        }}
+        onKeyDown={(e) => {
+          if (!selectionMode) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleMissionSelect(mission);
+          }
+        }}
+        role={selectionMode ? 'button' : undefined}
+        tabIndex={selectionMode ? 0 : undefined}
+        style={{
+          position: 'relative',
+          ...(selectionMode && {
+            cursor: 'pointer',
+            padding: '0.5px 4px',
+            margin: '0 4px',
+            maxWidth: '400px',
+            borderRadius: '12px',
+            border: isSelected ? '3px solid #2196f3' : '',
+            backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
+            transition: 'all 0.2s ease'
+          }),
+          ...(applyRecentMargin && isRecentlyCompleted && {
+            marginBottom: index === recentlyCompletedMissions.length - 1 ? '25px' : '8px'
+          })
+        }}
+      >
+        {/* Drag Prompt - appears near the mission that was attempted to drag */}
+        {showDragPrompt && dragPromptPosition === mission.id && (
+          <div className="drag-prompt-inline">
+            <button
+              className="drag-prompt-close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDragPrompt(false);
+              }}
+            >
+              ×
+            </button>
+            <div className="drag-prompt-content">
+              <p className="drag-prompt-text">
+                Switch to Custom Order to reorder missions
+              </p>
+              <button
+                className="drag-prompt-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSwitchToCustomOrder();
+                }}
+              >
+                Open Filters
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isSelected && selectionMode && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            backgroundColor: '#2196f3',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            zIndex: 10
+          }}>
+            ✓
+          </div>
+        )}
+
+        <MissionCard
+          mission={mission}
+          onToggleComplete={handleToggleComplete}
+          onMissionChanged={loadMissions}
+          onSelect={selectionMode ? handleMissionSelect : undefined}
+          selectionMode={selectionMode}
+          isRecentlyCompleted={isRecentlyCompleted}
+          isCustomOrderMode={isCustomOrderMode}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className={selectionMode ? 'mission-list-selection-mode' : 'mission-list'}>
 
@@ -431,109 +541,20 @@ const MissionList = ({
           strategy={verticalListSortingStrategy}
           disabled={!isCustomOrderMode || selectionMode}
         >
-          <div style={{ textAlign: 'center' }}>
-            {displayMissions.map((mission, index) => {
-              const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
-              const isRecentlyCompleted = recentlyCompletedMissions.some(completed => completed.id === mission.id);
-              
-              return (
-                <div
-                  key={mission.id}
-                  className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''} ${isRecentlyCompleted ? 'recently-completed' : ''}`}
-                  onClick={() => {
-                    if (!selectionMode) return;
-                    handleMissionSelect(mission);
-                  }}
-                  onKeyDown={(e) => {
-                    if (!selectionMode) return;
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleMissionSelect(mission);
-                    }
-                  }}
-                  role={selectionMode ? 'button' : undefined}
-                  tabIndex={selectionMode ? 0 : undefined}
-                  style={{
-                    position: 'relative',
-                    ...(selectionMode && {
-                      cursor: 'pointer',
-                      padding: '0.5px 4px',
-                      margin: '0 4px',
-                      maxWidth: '400px',
-                      borderRadius: '12px',
-                      border: isSelected ? '3px solid #2196f3' : '',
-                      backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
-                      transition: 'all 0.2s ease'
-                    }),
-                    ...(isRecentlyCompleted && {
-                      marginBottom: index === recentlyCompletedMissions.length - 1 ? '25px' : '8px'
-                    })
-                  }}
-                >
-                  {/* Drag Prompt - appears near the mission that was attempted to drag */}
-                  {showDragPrompt && dragPromptPosition === mission.id && (
-                    <div className="drag-prompt-inline">
-                      <button 
-                        className="drag-prompt-close"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowDragPrompt(false);
-                        }}
-                      >
-                        ×
-                      </button>
-                      <div className="drag-prompt-content">
-                        <p className="drag-prompt-text">
-                          Switch to Custom Order to reorder missions
-                        </p>
-                        <button 
-                          className="drag-prompt-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSwitchToCustomOrder();
-                          }}
-                        >
-                          Open Filters
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {isSelected && selectionMode && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      backgroundColor: '#2196f3',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      zIndex: 10
-                    }}>
-                      ✓
-                    </div>
-                  )}
-                  
-                  <MissionCard
-                    key={mission.id}
-                    mission={mission}
-                    onToggleComplete={handleToggleComplete}
-                    onMissionChanged={loadMissions}
-                    onSelect={selectionMode ? handleMissionSelect : undefined}
-                    selectionMode={selectionMode}
-                    isRecentlyCompleted={isRecentlyCompleted}
-                    isCustomOrderMode={isCustomOrderMode}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          {isDueDateGrouped ? (
+            <div className="mission-due-groups">
+              {dueDateGroups.map(group => (
+                <section key={group.key} className={`mission-due-group mission-due-group--${group.key}`}>
+                  <h3 className="mission-due-group-header">{group.label}</h3>
+                  {group.missions.map((mission, i) => renderMissionItem(mission, i, { applyRecentMargin: false }))}
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              {displayMissions.map((mission, i) => renderMissionItem(mission, i))}
+            </div>
+          )}
         </SortableContext>
       </DndContext>
 

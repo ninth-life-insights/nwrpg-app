@@ -175,6 +175,65 @@ export const applyMissionFiltersAndSort = (missionData = [], filters) => {
   return filteredMissions.sort((a, b) => compareMissions(a, b, filterSettings));
 };
 
+// Group an already-sorted list of missions into date buckets. Used by the
+// Mission Bank when sortBy === 'dueDate' to give a contextual sense of
+// urgency. Bucket order is fixed (chronological / by urgency); within each
+// bucket, missions stay in whatever order the caller passed (so the existing
+// sortOrder ASC/DESC is preserved per-bucket). Returns only non-empty buckets.
+export const groupMissionsByDueDate = (missions) => {
+  const todayDate = new Date();
+  const todayMs = todayDate.getTime();
+  const todayStr = toIsoDateString(todayDate);
+  const tomorrowStr = toIsoDateString(new Date(todayMs + 86400000));
+  const weekOutStr = toIsoDateString(new Date(todayMs + 7 * 86400000));
+
+  const buckets = {
+    overdue: [],
+    today: [],
+    tomorrow: [],
+    thisWeek: [],
+    later: [],
+    noDueDate: [],
+  };
+
+  for (const mission of missions) {
+    const due = mission.dueDate;
+    if (!due || due === '') {
+      buckets.noDueDate.push(mission);
+    } else if (due < todayStr) {
+      buckets.overdue.push(mission);
+    } else if (due === todayStr) {
+      buckets.today.push(mission);
+    } else if (due === tomorrowStr) {
+      buckets.tomorrow.push(mission);
+    } else if (due <= weekOutStr) {
+      buckets.thisWeek.push(mission);
+    } else {
+      buckets.later.push(mission);
+    }
+  }
+
+  const order = [
+    ['overdue', 'Overdue'],
+    ['today', 'Today'],
+    ['tomorrow', 'Tomorrow'],
+    ['thisWeek', 'This Week'],
+    ['later', 'Later'],
+    ['noDueDate', 'No due date'],
+  ];
+
+  return order
+    .filter(([key]) => buckets[key].length > 0)
+    .map(([key, label]) => ({ key, label, missions: buckets[key] }));
+};
+
+const toIsoDateString = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 export const getMissionListDisplayMissions = ({
   missions = [],
   missionType,

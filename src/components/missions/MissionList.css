@@ -428,3 +428,40 @@
 .mission-wrapper {
   position: relative;
 }
+
+/* ========================================
+   Due-date grouping (sortBy === 'dueDate')
+   ======================================== */
+
+.mission-due-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.mission-due-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mission-due-group-header {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 auto var(--space-xs);
+  padding: 0 var(--space-md);
+  text-align: left;
+  max-width: var(--max-width-card);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mission-due-group--overdue .mission-due-group-header {
+  color: #b91c1c;
+}
+
+.mission-due-group--today .mission-due-group-header {
+  color: var(--color-warning);
+}
