@@ -56,36 +56,147 @@
   margin: 0;
 }
 
+/* Bulk action bar */
+.dm-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0 var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.dm-select-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: var(--space-xs) 0;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.dm-select-all-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.dm-restore-selected-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  margin-left: auto;
+}
+
+.dm-restore-selected-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: var(--color-primary);
+}
+
+.dm-restore-selected-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dm-restore-selected-btn .material-icons {
+  font-size: 16px;
+}
+
+/* Checkbox */
+.dm-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.dm-checkbox--checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.dm-checkbox--checked .material-icons {
+  font-size: 14px;
+  color: white;
+}
+
+.dm-checkbox-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Mission list */
 .deleted-mission-list {
   display: flex;
   flex-direction: column;
+  gap: var(--space-xs);
 }
 
-.deleted-mission-list .mission-card-condensed {
-  max-width: 100%;
+.dm-mission-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.dm-mission-card-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.dm-mission-card-wrap .mission-card-condensed {
+  width: 100%;
+  box-sizing: border-box;
+  max-width: none;
   margin-left: 0;
   margin-right: 0;
 }
 
-.deleted-mission-restore {
-  background: var(--color-bg-white);
-  color: var(--color-text-dark);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+/* Per-row restore icon button */
+.dm-restore-btn {
+  background: none;
+  border: none;
+  padding: 4px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
-  transition: var(--transition);
+  transition: background var(--transition), color var(--transition);
 }
 
-.deleted-mission-restore:hover:not(:disabled) {
-  background: var(--color-bg-main);
-  box-shadow: var(--shadow-hover);
+.dm-restore-btn:hover:not(:disabled) {
+  background: #eff6ff;
 }
 
-.deleted-mission-restore:disabled {
-  opacity: 0.6;
+.dm-restore-btn:disabled {
+  opacity: 0.4;
   cursor: default;
+}
+
+.dm-restore-btn .material-icons {
+  font-size: 20px;
 }

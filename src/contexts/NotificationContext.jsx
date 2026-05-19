@@ -29,6 +29,7 @@ export const NotificationProvider = ({ children }) => {
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [deleteToast, setDeleteToast] = useState(null);
+  const deleteToastIdRef = useRef(0);
 
   // --- Push notification scheduling ---
   const { currentUser } = useAuth();
@@ -126,8 +127,10 @@ export const NotificationProvider = ({ children }) => {
 
   // Show an "undo delete" toast for a soft-deleted mission. The caller provides
   // the title (for display) and an async `onUndo` that performs the restore.
+  // The id changes per call so the toast remounts and its auto-dismiss timer resets.
   const notifyMissionDeleted = useCallback(({ missionTitle, onUndo }) => {
-    setDeleteToast({ missionTitle, onUndo });
+    deleteToastIdRef.current += 1;
+    setDeleteToast({ id: deleteToastIdRef.current, missionTitle, onUndo });
   }, []);
 
   return (
@@ -157,6 +160,7 @@ export const NotificationProvider = ({ children }) => {
 
       {deleteToast && (
         <UndoDeleteToast
+          key={deleteToast.id}
           missionTitle={deleteToast.missionTitle}
           onUndo={deleteToast.onUndo}
           onDismiss={() => setDeleteToast(null)}
