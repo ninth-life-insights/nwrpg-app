@@ -6,6 +6,7 @@ import {
   updateDoc,
   getDocs,
   getDoc,
+  getCountFromServer,
   query,
   where,
   orderBy,
@@ -144,6 +145,20 @@ export const getDeletedMissions = async (userId) => {
     }));
   } catch (error) {
     console.error('Error getting deleted missions:', error);
+    throw error;
+  }
+};
+
+// Cheap aggregate count of deleted missions — used by the settings entry point.
+// Avoids the composite index that getDeletedMissions needs (where + orderBy).
+export const getDeletedMissionsCount = async (userId) => {
+  try {
+    const missionsRef = getUserMissionsRef(userId);
+    const q = query(missionsRef, where('status', '==', MISSION_STATUS.DELETED));
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error('Error getting deleted missions count:', error);
     throw error;
   }
 };

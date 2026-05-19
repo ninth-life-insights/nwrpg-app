@@ -8,9 +8,8 @@ import { db } from '../services/firebase/config';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
 import { getUserProfile, updateUserProfile } from '../services/userService';
-import { getDeletedMissions, restoreMission } from '../services/missionService';
+import { getDeletedMissionsCount } from '../services/missionService';
 import { DAY_NAMES } from '../utils/weeklyReviewHelpers';
-import { formatForUserLong } from '../utils/dateHelpers';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
 import './SettingsPage.css';
@@ -39,25 +38,13 @@ const SettingsPage = () => {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  const [deletedMissions, setDeletedMissions] = useState([]);
-  const [deletedLoadError, setDeletedLoadError] = useState(null);
-  const [deletedActionError, setDeletedActionError] = useState(null);
-  const [pendingMissionId, setPendingMissionId] = useState(null);
-
-  const loadDeletedMissions = async () => {
-    if (!currentUser) return;
-    setDeletedLoadError(null);
-    try {
-      const missions = await getDeletedMissions(currentUser.uid);
-      setDeletedMissions(missions);
-    } catch {
-      setDeletedLoadError("Your deleted missions didn't load. Try again.");
-    }
-  };
+  const [deletedCount, setDeletedCount] = useState(0);
 
   useEffect(() => {
     if (!currentUser) return;
-    loadDeletedMissions();
+    getDeletedMissionsCount(currentUser.uid)
+      .then(setDeletedCount)
+      .catch(() => setDeletedCount(0));
     getNotificationPrefs(currentUser.uid).then(setPrefs);
     getUserProfile(currentUser.uid).then(profile => {
       if (profile?.weekStartDay != null) {
@@ -78,21 +65,6 @@ const SettingsPage = () => {
   const handleLogout = async () => {
     await logout();
   };
-
-  const handleRestoreDeleted = async (missionId) => {
-    if (!currentUser || pendingMissionId) return;
-    setDeletedActionError(null);
-    setPendingMissionId(missionId);
-    try {
-      await restoreMission(currentUser.uid, missionId);
-      setDeletedMissions(prev => prev.filter(m => m.id !== missionId));
-    } catch {
-      setDeletedActionError("That mission didn't restore. Try again.");
-    } finally {
-      setPendingMissionId(null);
-    }
-  };
-
 
   const handleMasterToggle = async () => {
     const turningOn = !prefs.enabled;
@@ -345,45 +317,20 @@ const SettingsPage = () => {
         </div>
       </section>
 
-      {(deletedMissions.length > 0 || deletedLoadError) && (
+      {deletedCount > 0 && (
         <section className="settings-section">
-          <h2 className="settings-section-title">Deleted Missions</h2>
-          <p className="settings-hint">
-            Restore a mission to bring it back to your active list.
-          </p>
-
-          {deletedLoadError && (
-            <ErrorMessage message={deletedLoadError} onRetry={loadDeletedMissions} />
-          )}
-
-          {deletedActionError && (
-            <ErrorMessage message={deletedActionError} />
-          )}
-
-          {deletedMissions.length > 0 && (
-            <ul className="settings-deleted-list">
-              {deletedMissions.map(m => (
-                <li key={m.id} className="settings-deleted-item">
-                  <div className="settings-deleted-info">
-                    <span className="settings-deleted-title">{m.title}</span>
-                    {m.deletedAt && (
-                      <span className="settings-deleted-meta">
-                        Deleted {formatForUserLong(m.deletedAt)}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="settings-deleted-restore"
-                    onClick={() => handleRestoreDeleted(m.id)}
-                    disabled={pendingMissionId === m.id}
-                  >
-                    {pendingMissionId === m.id ? 'Restoring...' : 'Restore'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <button
+            className="settings-nav-row"
+            onClick={() => navigate('/deleted-missions')}
+          >
+            <div className="settings-row-label-group">
+              <span className="settings-label">Deleted missions</span>
+              <span className="settings-hint">
+                {deletedCount} {deletedCount === 1 ? 'mission' : 'missions'} ready to restore
+              </span>
+            </div>
+            <span className="material-icons-outlined settings-nav-row-chevron">chevron_right</span>
+          </button>
         </section>
       )}
 
