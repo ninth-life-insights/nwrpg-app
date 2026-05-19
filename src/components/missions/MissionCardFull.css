@@ -381,11 +381,21 @@
 
 
 .info-icon {
-  font-size: 0.8em;
-  color: var(--color-text-light);
+  background: none;
+  border: none;
+  padding: 1px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  vertical-align: middle;
-  user-select: none;
+  color: var(--color-text-light);
+  transition: color var(--transition);
+  vertical-align: -2px;
+}
+
+.info-icon .material-icons-outlined {
+  font-size: 14px;
 }
 
 .info-icon:hover {

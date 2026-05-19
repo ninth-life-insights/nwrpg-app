@@ -411,13 +411,16 @@ const MissionCardFull = ({
               {expiryDisplay && (
                 <div className="metadata-row expiry-row">
                   <span>Up for review by {expiryDisplay}</span>
-                  <span
+                  <button
+                    type="button"
                     className="info-icon"
                     aria-label="About the review date"
                     onClick={() => setShowExpiryNote(v => !v)}
-                  >ⓘ</span>
+                  >
+                    <span className="material-icons-outlined">info</span>
+                  </button>
                   {showExpiryNote && (
-                    <p className="expiry-note">Missions are never archived without your permission. After this date, this mission will be surfaced during your weekly review so you can decide whether to keep or archive it.</p>
+                    <p className="expiry-note">Missions are never archived without your permission. After this date, this mission will be surfaced during your weekly review.</p>
                   )}
                 </div>
               )}
