@@ -93,7 +93,8 @@ export const MISSION_SCHEMA = {
   currentCount: 0,                    // number - current progress count
   
   // RPG elements
-  isDailyMission: false,              // boolean - is this a daily mission
+  // (isDailyMission is NOT stored — it's computed from dailyMissions/config
+  //  via DailyMissionsContext / useIsDailyMission at display time)
   quest: null,                        // object - if part of a quest
   questID: null,                      // number - order in quest
   forPartyMember: null,               // object - party member

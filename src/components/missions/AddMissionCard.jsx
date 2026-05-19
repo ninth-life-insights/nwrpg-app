@@ -67,7 +67,6 @@ const AddMissionCard = ({
         },
         priority: initialMission.priority || 'normal',
         pinned: initialMission.pinned || false,
-        isDailyMission: initialMission.isDailyMission || false,
         questId: initialMission.questId || null,
         baseLocation: initialMission.baseLocation || null,
       };
@@ -95,7 +94,6 @@ const AddMissionCard = ({
       },
       priority: 'normal',
       pinned: false,
-      isDailyMission: false,
       questId: defaultQuestId || null,
       baseLocation: defaultRoomId || null,
     };
@@ -241,7 +239,6 @@ const AddMissionCard = ({
       targetCount: formData.targetCount ? parseInt(formData.targetCount, 10) : null,
       recurrence: formData.recurrence,
       category: 'personal',
-      isDailyMission: formData.isDailyMission,
       priority: formData.priority,
       pinned: formData.pinned,
       baseLocation: formData.baseLocation || null,
@@ -292,7 +289,6 @@ const AddMissionCard = ({
       },
       priority: 'normal',
       pinned: false,
-      isDailyMission: false,
       questId: null,
       baseLocation: null,
     });

@@ -14,6 +14,7 @@ import {
   toDateString
 } from '../../utils/dateHelpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import { toggleMissionStoryExclusion } from '../../services/missionService';
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import './MissionCardCondensed.css';
@@ -26,6 +27,7 @@ const MissionCardCondensed = ({
   actionSlot = null,
 }) => {
   const { currentUser } = useAuth();
+  const isDailyMission = useIsDailyMission(mission.id);
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
@@ -90,7 +92,7 @@ const MissionCardCondensed = ({
 
   const cardClass = readOnly
     ? 'mission-card-condensed readonly'
-    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily' : ''}`;
+    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${isDailyMission ? 'daily' : ''}`;
   const titleClass = readOnly
     ? 'mcc-title'
     : `mcc-title ${isCompleted ? 'completed' : ''}`;

@@ -32,6 +32,7 @@ import {
 } from '../../services/dailyMissionService';
 
 import { useQuests } from '../../contexts/QuestsContext';
+import { useDailyMissions } from '../../contexts/DailyMissionsContext';
 
 // Date helpers
 import {
@@ -71,6 +72,7 @@ const EditDailyMissionsPage = ({
   const tomorrow = toDateString(new Date(Date.now() + 86400000));
 
   const { questsMap } = useQuests();
+  const { refreshDailyMissions } = useDailyMissions();
   const [targetDate, setTargetDate] = useState(initialTargetDate || today);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
@@ -316,6 +318,8 @@ const handleAddNewMission = async (missionData) => {
 
         const updatedConfig = await getDailyMissionsConfig(currentUser.uid);
         setCurrentConfig(updatedConfig);
+        // Propagate the new config to every mounted mission card.
+        refreshDailyMissions();
       } else {
         // Future date: write only to history, never touch config
         await planDailyMissionsForDate(currentUser.uid, selectedMissionIds, targetDate);

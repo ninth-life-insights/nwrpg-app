@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { RoomsProvider } from './contexts/RoomsContext';
 import { QuestsProvider } from './contexts/QuestsContext';
+import { DailyMissionsProvider } from './contexts/DailyMissionsContext';
 import { Navigate } from 'react-router-dom';
 import './App.css';
 
@@ -94,7 +95,9 @@ function App() {
         <NotificationProvider>
           <RoomsProvider>
             <QuestsProvider>
-              <AppContent />
+              <DailyMissionsProvider>
+                <AppContent />
+              </DailyMissionsProvider>
             </QuestsProvider>
           </RoomsProvider>
         </NotificationProvider>

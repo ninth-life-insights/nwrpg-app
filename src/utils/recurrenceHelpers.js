@@ -146,6 +146,7 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     spReward, // Legacy field, no longer stored
     xpAwarded, // Reset — this instance hasn't been completed yet
     spAwarded, // Reset — this instance hasn't been completed yet
+    isDailyMission, // Computed from daily config; don't inherit a stale value
     ...missionData
   } = originalMission;
 

@@ -23,6 +23,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
+import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import './MissionCard.css';
 
 const MissionCard = ({
@@ -41,6 +42,7 @@ const MissionCard = ({
   const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
+  const isDailyMission = useIsDailyMission(mission.id);
   const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
   const [showXpBadge, setShowXpBadge] = useState(false);
@@ -160,7 +162,7 @@ const MissionCard = ({
   <div
     ref={setNodeRef}
     style={style}
-    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : mission.isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
   >
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (
@@ -219,7 +221,7 @@ const MissionCard = ({
               </button>
             )}
 
-            {mission.isDailyMission && !hideDailyBadge && (
+            {isDailyMission && !hideDailyBadge && (
               <Badge variant="daily">Daily</Badge>
             )}
             

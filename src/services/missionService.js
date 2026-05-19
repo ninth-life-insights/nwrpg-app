@@ -254,8 +254,8 @@ export const updateMission = async (userId, missionId, updates) => {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     
     // Remove fields that shouldn't be directly updated by user-driven edits.
-    // xpReward/spReward are no longer stored at all; xpAwarded/spAwarded are
-    // server-managed at completion time.
+    // xpReward/spReward are no longer stored; xpAwarded/spAwarded are server-
+    // managed at completion; isDailyMission is computed from daily config.
     const {
       id,
       createdAt,
@@ -265,6 +265,7 @@ export const updateMission = async (userId, missionId, updates) => {
       spAwarded,
       xpReward,
       spReward,
+      isDailyMission,
       ...updateData
     } = updates;
     

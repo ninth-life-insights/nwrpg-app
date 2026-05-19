@@ -200,25 +200,7 @@ const MissionList = ({
       return;
     }
 
-    const enhanceMissionWithDailyStatus = async () => {
-      try {
-        const enhancedMissions = await addDailyMissionStatus(currentUser.uid, [newMission]);
-        const enhancedMission = enhancedMissions[0];
-        
-        setMissions(prev => {
-          const newMissions = [enhancedMission, ...prev];
-          return newMissions;
-        });
-      } catch (error) {
-        console.error('Error enhancing mission with daily status:', error);
-        setMissions(prev => {
-          const newMissions = [{...newMission, isDailyMission: false}, ...prev];
-          return newMissions;
-        });
-      }
-    };
-
-    enhanceMissionWithDailyStatus();
+    setMissions(prev => [newMission, ...prev]);
   };
 
   const handleMissionSelect = (mission) => {

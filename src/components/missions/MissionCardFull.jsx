@@ -21,6 +21,7 @@ import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import {
   deleteMission,
   archiveMission,
@@ -42,6 +43,7 @@ const MissionCardFull = ({
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
   const { notifyMissionDeleted } = useNotifications();
+  const isDailyMission = useIsDailyMission(mission.id);
   const [isEditing, setIsEditing] = useState(false);
   const [editFocusField, setEditFocusField] = useState(null);
   const [showExpiryNote, setShowExpiryNote] = useState(false);
@@ -287,7 +289,7 @@ const MissionCardFull = ({
           <div className="mission-detail-content">
             
             {/* Daily Mission Badge */}
-            {displayMission.isDailyMission && (
+            {isDailyMission && (
               <div className="daily-mission-header">
                 <Badge variant="daily-large" icon="sunny">Daily</Badge>
               </div>
