@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
+import UndoDeleteToast from '../components/ui/UndoDeleteToast';
 import { useAuth } from './AuthContext';
 import { getNotificationPrefs } from '../services/notificationPrefsService';
 import {
@@ -27,6 +28,7 @@ export const NotificationProvider = ({ children }) => {
   // --- In-app modal state (level-up / skill-up) ---
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
+  const [deleteToast, setDeleteToast] = useState(null);
 
   // --- Push notification scheduling ---
   const { currentUser } = useAuth();
@@ -122,11 +124,18 @@ export const NotificationProvider = ({ children }) => {
     setSkillLevelUpInfo({ skillName, newLevel });
   }, []);
 
+  // Show an "undo delete" toast for a soft-deleted mission. The caller provides
+  // the title (for display) and an async `onUndo` that performs the restore.
+  const notifyMissionDeleted = useCallback(({ missionTitle, onUndo }) => {
+    setDeleteToast({ missionTitle, onUndo });
+  }, []);
+
   return (
     <NotificationContext.Provider value={{
       notifyMissionCompletion,
       notifyLevelUp,
       notifySkillLevelUp,
+      notifyMissionDeleted,
       refreshSchedule,
     }}>
       {children}
@@ -143,6 +152,14 @@ export const NotificationProvider = ({ children }) => {
           skillName={skillLevelUpInfo.skillName}
           newLevel={skillLevelUpInfo.newLevel}
           onClose={() => setSkillLevelUpInfo(null)}
+        />
+      )}
+
+      {deleteToast && (
+        <UndoDeleteToast
+          missionTitle={deleteToast.missionTitle}
+          onUndo={deleteToast.onUndo}
+          onDismiss={() => setDeleteToast(null)}
         />
       )}
     </NotificationContext.Provider>

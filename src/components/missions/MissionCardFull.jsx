@@ -20,6 +20,7 @@ import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from
 import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import {
   deleteMission,
   archiveMission,
@@ -40,6 +41,7 @@ const MissionCardFull = ({
   const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
+  const { notifyMissionDeleted } = useNotifications();
   const [isEditing, setIsEditing] = useState(false);
   const [editFocusField, setEditFocusField] = useState(null);
   const [showExpiryNote, setShowExpiryNote] = useState(false);
@@ -145,9 +147,20 @@ const MissionCardFull = ({
   const handleDelete = async () => {
     setActionError(null);
     setActionRetry(() => handleDelete);
+    const userId = currentUser.uid;
+    const missionId = mission.id;
+    const missionTitle = displayMission.title;
+    const notifyChange = onMissionChanged;
     try {
-      await deleteMission(currentUser.uid, mission.id);
-      onMissionChanged?.(mission.id, 'deleted');
+      await deleteMission(userId, missionId);
+      notifyChange?.(missionId, 'deleted');
+      notifyMissionDeleted({
+        missionTitle,
+        onUndo: async () => {
+          await restoreMission(userId, missionId);
+          notifyChange?.(missionId, 'restored');
+        },
+      });
       handleClose();
     } catch {
       setActionError("That mission didn't delete. Try again.");

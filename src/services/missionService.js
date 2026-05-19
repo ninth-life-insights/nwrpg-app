@@ -113,7 +113,7 @@ export const getExpiredMissions = async (userId) => {
   try {
     const missionsRef = getUserMissionsRef(userId);
     const q = query(
-      missionsRef, 
+      missionsRef,
       where('status', '==', 'expired'),
       orderBy('createdAt', 'desc')
     );
@@ -124,6 +124,26 @@ export const getExpiredMissions = async (userId) => {
     }));
   } catch (error) {
     console.error('Error getting expired missions:', error);
+    throw error;
+  }
+};
+
+// Get deleted (soft-deleted) missions, most recently deleted first
+export const getDeletedMissions = async (userId) => {
+  try {
+    const missionsRef = getUserMissionsRef(userId);
+    const q = query(
+      missionsRef,
+      where('status', '==', MISSION_STATUS.DELETED),
+      orderBy('deletedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting deleted missions:', error);
     throw error;
   }
 };
@@ -514,13 +534,14 @@ export const archiveMission = async (userId, missionId) => {
   return expireMission(userId, missionId);
 };
 
-// Restore an archived/expired mission back to active
+// Restore a mission (from archived/expired OR deleted) back to active
 export const restoreMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     await updateDoc(missionRef, {
       status: MISSION_STATUS.ACTIVE,
       expiredAt: null,
+      deletedAt: null,
       updatedAt: serverTimestamp()
     });
   } catch (error) {

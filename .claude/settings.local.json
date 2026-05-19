@@ -13,7 +13,8 @@
       "Bash(grep -E \"\\\\.\\(jsx|js\\)$\")",
       "Bash(grep -E \"\\\\.js$|\\\\.jsx$\")",
       "Bash(npm run *)",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(grep -E \"/\\\\*|^\\\\s*\\\\//\" src/pages/missions/MissionBankPage.jsx src/components/missions/MissionList.jsx)"
     ]
   }
 }
