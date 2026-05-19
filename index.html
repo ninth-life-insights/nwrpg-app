@@ -56,6 +56,39 @@
             url: location.href,
           });
         });
+
+        function addDebugButton() {
+          if (document.getElementById('__nwrpg_dbg_btn')) return;
+          var btn = document.createElement('a');
+          btn.id = '__nwrpg_dbg_btn';
+          btn.href = '/debug.html';
+          btn.textContent = '?';
+          btn.setAttribute('aria-label', 'Diagnostics');
+          btn.style.cssText = [
+            'position:fixed',
+            'bottom:8px',
+            'right:8px',
+            'width:32px',
+            'height:32px',
+            'border-radius:50%',
+            'background:rgba(0,0,0,0.35)',
+            'color:#fff',
+            'display:flex',
+            'align-items:center',
+            'justify-content:center',
+            'font:bold 14px system-ui,-apple-system,sans-serif',
+            'text-decoration:none',
+            'z-index:99999',
+            'user-select:none',
+            '-webkit-tap-highlight-color:transparent',
+          ].join(';');
+          document.body.appendChild(btn);
+        }
+        if (document.body) {
+          addDebugButton();
+        } else {
+          document.addEventListener('DOMContentLoaded', addDebugButton);
+        }
       })();
     </script>
   </head>
