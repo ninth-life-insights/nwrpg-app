@@ -29,6 +29,10 @@
   border-color: #f7b946;
 }
 
+.mission-card-condensed.readonly:hover {
+  transform: none;
+}
+
 /* Content takes all remaining space, clips overflow */
 .mcc-content {
   flex: 1;

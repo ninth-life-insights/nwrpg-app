@@ -22,6 +22,8 @@ const MissionCardCondensed = ({
   mission,
   onToggleComplete,
   onMissionChanged,
+  readOnly = false,
+  actionSlot = null,
 }) => {
   const { currentUser } = useAuth();
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
@@ -86,23 +88,34 @@ const MissionCardCondensed = ({
     }
   };
 
+  const cardClass = readOnly
+    ? 'mission-card-condensed readonly'
+    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily' : ''}`;
+  const titleClass = readOnly
+    ? 'mcc-title'
+    : `mcc-title ${isCompleted ? 'completed' : ''}`;
+
   return (
   <>
-    <div className={`mission-card-condensed ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily' : ''}`}>
-      <div className="mcc-content" onClick={() => setViewingDetails(true)}>
+    <div className={cardClass}>
+      <div
+        className="mcc-content"
+        onClick={readOnly ? undefined : () => setViewingDetails(true)}
+        style={readOnly ? { cursor: 'default' } : undefined}
+      >
         <div className="mcc-row">
           <h3
             ref={titleRef}
-            className={`mcc-title ${isCompleted ? 'completed' : ''}`}
+            className={titleClass}
             style={{ minWidth: titleMinWidth }}
           >
             {mission.title}
           </h3>
           <div className="mcc-badges">
-            {showXpBadge && mission.xpAwarded && (
+            {!readOnly && showXpBadge && mission.xpAwarded && (
               <span className="mcc-xp-badge">+{mission.xpAwarded} XP</span>
             )}
-            {isCompletedToday ? (
+            {!readOnly && isCompletedToday ? (
               <button
                 type="button"
                 className={`mcc-story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
@@ -129,24 +142,28 @@ const MissionCardCondensed = ({
         </div>
       </div>
 
-      <button
-        className={`mcc-toggle ${isCompleted ? 'completed' : ''}`}
-        onClick={handleToggleComplete}
-        aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
-      >
-        <svg
-          className={`mcc-check-icon ${isCompleted ? 'completed' : ''}`}
-          xmlns="http://www.w3.org/2000/svg"
-          height="18px"
-          viewBox="0 -960 960 960"
-          width="18px"
+      {readOnly ? (
+        actionSlot
+      ) : (
+        <button
+          className={`mcc-toggle ${isCompleted ? 'completed' : ''}`}
+          onClick={handleToggleComplete}
+          aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
         >
-          <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
-        </svg>
-      </button>
+          <svg
+            className={`mcc-check-icon ${isCompleted ? 'completed' : ''}`}
+            xmlns="http://www.w3.org/2000/svg"
+            height="18px"
+            viewBox="0 -960 960 960"
+            width="18px"
+          >
+            <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
+          </svg>
+        </button>
+      )}
     </div>
 
-    {viewingDetails && (
+    {!readOnly && viewingDetails && (
       <MissionCardFull
         mission={mission}
         onClose={() => setViewingDetails(false)}

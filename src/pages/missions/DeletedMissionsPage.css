@@ -57,47 +57,8 @@
 }
 
 .deleted-mission-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.deleted-mission-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border-yellow);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-}
-
-.deleted-mission-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
-
-.deleted-mission-title {
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  color: var(--color-text-dark);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.deleted-mission-meta {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-light);
 }
 
 .deleted-mission-restore {
