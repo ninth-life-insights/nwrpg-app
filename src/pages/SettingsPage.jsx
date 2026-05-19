@@ -31,6 +31,8 @@ const SettingsPage = () => {
   const [character, setCharacter] = useState(null);
   const [weekStartDay, setWeekStartDay] = useState(0); // default Sunday
   const [storyStyle, setStoryStyle] = useState('balanced');
+  // 'none' (no auto follow-up) or a positive number of days. Defaults to 30.
+  const [defaultFollowUpDays, setDefaultFollowUpDays] = useState(30);
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -56,6 +58,10 @@ const SettingsPage = () => {
         setWeekStartDay(Number.isFinite(coerced) ? coerced : 0);
       }
       if (profile?.storyStyle) setStoryStyle(profile.storyStyle);
+      const followUp = profile?.defaultFollowUpDays;
+      if (followUp === 'none' || (typeof followUp === 'number' && followUp > 0)) {
+        setDefaultFollowUpDays(followUp);
+      }
     });
     getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
       if (snap.exists()) setCharacter(snap.data().character ?? null);
@@ -100,7 +106,7 @@ const SettingsPage = () => {
     try {
       await Promise.all([
         saveNotificationPrefs(currentUser.uid, prefs),
-        updateUserProfile(currentUser.uid, { weekStartDay, storyStyle }),
+        updateUserProfile(currentUser.uid, { weekStartDay, storyStyle, defaultFollowUpDays }),
       ]);
       await refreshSchedule();
       setSaved(true);
@@ -277,6 +283,27 @@ const SettingsPage = () => {
             {[6, 0, 1].map(i => (
               <option key={i} value={i}>{DAY_NAMES[i]}</option>
             ))}
+          </select>
+        </div>
+
+        <div className="settings-row">
+          <div className="settings-row-label-group">
+            <span className="settings-label">Default follow-up window</span>
+            <span className="settings-hint">How long new missions stay active before showing up in your weekly review. You can override per mission.</span>
+          </div>
+          <select
+            value={defaultFollowUpDays}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDefaultFollowUpDays(v === 'none' ? 'none' : Number(v));
+            }}
+            className="settings-select"
+          >
+            <option value="14">14 days</option>
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="none">No follow-up</option>
           </select>
         </div>
 
