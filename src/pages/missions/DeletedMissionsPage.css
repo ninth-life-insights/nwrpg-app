@@ -61,6 +61,12 @@
   flex-direction: column;
 }
 
+.deleted-mission-list .mission-card-condensed {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .deleted-mission-restore {
   background: var(--color-bg-white);
   color: var(--color-text-dark);
