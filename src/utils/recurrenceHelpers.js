@@ -128,6 +128,33 @@ export const shouldCreateNextOccurrence = (recurrence, currentOccurrenceCount = 
   return true;
 };
 
+// Compute the expiry date for a new occurrence. Preserves the *duration* the
+// user originally set on the parent (e.g. 30 days, 1 year, etc.) by measuring
+// the offset between the parent's createdAt and its expiryDate, then applying
+// that same offset from "now". If the parent had no expiry, the new instance
+// has none either.
+const computeNextExpiryDate = (originalMission) => {
+  const { expiryDate, createdAt } = originalMission;
+
+  if (!expiryDate || expiryDate === '') return null;
+
+  if (createdAt) {
+    const parentCreated = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    const parentCreatedDay = dayjs(parentCreated).startOf('day');
+    const parentExpiry = dayjs(expiryDate, 'YYYY-MM-DD');
+    const offsetDays = parentExpiry.diff(parentCreatedDay, 'day');
+
+    if (offsetDays > 0) {
+      return dayjs().add(offsetDays, 'day').format('YYYY-MM-DD');
+    }
+  }
+
+  // Defensive fallback: parent had an expiry but we can't compute an offset
+  // (missing createdAt, malformed date, or non-positive offset). Use the same
+  // 30-day default the create form uses.
+  return dayjs().add(30, 'day').format('YYYY-MM-DD');
+};
+
 // Create next mission instance data
 export const createNextMissionInstance = (originalMission, nextDueDate) => {
   // Remove fields that shouldn't be copied to the new instance
@@ -147,6 +174,11 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     xpAwarded, // Reset — this instance hasn't been completed yet
     spAwarded, // Reset — this instance hasn't been completed yet
     isDailyMission, // Computed from daily config; don't inherit a stale value
+    expiryDate, // Recomputed below to preserve the user's chosen duration
+    scheduledDates, // Per-mission daily planning slots — don't carry to new doc
+    customSortOrder, // Drag-and-drop position — doesn't apply to new instance
+    excludeFromStory, // Per-completion flag — new instance hasn't been completed
+    questId, // Quests are finite — recurrence shouldn't auto-extend membership
     ...missionData
   } = originalMission;
 
@@ -156,6 +188,11 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     status: 'active',
     currentCount: 0, // Reset count progress
     actualTimeSpentMinutes: null, // Reset timer progress
+    expiryDate: computeNextExpiryDate(originalMission),
+    scheduledDates: [],
+    customSortOrder: null,
+    excludeFromStory: false,
+    questId: null,
     // Keep the original recurrence settings
     recurrence: originalMission.recurrence,
     // Track relationship to original
