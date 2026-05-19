@@ -317,22 +317,22 @@ const SettingsPage = () => {
         </div>
       </section>
 
-      {deletedCount > 0 && (
-        <section className="settings-section">
-          <button
-            className="settings-nav-row"
-            onClick={() => navigate('/deleted-missions')}
-          >
-            <div className="settings-row-label-group">
-              <span className="settings-label">Deleted missions</span>
-              <span className="settings-hint">
-                {deletedCount} {deletedCount === 1 ? 'mission' : 'missions'} ready to restore
-              </span>
-            </div>
-            <span className="material-icons-outlined settings-nav-row-chevron">chevron_right</span>
-          </button>
-        </section>
-      )}
+      <section className="settings-section">
+        <button
+          className="settings-nav-row"
+          onClick={() => navigate('/deleted-missions')}
+        >
+          <div className="settings-row-label-group">
+            <span className="settings-label">Deleted missions</span>
+            <span className="settings-hint">
+              {deletedCount === 0
+                ? 'Nothing to restore'
+                : `${deletedCount} ${deletedCount === 1 ? 'mission' : 'missions'} ready to restore`}
+            </span>
+          </div>
+          <span className="material-icons-outlined settings-nav-row-chevron">chevron_right</span>
+        </button>
+      </section>
 
       <section className="settings-section">
         <h2 className="settings-section-title">Account</h2>
