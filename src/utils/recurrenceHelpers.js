@@ -137,10 +137,15 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     completedAt,
     uncompletedAt,
     expiredAt,
+    deletedAt,
     createdAt,
     updatedAt,
     currentCount, // Reset progress for count-based missions
     actualTimeSpentMinutes, // Reset timer progress
+    xpReward, // Legacy field, no longer stored
+    spReward, // Legacy field, no longer stored
+    xpAwarded, // Reset — this instance hasn't been completed yet
+    spAwarded, // Reset — this instance hasn't been completed yet
     ...missionData
   } = originalMission;
 

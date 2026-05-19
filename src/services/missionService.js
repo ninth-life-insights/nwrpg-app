@@ -14,7 +14,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase/config';
-import { MISSION_STATUS } from '../types/Mission';
+import { MISSION_STATUS, calculateXPReward, calculateSPReward } from '../types/Mission';
 import {
   calculateNextDueDate,
   shouldCreateNextOccurrence,
@@ -32,8 +32,11 @@ import {
  import { logActivityEvent } from './reviewService';
 import { checkAndAwardAchievements } from './achievementService';
 
+// Always computes from the mission's current difficulty + isDailyMission flag.
+// Does NOT read any stored xpReward, so edits to difficulty before completion
+// are honored (which was the source of the stale-reward bug).
 const calculateTotalMissionXP = (mission) => {
-  let totalXP = mission.xpReward;
+  let totalXP = calculateXPReward(mission.difficulty);
   if (mission.isDailyMission) totalXP += 5;
   return totalXP;
 };
@@ -195,10 +198,13 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
     }
 
     const xpAwarded = calculateTotalMissionXP(missionData);
+    // calculateSPReward returns null when there's no skill; otherwise a number.
+    const spAwarded = calculateSPReward(missionData.difficulty, missionData.skill);
 
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
-      xpAwarded: xpAwarded,
+      xpAwarded,
+      spAwarded,
       completedAt: Timestamp.fromDate(new Date()),
       excludeFromStory: false
     });
@@ -206,8 +212,8 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
     const xpResult = await addXP(userId, xpAwarded);
 
     let spResult = null;
-    if (missionData.skill && missionData.spReward) {
-      spResult = await addSP(userId, missionData.skill, missionData.spReward);
+    if (missionData.skill && spAwarded) {
+      spResult = await addSP(userId, missionData.skill, spAwarded);
     }
 
     // Update quest progress if mission is part of a quest
@@ -221,9 +227,10 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
       }
     }
 
-    const completionResult = { 
-      xpAwarded, 
-      leveledUp: xpResult?.leveledUp || false, 
+    const completionResult = {
+      xpAwarded,
+      spAwarded,
+      leveledUp: xpResult?.leveledUp || false,
       newLevel: xpResult?.newLevel || null,
       skillLeveledUp: spResult?.leveledUp || false,
       skillName: spResult?.skillName || null,
@@ -246,8 +253,20 @@ export const updateMission = async (userId, missionId, updates) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     
-    // Remove fields that shouldn't be directly updated
-    const { id, createdAt, completedAt, status, xpAwarded, ...updateData } = updates;
+    // Remove fields that shouldn't be directly updated by user-driven edits.
+    // xpReward/spReward are no longer stored at all; xpAwarded/spAwarded are
+    // server-managed at completion time.
+    const {
+      id,
+      createdAt,
+      completedAt,
+      status,
+      xpAwarded,
+      spAwarded,
+      xpReward,
+      spReward,
+      ...updateData
+    } = updates;
     
     await updateDoc(missionRef, {
       ...updateData,
@@ -302,6 +321,10 @@ export const uncompleteMission = async (userId, missionId) => {
     const missionData = missionDoc.data(); 
 
     const xpToRemove = missionData.xpAwarded || 0;
+    // Prefer spAwarded (new). Fall back to spReward for missions that were
+    // completed before the spAwarded field existed — for those, the historical
+    // spReward IS what was actually granted at completion time.
+    const spToRemove = missionData.spAwarded ?? missionData.spReward ?? 0;
 
     if (xpToRemove === 0) {
       console.warn('Mission has no xpAwarded value, skipping XP removal');
@@ -311,7 +334,8 @@ export const uncompleteMission = async (userId, missionId) => {
       status: MISSION_STATUS.ACTIVE,
       completedAt: null,
       uncompletedAt: serverTimestamp(),
-      xpAwarded: null, // Clear the stored XP
+      xpAwarded: null,
+      spAwarded: null,
       excludeFromStory: false,
     });
 
@@ -319,8 +343,8 @@ export const uncompleteMission = async (userId, missionId) => {
       await subtractXP(userId, xpToRemove);
     }
 
-    if (missionData.skill && missionData.spReward) {
-      await subtractSP(userId, missionData.skill, missionData.spReward);
+    if (missionData.skill && spToRemove > 0) {
+      await subtractSP(userId, missionData.skill, spToRemove);
     }
 
     // Update quest progress if mission is part of a quest
@@ -355,28 +379,29 @@ const completeRecurringMission = async (userId, missionId, prefetchedData = null
     }
 
     // Complete the current mission (handles XP, status, completion timestamp, and quest progress)
-    const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, mission);
-    
+    const { xpAwarded, spAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, mission);
+
     // 3. Check if this is a recurring mission and should create next instance
     if (isRecurringMission(mission)) {
       const currentOccurrence = mission.occurrenceNumber || 1;
-      
+
       if (shouldCreateNextOccurrence(mission.recurrence, currentOccurrence, mission.dueDate)) {
         const nextDueDate = calculateNextDueDate(mission.dueDate, mission.recurrence);
-        
+
         if (nextDueDate) {
           // Create the next mission instance
           const nextMissionData = createNextMissionInstance(mission, nextDueDate);
-          
+
           // Create the new mission
           const missionsRef = getUserMissionsRef(userId);
           const newMissionRef = await addDoc(missionsRef, {
             ...nextMissionData,
             createdAt: serverTimestamp()
           });
-          
+
           return {
             xpAwarded,
+            spAwarded,
             leveledUp,
             newLevel,
             skillLeveledUp,
@@ -389,9 +414,10 @@ const completeRecurringMission = async (userId, missionId, prefetchedData = null
         }
       }
     }
-    
+
     return {
       xpAwarded,
+      spAwarded,
       leveledUp,
       newLevel,
       skillLeveledUp,
@@ -434,7 +460,7 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
 
     // If it's an evergreen mission, complete and create a fresh instance (no due date)
     if (isEvergreenMission(mission)) {
-      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, missionWithDaily);
+      const { xpAwarded, spAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, missionWithDaily);
 
       const nextMissionData = createNextMissionInstance(mission, null);
       const missionsRef = getUserMissionsRef(userId);
@@ -446,6 +472,7 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
 
       completionResult = {
         xpAwarded,
+        spAwarded,
         leveledUp,
         newLevel,
         skillLeveledUp,
@@ -459,10 +486,11 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       completionResult = await completeRecurringMission(userId, missionId, missionWithDaily);
     } else {
       // Use the regular completion logic
-      const { xpAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, missionWithDaily);
+      const { xpAwarded, spAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, missionWithDaily);
 
       completionResult = {
         xpAwarded,
+        spAwarded,
         leveledUp,
         newLevel,
         skillLeveledUp,

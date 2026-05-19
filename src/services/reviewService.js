@@ -296,7 +296,9 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
       isDailyMission,
       missionCreatedAt: missionData.createdAt || null,
       xpEarned: completionResult.xpAwarded || 0,
-      spEarned: missionData.spReward || 0,
+      // spAwarded comes from completionResult (current code path).
+      // Fall back to legacy spReward for completions that predate spAwarded.
+      spEarned: completionResult.spAwarded ?? missionData.spReward ?? 0,
       skillName: missionData.skill || null,
 
       // Quest context

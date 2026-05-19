@@ -56,10 +56,9 @@ export const MISSION_SCHEMA = {
   
   // Difficulty and rewards
   difficulty: DIFFICULTY_LEVELS.EASY, // string - mission difficulty
-  xpReward: null,                     // number - calculated based on difficulty/completion type
-  xpAwarded: null,                    // number - keeps track of XP given if task is completed
+  xpAwarded: null,                    // number | null - XP granted at completion (server-managed)
+  spAwarded: null,                    // number | null - SP granted at completion (server-managed)
   skill: null,                        // string | null - associated skill
-  spReward: null,
   
   // Timestamps (Firestore Timestamp objects)
   createdAt: null,                    // Timestamp - when mission was created
@@ -118,19 +117,11 @@ export const MISSION_SCHEMA = {
 // Create a new mission object with default values
 
 export const createMissionTemplate = (overrides = {}) => {
+  // XP/SP rewards are no longer stored on the mission — they're computed at
+  // completion time from the mission's current difficulty + skill.
   return {
     ...MISSION_SCHEMA,
     ...overrides,
-    // Ensure XP is calculated if not provided
-    xpReward: overrides.xpReward || calculateXPReward(
-      overrides.difficulty || DIFFICULTY_LEVELS.EASY,
-      overrides.completionType || COMPLETION_TYPES.SIMPLE
-    ),
-
-    spReward: overrides.spReward || calculateSPReward(
-      overrides.difficulty || DIFFICULTY_LEVELS.EASY,
-      overrides.skill || null
-    ),
   };
 };
 
