@@ -321,14 +321,30 @@ export const uncompleteMission = async (userId, missionId) => {
     const missionDoc = await getDoc(missionRef);
     const missionData = missionDoc.data(); 
 
-    const xpToRemove = missionData.xpAwarded || 0;
-    // Prefer spAwarded (new). Fall back to spReward for missions that were
-    // completed before the spAwarded field existed — for those, the historical
-    // spReward IS what was actually granted at completion time.
-    const spToRemove = missionData.spAwarded ?? missionData.spReward ?? 0;
+    // Determine how much XP to reverse. Prefer the actually-awarded amount
+    // (xpAwarded). Fall back to recalculating from difficulty if it's missing
+    // — this shouldn't happen in current code, but covers any legacy doc that
+    // was completed without xpAwarded being written.
+    let xpToRemove;
+    if (missionData.xpAwarded != null) {
+      xpToRemove = missionData.xpAwarded;
+    } else {
+      xpToRemove = calculateTotalMissionXP(missionData);
+      console.warn(`Mission ${missionId} missing xpAwarded; recalculated to ${xpToRemove} from difficulty.`);
+    }
 
-    if (xpToRemove === 0) {
-      console.warn('Mission has no xpAwarded value, skipping XP removal');
+    // SP fallback chain: spAwarded (new) → spReward (legacy completion field)
+    // → recompute from difficulty + skill. Zero if no skill.
+    let spToRemove;
+    if (missionData.spAwarded != null) {
+      spToRemove = missionData.spAwarded;
+    } else if (missionData.spReward != null) {
+      spToRemove = missionData.spReward;
+    } else if (missionData.skill) {
+      spToRemove = calculateSPReward(missionData.difficulty, missionData.skill) || 0;
+      console.warn(`Mission ${missionId} missing spAwarded/spReward; recalculated to ${spToRemove} from difficulty + skill.`);
+    } else {
+      spToRemove = 0;
     }
 
     await updateDoc(missionRef, {
