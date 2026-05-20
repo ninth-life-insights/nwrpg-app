@@ -7,7 +7,8 @@ export const normalizeMissionListFilters = (filters = {}) => ({
   completedDateRange: filters.completedDateRange || 'last7days',
   roomFilter: filters.roomFilter || '',
   taskTypeFilter: filters.taskTypeFilter || '',
-  questFilter: filters.questFilter || ''
+  questFilter: filters.questFilter || '',
+  priorityFilter: filters.priorityFilter || ''
 });
 
 const toJsDate = (value) => {
@@ -161,6 +162,10 @@ export const applyMissionFiltersAndSort = (missionData = [], filters) => {
         mission.questId === filterSettings.questFilter
       );
     }
+  }
+
+  if (filterSettings.priorityFilter === '__priority_only__') {
+    filteredMissions = filteredMissions.filter(mission => mission.isPriority === true);
   }
 
   if (filterSettings.includeCompleted && filterSettings.completedDateRange) {

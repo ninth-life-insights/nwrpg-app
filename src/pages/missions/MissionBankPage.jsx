@@ -26,7 +26,8 @@ const MissionBank = () => {
     completedDateRange: 'last7days',
     roomFilter: '',
     taskTypeFilter: '',
-    questFilter: ''
+    questFilter: '',
+    priorityFilter: ''
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,7 +142,8 @@ const MissionBank = () => {
       completedDateRange: 'last7days',
       roomFilter: '',
       taskTypeFilter: '',
-      questFilter: ''
+      questFilter: '',
+      priorityFilter: ''
     });
     setSearchQuery('');
   };
@@ -161,6 +163,7 @@ const MissionBank = () => {
     filters.roomFilter !== '' ||
     filters.taskTypeFilter !== '' ||
     filters.questFilter !== '' ||
+    filters.priorityFilter !== '' ||
     searchQuery !== '';
 
   return (

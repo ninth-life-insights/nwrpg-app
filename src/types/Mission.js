@@ -103,8 +103,7 @@ export const MISSION_SCHEMA = {
   
   // Future expansion fields
   tags: [],                           // array - for filtering/organization
-  priority: 'normal',                 // string - 'low', 'normal', 'high'
-  pinned: false,
+  isPriority: false,                  // boolean - marks mission for visual emphasis + filtering
   
   // Metadata
   version: 1,                          // number - for future schema migrations

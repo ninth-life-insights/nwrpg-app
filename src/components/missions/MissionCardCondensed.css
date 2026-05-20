@@ -29,6 +29,11 @@
   border-color: #f7b946;
 }
 
+.mission-card-condensed.priority {
+  background-color: #fce7f3;
+  border-color: #ec4899;
+}
+
 .mission-card-condensed.readonly:hover {
   transform: none;
 }

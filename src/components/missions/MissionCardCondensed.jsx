@@ -90,9 +90,14 @@ const MissionCardCondensed = ({
     }
   };
 
+  // Precedence: completed > daily > priority. (Quest tint isn't applied on the
+  // condensed card.) Matches MissionCard's full ordering: daily > priority > quest.
+  const priorityClass = isDailyMission
+    ? 'daily'
+    : mission.isPriority ? 'priority' : '';
   const cardClass = readOnly
     ? 'mission-card-condensed readonly'
-    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${isDailyMission ? 'daily' : ''}`;
+    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${priorityClass}`;
   const titleClass = readOnly
     ? 'mcc-title'
     : `mcc-title ${isCompleted ? 'completed' : ''}`;

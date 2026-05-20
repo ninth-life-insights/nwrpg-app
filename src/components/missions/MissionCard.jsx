@@ -162,7 +162,7 @@ const MissionCard = ({
   <div
     ref={setNodeRef}
     style={style}
-    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : isDailyMission ? 'daily-mission-card' : mission.isPriority ? 'priority-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${isDragging ? 'dragging' : ''}`}
   >
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (
@@ -203,8 +203,8 @@ const MissionCard = ({
             <h3 className={`mission-title ${isCompleted ? 'completed' : ''}`}>
               {mission.title}
             </h3>
-            {mission.pinned && (
-              <span className="pin-indicator" title="Pinned mission">📌</span>
+            {mission.isPriority && (
+              <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
             )}
           </div>
           

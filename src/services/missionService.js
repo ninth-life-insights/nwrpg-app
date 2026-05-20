@@ -610,6 +610,25 @@ export const restoreMission = async (userId, missionId) => {
   }
 };
 
+// Toggle the user-set "priority" flag on a mission. Used for visual emphasis
+// (magenta tint) and filtering. Does not affect sort order.
+export const toggleMissionPriority = async (userId, missionId) => {
+  try {
+    const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    const snap = await getDoc(missionRef);
+    if (!snap.exists()) throw new Error('Mission not found');
+    const next = snap.data().isPriority !== true;
+    await updateDoc(missionRef, {
+      isPriority: next,
+      updatedAt: serverTimestamp()
+    });
+    return next;
+  } catch (error) {
+    console.error('Error toggling mission priority:', error);
+    throw error;
+  }
+};
+
 // Toggle whether a completed mission should be used as material for generated story text.
 // XP, SP, activity logs, and review totals still count normally.
 export const toggleMissionStoryExclusion = async (userId, missionId) => {

@@ -92,7 +92,8 @@ const MissionList = ({
   const memoizedFilters = useMemo(() => normalizeMissionListFilters(filters), [
     filters.sortBy, filters.sortOrder, filters.skillFilter,
     filters.includeCompleted, filters.showArchive, filters.completedDateRange,
-    filters.roomFilter, filters.taskTypeFilter, filters.questFilter
+    filters.roomFilter, filters.taskTypeFilter, filters.questFilter,
+    filters.priorityFilter
   ]);
 
   const isCustomOrderMode = memoizedFilters.sortBy === 'custom';

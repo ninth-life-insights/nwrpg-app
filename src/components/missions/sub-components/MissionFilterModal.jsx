@@ -15,7 +15,8 @@ const FILTER_DEFAULTS = {
   completedDateRange: 'last7days',
   roomFilter: '',
   taskTypeFilter: '',
-  questFilter: ''
+  questFilter: '',
+  priorityFilter: ''
 };
 
 const MissionFilterModal = ({
@@ -132,7 +133,7 @@ const MissionFilterModal = ({
           <div className="filter-group">
             <h3 className="filter-group-header">
               Filter
-              {(filters.taskTypeFilter || filters.skillFilter || filters.roomFilter || filters.questFilter || filters.includeCompleted) && (
+              {(filters.taskTypeFilter || filters.skillFilter || filters.roomFilter || filters.questFilter || filters.priorityFilter || filters.includeCompleted) && (
                 <span className="filter-active-dot-inline" />
               )}
             </h3>
@@ -213,6 +214,21 @@ const MissionFilterModal = ({
                     .map(q => (
                       <option key={q.id} value={q.id}>{q.title}</option>
                     ))}
+                </select>
+              </div>
+
+              <div className="filter-section">
+                <h4>
+                  Priority
+                  {filters.priorityFilter && <span className="filter-active-dot-inline" />}
+                </h4>
+                <select
+                  value={filters.priorityFilter}
+                  onChange={(e) => handleFilterChange('priorityFilter', e.target.value)}
+                  className="filter-select full-width"
+                >
+                  <option value="">Any</option>
+                  <option value="__priority_only__">Priority only</option>
                 </select>
               </div>
             </div>

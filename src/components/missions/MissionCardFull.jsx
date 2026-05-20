@@ -27,6 +27,7 @@ import {
   archiveMission,
   restoreMission,
   toggleMissionStoryExclusion,
+  toggleMissionPriority,
 } from '../../services/missionService';
 import './MissionCardFull.css';
 
@@ -193,6 +194,22 @@ const MissionCardFull = ({
     }
   };
 
+  const handleTogglePriority = async () => {
+    setActionError(null);
+    setActionRetry(() => handleTogglePriority);
+    const current = displayMission.isPriority === true;
+    // Optimistic update so the card visual responds immediately.
+    setMissionOverride(prev => ({ ...(prev ?? displayMission), isPriority: !current }));
+    try {
+      const isNow = await toggleMissionPriority(currentUser.uid, mission.id);
+      setMissionOverride(prev => ({ ...(prev ?? displayMission), isPriority: isNow }));
+      onMissionChanged?.(mission.id, 'updated');
+    } catch {
+      setMissionOverride(prev => ({ ...(prev ?? displayMission), isPriority: current }));
+      setActionError("That mission's priority didn't save. Try again.");
+    }
+  };
+
   const handleToggleStoryExclusion = async () => {
     if (excludeLoading || !currentUser) return;
     setActionError(null);
@@ -266,6 +283,13 @@ const MissionCardFull = ({
                       </button>
                     )}
                     <button
+                      className="dropdown-item"
+                      onClick={() => { setShowActionsMenu(false); handleTogglePriority(); }}
+                    >
+                      <span className="material-icons">{displayMission.isPriority ? 'flag' : 'outlined_flag'}</span>
+                      {displayMission.isPriority ? 'Remove priority' : 'Mark as priority'}
+                    </button>
+                    <button
                       className="dropdown-item archive-item"
                       onClick={() => { setShowActionsMenu(false); handleArchive(); }}
                     >
@@ -302,6 +326,9 @@ const MissionCardFull = ({
                   className={`mission-detail-title ${isCompleted ? 'completed' : ''}${isActive ? ' tappable' : ''}`}
                   onClick={isActive ? handleEditClick : undefined}
                 >
+                  {displayMission.isPriority && (
+                    <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
+                  )}
                   {displayMission.title}
                 </h2>
                 {dueDateInfo && (
