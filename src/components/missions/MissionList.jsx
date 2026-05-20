@@ -69,6 +69,7 @@ const MissionList = ({
   const [showDragPrompt, setShowDragPrompt] = useState(false);
   const [dragPromptPosition, setDragPromptPosition] = useState(null);
   const [hasInitializedCustomOrder, setHasInitializedCustomOrder] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -424,6 +425,15 @@ const MissionList = ({
   const isDueDateGrouped = memoizedFilters.sortBy === 'dueDate' && !selectionMode;
   const dueDateGroups = isDueDateGrouped ? groupMissionsByDueDate(displayMissions) : [];
 
+  const toggleGroup = (key) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   const renderMissionItem = (mission, index, options = {}) => {
     const { applyRecentMargin = true } = options;
     const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
@@ -543,12 +553,26 @@ const MissionList = ({
         >
           {isDueDateGrouped ? (
             <div className="mission-due-groups">
-              {dueDateGroups.map(group => (
-                <section key={group.key} className={`mission-due-group mission-due-group--${group.key}`}>
-                  <h3 className="mission-due-group-header">{group.label}</h3>
-                  {group.missions.map((mission, i) => renderMissionItem(mission, i, { applyRecentMargin: false }))}
-                </section>
-              ))}
+              {dueDateGroups.map(group => {
+                const isCollapsed = collapsedGroups.has(group.key);
+                return (
+                  <section key={group.key} className={`mission-due-group mission-due-group--${group.key}`}>
+                    <button
+                      type="button"
+                      className="mission-due-group-header"
+                      onClick={() => toggleGroup(group.key)}
+                      aria-expanded={!isCollapsed}
+                    >
+                      <span className="material-icons-outlined mission-due-group-chevron">
+                        {isCollapsed ? 'chevron_right' : 'expand_more'}
+                      </span>
+                      <span className="mission-due-group-label">{group.label}</span>
+                      <span className="mission-due-group-count">{group.missions.length}</span>
+                    </button>
+                    {!isCollapsed && group.missions.map((mission, i) => renderMissionItem(mission, i, { applyRecentMargin: false }))}
+                  </section>
+                );
+              })}
             </div>
           ) : (
             <div style={{ textAlign: 'center' }}>
