@@ -388,6 +388,8 @@
 .add-mission-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
   padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
@@ -398,6 +400,54 @@
   font-weight: 600;
   margin: 0;
   color: var(--color-text-dark);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Priority toggle in the form header — same shape as the MissionCardFull
+   header version (icon-only, circular). Color is intentionally !important
+   to win against Material Icons' inherit-from-text-parent default. */
+.add-mission-header .priority-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-sm);
+  border-radius: 50%;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.add-mission-header .priority-toggle-btn .material-icons {
+  font-size: 22px;
+}
+
+.add-mission-header .priority-toggle-btn:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--color-text-dark);
+}
+
+.add-mission-header .priority-toggle-btn.active,
+.add-mission-header .priority-toggle-btn.active .material-icons {
+  color: #be185d !important;
+}
+
+.add-mission-header .priority-toggle-btn.active {
+  background-color: #fce7f3;
+}
+
+.add-mission-header .priority-toggle-btn.active:hover:not(:disabled) {
+  background-color: #fbcfe8;
+}
+
+.add-mission-header .priority-toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .add-mission-body {
@@ -500,53 +550,9 @@
   color: #9ca3af;
 }
 
-/* Difficulty Badge Selector + Priority toggle row */
+/* Difficulty Badge Selector */
 .add-mission-badges {
   margin-bottom: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
-
-.priority-form-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  color: var(--color-text-medium);
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), color var(--transition);
-}
-
-.priority-form-toggle .material-icons {
-  font-size: 18px;
-}
-
-.priority-form-toggle:hover:not(:disabled) {
-  border-color: #f9a8d4;
-  color: #be185d;
-}
-
-.priority-form-toggle.active {
-  background: #fce7f3;
-  border-color: #ec4899;
-  color: #be185d;
-}
-
-.priority-form-toggle.active:hover:not(:disabled) {
-  background: #fbcfe8;
-}
-
-.priority-form-toggle:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 
 .difficulty-selector {

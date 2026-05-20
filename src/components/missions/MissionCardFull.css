@@ -73,14 +73,17 @@
   font-size: 22px;
 }
 
+.priority-toggle-btn.active,
+.priority-toggle-btn.active .material-icons {
+  color: #be185d !important;
+}
+
 .priority-toggle-btn.active {
-  color: #be185d;
   background-color: #fce7f3;
 }
 
 .priority-toggle-btn.active:hover {
   background-color: #fbcfe8;
-  color: #be185d;
 }
 
 .mission-detail-header-actions {

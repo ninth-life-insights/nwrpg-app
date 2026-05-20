@@ -116,10 +116,10 @@ const MissionCardCondensed = ({
             className={titleClass}
             style={{ minWidth: titleMinWidth }}
           >
+            {mission.title}
             {mission.isPriority && (
               <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
             )}
-            {mission.title}
           </h3>
           <div className="mcc-badges">
             {!readOnly && showXpBadge && mission.xpAwarded && (

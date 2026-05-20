@@ -397,6 +397,17 @@ const AddMissionCard = ({
       <form className="add-mission-card" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
         <div className="add-mission-header">
           <h2>{mode === 'edit' ? 'Edit Mission' : 'Add Mission'}</h2>
+          <button
+            type="button"
+            className={`priority-toggle-btn ${formData.isPriority ? 'active' : ''}`}
+            onClick={() => setFormData(prev => ({ ...prev, isPriority: !prev.isPriority }))}
+            disabled={isSubmitting}
+            aria-label={formData.isPriority ? 'Remove priority' : 'Mark as priority'}
+            aria-pressed={formData.isPriority === true}
+            title={formData.isPriority ? 'Remove priority' : 'Mark as priority'}
+          >
+            <span className="material-icons">{formData.isPriority ? 'flag' : 'outlined_flag'}</span>
+          </button>
         </div>
         <div className="add-mission-body">
 
@@ -427,7 +438,7 @@ const AddMissionCard = ({
             />
           </div>
 
-          {/* Difficulty Badge Selector + Priority Toggle */}
+          {/* Difficulty Badge Selector */}
           <div className="add-mission-badges">
             <div className="difficulty-selector">
               {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
@@ -442,16 +453,6 @@ const AddMissionCard = ({
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              className={`priority-form-toggle ${formData.isPriority ? 'active' : ''}`}
-              onClick={() => setFormData(prev => ({ ...prev, isPriority: !prev.isPriority }))}
-              disabled={isSubmitting}
-              aria-pressed={formData.isPriority === true}
-            >
-              <span className="material-icons">{formData.isPriority ? 'flag' : 'outlined_flag'}</span>
-              {formData.isPriority ? 'Priority' : 'Mark as priority'}
-            </button>
           </div>
 
           {/* Completion Type Selector — not yet fully implemented */}

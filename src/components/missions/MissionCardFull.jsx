@@ -37,6 +37,7 @@ const MissionCardFull = ({
   onToggleComplete,
   onMissionChanged,
   onExclusionToggled,
+  onPriorityToggled,
   excludedFromStory,
 }) => {
   const navigate = useNavigate();
@@ -198,14 +199,20 @@ const MissionCardFull = ({
     setActionError(null);
     setActionRetry(() => handleTogglePriority);
     const current = displayMission.isPriority === true;
-    // Optimistic update so the card visual responds immediately.
+    // Optimistic update so the card visual responds immediately. We use a
+    // lightweight onPriorityToggled callback (not onMissionChanged) so the
+    // parent updates just this one mission's field in-place rather than
+    // doing a full Firestore reload — which would risk re-mounting state
+    // and closing the modal.
     setMissionOverride(prev => ({ ...(prev ?? displayMission), isPriority: !current }));
+    onPriorityToggled?.(!current);
     try {
       const isNow = await toggleMissionPriority(currentUser.uid, mission.id);
       setMissionOverride(prev => ({ ...(prev ?? displayMission), isPriority: isNow }));
-      onMissionChanged?.(mission.id, 'updated');
+      onPriorityToggled?.(isNow);
     } catch {
       setMissionOverride(prev => ({ ...(prev ?? displayMission), isPriority: current }));
+      onPriorityToggled?.(current);
       setActionError("That mission's priority didn't save. Try again.");
     }
   };
@@ -334,9 +341,6 @@ const MissionCardFull = ({
                   className={`mission-detail-title ${isCompleted ? 'completed' : ''}${isActive ? ' tappable' : ''}`}
                   onClick={isActive ? handleEditClick : undefined}
                 >
-                  {displayMission.isPriority && (
-                    <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
-                  )}
                   {displayMission.title}
                 </h2>
                 {dueDateInfo && (

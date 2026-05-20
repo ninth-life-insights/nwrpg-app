@@ -197,6 +197,15 @@ const MissionList = ({
     }
   };
 
+  // Lightweight in-place update for a single mission's priority flag.
+  // Avoids the full Firestore reload that onMissionChanged would trigger,
+  // which would re-mount the open MissionCardFull and close it.
+  const handlePriorityToggled = (missionId, isPriority) => {
+    setMissions(prev => prev.map(m =>
+      m.id === missionId ? { ...m, isPriority } : m
+    ));
+  };
+
   const handleAddMission = (newMission) => {
     if (!newMission.id) {
       console.error('BLOCKING: Cannot add mission without ID');
@@ -528,6 +537,7 @@ const MissionList = ({
           mission={mission}
           onToggleComplete={handleToggleComplete}
           onMissionChanged={loadMissions}
+          onPriorityToggled={handlePriorityToggled}
           onSelect={selectionMode ? handleMissionSelect : undefined}
           selectionMode={selectionMode}
           isRecentlyCompleted={isRecentlyCompleted}
