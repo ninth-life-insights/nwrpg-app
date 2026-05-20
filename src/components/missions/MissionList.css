@@ -530,3 +530,20 @@
   border-color: #fed7aa;
   color: var(--color-warning);
 }
+
+/* Done: muted neutral — they're past-tense, shouldn't draw attention */
+.mission-due-group--done .mission-due-group-header {
+  background: #f9fafb;
+  border-color: var(--color-border);
+}
+
+.mission-due-group--done .mission-due-group-label,
+.mission-due-group--done .mission-due-group-chevron {
+  color: var(--color-text-medium);
+}
+
+.mission-due-group--done .mission-due-group-count {
+  background: var(--color-bg-main);
+  border-color: var(--color-border);
+  color: var(--color-text-medium);
+}

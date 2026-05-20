@@ -239,7 +239,7 @@ const MissionFilterModal = ({
                 Completed
                 {filters.includeCompleted && <span className="filter-active-dot-inline" />}
               </h4>
-              <div className="checkbox-options">
+              <div className="completed-row">
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
@@ -251,19 +251,16 @@ const MissionFilterModal = ({
                 </label>
 
                 {filters.includeCompleted && (
-                  <div className="date-range-section">
-                    <label className="date-range-label">Within:</label>
-                    <select
-                      value={filters.completedDateRange}
-                      onChange={(e) => handleFilterChange('completedDateRange', e.target.value)}
-                      className="filter-select date-range-select"
-                    >
-                      <option value="today">Today</option>
-                      <option value="last7days">Last 7 days</option>
-                      <option value="last30days">Last 30 days</option>
-                      <option value="alltime">All time</option>
-                    </select>
-                  </div>
+                  <select
+                    value={filters.completedDateRange}
+                    onChange={(e) => handleFilterChange('completedDateRange', e.target.value)}
+                    className="filter-select completed-date-range-select"
+                  >
+                    <option value="today">Today</option>
+                    <option value="last7days">Last 7 days</option>
+                    <option value="last30days">Last 30 days</option>
+                    <option value="alltime">All time</option>
+                  </select>
                 )}
               </div>
             </div>

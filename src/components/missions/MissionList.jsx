@@ -432,8 +432,16 @@ const MissionList = ({
   // Grouped view kicks in only when the user has explicitly chosen to sort by
   // due date — that's the context where "Overdue / Today / This Week / Later"
   // bucketing helps. Other sorts stay flat. Selection mode is always flat.
+  // When includeCompleted is on, completed missions render in their own
+  // "Done" group above the date buckets so they don't muddle the timeline.
   const isDueDateGrouped = memoizedFilters.sortBy === 'dueDate' && !selectionMode;
-  const dueDateGroups = isDueDateGrouped ? groupMissionsByDueDate(displayMissions) : [];
+  const completedInGroupedView = isDueDateGrouped
+    ? displayMissions.filter(m => m.status === 'completed')
+    : [];
+  const activeForBuckets = isDueDateGrouped
+    ? displayMissions.filter(m => m.status !== 'completed')
+    : [];
+  const dueDateGroups = isDueDateGrouped ? groupMissionsByDueDate(activeForBuckets) : [];
 
   const toggleGroup = (key) => {
     setCollapsedGroups(prev => {
@@ -564,6 +572,26 @@ const MissionList = ({
         >
           {isDueDateGrouped ? (
             <div className="mission-due-groups">
+              {completedInGroupedView.length > 0 && (() => {
+                const isCollapsed = collapsedGroups.has('done');
+                return (
+                  <section className="mission-due-group mission-due-group--done">
+                    <button
+                      type="button"
+                      className="mission-due-group-header"
+                      onClick={() => toggleGroup('done')}
+                      aria-expanded={!isCollapsed}
+                    >
+                      <span className="material-icons-outlined mission-due-group-chevron">
+                        {isCollapsed ? 'chevron_right' : 'expand_more'}
+                      </span>
+                      <span className="mission-due-group-label">Done</span>
+                      <span className="mission-due-group-count">{completedInGroupedView.length}</span>
+                    </button>
+                    {!isCollapsed && completedInGroupedView.map((mission, i) => renderMissionItem(mission, i, { applyRecentMargin: false }))}
+                  </section>
+                );
+              })()}
               {dueDateGroups.map(group => {
                 const isCollapsed = collapsedGroups.has(group.key);
                 return (

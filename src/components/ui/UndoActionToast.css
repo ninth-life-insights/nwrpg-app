@@ -1,4 +1,4 @@
-.undo-delete-toast-wrapper {
+.undo-action-toast-wrapper {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -9,7 +9,7 @@
   pointer-events: none;
 }
 
-.undo-delete-toast {
+.undo-action-toast {
   display: flex;
   align-items: center;
   gap: var(--space-md);
@@ -19,15 +19,15 @@
   padding: var(--space-md) var(--space-md) var(--space-md) var(--space-lg);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   pointer-events: all;
-  animation: undoToastSlideUp 0.3s ease-out;
+  animation: undoActionToastSlideUp 0.3s ease-out;
 }
 
-@keyframes undoToastSlideUp {
+@keyframes undoActionToastSlideUp {
   from { transform: translateY(16px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-.undo-delete-toast__text {
+.undo-action-toast__text {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -35,7 +35,7 @@
   min-width: 0;
 }
 
-.undo-delete-toast__label {
+.undo-action-toast__label {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -43,7 +43,7 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
-.undo-delete-toast__name {
+.undo-action-toast__name {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: white;
@@ -52,7 +52,7 @@
   white-space: nowrap;
 }
 
-.undo-delete-toast__undo {
+.undo-action-toast__undo {
   background: none;
   border: none;
   color: white;
@@ -67,16 +67,16 @@
   transition: background var(--transition);
 }
 
-.undo-delete-toast__undo:hover:not(:disabled) {
+.undo-action-toast__undo:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.undo-delete-toast__undo:disabled {
+.undo-action-toast__undo:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
-.undo-delete-toast__close {
+.undo-action-toast__close {
   background: none;
   border: none;
   cursor: pointer;
@@ -88,10 +88,10 @@
   transition: color var(--transition);
 }
 
-.undo-delete-toast__close:hover {
+.undo-action-toast__close:hover {
   color: white;
 }
 
-.undo-delete-toast__close .material-icons {
+.undo-action-toast__close .material-icons {
   font-size: 16px;
 }

@@ -44,7 +44,7 @@ const MissionCardFull = ({
   const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
-  const { notifyMissionDeleted } = useNotifications();
+  const { notifyMissionDeleted, notifyMissionArchived } = useNotifications();
   const isDailyMission = useIsDailyMission(mission.id);
   const [isEditing, setIsEditing] = useState(false);
   const [editFocusField, setEditFocusField] = useState(null);
@@ -174,9 +174,20 @@ const MissionCardFull = ({
   const handleArchive = async () => {
     setActionError(null);
     setActionRetry(() => handleArchive);
+    const userId = currentUser.uid;
+    const missionId = mission.id;
+    const missionTitle = displayMission.title;
+    const notifyChange = onMissionChanged;
     try {
-      await archiveMission(currentUser.uid, mission.id);
-      onMissionChanged?.(mission.id, 'archived');
+      await archiveMission(userId, missionId);
+      notifyChange?.(missionId, 'archived');
+      notifyMissionArchived({
+        missionTitle,
+        onUndo: async () => {
+          await restoreMission(userId, missionId);
+          notifyChange?.(missionId, 'restored');
+        },
+      });
       handleClose();
     } catch {
       setActionError("That mission didn't archive. Try again.");

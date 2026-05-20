@@ -177,7 +177,19 @@ export const applyMissionFiltersAndSort = (missionData = [], filters) => {
     });
   }
 
-  return filteredMissions.sort((a, b) => compareMissions(a, b, filterSettings));
+  const sorted = filteredMissions.sort((a, b) => compareMissions(a, b, filterSettings));
+
+  // When the user has opted to include completed missions, stack them at the
+  // top of the list above active ones. Within each partition we keep the
+  // user's chosen sort order. This makes "what did I just finish?" obvious
+  // without requiring a separate view.
+  if (filterSettings.includeCompleted) {
+    const completed = sorted.filter(m => m.status === 'completed');
+    const active = sorted.filter(m => m.status !== 'completed');
+    return [...completed, ...active];
+  }
+
+  return sorted;
 };
 
 // Group an already-sorted list of missions into date buckets. Used by the
