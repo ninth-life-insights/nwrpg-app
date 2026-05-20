@@ -201,11 +201,11 @@ const MissionCard = ({
               </span>
             )}
             <h3 className={`mission-title ${isCompleted ? 'completed' : ''}`}>
+              {mission.isPriority && (
+                <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
+              )}
               {mission.title}
             </h3>
-            {mission.isPriority && (
-              <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
-            )}
           </div>
           
           <div className="badges">

@@ -75,6 +75,7 @@ const AddMissionCard = ({
         },
         questId: initialMission.questId || null,
         baseLocation: initialMission.baseLocation || null,
+        isPriority: initialMission.isPriority === true,
       };
     }
 
@@ -100,6 +101,7 @@ const AddMissionCard = ({
       },
       questId: defaultQuestId || null,
       baseLocation: defaultRoomId || null,
+      isPriority: false,
     };
   };
 
@@ -261,6 +263,7 @@ const AddMissionCard = ({
       recurrence: formData.recurrence,
       category: 'personal',
       baseLocation: formData.baseLocation || null,
+      isPriority: formData.isPriority === true,
     });
   };
 
@@ -308,6 +311,7 @@ const AddMissionCard = ({
       },
       questId: null,
       baseLocation: null,
+      isPriority: false,
     });
 
     setShowDueDateField(false);
@@ -423,7 +427,7 @@ const AddMissionCard = ({
             />
           </div>
 
-          {/* Difficulty Badge Selector */}
+          {/* Difficulty Badge Selector + Priority Toggle */}
           <div className="add-mission-badges">
             <div className="difficulty-selector">
               {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
@@ -434,10 +438,20 @@ const AddMissionCard = ({
                   className={`difficulty-badge-button ${formData.difficulty === difficulty ? 'selected' : 'unselected'}`}
                   disabled={isSubmitting}
                 >
-                  <Badge variant="difficulty" difficulty={difficulty}>{difficulty}</Badge> 
+                  <Badge variant="difficulty" difficulty={difficulty}>{difficulty}</Badge>
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              className={`priority-form-toggle ${formData.isPriority ? 'active' : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, isPriority: !prev.isPriority }))}
+              disabled={isSubmitting}
+              aria-pressed={formData.isPriority === true}
+            >
+              <span className="material-icons">{formData.isPriority ? 'flag' : 'outlined_flag'}</span>
+              {formData.isPriority ? 'Priority' : 'Mark as priority'}
+            </button>
           </div>
 
           {/* Completion Type Selector — not yet fully implemented */}

@@ -262,51 +262,59 @@ const MissionCardFull = ({
               </svg>
             </button>
 
-            {!isExpired && (
-              <div className="actions-menu-wrapper" ref={actionsMenuRef}>
+            <div className="mission-detail-header-actions">
+              {!isExpired && (
                 <button
-                  className="more-button"
-                  onClick={(e) => { e.stopPropagation(); setShowActionsMenu(v => !v); }}
-                  aria-label="More options"
+                  type="button"
+                  className={`priority-toggle-btn ${displayMission.isPriority ? 'active' : ''}`}
+                  onClick={handleTogglePriority}
+                  aria-label={displayMission.isPriority ? 'Remove priority' : 'Mark as priority'}
+                  aria-pressed={displayMission.isPriority === true}
+                  title={displayMission.isPriority ? 'Remove priority' : 'Mark as priority'}
                 >
-                  <span className="material-icons">more_vert</span>
+                  <span className="material-icons">{displayMission.isPriority ? 'flag' : 'outlined_flag'}</span>
                 </button>
-                {showActionsMenu && (
-                  <div className="actions-dropdown">
-                    {isActive && (
+              )}
+
+              {!isExpired && (
+                <div className="actions-menu-wrapper" ref={actionsMenuRef}>
+                  <button
+                    className="more-button"
+                    onClick={(e) => { e.stopPropagation(); setShowActionsMenu(v => !v); }}
+                    aria-label="More options"
+                  >
+                    <span className="material-icons">more_vert</span>
+                  </button>
+                  {showActionsMenu && (
+                    <div className="actions-dropdown">
+                      {isActive && (
+                        <button
+                          className="dropdown-item"
+                          onClick={() => { setShowActionsMenu(false); handleEditClick(); }}
+                        >
+                          <span className="material-icons">edit</span>
+                          Edit
+                        </button>
+                      )}
                       <button
-                        className="dropdown-item"
-                        onClick={() => { setShowActionsMenu(false); handleEditClick(); }}
+                        className="dropdown-item archive-item"
+                        onClick={() => { setShowActionsMenu(false); handleArchive(); }}
                       >
-                        <span className="material-icons">edit</span>
-                        Edit
+                        <span className="material-icons">archive</span>
+                        Archive
                       </button>
-                    )}
-                    <button
-                      className="dropdown-item"
-                      onClick={() => { setShowActionsMenu(false); handleTogglePriority(); }}
-                    >
-                      <span className="material-icons">{displayMission.isPriority ? 'flag' : 'outlined_flag'}</span>
-                      {displayMission.isPriority ? 'Remove priority' : 'Mark as priority'}
-                    </button>
-                    <button
-                      className="dropdown-item archive-item"
-                      onClick={() => { setShowActionsMenu(false); handleArchive(); }}
-                    >
-                      <span className="material-icons">archive</span>
-                      Archive
-                    </button>
-                    <button
-                      className="dropdown-item delete-item"
-                      onClick={() => { setShowActionsMenu(false); handleDelete(); }}
-                    >
-                      <span className="material-icons">delete</span>
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+                      <button
+                        className="dropdown-item delete-item"
+                        onClick={() => { setShowActionsMenu(false); handleDelete(); }}
+                      >
+                        <span className="material-icons">delete</span>
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Mission Content */}

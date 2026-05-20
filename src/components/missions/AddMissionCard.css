@@ -500,9 +500,53 @@
   color: #9ca3af;
 }
 
-/* Difficulty Badge Selector */
+/* Difficulty Badge Selector + Priority toggle row */
 .add-mission-badges {
   margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.priority-form-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-medium);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.priority-form-toggle .material-icons {
+  font-size: 18px;
+}
+
+.priority-form-toggle:hover:not(:disabled) {
+  border-color: #f9a8d4;
+  color: #be185d;
+}
+
+.priority-form-toggle.active {
+  background: #fce7f3;
+  border-color: #ec4899;
+  color: #be185d;
+}
+
+.priority-form-toggle.active:hover:not(:disabled) {
+  background: #fbcfe8;
+}
+
+.priority-form-toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .difficulty-selector {

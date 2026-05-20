@@ -59,11 +59,15 @@
   opacity: 0.5;
 }
 
-/* Flag icon shown in the title row when isPriority */
-.priority-flag {
-  color: #be185d;
+/* Flag icon shown inside the title when isPriority. Uses .material-icons in
+   the selector to win specificity over the global Material Icons font rule,
+   and !important on color because Material Icons inherits color from its
+   text parent — title contexts override it back to text-dark otherwise. */
+.material-icons.priority-flag {
+  color: #be185d !important;
   font-size: 18px !important;
   vertical-align: -3px;
+  margin-right: 4px;
 }
 
 /* ===== CONTENT AREA ===== */

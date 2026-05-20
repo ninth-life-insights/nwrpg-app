@@ -44,7 +44,8 @@
 }
 
 .mission-modal-back,
-.more-button {
+.more-button,
+.priority-toggle-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -61,13 +62,31 @@
 }
 
 .mission-modal-back:hover,
-.more-button:hover {
+.more-button:hover,
+.priority-toggle-btn:hover {
   background-color: rgba(0, 0, 0, 0.06);
   color: var(--color-text-dark);
 }
 
-.more-button .material-icons {
+.more-button .material-icons,
+.priority-toggle-btn .material-icons {
   font-size: 22px;
+}
+
+.priority-toggle-btn.active {
+  color: #be185d;
+  background-color: #fce7f3;
+}
+
+.priority-toggle-btn.active:hover {
+  background-color: #fbcfe8;
+  color: #be185d;
+}
+
+.mission-detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 .mission-detail-content {
