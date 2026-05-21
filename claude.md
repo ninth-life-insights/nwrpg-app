@@ -148,6 +148,28 @@ Modals currently using portal: `AddMissionCard`, `MissionCardFull`, `CreateCusto
 
 ---
 
+## Material Icons — color inheritance gotcha
+
+Material Icons (`<span className="material-icons">name</span>` and the `material-icons-outlined` variant) render via a webfont. The icon glyph has **no color of its own** — it inherits from the nearest text-color rule. This causes recurring surprises:
+
+- Setting `color: white` on a button doesn't always cascade to the icon if any other selector with equal-or-higher specificity sets the icon's color.
+- Even with no other override, the inheritance can lose to source-order or global Material Icons rules depending on bundle order.
+
+**Bulletproof rule** when an icon needs a non-default color on a custom button or chip:
+
+```css
+.my-button,
+.my-button .material-icons {
+  color: <intended-color> !important;
+}
+```
+
+Targeting `.material-icons` directly via the descendant selector AND using `!important` together guarantees the color wins. Use both — pick one and you may still hit the inherit-from-text-parent bug. Examples already in the codebase: `.priority-toggle-btn.active`, `.priority-flag`, `.add-mission-fab`.
+
+If you skip this and the icon shows up gray (or black, or whatever the parent text color is), this is the cause.
+
+---
+
 ## Error Handling Patterns
 
 ### Principle

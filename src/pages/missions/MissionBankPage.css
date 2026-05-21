@@ -18,14 +18,18 @@
 .top-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 15px;
 }
 
+.top-header h1 {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
 .home-button {
-  position: absolute;
-  left: 0;
   padding: 8px;
   background: #f8f9fa;
   border: 1px solid #dee2e6;
@@ -38,6 +42,7 @@
   justify-content: center;
   min-width: 40px;
   min-height: 40px;
+  flex-shrink: 0;
 }
 
 .home-button:hover {
@@ -60,13 +65,6 @@
   font-size: 2rem;
   font-weight: 700;
   color: #2c3e50;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
 }
 
 /* Filter Button */
@@ -204,6 +202,11 @@
   z-index: 20;
   transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
   white-space: nowrap;
+}
+
+.add-mission-fab,
+.add-mission-fab .material-icons {
+  color: white !important;
 }
 
 .add-mission-fab .material-icons {

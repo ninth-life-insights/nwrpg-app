@@ -177,10 +177,6 @@ const MissionBank = () => {
             <span className="material-icons">arrow_back</span>
           </button>
           <h1>Mission Bank</h1>
-        </div>
-
-        <div className="header-actions">
-          {/* Plan today's missions */}
           <button
             onClick={() => setShowDailyPlanning(true)}
             className="filter-btn-header"
