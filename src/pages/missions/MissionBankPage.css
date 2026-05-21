@@ -4,6 +4,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  padding-bottom: 100px; /* room for the floating Add Mission FAB */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -167,28 +168,43 @@
   font-size: 18px;
 }
 
-/* Add Mission Button */
-.add-mission-btn {
-  padding: 12px 24px;
+/* Floating Add Mission FAB — primary create action, thumb-zone position.
+   Mirrors the .achievements-fab pattern from CLAUDE.md. */
+.add-mission-fab {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
   background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
+  border-radius: 99px;
+  padding: var(--space-md) var(--space-xl);
+  font-size: var(--font-size-base);
   font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+  font-family: var(--font-family);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.45);
+  z-index: 20;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+  white-space: nowrap;
 }
 
-.add-mission-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+.add-mission-fab .material-icons {
+  font-size: 20px;
+}
+
+.add-mission-fab:hover {
   background: linear-gradient(135deg, #218838, #1fa085);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.55);
+  transform: translateX(-50%) translateY(-1px);
 }
 
-.add-mission-btn:active {
-  transform: translateY(0);
+.add-mission-fab:active {
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Tab Navigation */
@@ -318,11 +334,7 @@
   .mission-tabs {
     flex-direction: column;
   }
-  
-  .add-mission-btn {
-    width: 100%;
-  }
-  
+
   .user-info-content {
     flex-direction: column;
     text-align: center;
@@ -334,13 +346,8 @@
   .mission-tabs {
     gap: 8px;
   }
-  
+
   .mission-tab-btn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-  
-  .add-mission-btn {
     padding: 10px 16px;
     font-size: 14px;
   }

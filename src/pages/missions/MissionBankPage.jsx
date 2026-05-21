@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionList from '../../components/missions/MissionList';
 import MissionFilterModal from '../../components/missions/sub-components/MissionFilterModal';
+import EditDailyMissionsModal from '../../components/missions/EditDailyMissionsModal';
 import { getUserProfile } from '../../services/userService';
 import { getRooms } from '../../services/roomService';
 import { getAllQuests } from '../../services/questService';
@@ -17,6 +18,7 @@ const MissionBank = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showDailyPlanning, setShowDailyPlanning] = useState(false);
   const [filters, setFilters] = useState({
     sortBy: 'custom',
     sortOrder: 'asc',
@@ -178,6 +180,16 @@ const MissionBank = () => {
         </div>
 
         <div className="header-actions">
+          {/* Plan today's missions */}
+          <button
+            onClick={() => setShowDailyPlanning(true)}
+            className="filter-btn-header"
+            title="Plan today's missions"
+            aria-label="Plan today's missions"
+          >
+            <span className="material-icons">sunny</span>
+          </button>
+
           {/* Filter Button */}
           <button
             onClick={handleShowFilters}
@@ -188,14 +200,6 @@ const MissionBank = () => {
               <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
             </svg>
             {hasActiveFilters && <span className="filter-active-dot" />}
-          </button>
-
-          {/* Add Mission Button */}
-          <button
-            onClick={handleShowAddMission}
-            className="add-mission-btn"
-          >
-            + Add Mission
           </button>
         </div>
       </div>
@@ -255,6 +259,24 @@ const MissionBank = () => {
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
+
+      {/* Floating "Add Mission" — primary create action lives in the thumb zone */}
+      <button
+        type="button"
+        className="add-mission-fab"
+        onClick={handleShowAddMission}
+        aria-label="Add Mission"
+      >
+        <span className="material-icons">add</span>
+        Add Mission
+      </button>
+
+      {/* Daily planning modal */}
+      {showDailyPlanning && (
+        <EditDailyMissionsModal
+          onClose={() => setShowDailyPlanning(false)}
+        />
+      )}
     </div>
   );
 };
