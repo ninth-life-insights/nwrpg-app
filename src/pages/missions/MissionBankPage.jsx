@@ -189,40 +189,42 @@ const MissionBank = () => {
           >
             <span className="material-icons">sunny</span>
           </button>
-
-          {/* Filter Button */}
-          <button
-            onClick={handleShowFilters}
-            className={`filter-btn-header${hasActiveFilters ? ' filter-btn-active' : ''}`}
-            title="Filter & Sort"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
-            </svg>
-            {hasActiveFilters && <span className="filter-active-dot" />}
-          </button>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mission-bank-search">
-        <span className="material-icons search-icon">search</span>
-        <input
-          type="text"
-          className="mission-bank-search-input"
-          placeholder="Search missions..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button
-            className="search-clear-btn"
-            onClick={() => setSearchQuery('')}
-            aria-label="Clear search"
-          >
-            <span className="material-icons">close</span>
-          </button>
-        )}
+      {/* Search + filter row */}
+      <div className="mission-bank-search-row">
+        <div className="mission-bank-search">
+          <span className="material-icons search-icon">search</span>
+          <input
+            type="text"
+            className="mission-bank-search-input"
+            placeholder="Search missions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              className="search-clear-btn"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+            >
+              <span className="material-icons">close</span>
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={handleShowFilters}
+          className={`filter-btn-header${hasActiveFilters ? ' filter-btn-active' : ''}`}
+          title="Filter & Sort"
+          aria-label="Filter & Sort"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+          </svg>
+          {hasActiveFilters && <span className="filter-active-dot" />}
+        </button>
       </div>
 
       {loadError && <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); loadUserProfile(); }} className="mission-bank-load-error" />}

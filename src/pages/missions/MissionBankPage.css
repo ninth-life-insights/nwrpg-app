@@ -111,8 +111,21 @@
   border: 1.5px solid #fff;
 }
 
+/* Search + filter row */
+.mission-bank-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mission-bank-search-row .filter-btn-header {
+  flex-shrink: 0;
+}
+
 /* Search Bar */
 .mission-bank-search {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -120,8 +133,8 @@
   border: 1.5px solid var(--color-border, #dee2e6);
   border-radius: 10px;
   padding: 8px 12px;
-  margin-bottom: 16px;
   transition: border-color 0.2s ease;
+  min-width: 0;
 }
 
 .mission-bank-search:focus-within {
@@ -169,7 +182,7 @@
 }
 
 /* Floating Add Mission FAB — primary create action, thumb-zone position.
-   Mirrors the .achievements-fab pattern from CLAUDE.md. */
+   Mirrors the .achievements-fab pattern from CLAUDE.md (primary blue). */
 .add-mission-fab {
   position: fixed;
   bottom: 24px;
@@ -178,7 +191,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  background: linear-gradient(135deg, #28a745, #20c997);
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 99px;
@@ -187,7 +200,7 @@
   font-weight: 600;
   font-family: var(--font-family);
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.45);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.45);
   z-index: 20;
   transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
   white-space: nowrap;
@@ -198,8 +211,8 @@
 }
 
 .add-mission-fab:hover {
-  background: linear-gradient(135deg, #218838, #1fa085);
-  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.55);
+  background: var(--color-primary-hover);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.55);
   transform: translateX(-50%) translateY(-1px);
 }
 
