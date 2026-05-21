@@ -255,15 +255,27 @@ export const getMissionListDisplayMissions = ({
   missions = [],
   missionType,
   recentlyCompletedMissions = [],
-  searchQuery = ''
+  searchQuery = '',
+  roomsMap = {},
+  questsMap = {}
 }) => {
   const recentlyCompletedIds = recentlyCompletedMissions.map(mission => mission.id);
   const filteredMissions = missions.filter(mission => !recentlyCompletedIds.includes(mission.id));
   const trimmedQuery = (searchQuery || '').trim().toLowerCase();
 
+  // Search matches across the fields the user is most likely to remember:
+  // title, description, skill name, room name (resolved via roomsMap), and
+  // quest title (resolved via questsMap). Each is short-circuit checked.
   const matchesSearch = (mission) => {
     if (!trimmedQuery) return true;
-    return mission.title?.toLowerCase().includes(trimmedQuery);
+    if (mission.title?.toLowerCase().includes(trimmedQuery)) return true;
+    if (mission.description?.toLowerCase().includes(trimmedQuery)) return true;
+    if (mission.skill?.toLowerCase().includes(trimmedQuery)) return true;
+    const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name : null;
+    if (roomName?.toLowerCase().includes(trimmedQuery)) return true;
+    const questTitle = mission.questId ? questsMap[mission.questId]?.title : null;
+    if (questTitle?.toLowerCase().includes(trimmedQuery)) return true;
+    return false;
   };
 
   if (missionType === 'active') {

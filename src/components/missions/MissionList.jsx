@@ -24,6 +24,8 @@ import {
   groupMissionsByDueDate,
   normalizeMissionListFilters
 } from '../../utils/missionListFilters';
+import { useRooms } from '../../contexts/RoomsContext';
+import { useQuests } from '../../contexts/QuestsContext';
 import './MissionList.css';
 
 // Drag and drop imports
@@ -63,6 +65,8 @@ const MissionList = ({
   onAchievementsUnlocked = null
 }) => {
   const { currentUser } = useAuth();
+  const { roomsMap } = useRooms();
+  const { questsMap } = useQuests();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -326,7 +330,9 @@ const MissionList = ({
     missions,
     missionType,
     recentlyCompletedMissions,
-    searchQuery
+    searchQuery,
+    roomsMap,
+    questsMap
   });
 
   if (loading) {
