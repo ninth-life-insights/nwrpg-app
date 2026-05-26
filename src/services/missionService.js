@@ -314,12 +314,62 @@ export const deleteMission = async (userId, missionId) => {
   }
 };
 
+// Window during which an uncomplete is treated as "undo of a mistaken click" —
+// also cleans up the just-spawned child instance, so the user doesn't end up
+// with two active missions (today's restored + tomorrow's still spawned).
+const RECENT_COMPLETION_UNDO_WINDOW_MS = 60 * 1000;
+
+// Best-effort cleanup of a child instance spawned by a recent completion of
+// `parentMission`. Only runs if:
+//   - completion was within RECENT_COMPLETION_UNDO_WINDOW_MS
+//   - the parent is recurring or evergreen (the only types that spawn)
+//   - a child exists with the expected parentMissionId + occurrenceNumber
+//   - the child shows no sign of user interaction (untouched safety net)
+// Soft-deletes via deleteMission so the child still appears in the deleted bin
+// rather than vanishing — matches the global soft-delete convention.
+const cleanupRecentlySpawnedChild = async (userId, parentMission) => {
+  const { completedAt } = parentMission;
+  if (!completedAt) return;
+
+  const completedMs = completedAt.toDate ? completedAt.toDate().getTime() : new Date(completedAt).getTime();
+  if (Date.now() - completedMs > RECENT_COMPLETION_UNDO_WINDOW_MS) return;
+
+  if (!isRecurringMission(parentMission) && !isEvergreenMission(parentMission)) return;
+
+  const chainRoot = parentMission.parentMissionId || parentMission.id;
+  const expectedOccurrence = (parentMission.occurrenceNumber || 1) + 1;
+
+  const missionsRef = getUserMissionsRef(userId);
+  const q = query(missionsRef, where('parentMissionId', '==', chainRoot));
+  const snap = await getDocs(q);
+
+  const childDoc = snap.docs.find(d => (d.data().occurrenceNumber || 0) === expectedOccurrence);
+  if (!childDoc) return;
+
+  const child = childDoc.data();
+
+  // Safety net — leave the child alone if it shows any sign of user interaction
+  if (child.status !== MISSION_STATUS.ACTIVE) return;
+  if (child.currentCount) return;
+  if (child.actualTimeSpentMinutes) return;
+  if (Array.isArray(child.scheduledDates) && child.scheduledDates.length > 0) return;
+
+  // updatedAt later than createdAt by more than ~1s = the user edited it
+  if (child.updatedAt && child.createdAt) {
+    const createdMs = child.createdAt.toDate ? child.createdAt.toDate().getTime() : 0;
+    const updatedMs = child.updatedAt.toDate ? child.updatedAt.toDate().getTime() : 0;
+    if (updatedMs - createdMs > 1000) return;
+  }
+
+  await deleteMission(userId, childDoc.id);
+};
+
 // Uncomplete a mission (revert from completed to active)
 export const uncompleteMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
     const missionDoc = await getDoc(missionRef);
-    const missionData = missionDoc.data(); 
+    const missionData = missionDoc.data();
 
     // Determine how much XP to reverse. Prefer the actually-awarded amount
     // (xpAwarded). Fall back to recalculating from difficulty if it's missing
@@ -373,6 +423,13 @@ export const uncompleteMission = async (userId, missionId) => {
         console.error('Error updating quest progress:', error);
         // Don't throw - mission is still uncompleted even if quest update fails
       }
+    }
+
+    try {
+      await cleanupRecentlySpawnedChild(userId, { id: missionId, ...missionData });
+    } catch (error) {
+      console.error('Error cleaning up recently-spawned child mission:', error);
+      // Don't throw - the parent uncomplete already succeeded
     }
 
     return { xpRemoved: xpToRemove };
