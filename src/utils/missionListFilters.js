@@ -69,7 +69,8 @@ const compareByDueDate = (a, b) => {
   const aDate = toJsDate(a.dueDate);
   const bDate = toJsDate(b.dueDate);
 
-  if (!aDate && !bDate) return compareByCreatedAt(a, b);
+  // Both undated: newest-created first (fresh ideas more relevant than stale ones).
+  if (!aDate && !bDate) return -compareByCreatedAt(a, b);
   if (!aDate) return 1;
   if (!bDate) return -1;
   return aDate - bDate;
