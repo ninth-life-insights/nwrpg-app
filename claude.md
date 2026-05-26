@@ -148,6 +148,18 @@ Modals currently using portal: `AddMissionCard`, `MissionCardFull`, `CreateCusto
 
 ---
 
+## CSS scope — global namespace gotcha
+
+There is no CSS module / scoped-CSS setup. Every selector in every imported `.css` file lives in **one global namespace**. When two page-level files (`MissionBankPage.css`, `QuestBankPage.css`, etc.) both declare unscoped utility-ish class names like `.top-header`, `.home-button`, `.header-actions`, `.filter-btn-header`, they **collide silently** — whichever file is bundled later wins the cascade. Your edits to the "losing" file appear to do nothing.
+
+**Symptoms**: CSS edits don't visibly take effect; layouts look like a different page's; everything seems to revert after each change.
+
+**Rule**: When adding or modifying rules in a page-level CSS file for a class name that's not obviously unique to that page, scope it to the page's root class. E.g. `.mission-bank-page .top-header { ... }` instead of bare `.top-header { ... }`. The page-root prefix bumps specificity from `(0,1,0)` to `(0,2,0)`, which wins regardless of bundle order.
+
+Before editing any page-level CSS class, grep `src/**/*.css` for the bare class name. If it appears in more than one file, scope yours.
+
+---
+
 ## Material Icons — color inheritance gotcha
 
 Material Icons (`<span className="material-icons">name</span>` and the `material-icons-outlined` variant) render via a webfont. The icon glyph has **no color of its own** — it inherits from the nearest text-color rule. This causes recurring surprises:

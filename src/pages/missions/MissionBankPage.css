@@ -15,18 +15,38 @@
   border-bottom: 2px solid #e9ecef;
 }
 
-.top-header {
-  display: flex;
+/* IMPORTANT: scoped to `.mission-bank-page` because `.top-header` is also
+   declared (unscoped) in QuestBankPage.css. CSS is global — without this
+   scope, whichever file is bundled later wins the cascade, and our rules
+   silently lose. */
+.mission-bank-page .top-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   margin-bottom: 15px;
 }
 
-.top-header h1 {
-  flex: 1;
+.mission-bank-page .top-header h1 {
+  margin: 0;
   text-align: center;
-  min-width: 0;
+}
+
+.mission-bank-page .top-header > .home-button {
+  justify-self: start;
+  position: static; /* override QuestBankPage's .home-button { position: absolute } */
+}
+
+.mission-bank-page .top-header > .filter-btn-header {
+  justify-self: end;
+}
+
+.mission-bank-page .top-header .home-button,
+.mission-bank-page .top-header .filter-btn-header {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .home-button {
