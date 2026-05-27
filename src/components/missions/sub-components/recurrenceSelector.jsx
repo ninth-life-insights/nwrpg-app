@@ -89,20 +89,20 @@ const RecurrenceSelector = ({
   const { pattern, interval, weekdays } = recurrence;
   switch (pattern) {
       case RECURRENCE_PATTERNS.DAILY:
-        return interval === 1 ? 'Daily' : `Every ${interval} days`;
-      
+        return interval === 1 ? 'Every day' : `Every ${interval} days`;
+
       case RECURRENCE_PATTERNS.WEEKLY:
-        if (weekdays.length === 0) return 'Weekly';
-        if (weekdays.length === 7) return interval === 1 ? 'Daily' : `Every ${interval} weeks`;
-        
+        if (weekdays.length === 0) return 'Every week';
+        if (weekdays.length === 7) return interval === 1 ? 'Every day' : `Every ${interval} weeks`;
+
         const dayNames = weekdays.map(day => WEEKDAYS[day].label).join('');
-        return interval === 1 ? `Weekly (${dayNames})` : `Every ${interval} weeks (${dayNames})`;
-      
+        return interval === 1 ? `Every week (${dayNames})` : `Every ${interval} weeks (${dayNames})`;
+
       case RECURRENCE_PATTERNS.MONTHLY:
-        return interval === 1 ? 'Monthly' : `Every ${interval} months`;
-      
+        return interval === 1 ? 'Every month' : `Every ${interval} months`;
+
       case RECURRENCE_PATTERNS.YEARLY:
-        return interval === 1 ? 'Yearly' : `Every ${interval} years`;
+        return interval === 1 ? 'Every year' : `Every ${interval} years`;
       
       default:
         return 'Custom';
@@ -124,10 +124,10 @@ const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
           className="recurrence-select"
           disabled={disabled}
         >
-          <option value={RECURRENCE_PATTERNS.DAILY}>Daily</option>
-          <option value={RECURRENCE_PATTERNS.WEEKLY}>Weekly</option>
-          <option value={RECURRENCE_PATTERNS.MONTHLY}>Monthly</option>
-          <option value={RECURRENCE_PATTERNS.YEARLY}>Yearly</option>
+          <option value={RECURRENCE_PATTERNS.DAILY}>Every day</option>
+          <option value={RECURRENCE_PATTERNS.WEEKLY}>Every week</option>
+          <option value={RECURRENCE_PATTERNS.MONTHLY}>Every month</option>
+          <option value={RECURRENCE_PATTERNS.YEARLY}>Every year</option>
         </select>
 
         {/* Show current pattern as compact label */}

@@ -24,16 +24,16 @@ export const getRecurrenceDisplayText = (mission) => {
   
   switch (pattern) {
     case 'daily':
-      return interval === 1 ? 'Daily' : `Every ${interval} days`;
-    
+      return interval === 1 ? 'Every day' : `Every ${interval} days`;
+
     case 'weekly':
-      return interval === 1 ? 'Weekly' : `Every ${interval} weeks`;
-    
+      return interval === 1 ? 'Every week' : `Every ${interval} weeks`;
+
     case 'monthly':
-      return interval === 1 ? 'Monthly' : `Every ${interval} months`;
-    
+      return interval === 1 ? 'Every month' : `Every ${interval} months`;
+
     case 'yearly':
-      return interval === 1 ? 'Yearly' : `Every ${interval} years`;
+      return interval === 1 ? 'Every year' : `Every ${interval} years`;
     
     default:
       return 'Recurring';
