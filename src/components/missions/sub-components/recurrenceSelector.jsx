@@ -1,5 +1,6 @@
 // src/components/missions/sub-components/RecurrenceSelector.js
 import React, { useState } from 'react';
+import { formatForUser } from '../../../utils/dateHelpers';
 import './recurrenceSelector.css';
 
 const RECURRENCE_PATTERNS = {
@@ -114,6 +115,15 @@ const RecurrenceSelector = ({
 const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY && recurrence.pattern !== RECURRENCE_PATTERNS.NONE;
 const showIntervalPicker = recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (recurrence.interval > 1 || showCustomOptions);
 
+// Surface the current end-condition as a clickable summary line so the default
+// ("forever") is visible without needing to expand. Replaces the bare
+// "More options" toggle — same expand behavior, just self-describing.
+const getEndConditionSummary = () => {
+  if (recurrence.endDate) return `Repeats until ${formatForUser(recurrence.endDate)}`;
+  if (recurrence.maxOccurrences) return `Repeats ${recurrence.maxOccurrences} times`;
+  return 'Repeats forever';
+};
+
   return (
     <div className="recurrence-selector-compact">
       
@@ -181,7 +191,7 @@ const showIntervalPicker = recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (r
         </div>
       )}
 
-      {/* Custom Options Toggle */}
+      {/* End-condition summary (click to expand/edit) */}
       {recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (
         <div className="custom-options-toggle">
             <button
@@ -190,7 +200,7 @@ const showIntervalPicker = recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (r
             className="toggle-btn-compact"
             disabled={disabled}
             >
-            {showCustomOptions ? 'Less options' : 'More options'}
+            {getEndConditionSummary()} · {showCustomOptions ? 'Done' : 'Edit'}
             </button>
         </div>
         )}
