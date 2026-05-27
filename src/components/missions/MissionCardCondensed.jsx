@@ -15,8 +15,9 @@ import {
 } from '../../utils/dateHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
-import { toggleMissionStoryExclusion } from '../../services/missionService';
+import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import dayjs from 'dayjs';
 import './MissionCardCondensed.css';
 
 const MissionCardCondensed = ({
@@ -36,8 +37,7 @@ const MissionCardCondensed = ({
   const [titleMinWidth, setTitleMinWidth] = useState(150);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
-  const [excludeLoading, setExcludeLoading] = useState(false);
-  const [excludedFromStory, setExcludedFromStory] = useState(mission.excludeFromStory === true);
+  const [yesterdayLoading, setYesterdayLoading] = useState(false);
 
   useLayoutEffect(() => {
     const el = titleRef.current;
@@ -51,7 +51,6 @@ const MissionCardCondensed = ({
   }, [mission.title]);
 
   useEffect(() => { setShowXpBadge(isCompleted); }, [isCompleted]);
-  useEffect(() => { setExcludedFromStory(mission.excludeFromStory === true); }, [mission.excludeFromStory]);
 
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -67,26 +66,24 @@ const MissionCardCondensed = ({
     ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
     : null;
   const isCompletedToday = completedDate === today;
-  const isExcluded = isCompletedToday && excludedFromStory;
 
   const handleToggleComplete = (e) => {
     e.stopPropagation();
     onToggleComplete(mission.id, isCompleted, mission.xpReward, mission.spReward);
   };
 
-  const handleToggleExclusion = async (e) => {
+  const handleMarkYesterday = async (e) => {
     e.stopPropagation();
-    if (excludeLoading || !currentUser) return;
-    setExcludeLoading(true);
-    const newExcluded = !excludedFromStory;
-    setExcludedFromStory(newExcluded);
+    if (yesterdayLoading || !currentUser) return;
+    setYesterdayLoading(true);
     try {
-      await toggleMissionStoryExclusion(currentUser.uid, mission.id);
+      const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
+      onMissionChanged?.(mission.id, 'completedDateChanged');
     } catch (err) {
-      setExcludedFromStory(!newExcluded);
-      console.error('Failed to toggle story exclusion:', err);
+      console.error('Failed to mark mission as completed yesterday:', err);
     } finally {
-      setExcludeLoading(false);
+      setYesterdayLoading(false);
     }
   };
 
@@ -128,11 +125,11 @@ const MissionCardCondensed = ({
             {!readOnly && isCompletedToday ? (
               <button
                 type="button"
-                className={`mcc-story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
-                onClick={handleToggleExclusion}
-                disabled={excludeLoading}
+                className="mcc-mark-yesterday-chip"
+                onClick={handleMarkYesterday}
+                disabled={yesterdayLoading}
               >
-                {isExcluded ? 'Left out ✓' : "Leave out of today's story"}
+                Did this yesterday?
               </button>
             ) : (
               <>
@@ -179,8 +176,6 @@ const MissionCardCondensed = ({
         onClose={() => setViewingDetails(false)}
         onToggleComplete={onToggleComplete}
         onMissionChanged={onMissionChanged}
-        onExclusionToggled={(val) => setExcludedFromStory(val)}
-        excludedFromStory={excludedFromStory}
       />
     )}
   </>

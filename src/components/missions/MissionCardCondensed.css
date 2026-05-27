@@ -96,11 +96,11 @@
   overflow: hidden;
 }
 
-.mission-card-condensed.completed .mcc-badges > *:not(.mcc-story-exclusion-chip) {
+.mission-card-condensed.completed .mcc-badges > *:not(.mcc-mark-yesterday-chip) {
   opacity: 0.6;
 }
 
-.mcc-story-exclusion-chip {
+.mcc-mark-yesterday-chip {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
@@ -114,25 +114,13 @@
   transition: all var(--transition);
 }
 
-.mcc-story-exclusion-chip:hover:not(:disabled) {
+.mcc-mark-yesterday-chip:hover:not(:disabled) {
+  border-style: solid;
   border-color: #4b5563;
   color: #4b5563;
 }
 
-.mcc-story-exclusion-chip.excluded {
-  border-style: solid;
-  border-color: #374151;
-  background: #374151;
-  color: white;
-}
-
-.mcc-story-exclusion-chip.excluded:hover:not(:disabled) {
-  border-color: #991b1b;
-  background: #991b1b;
-  color: white;
-}
-
-.mcc-story-exclusion-chip:disabled {
+.mcc-mark-yesterday-chip:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

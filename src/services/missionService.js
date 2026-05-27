@@ -4,6 +4,8 @@ import {
   doc,
   addDoc,
   updateDoc,
+  deleteDoc,
+  writeBatch,
   getDocs,
   getDoc,
   getCountFromServer,
@@ -13,6 +15,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
+import dayjs from 'dayjs';
 import { db } from './firebase/config';
 import { MISSION_STATUS, calculateXPReward, calculateSPReward } from '../types/Mission';
 import {
@@ -205,8 +208,7 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
       status: MISSION_STATUS.COMPLETED,
       xpAwarded,
       spAwarded,
-      completedAt: Timestamp.fromDate(new Date()),
-      excludeFromStory: false
+      completedAt: Timestamp.fromDate(new Date())
     });
 
     const xpResult = await addXP(userId, xpAwarded);
@@ -364,6 +366,25 @@ const cleanupRecentlySpawnedChild = async (userId, parentMission) => {
   await deleteMission(userId, childDoc.id);
 };
 
+// Find the activity log entry that records a mission's completion. Returns the
+// most recent `mission_completed` entry for this missionId, or null if none.
+// Queries by missionId only (single-field index) and filters/sorts in memory —
+// keeps Firestore happy without a composite index and is cheap since a single
+// mission has at most a handful of entries.
+const findCompletionActivityLogEntry = async (userId, missionId) => {
+  const logRef = collection(db, 'users', userId, 'activityLog');
+  const snap = await getDocs(query(logRef, where('missionId', '==', missionId)));
+  if (snap.empty) return null;
+  const completionDocs = snap.docs
+    .filter(d => d.data().type === 'mission_completed')
+    .sort((a, b) => {
+      const ta = a.data().timestamp?.toMillis?.() ?? 0;
+      const tb = b.data().timestamp?.toMillis?.() ?? 0;
+      return tb - ta;
+    });
+  return completionDocs[0] ?? null;
+};
+
 // Uncomplete a mission (revert from completed to active)
 export const uncompleteMission = async (userId, missionId) => {
   try {
@@ -403,8 +424,20 @@ export const uncompleteMission = async (userId, missionId) => {
       uncompletedAt: serverTimestamp(),
       xpAwarded: null,
       spAwarded: null,
-      excludeFromStory: false,
     });
+
+    // The completion event no longer happened — scrub its activity log entry
+    // so the daily story (and any future regeneration) doesn't describe the
+    // mission as completed on the day it was completed.
+    try {
+      const logEntry = await findCompletionActivityLogEntry(userId, missionId);
+      if (logEntry) {
+        await deleteDoc(logEntry.ref);
+      }
+    } catch (error) {
+      console.warn('Could not remove activity log entry for uncompleted mission:', error);
+      // Don't throw — the uncomplete itself already succeeded.
+    }
 
     if (xpToRemove > 0) {
       await subtractXP(userId, xpToRemove);
@@ -686,23 +719,85 @@ export const toggleMissionPriority = async (userId, missionId) => {
   }
 };
 
-// Toggle whether a completed mission should be used as material for generated story text.
-// XP, SP, activity logs, and review totals still count normally.
-export const toggleMissionStoryExclusion = async (userId, missionId) => {
-  try {
-    const missionRef = doc(db, 'users', userId, 'missions', missionId);
-    const snap = await getDoc(missionRef);
-    if (!snap.exists()) throw new Error('Mission not found');
-    const isCurrentlyExcluded = snap.data().excludeFromStory === true;
-    await updateDoc(missionRef, {
-      excludeFromStory: !isCurrentlyExcluded,
-      updatedAt: serverTimestamp()
-    });
-    return !isCurrentlyExcluded;
-  } catch (error) {
-    console.error('Error toggling mission story exclusion:', error);
-    throw error;
+// Update the completed date of a previously-completed mission. Used when the
+// user retroactively says "I actually did this yesterday" (or earlier).
+//
+// Updates both the mission doc's `completedAt` and the matching activity log
+// entry's `date` + `timestamp` in a single batch, so the corrected mission
+// lands in the right day's story going forward. Time-of-day on `completedAt`
+// is preserved so intra-day ordering of completions is stable.
+//
+// Validation:
+//  - newDateString must be 'YYYY-MM-DD'
+//  - cannot be in the future
+//  - cannot be before the mission's createdAt
+//
+// Note: any daily snapshot that has already been generated for the old or new
+// date is NOT auto-regenerated. The mission + activity log are the source of
+// truth; a later regeneration will reflect the change.
+export const updateMissionCompletedDate = async (userId, missionId, newDateString) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(newDateString)) {
+    throw new Error('updateMissionCompletedDate requires newDateString in YYYY-MM-DD format');
   }
+
+  const newDateDayjs = dayjs(newDateString, 'YYYY-MM-DD');
+  if (!newDateDayjs.isValid()) {
+    throw new Error(`updateMissionCompletedDate received invalid date: ${newDateString}`);
+  }
+  if (newDateDayjs.isAfter(dayjs(), 'day')) {
+    throw new Error('Completed date cannot be in the future');
+  }
+
+  const missionRef = doc(db, 'users', userId, 'missions', missionId);
+  const missionSnap = await getDoc(missionRef);
+  if (!missionSnap.exists()) throw new Error('Mission not found');
+  const missionData = missionSnap.data();
+
+  if (missionData.status !== MISSION_STATUS.COMPLETED || !missionData.completedAt) {
+    throw new Error('Only completed missions can have their completed date changed');
+  }
+
+  if (missionData.createdAt) {
+    const createdAtDate = missionData.createdAt.toDate
+      ? missionData.createdAt.toDate()
+      : new Date(missionData.createdAt);
+    if (newDateDayjs.isBefore(dayjs(createdAtDate), 'day')) {
+      throw new Error('Completed date cannot be before the mission was created');
+    }
+  }
+
+  // Preserve the original time-of-day so intra-day ordering of completions
+  // (used by the activity log) stays consistent on the new date.
+  const oldCompletedAt = missionData.completedAt.toDate
+    ? missionData.completedAt.toDate()
+    : new Date(missionData.completedAt);
+  const newCompletedAt = new Date(
+    newDateDayjs.year(),
+    newDateDayjs.month(),
+    newDateDayjs.date(),
+    oldCompletedAt.getHours(),
+    oldCompletedAt.getMinutes(),
+    oldCompletedAt.getSeconds(),
+    oldCompletedAt.getMilliseconds()
+  );
+
+  const newTimestamp = Timestamp.fromDate(newCompletedAt);
+  const logEntry = await findCompletionActivityLogEntry(userId, missionId);
+
+  const batch = writeBatch(db);
+  batch.update(missionRef, {
+    completedAt: newTimestamp,
+    updatedAt: serverTimestamp(),
+  });
+  if (logEntry) {
+    batch.update(logEntry.ref, {
+      date: newDateString,
+      timestamp: newTimestamp,
+    });
+  }
+  await batch.commit();
+
+  return { completedAt: newTimestamp };
 };
 
 // Batch update multiple missions' custom sort orders

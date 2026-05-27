@@ -26,9 +26,10 @@ import {
   deleteMission,
   archiveMission,
   restoreMission,
-  toggleMissionStoryExclusion,
+  updateMissionCompletedDate,
   toggleMissionPriority,
 } from '../../services/missionService';
+import dayjs from 'dayjs';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({
@@ -36,9 +37,7 @@ const MissionCardFull = ({
   onClose,
   onToggleComplete,
   onMissionChanged,
-  onExclusionToggled,
   onPriorityToggled,
-  excludedFromStory,
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -52,13 +51,11 @@ const MissionCardFull = ({
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [actionRetry, setActionRetry] = useState(null);
-  const [missionOverride, setMissionOverride] = useState(() => {
-    if (excludedFromStory !== undefined && excludedFromStory !== mission.excludeFromStory) {
-      return { ...mission, excludeFromStory: excludedFromStory };
-    }
-    return null;
-  });
-  const [excludeLoading, setExcludeLoading] = useState(false);
+  const [missionOverride, setMissionOverride] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerValue, setDatePickerValue] = useState('');
+  const [dateSaving, setDateSaving] = useState(false);
+  const [dateError, setDateError] = useState(null);
   const actionsMenuRef = useRef(null);
 
   const displayMission = missionOverride
@@ -76,6 +73,8 @@ const MissionCardFull = ({
     setMissionOverride(null);
     setActionError(null);
     setActionRetry(null);
+    setShowDatePicker(false);
+    setDateError(null);
     onClose();
   };
 
@@ -145,8 +144,10 @@ const MissionCardFull = ({
   const completedDate = isCompleted && displayMission.completedAt
     ? toDateString(displayMission.completedAt.toDate?.() ?? new Date(displayMission.completedAt))
     : null;
-  const isCompletedToday = completedDate === today;
-  const isExcludedFromStory = isCompletedToday && displayMission.excludeFromStory === true;
+  const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+  const createdAtDateString = displayMission.createdAt
+    ? toDateString(displayMission.createdAt.toDate?.() ?? new Date(displayMission.createdAt))
+    : null;
 
   const handleDelete = async () => {
     setActionError(null);
@@ -228,25 +229,45 @@ const MissionCardFull = ({
     }
   };
 
-  const handleToggleStoryExclusion = async () => {
-    if (excludeLoading || !currentUser) return;
-    setActionError(null);
-    setActionRetry(() => handleToggleStoryExclusion);
-    setExcludeLoading(true);
-    const newExcluded = !displayMission.excludeFromStory;
-    setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: newExcluded }));
-    onExclusionToggled?.(newExcluded);
+  const openDatePicker = () => {
+    setDateError(null);
+    setDatePickerValue(completedDate || '');
+    setShowDatePicker(true);
+  };
+
+  const closeDatePicker = () => {
+    setShowDatePicker(false);
+    setDateError(null);
+  };
+
+  const persistCompletedDate = async (newDateString) => {
+    if (!currentUser || dateSaving) return;
+    setDateSaving(true);
+    setDateError(null);
     try {
-      const isNowExcluded = await toggleMissionStoryExclusion(currentUser.uid, mission.id);
-      setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: isNowExcluded }));
-      onExclusionToggled?.(isNowExcluded);
-    } catch {
-      setMissionOverride(prev => ({ ...(prev ?? displayMission), excludeFromStory: !newExcluded }));
-      onExclusionToggled?.(!newExcluded);
-      setActionError("That mission's story setting didn't save. Try again.");
+      const result = await updateMissionCompletedDate(currentUser.uid, mission.id, newDateString);
+      setMissionOverride(prev => ({
+        ...(prev ?? displayMission),
+        completedAt: result.completedAt,
+      }));
+      onMissionChanged?.(mission.id, 'completedDateChanged');
+      setShowDatePicker(false);
+    } catch (err) {
+      console.error('Failed to update completed date:', err);
+      setDateError("That date didn't save. Try again.");
     } finally {
-      setExcludeLoading(false);
+      setDateSaving(false);
     }
+  };
+
+  const handleMarkYesterday = () => persistCompletedDate(yesterday);
+
+  const handleSavePickedDate = () => {
+    if (!datePickerValue) {
+      setDateError('Pick a date first.');
+      return;
+    }
+    persistCompletedDate(datePickerValue);
   };
 
   const handleEditClick = (fieldHint) => {
@@ -440,6 +461,74 @@ const MissionCardFull = ({
               </div>
             )}
 
+            {/* Completed banner — promoted hierarchy when the mission is done */}
+            {isCompleted && completedDisplay && (
+              <div className="completed-banner">
+                <span className="material-icons completed-banner-icon">check_circle</span>
+                <div className="completed-banner-text">
+                  <div className="completed-banner-label">Completed</div>
+                  <div className="completed-banner-date">{completedDisplay}</div>
+                </div>
+                {!showDatePicker && (
+                  <button
+                    type="button"
+                    className="completed-banner-edit"
+                    onClick={openDatePicker}
+                    aria-label="Edit completed date"
+                  >
+                    <span className="material-icons">edit</span>
+                  </button>
+                )}
+                {showDatePicker && (
+                  <div className="completed-date-picker">
+                    {completedDate !== yesterday && (
+                      <button
+                        type="button"
+                        className="completed-date-picker-yesterday"
+                        onClick={handleMarkYesterday}
+                        disabled={dateSaving}
+                      >
+                        Yesterday
+                      </button>
+                    )}
+                    <input
+                      type="date"
+                      className="completed-date-picker-input"
+                      value={datePickerValue}
+                      max={today}
+                      min={createdAtDateString || undefined}
+                      onChange={(e) => {
+                        setDatePickerValue(e.target.value);
+                        setDateError(null);
+                      }}
+                      disabled={dateSaving}
+                    />
+                    {dateError && (
+                      <ErrorMessage message={dateError} />
+                    )}
+                    <div className="completed-date-picker-actions">
+                      <button
+                        type="button"
+                        className="completed-date-picker-cancel"
+                        onClick={closeDatePicker}
+                        disabled={dateSaving}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="completed-date-picker-save"
+                        onClick={handleSavePickedDate}
+                        disabled={dateSaving || !datePickerValue || datePickerValue === completedDate}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Mission Metadata */}
             <div className="mission-metadata">
               {(createdDisplay || editedDisplay) && (
@@ -451,11 +540,6 @@ const MissionCardFull = ({
                       <span>Edited {editedDisplay}</span>
                     </>
                   )}
-                </div>
-              )}
-              {isCompleted && completedDisplay && (
-                <div className="metadata-row">
-                  <span>Completed {completedDisplay}</span>
                 </div>
               )}
               {expiryDisplay && (
@@ -481,16 +565,6 @@ const MissionCardFull = ({
               <ErrorMessage message={actionError} onRetry={actionRetry} />
             )}
             <div className="mission-actions">
-              {isCompletedToday && (
-                <button
-                  type="button"
-                  onClick={handleToggleStoryExclusion}
-                  className={`action-button story-exclusion-button ${isExcludedFromStory ? 'excluded' : ''}`}
-                  disabled={excludeLoading}
-                >
-                  {isExcludedFromStory ? 'Left out ✓' : "Leave out of today's story"}
-                </button>
-              )}
               {isExpired ? (
                 <button
                   onClick={handleRestore}

@@ -177,7 +177,6 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     expiryDate, // Recomputed below to preserve the user's chosen duration
     scheduledDates, // Per-mission daily planning slots — don't carry to new doc
     customSortOrder, // Drag-and-drop position — doesn't apply to new instance
-    excludeFromStory, // Per-completion flag — new instance hasn't been completed
     questId, // Quests are finite — recurrence shouldn't auto-extend membership
     ...missionData
   } = originalMission;
@@ -191,7 +190,6 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     expiryDate: computeNextExpiryDate(originalMission),
     scheduledDates: [],
     customSortOrder: null,
-    excludeFromStory: false,
     questId: null,
     // Keep the original recurrence settings
     recurrence: originalMission.recurrence,

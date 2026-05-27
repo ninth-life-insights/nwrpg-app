@@ -17,8 +17,9 @@ import {
   toDateString,
 } from '../../utils/dateHelpers';
 import { useAuth } from '../../contexts/AuthContext';
-import { toggleMissionStoryExclusion } from '../../services/missionService';
+import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import dayjs from 'dayjs';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useRooms } from '../../contexts/RoomsContext';
@@ -48,8 +49,7 @@ const MissionCard = ({
   const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
-  const [excludeLoading, setExcludeLoading] = useState(false);
-  const [excludedFromStory, setExcludedFromStory] = useState(mission.excludeFromStory === true);
+  const [yesterdayLoading, setYesterdayLoading] = useState(false);
   
   // Drag and drop setup
   const {
@@ -76,7 +76,6 @@ const MissionCard = ({
   const recurrenceText = getRecurrenceDisplayText(mission);
 
   useEffect(() => { setShowXpBadge(isCompleted || isRecentlyCompleted); }, [isCompleted, isRecentlyCompleted]);
-  useEffect(() => { setExcludedFromStory(mission.excludeFromStory === true); }, [mission.excludeFromStory]);
   
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -121,21 +120,19 @@ const MissionCard = ({
     ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
     : null;
   const isCompletedToday = completedDate === today;
-  const isExcluded = isCompletedToday && excludedFromStory;
 
-  const handleToggleExclusion = async (e) => {
+  const handleMarkYesterday = async (e) => {
     e.stopPropagation();
-    if (excludeLoading || !currentUser) return;
-    setExcludeLoading(true);
-    const newExcluded = !excludedFromStory;
-    setExcludedFromStory(newExcluded);
+    if (yesterdayLoading || !currentUser) return;
+    setYesterdayLoading(true);
     try {
-      await toggleMissionStoryExclusion(currentUser.uid, mission.id);
+      const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
+      onMissionChanged?.(mission.id, 'completedDateChanged');
     } catch (err) {
-      setExcludedFromStory(!newExcluded);
-      console.error('Failed to toggle story exclusion:', err);
+      console.error('Failed to mark mission as completed yesterday:', err);
     } finally {
-      setExcludeLoading(false);
+      setYesterdayLoading(false);
     }
   };
 
@@ -214,11 +211,11 @@ const MissionCard = ({
             {isCompletedToday && !selectionMode && (
               <button
                 type="button"
-                className={`story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
-                onClick={handleToggleExclusion}
-                disabled={excludeLoading}
+                className="mark-yesterday-chip"
+                onClick={handleMarkYesterday}
+                disabled={yesterdayLoading}
               >
-                {isExcluded ? 'Left out ✓' : 'Leave out of today\'s story'}
+                Did this yesterday?
               </button>
             )}
 
@@ -327,8 +324,6 @@ const MissionCard = ({
         onToggleComplete={onToggleComplete}
         onMissionChanged={onMissionChanged}
         onPriorityToggled={(val) => onPriorityToggled?.(mission.id, val)}
-        onExclusionToggled={(val) => setExcludedFromStory(val)}
-        excludedFromStory={excludedFromStory}
       />
     )}
   </>

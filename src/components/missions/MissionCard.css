@@ -132,8 +132,8 @@
   opacity: 0.7;
 }
 
-/* Fade badges on completed cards, but keep the story chip fully visible */
-.mission-card.completed .badges > *:not(.story-exclusion-chip) {
+/* Fade badges on completed cards, but keep the yesterday chip fully visible */
+.mission-card.completed .badges > *:not(.mark-yesterday-chip) {
   opacity: 0.7;
 }
 
@@ -241,8 +241,8 @@
   opacity: 0.7;
 }
 
-/* ===== STORY EXCLUSION CHIP ===== */
-.story-exclusion-chip {
+/* ===== MARK-AS-YESTERDAY CHIP ===== */
+.mission-card .mark-yesterday-chip {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
@@ -256,25 +256,13 @@
   transition: all var(--transition);
 }
 
-.story-exclusion-chip:hover:not(:disabled) {
-  border-color: #6b7280;
-  color: #6b7280;
-}
-
-.story-exclusion-chip.excluded {
+.mission-card .mark-yesterday-chip:hover:not(:disabled) {
   border-style: solid;
   border-color: #374151;
-  background: #374151;
-  color: white;
+  color: #374151;
 }
 
-.story-exclusion-chip.excluded:hover:not(:disabled) {
-  border-color: #991b1b;
-  background: #991b1b;
-  color: white;
-}
-
-.story-exclusion-chip:disabled {
+.mission-card .mark-yesterday-chip:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
