@@ -51,6 +51,9 @@ const MissionCard = ({
   const [viewingDetails, setViewingDetails] = useState(false);
   const [yesterdayLoading, setYesterdayLoading] = useState(false);
   const [markedYesterday, setMarkedYesterday] = useState(false);
+  // Local override for completedAt so a chip click here is visible to
+  // MissionCardFull when the user opens it — without forcing a parent reload.
+  const [completedAtOverride, setCompletedAtOverride] = useState(null);
   
   // Drag and drop setup
   const {
@@ -129,7 +132,8 @@ const MissionCard = ({
     setMarkedYesterday(true);
     try {
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-      await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
+      const result = await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
+      setCompletedAtOverride(result.completedAt);
     } catch (err) {
       setMarkedYesterday(false);
       console.error('Failed to mark mission as completed yesterday:', err);
@@ -321,11 +325,14 @@ const MissionCard = ({
 
     {viewingDetails && (
       <MissionCardFull
-        mission={mission}
+        mission={completedAtOverride
+          ? { ...mission, completedAt: completedAtOverride }
+          : mission}
         onClose={() => setViewingDetails(false)}
         onToggleComplete={onToggleComplete}
         onMissionChanged={onMissionChanged}
         onPriorityToggled={(val) => onPriorityToggled?.(mission.id, val)}
+        onCompletedAtChanged={setCompletedAtOverride}
       />
     )}
   </>

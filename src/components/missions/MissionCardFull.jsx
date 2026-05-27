@@ -38,6 +38,7 @@ const MissionCardFull = ({
   onToggleComplete,
   onMissionChanged,
   onPriorityToggled,
+  onCompletedAtChanged,
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -250,6 +251,7 @@ const MissionCardFull = ({
         ...(prev ?? displayMission),
         completedAt: result.completedAt,
       }));
+      onCompletedAtChanged?.(result.completedAt);
       setShowDatePicker(false);
     } catch (err) {
       console.error('Failed to update completed date:', err);
