@@ -250,7 +250,6 @@ const MissionCardFull = ({
         ...(prev ?? displayMission),
         completedAt: result.completedAt,
       }));
-      onMissionChanged?.(mission.id, 'completedDateChanged');
       setShowDatePicker(false);
     } catch (err) {
       console.error('Failed to update completed date:', err);

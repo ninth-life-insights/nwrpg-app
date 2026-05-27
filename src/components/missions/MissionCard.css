@@ -262,7 +262,19 @@
   color: #374151;
 }
 
-.mission-card .mark-yesterday-chip:disabled {
+.mission-card .mark-yesterday-chip.marked {
+  border-style: solid;
+  border-color: #374151;
+  background: #374151;
+  color: white;
+  cursor: default;
+}
+
+.mission-card .mark-yesterday-chip.marked:disabled {
+  opacity: 1;
+}
+
+.mission-card .mark-yesterday-chip:disabled:not(.marked) {
   opacity: 0.5;
   cursor: not-allowed;
 }

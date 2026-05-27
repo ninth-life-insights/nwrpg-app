@@ -50,6 +50,7 @@ const MissionCard = ({
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
   const [yesterdayLoading, setYesterdayLoading] = useState(false);
+  const [markedYesterday, setMarkedYesterday] = useState(false);
   
   // Drag and drop setup
   const {
@@ -123,13 +124,14 @@ const MissionCard = ({
 
   const handleMarkYesterday = async (e) => {
     e.stopPropagation();
-    if (yesterdayLoading || !currentUser) return;
+    if (yesterdayLoading || markedYesterday || !currentUser) return;
     setYesterdayLoading(true);
+    setMarkedYesterday(true);
     try {
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
       await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
-      onMissionChanged?.(mission.id, 'completedDateChanged');
     } catch (err) {
+      setMarkedYesterday(false);
       console.error('Failed to mark mission as completed yesterday:', err);
     } finally {
       setYesterdayLoading(false);
@@ -211,11 +213,11 @@ const MissionCard = ({
             {isCompletedToday && !selectionMode && (
               <button
                 type="button"
-                className="mark-yesterday-chip"
+                className={`mark-yesterday-chip ${markedYesterday ? 'marked' : ''}`}
                 onClick={handleMarkYesterday}
-                disabled={yesterdayLoading}
+                disabled={yesterdayLoading || markedYesterday}
               >
-                Did this yesterday?
+                {markedYesterday ? 'Moved to yesterday ✓' : 'Did this yesterday?'}
               </button>
             )}
 

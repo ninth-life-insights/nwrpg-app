@@ -120,7 +120,19 @@
   color: #4b5563;
 }
 
-.mcc-mark-yesterday-chip:disabled {
+.mcc-mark-yesterday-chip.marked {
+  border-style: solid;
+  border-color: #374151;
+  background: #374151;
+  color: white;
+  cursor: default;
+}
+
+.mcc-mark-yesterday-chip.marked:disabled {
+  opacity: 1;
+}
+
+.mcc-mark-yesterday-chip:disabled:not(.marked) {
   opacity: 0.5;
   cursor: not-allowed;
 }
