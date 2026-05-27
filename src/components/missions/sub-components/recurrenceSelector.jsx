@@ -117,7 +117,7 @@ const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
       
       {/* Main Dropdown */}
       <div className="recurrence-main">
-        <label>Repeat</label>
+        <label>Repeat:</label>
         <select
           value={recurrence.pattern}
           onChange={(e) => handlePatternChange(e.target.value)}

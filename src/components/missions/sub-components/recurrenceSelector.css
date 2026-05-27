@@ -53,15 +53,14 @@
 .weekday-picker-compact {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   margin-bottom: var(--space-xs);
-  padding-left: 50px; /* Align with dropdown */
 }
 
 .picker-label {
   font-size: var(--font-size-sm);
   color: var(--color-text-medium);
-  min-width: 25px;
+  min-width: 50px;
 }
 
 .weekday-buttons-compact {
@@ -106,9 +105,8 @@
 .interval-picker-compact {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   margin-bottom: var(--space-xs);
-  padding-left: 50px; /* Align with dropdown */
 }
 
 .interval-input-compact {
@@ -148,7 +146,7 @@
 .end-main-row label {
   font-size: var(--font-size-sm);
   color: var(--color-text-medium);
-  min-width: 35px;
+  min-width: 50px;
   margin-bottom: 0;
 }
 
@@ -238,28 +236,9 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
-  .recurrence-main {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-xs);
-  }
-  
-  .recurrence-main label {
-    min-width: auto;
-  }
-  
   .weekday-picker-compact,
   .interval-picker-compact {
     padding-left: 0;
     flex-wrap: wrap;
-  }
-  
-  .end-options-row {
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-  
-  .recurrence-label {
-    align-self: flex-start;
   }
 }

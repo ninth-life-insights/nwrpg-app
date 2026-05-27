@@ -615,6 +615,12 @@
   animation: slideDown 0.2s ease-out;
 }
 
+/* When the due-date field is immediately followed by the recurrence section,
+   tighten the gap so the two read as a single grouped control. */
+.optional-field-inline:has(+ .recurrence-section) {
+  margin-bottom: var(--space-xs);
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
