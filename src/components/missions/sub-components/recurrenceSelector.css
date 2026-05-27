@@ -131,40 +131,6 @@
   color: var(--color-text-medium);
 }
 
-/* Custom Options Toggle */
-.custom-options-toggle {
-  display: flex;
-  justify-content: center;
-  margin: var(--space-xs) 0;
-}
-
-.toggle-btn-compact {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-  padding: var(--space-xs);
-  text-decoration: underline;
-  transition: color var(--transition);
-}
-
-.toggle-btn-compact:hover {
-  color: var(--color-primary-hover);
-}
-
-.toggle-btn-compact:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Advanced Options */
-.advanced-options-compact {
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--space-sm);
-  margin-top: var(--space-xs);
-}
-
 .end-options-compact label {
   font-size: var(--font-size-xs);
   color: var(--color-text-medium);

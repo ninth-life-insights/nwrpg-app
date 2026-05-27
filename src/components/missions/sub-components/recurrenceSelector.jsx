@@ -1,6 +1,5 @@
 // src/components/missions/sub-components/RecurrenceSelector.js
-import React, { useState } from 'react';
-import { formatForUser } from '../../../utils/dateHelpers';
+import React from 'react';
 import './recurrenceSelector.css';
 
 const RECURRENCE_PATTERNS = {
@@ -37,7 +36,6 @@ const RecurrenceSelector = ({
   disabled = false,
   errors = {}
 }) => {
-  const [showCustomOptions, setShowCustomOptions] = useState(false);
 
   const handlePatternChange = (pattern) => {
     let newRecurrence = {
@@ -62,7 +60,6 @@ const RecurrenceSelector = ({
         endDate: null,
         maxOccurrences: null
         };
-        setShowCustomOptions(false);
     }
 
     onRecurrenceChange(newRecurrence);
@@ -112,17 +109,8 @@ const RecurrenceSelector = ({
     }
 };
 
-const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY && recurrence.pattern !== RECURRENCE_PATTERNS.NONE;
-const showIntervalPicker = recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (recurrence.interval > 1 || showCustomOptions);
-
-// Surface the current end-condition as a clickable summary line so the default
-// ("forever") is visible without needing to expand. Replaces the bare
-// "More options" toggle — same expand behavior, just self-describing.
-const getEndConditionSummary = () => {
-  if (recurrence.endDate) return `Repeats until ${formatForUser(recurrence.endDate)}`;
-  if (recurrence.maxOccurrences) return `Repeats ${recurrence.maxOccurrences} times`;
-  return 'Repeats forever';
-};
+const patternSelected = recurrence.pattern !== RECURRENCE_PATTERNS.NONE;
+const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
 
   return (
     <div className="recurrence-selector-compact">
@@ -169,8 +157,8 @@ const getEndConditionSummary = () => {
         </div>
       )}
 
-      {/* Custom Interval Picker */}
-      {showIntervalPicker && (
+      {/* Interval Picker */}
+      {patternSelected && (
         <div className="interval-picker-compact">
           <span className="picker-label">Every:</span>
           <input
@@ -191,96 +179,77 @@ const getEndConditionSummary = () => {
         </div>
       )}
 
-      {/* End-condition summary (click to expand/edit) */}
-      {recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (
-        <div className="custom-options-toggle">
-            <button
-            type="button"
-            onClick={() => setShowCustomOptions(!showCustomOptions)}
-            className="toggle-btn-compact"
-            disabled={disabled}
-            >
-            {getEndConditionSummary()} · {showCustomOptions ? 'Done' : 'Edit'}
-            </button>
-        </div>
-        )}
-        
-      {/* Advanced Options (collapsed by default) */}
-      {showCustomOptions && recurrence.pattern !== RECURRENCE_PATTERNS.NONE && (
-        <div className="advanced-options-compact">
-          
-          <div className="end-options-compact">
-            <div className="end-main-row">
-              <label>Ends:</label>
-              <select
-                value={
-                  recurrence.endDate ? 'date' :
-                  recurrence.maxOccurrences ? 'count' : 'never'
+      {/* End Condition */}
+      {patternSelected && (
+        <div className="end-options-compact">
+          <div className="end-main-row">
+            <label>Ends:</label>
+            <select
+              value={
+                recurrence.endDate ? 'date' :
+                recurrence.maxOccurrences ? 'count' : 'never'
+              }
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'never') {
+                  onRecurrenceChange({
+                    ...recurrence,
+                    endDate: null,
+                    maxOccurrences: null
+                  });
+                } else if (value === 'date') {
+                  onRecurrenceChange({
+                    ...recurrence,
+                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    maxOccurrences: null
+                  });
+                } else if (value === 'count') {
+                  onRecurrenceChange({
+                    ...recurrence,
+                    maxOccurrences: 10,
+                    endDate: null
+                  });
                 }
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === 'never') {
-                    onRecurrenceChange({
-                      ...recurrence,
-                      endDate: null,
-                      maxOccurrences: null
-                    });
-                  } else if (value === 'date') {
-                    onRecurrenceChange({
-                      ...recurrence,
-                      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                      maxOccurrences: null
-                    });
-                  } else if (value === 'count') {
-                    onRecurrenceChange({
-                      ...recurrence,
-                      maxOccurrences: 10,
-                      endDate: null
-                    });
-                  }
-                }}
-                className="end-select-compact"
-                disabled={disabled}
-              >
-                <option value="never">Never</option>
-                <option value="date">On date</option>
-                <option value="count">After # times</option>
-              </select>
-            </div>
+              }}
+              className="end-select-compact"
+              disabled={disabled}
+            >
+              <option value="never">Never</option>
+              <option value="date">On date</option>
+              <option value="count">After # times</option>
+            </select>
+          </div>
 
-            {/* End Date Input */}
-            {recurrence.endDate && (
+          {recurrence.endDate && (
+            <input
+              type="date"
+              value={recurrence.endDate}
+              onChange={(e) => onRecurrenceChange({
+                ...recurrence,
+                endDate: e.target.value
+              })}
+              className="end-date-input-compact"
+              disabled={disabled}
+            />
+          )}
+
+          {recurrence.maxOccurrences && (
+            <div className="max-occurrences-compact">
               <input
-                type="date"
-                value={recurrence.endDate}
+                type="number"
+                min="1"
+                max="365"
+                value={recurrence.maxOccurrences}
                 onChange={(e) => onRecurrenceChange({
                   ...recurrence,
-                  endDate: e.target.value
+                  maxOccurrences: parseInt(e.target.value) || 1
                 })}
-                className="end-date-input-compact"
+                className="max-occurrences-input-compact"
                 disabled={disabled}
               />
-            )}
-
-            {/* Max Occurrences Input */}
-            {recurrence.maxOccurrences && (
-              <div className="max-occurrences-compact">
-                <input
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={recurrence.maxOccurrences}
-                  onChange={(e) => onRecurrenceChange({
-                    ...recurrence,
-                    maxOccurrences: parseInt(e.target.value) || 1
-                  })}
-                  className="max-occurrences-input-compact"
-                  disabled={disabled}
-                />
-                <span>times</span>
-              </div>
-            )}
-          </div>
+              <span>times</span>
+            </div>
+          )}
         </div>
       )}
 
