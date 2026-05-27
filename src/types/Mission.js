@@ -95,14 +95,10 @@ export const MISSION_SCHEMA = {
   // RPG elements
   // (isDailyMission is NOT stored — it's computed from dailyMissions/config
   //  via DailyMissionsContext / useIsDailyMission at display time)
-  quest: null,                        // object - if part of a quest
-  questID: null,                      // number - order in quest
   forPartyMember: null,               // object - party member
   byPartyMember: null,
   baseLocation: null,
-  
-  // Future expansion fields
-  tags: [],                           // array - for filtering/organization
+
   isPriority: false,                  // boolean - marks mission for visual emphasis + filtering
   
   // Metadata
@@ -238,12 +234,6 @@ export const hasSkill = (mission) => {
   return mission.skill && 
          typeof mission.skill === 'string' && 
          mission.skill.trim().length > 0;
-};
-
-
-// Check if mission is part of a quest
-export const isQuestMission = (mission) => {
-  return mission.quest !== null || mission.questID !== null;
 };
 
 
