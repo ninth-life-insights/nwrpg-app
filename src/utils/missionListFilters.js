@@ -201,6 +201,21 @@ export const applyMissionFiltersAndSort = (missionData = [], filters) => {
   return sorted;
 };
 
+// Sort completed missions by completedAt descending (most recently done
+// first). Used by the "Done" bucket in the grouped due-date view, where the
+// user's active sort (often dueDate) produces a meaningless order for
+// completed items — many have past or null due dates.
+export const sortByCompletedAtDesc = (missions) => {
+  return [...missions].sort((a, b) => {
+    const aDate = toJsDate(a.completedAt);
+    const bDate = toJsDate(b.completedAt);
+    if (!aDate && !bDate) return 0;
+    if (!aDate) return 1;
+    if (!bDate) return -1;
+    return bDate - aDate;
+  });
+};
+
 // Group an already-sorted list of missions into date buckets. Used by the
 // Mission Bank when sortBy === 'dueDate' to give a contextual sense of
 // urgency. Bucket order is fixed (chronological / by urgency); within each

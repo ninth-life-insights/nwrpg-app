@@ -22,7 +22,8 @@ import {
   applyMissionFiltersAndSort,
   getMissionListDisplayMissions,
   groupMissionsByDueDate,
-  normalizeMissionListFilters
+  normalizeMissionListFilters,
+  sortByCompletedAtDesc
 } from '../../utils/missionListFilters';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
@@ -453,8 +454,12 @@ const MissionList = ({
   // When includeCompleted is on, completed missions render in their own
   // "Done" group above the date buckets so they don't muddle the timeline.
   const isDueDateGrouped = memoizedFilters.sortBy === 'dueDate' && !selectionMode;
+  // Sort the Done bucket by completedAt desc regardless of the active sort —
+  // dueDate sort puts completed missions in an arbitrary-looking order since
+  // many have past or null due dates. Most recently completed first matches
+  // user intent ("what did I just finish?").
   const completedInGroupedView = isDueDateGrouped
-    ? displayMissions.filter(m => m.status === 'completed')
+    ? sortByCompletedAtDesc(displayMissions.filter(m => m.status === 'completed'))
     : [];
   const activeForBuckets = isDueDateGrouped
     ? displayMissions.filter(m => m.status !== 'completed')
