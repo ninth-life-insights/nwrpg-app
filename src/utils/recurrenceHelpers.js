@@ -1,7 +1,15 @@
 // src/utils/recurrenceHelpers.js
-import { RECURRENCE_PATTERNS } from '../components/missions/sub-components/recurrenceSelector';
 import { DUE_TYPES } from '../types/Mission';
 import dayjs from 'dayjs';
+
+export const RECURRENCE_PATTERNS = {
+  NONE: 'none',
+  DAILY: 'daily',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+  CUSTOM: 'custom'
+};
 
 // Check if mission is recurring
 export const isRecurringMission = (mission) => {
@@ -13,31 +21,65 @@ export const isEvergreenMission = (mission) => {
   return mission.dueType === DUE_TYPES.EVERGREEN;
 };
 
-// Get display text for recurrence pattern
-export const getRecurrenceDisplayText = (mission) => {
-  if (!isRecurringMission(mission)) return null;
-  
-  // Check if recurrence object exists and has pattern
-  if (!mission.recurrence || !mission.recurrence.pattern) return 'Recurring';
-  
-  const { pattern, interval } = mission.recurrence;
-  
+const WEEKDAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAY_NAMES_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const ordinal = (n) => {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+// Format a recurrence object into a human-readable string. Used by both the
+// mission card badge and the recurrence selector preview — one source of truth.
+export const formatRecurrence = (recurrence) => {
+  if (!recurrence || !recurrence.pattern || recurrence.pattern === RECURRENCE_PATTERNS.NONE) {
+    return null;
+  }
+  const { pattern, interval = 1, weekdays = [], dayOfMonth } = recurrence;
+  const n = Math.max(1, interval);
+
   switch (pattern) {
     case 'daily':
-      return interval === 1 ? 'Every day' : `Every ${interval} days`;
+      return n === 1 ? 'Every day' : `Every ${n} days`;
 
-    case 'weekly':
-      return interval === 1 ? 'Every week' : `Every ${interval} weeks`;
+    case 'weekly': {
+      const sortedDays = [...weekdays].sort((a, b) => a - b);
+      const dayList = sortedDays.map(d => WEEKDAY_NAMES_SHORT[d]).join(', ');
 
-    case 'monthly':
-      return interval === 1 ? 'Every month' : `Every ${interval} months`;
+      if (sortedDays.length === 7) {
+        return n === 1 ? 'Every day' : `Every ${n} weeks`;
+      }
+      if (sortedDays.length === 0) {
+        return n === 1 ? 'Every week' : `Every ${n} weeks`;
+      }
+      if (n === 1 && sortedDays.length === 1) {
+        return `Every ${WEEKDAY_NAMES_FULL[sortedDays[0]]}`;
+      }
+      if (n === 1) {
+        return `Every ${dayList}`;
+      }
+      return `Every ${n} weeks on ${dayList}`;
+    }
+
+    case 'monthly': {
+      const base = n === 1 ? 'Every month' : `Every ${n} months`;
+      return dayOfMonth ? `${base} on the ${ordinal(dayOfMonth)}` : base;
+    }
 
     case 'yearly':
-      return interval === 1 ? 'Every year' : `Every ${interval} years`;
-    
+      return n === 1 ? 'Every year' : `Every ${n} years`;
+
     default:
       return 'Recurring';
   }
+};
+
+// Mission-shaped wrapper for `formatRecurrence`. Kept for the mission card
+// badge, which receives a mission object.
+export const getRecurrenceDisplayText = (mission) => {
+  if (!isRecurringMission(mission)) return null;
+  return formatRecurrence(mission.recurrence) || 'Recurring';
 };
 
 // Calculate the next due date based on recurrence pattern
@@ -59,32 +101,39 @@ export const calculateNextDueDate = (currentDueDate, recurrence) => {
         // Find the next occurrence of any selected weekday
         let nextDate = current.add(1, 'day');
         let daysChecked = 0;
-        
-        // Look for the next occurrence within the next 7 days
+
         while (daysChecked < 7 && !weekdays.includes(nextDate.day())) {
           nextDate = nextDate.add(1, 'day');
           daysChecked++;
         }
-        
-        // If we found a day in this week, use it. Otherwise, go to next interval
+
         if (weekdays.includes(nextDate.day())) {
+          // For interval > 1 ("every N weeks on [days]"), only apply the gap
+          // when the next match has crossed into a new calendar week. This
+          // preserves multi-day-per-week patterns: "every 2 weeks on Mon, Wed"
+          // means M and W in week 0, skip to M and W in week 2 — not M then
+          // Wed-of-next-week.
+          const nextDateInNewWeek = !nextDate.startOf('week').isSame(current.startOf('week'), 'day');
+          if (interval > 1 && nextDateInNewWeek) {
+            nextDate = nextDate.add(interval - 1, 'week');
+          }
           return nextDate.format('YYYY-MM-DD');
         }
       }
       // Fallback to simple weekly interval
       return current.add(interval, 'week').format('YYYY-MM-DD');
 
-    case RECURRENCE_PATTERNS.MONTHLY:
-      let nextMonth = current.add(interval, 'month');
-      
-      if (dayOfMonth) {
-        // Use specific day of month
-        const targetDay = Math.min(dayOfMonth, nextMonth.daysInMonth());
-        nextMonth = nextMonth.date(targetDay);
-      }
-      // If no dayOfMonth specified, keep the same day as original due date
-      
-      return nextMonth.format('YYYY-MM-DD');
+    case RECURRENCE_PATTERNS.MONTHLY: {
+      // dayOfMonth carries the user's intended day. If it's missing (legacy
+      // missions created before the selector auto-filled it), fall back to the
+      // current due date's day. Always cap to the target month's length, so
+      // the 31st collapses to 28/30 in short months but jumps back to 31
+      // whenever a 31-day month appears — without permanently locking in the
+      // capped value.
+      const nextMonth = current.add(interval, 'month');
+      const targetDay = Math.min(dayOfMonth || current.date(), nextMonth.daysInMonth());
+      return nextMonth.date(targetDay).format('YYYY-MM-DD');
+    }
       
     case RECURRENCE_PATTERNS.YEARLY:
     case 'yearly':
@@ -155,6 +204,15 @@ const computeNextExpiryDate = (originalMission) => {
   return dayjs().add(30, 'day').format('YYYY-MM-DD');
 };
 
+const stabilizeRecurrenceForChild = (originalMission) => {
+  const rec = originalMission.recurrence;
+  if (!rec) return rec;
+  if (rec.pattern === RECURRENCE_PATTERNS.MONTHLY && !rec.dayOfMonth && originalMission.dueDate) {
+    return { ...rec, dayOfMonth: dayjs(originalMission.dueDate).date() };
+  }
+  return rec;
+};
+
 // Create next mission instance data
 export const createNextMissionInstance = (originalMission, nextDueDate) => {
   // Remove fields that shouldn't be copied to the new instance
@@ -191,8 +249,11 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     scheduledDates: [],
     customSortOrder: null,
     questId: null,
-    // Keep the original recurrence settings
-    recurrence: originalMission.recurrence,
+    // Keep the original recurrence settings, with one backfill: legacy monthly
+    // missions can have a null dayOfMonth (the selector now auto-fills it, but
+    // older docs don't). Backfill it from the parent's dueDate so subsequent
+    // occurrences have a stable target day rather than silently drifting.
+    recurrence: stabilizeRecurrenceForChild(originalMission),
     // Track relationship to original
     parentMissionId: originalMission.parentMissionId || originalMission.id,
     occurrenceNumber: (originalMission.occurrenceNumber || 1) + 1

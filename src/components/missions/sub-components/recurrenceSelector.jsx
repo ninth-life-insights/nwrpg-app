@@ -1,15 +1,7 @@
 // src/components/missions/sub-components/RecurrenceSelector.js
 import React from 'react';
 import './recurrenceSelector.css';
-
-const RECURRENCE_PATTERNS = {
-  NONE: 'none',
-  DAILY: 'daily',
-  WEEKLY: 'weekly', 
-  MONTHLY: 'monthly',
-  YEARLY: 'yearly',
-  CUSTOM: 'custom'
-};
+import { RECURRENCE_PATTERNS, formatRecurrence } from '../../../utils/recurrenceHelpers';
 
 const WEEKDAYS = [
   { value: 0, label: 'S', full: 'Sunday' },
@@ -83,31 +75,18 @@ const RecurrenceSelector = ({
     });
   };
 
-  const getRecurrenceLabel = () => {
-  if (recurrence.pattern === RECURRENCE_PATTERNS.NONE) return null;
+  const recurrenceLabel = formatRecurrence(recurrence);
 
-  const { pattern, interval, weekdays } = recurrence;
-  switch (pattern) {
-      case RECURRENCE_PATTERNS.DAILY:
-        return interval === 1 ? 'Every day' : `Every ${interval} days`;
-
-      case RECURRENCE_PATTERNS.WEEKLY:
-        if (weekdays.length === 0) return 'Every week';
-        if (weekdays.length === 7) return interval === 1 ? 'Every day' : `Every ${interval} weeks`;
-
-        const dayNames = weekdays.map(day => WEEKDAYS[day].label).join('');
-        return interval === 1 ? `Every week (${dayNames})` : `Every ${interval} weeks (${dayNames})`;
-
-      case RECURRENCE_PATTERNS.MONTHLY:
-        return interval === 1 ? 'Every month' : `Every ${interval} months`;
-
-      case RECURRENCE_PATTERNS.YEARLY:
-        return interval === 1 ? 'Every year' : `Every ${interval} years`;
-      
-      default:
-        return 'Custom';
+  const intervalUnit = (() => {
+    const plural = recurrence.interval > 1;
+    switch (recurrence.pattern) {
+      case RECURRENCE_PATTERNS.DAILY:   return plural ? 'days' : 'day';
+      case RECURRENCE_PATTERNS.WEEKLY:  return plural ? 'weeks' : 'week';
+      case RECURRENCE_PATTERNS.MONTHLY: return plural ? 'months' : 'month';
+      case RECURRENCE_PATTERNS.YEARLY:  return plural ? 'years' : 'year';
+      default: return '';
     }
-};
+  })();
 
 const patternSelected = recurrence.pattern !== RECURRENCE_PATTERNS.NONE;
 const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
@@ -131,8 +110,8 @@ const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
         </select>
 
         {/* Show current pattern as compact label */}
-        {recurrence.isRecurring && (
-          <span className="recurrence-label">{getRecurrenceLabel()}</span>
+        {recurrence.isRecurring && recurrenceLabel && (
+          <span className="recurrence-label">{recurrenceLabel}</span>
         )}
       </div>
 
@@ -170,12 +149,7 @@ const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
             className="interval-input-compact"
             disabled={disabled}
           />
-          <span className="interval-unit-compact">
-            {recurrence.pattern === RECURRENCE_PATTERNS.DAILY ? 'day(s)' :
-             recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY ? 'week(s)' :
-             recurrence.pattern === RECURRENCE_PATTERNS.MONTHLY ? 'month(s)' :
-             recurrence.pattern === RECURRENCE_PATTERNS.YEARLY ? 'year(s)' : ''}
-          </span>
+          <span className="interval-unit-compact">{intervalUnit}</span>
         </div>
       )}
 
