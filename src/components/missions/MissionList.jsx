@@ -62,7 +62,8 @@ const MissionList = ({
   onMissionCompletion = null,
   onMissionUncompletion = null,
   onRecurringMissionCreated = null,
-  onAchievementsUnlocked = null
+  onAchievementsUnlocked = null,
+  onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
@@ -145,6 +146,17 @@ const MissionList = ({
       
       const missionsWithDailyStatus = await addDailyMissionStatus(currentUser.uid, missionData);
       const processedMissions = applyMissionFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
+      console.log('[BACKDATE] loadMissions fetched', {
+        missionType,
+        count: processedMissions.length,
+        completedInFetch: processedMissions
+          .filter(m => m.status === 'completed')
+          .map(m => ({
+            id: m.id,
+            title: m.title,
+            completedAt: m.completedAt?.toDate?.()?.toISOString?.() ?? null,
+          })),
+      });
       setMissions(processedMissions);
     } catch (err) {
       console.error('Error loading missions:', err);
@@ -556,6 +568,7 @@ const MissionList = ({
           selectionMode={selectionMode}
           isRecentlyCompleted={isRecentlyCompleted}
           isCustomOrderMode={isCustomOrderMode}
+          onRecentlyCompletedUpdated={onRecentlyCompletedUpdated}
         />
       </div>
     );

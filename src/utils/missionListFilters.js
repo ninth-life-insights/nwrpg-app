@@ -262,6 +262,28 @@ export const getMissionListDisplayMissions = ({
 }) => {
   const recentlyCompletedIds = recentlyCompletedMissions.map(mission => mission.id);
   const filteredMissions = missions.filter(mission => !recentlyCompletedIds.includes(mission.id));
+
+  // For each recently-completed mission, prefer the fresh Firestore copy
+  // once `loadMissions` has caught up (status === 'completed' in fresh data).
+  // The in-memory snapshot from completion time is only used during the brief
+  // window before the reload finishes — otherwise post-completion edits like
+  // backdating completedAt get masked by the stale snapshot.
+  const recentlyCompletedDisplay = recentlyCompletedMissions.map(cached => {
+    const fresh = missions.find(m => m.id === cached.id);
+    const used = fresh && fresh.status === 'completed' ? fresh : cached;
+    console.log('[BACKDATE] getMissionListDisplayMissions resolving recently-completed', {
+      missionId: cached.id,
+      cachedCompletedAt: cached.completedAt instanceof Date
+        ? cached.completedAt.toISOString()
+        : cached.completedAt?.toDate?.()?.toISOString?.() ?? String(cached.completedAt),
+      freshFound: !!fresh,
+      freshStatus: fresh?.status ?? null,
+      freshCompletedAt: fresh?.completedAt?.toDate?.()?.toISOString?.() ?? null,
+      using: used === fresh ? 'fresh' : 'cached',
+    });
+    return used;
+  });
+
   const trimmedQuery = (searchQuery || '').trim().toLowerCase();
 
   // Search matches across the fields the user is most likely to remember:
@@ -280,7 +302,7 @@ export const getMissionListDisplayMissions = ({
   };
 
   if (missionType === 'active') {
-    return [...recentlyCompletedMissions, ...filteredMissions].filter(matchesSearch);
+    return [...recentlyCompletedDisplay, ...filteredMissions].filter(matchesSearch);
   }
 
   return missions.filter(matchesSearch);

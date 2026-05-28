@@ -106,8 +106,18 @@ const MissionBank = () => {
   // Handle mission un-completion
   const handleMissionUncompletion = (uncompletedMissionId) => {
     // Remove from recently completed missions
-    setRecentlyCompletedMissions(prev => 
+    setRecentlyCompletedMissions(prev =>
       prev.filter(mission => mission.id !== uncompletedMissionId)
+    );
+  };
+
+  // Patch a recently-completed mission's cached fields when something edits
+  // them post-completion (e.g. backdating completedAt). Without this, the
+  // snapshot captured at completion time would mask the new value because
+  // getActiveMissions doesn't return completed missions on reload.
+  const handleRecentlyCompletedUpdated = (missionId, partialUpdate) => {
+    setRecentlyCompletedMissions(prev =>
+      prev.map(m => m.id === missionId ? { ...m, ...partialUpdate } : m)
     );
   };
 
@@ -239,6 +249,7 @@ const MissionBank = () => {
         recentlyCompletedMissions={recentlyCompletedMissions}
         onMissionCompletion={handleMissionCompletion}
         onMissionUncompletion={handleMissionUncompletion}
+        onRecentlyCompletedUpdated={handleRecentlyCompletedUpdated}
         onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
       />
 

@@ -26,6 +26,7 @@ const MissionCardCondensed = ({
   onMissionChanged,
   readOnly = false,
   actionSlot = null,
+  onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
   const isDailyMission = useIsDailyMission(mission.id);
@@ -66,8 +67,11 @@ const MissionCardCondensed = ({
 
   const dueDateInfo = getDueDateInfo();
   const today = toDateString(new Date());
-  const completedDate = isCompleted && mission.completedAt
-    ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
+  // Effective completedAt prefers the local override — see MissionCard for
+  // the same reasoning.
+  const effectiveCompletedAt = completedAtOverride ?? mission.completedAt;
+  const completedDate = isCompleted && effectiveCompletedAt
+    ? toDateString(effectiveCompletedAt.toDate?.() ?? new Date(effectiveCompletedAt))
     : null;
   const isCompletedToday = completedDate === today;
 
@@ -85,6 +89,7 @@ const MissionCardCondensed = ({
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
       const result = await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
       setCompletedAtOverride(result.completedAt);
+      onRecentlyCompletedUpdated?.(mission.id, { completedAt: result.completedAt });
     } catch (err) {
       setMarkedYesterday(false);
       console.error('Failed to mark mission as completed yesterday:', err);
@@ -128,7 +133,7 @@ const MissionCardCondensed = ({
             {!readOnly && showXpBadge && mission.xpAwarded && (
               <span className="mcc-xp-badge">+{mission.xpAwarded} XP</span>
             )}
-            {!readOnly && isCompletedToday ? (
+            {!readOnly && (isCompletedToday || markedYesterday) ? (
               <button
                 type="button"
                 className={`mcc-mark-yesterday-chip ${markedYesterday ? 'marked' : ''}`}
@@ -184,7 +189,10 @@ const MissionCardCondensed = ({
         onClose={() => setViewingDetails(false)}
         onToggleComplete={onToggleComplete}
         onMissionChanged={onMissionChanged}
-        onCompletedAtChanged={setCompletedAtOverride}
+        onCompletedAtChanged={(newTs) => {
+          setCompletedAtOverride(newTs);
+          onRecentlyCompletedUpdated?.(mission.id, { completedAt: newTs });
+        }}
       />
     )}
   </>

@@ -39,6 +39,7 @@ const MissionCard = ({
   hideDailyBadge = false,
   hideRoomBadge = false,
   hideQuestIndicator = false,
+  onRecentlyCompletedUpdated = null,
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -120,8 +121,15 @@ const MissionCard = ({
   const completionInfo = getCompletionTypeInfo();
 
   const today = toDateString(new Date());
-  const completedDate = isCompleted && mission.completedAt
-    ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
+  // Effective completedAt prefers the local override (set after the user
+  // backdates via this card's chip OR via MissionCardFull's picker). The prop
+  // can lag because MissionBankPage caches a snapshot at completion time and
+  // doesn't update it on backdate — using only the prop makes the chip
+  // re-appear as "Did this yesterday?" after a backdate, which reads as
+  // "the date didn't save."
+  const effectiveCompletedAt = completedAtOverride ?? mission.completedAt;
+  const completedDate = isCompleted && effectiveCompletedAt
+    ? toDateString(effectiveCompletedAt.toDate?.() ?? new Date(effectiveCompletedAt))
     : null;
   const isCompletedToday = completedDate === today;
 
@@ -132,11 +140,21 @@ const MissionCard = ({
     setMarkedYesterday(true);
     try {
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      console.log('[BACKDATE] MissionCard chip clicked', { missionId: mission.id, yesterday });
       const result = await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
+      console.log('[BACKDATE] MissionCard chip → setCompletedAtOverride', {
+        missionId: mission.id,
+        newCompletedAt: result.completedAt?.toDate?.()?.toISOString?.() ?? null,
+      });
       setCompletedAtOverride(result.completedAt);
+      // Patch the parent's recentlyCompletedMissions snapshot so the prop
+      // flowing back down on the next render also reflects the new date —
+      // protects against state loss if MissionCard remounts (StrictMode,
+      // sibling list churn, etc.).
+      onRecentlyCompletedUpdated?.(mission.id, { completedAt: result.completedAt });
     } catch (err) {
       setMarkedYesterday(false);
-      console.error('Failed to mark mission as completed yesterday:', err);
+      console.error('[BACKDATE] MissionCard chip FAILED:', err);
     } finally {
       setYesterdayLoading(false);
     }
@@ -214,7 +232,7 @@ const MissionCard = ({
           
           <div className="badges">
 
-            {isCompletedToday && !selectionMode && (
+            {(isCompletedToday || markedYesterday) && !selectionMode && (
               <button
                 type="button"
                 className={`mark-yesterday-chip ${markedYesterday ? 'marked' : ''}`}
@@ -323,18 +341,34 @@ const MissionCard = ({
       </div>
     </div>
 
-    {viewingDetails && (
-      <MissionCardFull
-        mission={completedAtOverride
-          ? { ...mission, completedAt: completedAtOverride }
-          : mission}
-        onClose={() => setViewingDetails(false)}
-        onToggleComplete={onToggleComplete}
-        onMissionChanged={onMissionChanged}
-        onPriorityToggled={(val) => onPriorityToggled?.(mission.id, val)}
-        onCompletedAtChanged={setCompletedAtOverride}
-      />
-    )}
+    {viewingDetails && (() => {
+      const effectiveMission = completedAtOverride
+        ? { ...mission, completedAt: completedAtOverride }
+        : mission;
+      console.log('[BACKDATE] MissionCard opening MissionCardFull', {
+        missionId: mission.id,
+        title: mission.title,
+        propCompletedAt: mission.completedAt?.toDate?.()?.toISOString?.()
+          ?? (mission.completedAt instanceof Date ? mission.completedAt.toISOString() : String(mission.completedAt)),
+        completedAtOverride: completedAtOverride?.toDate?.()?.toISOString?.() ?? null,
+        usingOverride: !!completedAtOverride,
+        effectiveCompletedAt: effectiveMission.completedAt?.toDate?.()?.toISOString?.()
+          ?? (effectiveMission.completedAt instanceof Date ? effectiveMission.completedAt.toISOString() : String(effectiveMission.completedAt)),
+      });
+      return (
+        <MissionCardFull
+          mission={effectiveMission}
+          onClose={() => setViewingDetails(false)}
+          onToggleComplete={onToggleComplete}
+          onMissionChanged={onMissionChanged}
+          onPriorityToggled={(val) => onPriorityToggled?.(mission.id, val)}
+          onCompletedAtChanged={(newTs) => {
+            setCompletedAtOverride(newTs);
+            onRecentlyCompletedUpdated?.(mission.id, { completedAt: newTs });
+          }}
+        />
+      );
+    })()}
   </>
   );
 };
