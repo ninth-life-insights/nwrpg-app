@@ -101,6 +101,49 @@
   cursor: not-allowed;
 }
 
+/* Monthly options */
+.monthly-options-compact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.monthly-mode-select,
+.monthly-week-select,
+.monthly-weekday-select {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-main);
+  color: var(--color-text-dark);
+}
+
+.monthly-mode-select:focus,
+.monthly-week-select:focus,
+.monthly-weekday-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.monthly-day-input {
+  width: 50px;
+  padding: 2px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.monthly-day-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
 /* Interval Picker */
 .interval-picker-compact {
   display: flex;

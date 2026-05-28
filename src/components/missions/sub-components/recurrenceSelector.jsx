@@ -44,13 +44,19 @@ const RecurrenceSelector = ({
         newRecurrence.weekdays = [dueDateObj.getDay()];
     } else if (pattern === RECURRENCE_PATTERNS.MONTHLY && dueDate) {
         const dueDateObj = new Date(dueDate);
+        newRecurrence.monthlyMode = 'dayOfMonth';
         newRecurrence.dayOfMonth = dueDateObj.getDate();
+        newRecurrence.weekOfMonth = null;
+        newRecurrence.weekdayOfMonth = null;
     } else if (pattern === RECURRENCE_PATTERNS.NONE) {
         newRecurrence = {
         pattern: RECURRENCE_PATTERNS.NONE,
         interval: 1,
         weekdays: [],
+        monthlyMode: 'dayOfMonth',
         dayOfMonth: null,
+        weekOfMonth: null,
+        weekdayOfMonth: null,
         endDate: null,
         maxOccurrences: null
         };
@@ -58,6 +64,47 @@ const RecurrenceSelector = ({
 
     onRecurrenceChange(newRecurrence);
     };
+
+  const handleMonthlyModeChange = (mode) => {
+    if (mode === 'dayOfWeek') {
+      // Derive defaults from due date so the user sees a sensible starting
+      // point (e.g. due 2026-06-12 → "second Friday").
+      const base = dueDate ? new Date(dueDate) : new Date();
+      const weekdayOfMonth = base.getDay();
+      const ordinalGuess = Math.ceil(base.getDate() / 7);
+      // The 5th occurrence doesn't exist in every month — treat it as "last".
+      const weekOfMonth = ordinalGuess > 4 ? -1 : ordinalGuess;
+      onRecurrenceChange({
+        ...recurrence,
+        monthlyMode: 'dayOfWeek',
+        weekOfMonth,
+        weekdayOfMonth,
+      });
+    } else {
+      const base = dueDate ? new Date(dueDate) : new Date();
+      onRecurrenceChange({
+        ...recurrence,
+        monthlyMode: 'dayOfMonth',
+        dayOfMonth: recurrence.dayOfMonth || base.getDate(),
+      });
+    }
+  };
+
+  const handleDayOfMonthChange = (value) => {
+    const parsed = parseInt(value, 10);
+    onRecurrenceChange({
+      ...recurrence,
+      dayOfMonth: Number.isNaN(parsed) ? '' : Math.max(1, Math.min(31, parsed)),
+    });
+  };
+
+  const handleWeekOfMonthChange = (value) => {
+    onRecurrenceChange({ ...recurrence, weekOfMonth: parseInt(value, 10) });
+  };
+
+  const handleWeekdayOfMonthChange = (value) => {
+    onRecurrenceChange({ ...recurrence, weekdayOfMonth: parseInt(value, 10) });
+  };
 
   const handleIntervalChange = (interval) => {
     // Allow temporarily-invalid values (empty, 0) during editing so the user
@@ -97,6 +144,8 @@ const RecurrenceSelector = ({
 
 const patternSelected = recurrence.pattern !== RECURRENCE_PATTERNS.NONE;
 const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
+const showMonthlyOptions = recurrence.pattern === RECURRENCE_PATTERNS.MONTHLY;
+const monthlyMode = recurrence.monthlyMode || 'dayOfMonth';
 
 // Live preview: plain-English summary + concrete next-due date. Catches
 // misconfigurations (recurrence end date before next occurrence; day-31 in a
@@ -175,6 +224,63 @@ const previewSentence = (() => {
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Monthly options — swap between day-of-month and day-of-week patterns */}
+      {showMonthlyOptions && (
+        <div className="monthly-options-compact">
+          <span className="picker-label">On:</span>
+          <select
+            value={monthlyMode}
+            onChange={(e) => handleMonthlyModeChange(e.target.value)}
+            className="monthly-mode-select"
+            disabled={disabled}
+          >
+            <option value="dayOfMonth">Day of month</option>
+            <option value="dayOfWeek">Day of week</option>
+          </select>
+
+          {monthlyMode === 'dayOfMonth' ? (
+            <input
+              type="number"
+              min="1"
+              max="31"
+              value={recurrence.dayOfMonth ?? ''}
+              onChange={(e) => handleDayOfMonthChange(e.target.value)}
+              className="monthly-day-input"
+              disabled={disabled}
+            />
+          ) : (
+            <>
+              <select
+                value={recurrence.weekOfMonth ?? 1}
+                onChange={(e) => handleWeekOfMonthChange(e.target.value)}
+                className="monthly-week-select"
+                disabled={disabled}
+              >
+                <option value={1}>First</option>
+                <option value={2}>Second</option>
+                <option value={3}>Third</option>
+                <option value={4}>Fourth</option>
+                <option value={-1}>Last</option>
+              </select>
+              <select
+                value={recurrence.weekdayOfMonth ?? 0}
+                onChange={(e) => handleWeekdayOfMonthChange(e.target.value)}
+                className="monthly-weekday-select"
+                disabled={disabled}
+              >
+                <option value={0}>Sunday</option>
+                <option value={1}>Monday</option>
+                <option value={2}>Tuesday</option>
+                <option value={3}>Wednesday</option>
+                <option value={4}>Thursday</option>
+                <option value={5}>Friday</option>
+                <option value={6}>Saturday</option>
+              </select>
+            </>
+          )}
         </div>
       )}
 

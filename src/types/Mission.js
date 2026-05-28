@@ -74,7 +74,13 @@ export const MISSION_SCHEMA = {
   pattern: null,                // string - 'daily', 'weekly', 'monthly', 'yearly', 'custom'
   interval: 1,                  // number - every X days/weeks/months (e.g., every 2 weeks)
   weekdays: [],                 // array - [0,1,2,3,4,5,6] for weekly (0=Sunday)
-  dayOfMonth: null,             // number - for monthly (1-31) or null for "same day"
+  // For monthly, two modes:
+  //   'dayOfMonth' (default) — uses `dayOfMonth` (1-31). The 12th of every month.
+  //   'dayOfWeek' — uses `weekOfMonth` + `weekdayOfMonth`. The 2nd Tuesday of every month.
+  monthlyMode: 'dayOfMonth',
+  dayOfMonth: null,             // number - for monthly (1-31), used in 'dayOfMonth' mode
+  weekOfMonth: null,            // number - 1|2|3|4|-1 (-1 = last), used in 'dayOfWeek' mode
+  weekdayOfMonth: null,         // number - 0-6, used in 'dayOfWeek' mode
   endDate: null,                // Date - when to stop recurring (optional)
   maxOccurrences: null,         // number - max times to recur (optional)
   parentMissionId: null,        // string - ID of original recurring mission

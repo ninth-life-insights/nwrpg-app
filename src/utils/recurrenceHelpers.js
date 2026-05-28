@@ -22,11 +22,38 @@ export const isEvergreenMission = (mission) => {
 };
 
 const WEEKDAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAY_NAMES_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEK_OF_MONTH_LABELS = { 1: 'first', 2: 'second', 3: 'third', 4: 'fourth', '-1': 'last' };
 
 const ordinal = (n) => {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+// Find the nth occurrence of a weekday in a given month.
+// ordinal: 1, 2, 3, 4, or -1 (last). weekday: 0 (Sun) - 6 (Sat).
+// monthDayjs: any dayjs date inside the target month.
+// Returns a dayjs object.
+export const getNthWeekdayOfMonth = (monthDayjs, ordinal, weekday) => {
+  if (ordinal === -1) {
+    // Last occurrence — walk back from the end of the month
+    const lastDay = monthDayjs.endOf('month');
+    const diff = (lastDay.day() - weekday + 7) % 7;
+    return lastDay.subtract(diff, 'day');
+  }
+  // First occurrence
+  const firstDay = monthDayjs.startOf('month');
+  const offset = (weekday - firstDay.day() + 7) % 7;
+  const first = firstDay.add(offset, 'day');
+  // Then advance (ordinal - 1) weeks. If the result spills into the next month
+  // (e.g. asking for "5th Friday" in a 4-Friday month), clamp to the last
+  // matching weekday so we never silently return the next month.
+  const candidate = first.add(ordinal - 1, 'week');
+  if (candidate.month() !== monthDayjs.month()) {
+    return getNthWeekdayOfMonth(monthDayjs, -1, weekday);
+  }
+  return candidate;
 };
 
 // Format a recurrence object into a human-readable string. Used by both the
@@ -60,6 +87,13 @@ export const formatRecurrence = (recurrence) => {
 
     case 'monthly': {
       const base = n === 1 ? 'Every month' : `Every ${n} months`;
+      if (recurrence.monthlyMode === 'dayOfWeek'
+        && recurrence.weekOfMonth != null
+        && recurrence.weekdayOfMonth != null) {
+        const ord = WEEK_OF_MONTH_LABELS[String(recurrence.weekOfMonth)] || ordinal(recurrence.weekOfMonth);
+        const day = WEEKDAY_NAMES_FULL[recurrence.weekdayOfMonth];
+        return `${base} on the ${ord} ${day}`;
+      }
       return dayOfMonth ? `${base} on the ${ordinal(dayOfMonth)}` : base;
     }
 
@@ -120,13 +154,17 @@ export const calculateNextDueDate = (currentDueDate, recurrence) => {
       return current.add(interval, 'week').format('YYYY-MM-DD');
 
     case RECURRENCE_PATTERNS.MONTHLY: {
-      // dayOfMonth carries the user's intended day. If it's missing (legacy
-      // missions created before the selector auto-filled it), fall back to the
-      // current due date's day. Always cap to the target month's length, so
-      // the 31st collapses to 28/30 in short months but jumps back to 31
-      // whenever a 31-day month appears — without permanently locking in the
-      // capped value.
       const nextMonth = current.add(interval, 'month');
+      // Day-of-week mode: "the 2nd Tuesday of every month".
+      if (recurrence.monthlyMode === 'dayOfWeek'
+        && recurrence.weekOfMonth != null
+        && recurrence.weekdayOfMonth != null) {
+        return getNthWeekdayOfMonth(nextMonth, recurrence.weekOfMonth, recurrence.weekdayOfMonth).format('YYYY-MM-DD');
+      }
+      // Day-of-month mode (default). dayOfMonth carries the user's intended
+      // day; if missing (legacy data), fall back to current.date(). Always cap
+      // to the target month's length so the 31st collapses to 28/30 in short
+      // months but jumps back to 31 whenever a 31-day month appears.
       const targetDay = Math.min(dayOfMonth || current.date(), nextMonth.daysInMonth());
       return nextMonth.date(targetDay).format('YYYY-MM-DD');
     }
@@ -178,6 +216,19 @@ export const calculateNextDueDateFromCompletion = (completionDateString, recurre
     }
 
     case RECURRENCE_PATTERNS.MONTHLY: {
+      // Day-of-week mode: snap forward to the next "nth weekday of month".
+      if (recurrence.monthlyMode === 'dayOfWeek'
+        && recurrence.weekOfMonth != null
+        && recurrence.weekdayOfMonth != null) {
+        const thisMonthHit = getNthWeekdayOfMonth(completion, recurrence.weekOfMonth, recurrence.weekdayOfMonth);
+        const base = thisMonthHit.isAfter(completion, 'day')
+          ? thisMonthHit
+          : getNthWeekdayOfMonth(completion.add(1, 'month'), recurrence.weekOfMonth, recurrence.weekdayOfMonth);
+        const final = n > 1
+          ? getNthWeekdayOfMonth(base.add(n - 1, 'month'), recurrence.weekOfMonth, recurrence.weekdayOfMonth)
+          : base;
+        return final.format('YYYY-MM-DD');
+      }
       if (dayOfMonth) {
         // Snap forward to the next matching day-of-month after completion.
         let candidate = completion;
@@ -222,6 +273,9 @@ export const resolveAnchorForRecurrence = (recurrence, anchorMode = 'smart') => 
         ? 'dueDate'
         : 'completion';
     case RECURRENCE_PATTERNS.MONTHLY:
+      if (recurrence.monthlyMode === 'dayOfWeek'
+        && recurrence.weekOfMonth != null
+        && recurrence.weekdayOfMonth != null) return 'dueDate';
       return recurrence.dayOfMonth ? 'dueDate' : 'completion';
     case RECURRENCE_PATTERNS.YEARLY:
       return 'dueDate';
