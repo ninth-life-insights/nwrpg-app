@@ -115,7 +115,6 @@ const AddMissionCard = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quests, setQuests] = useState([]);
   const [baseName, setBaseName] = useState('');
-  const [anchorMode, setAnchorMode] = useState('smart');
   const { rooms } = useRooms();
   const [showRoomField, setShowRoomField] = useState(!!(mode === 'edit' && !!initialMission?.baseLocation) || autoOpenField === 'room');
 
@@ -130,10 +129,6 @@ const AddMissionCard = ({
     getUserProfile(currentUser.uid)
       .then(profile => {
         setBaseName(profile?.baseName || '');
-        const anchor = profile?.recurrenceAnchorMode;
-        if (anchor === 'smart' || anchor === 'dueDate' || anchor === 'completion') {
-          setAnchorMode(anchor);
-        }
         if (mode === 'edit') return;
         const pref = profile?.defaultFollowUpDays;
         if (pref === 'none') {
@@ -620,7 +615,6 @@ const AddMissionCard = ({
                 recurrence={formData.recurrence}
                 onRecurrenceChange={handleRecurrenceChange}
                 dueDate={formData.dueDate}
-                anchorMode={anchorMode}
                 disabled={isSubmitting}
                 errors={errors}
               />
