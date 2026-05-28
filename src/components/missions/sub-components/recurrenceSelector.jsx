@@ -102,10 +102,6 @@ const RecurrenceSelector = ({
     onRecurrenceChange({ ...recurrence, weekOfMonth: parseInt(value, 10) });
   };
 
-  const handleWeekdayOfMonthChange = (value) => {
-    onRecurrenceChange({ ...recurrence, weekdayOfMonth: parseInt(value, 10) });
-  };
-
   const handleIntervalChange = (interval) => {
     // Allow temporarily-invalid values (empty, 0) during editing so the user
     // can delete the existing digit before typing a new one. Submit-time
@@ -129,7 +125,7 @@ const RecurrenceSelector = ({
     });
   };
 
-  const recurrenceLabel = formatRecurrence(recurrence);
+  const recurrenceLabel = formatRecurrence(recurrence, { verbose: true });
 
   const intervalUnit = (() => {
     const plural = recurrence.interval > 1;
@@ -265,20 +261,9 @@ const previewSentence = (() => {
                 <option value={4}>Fourth</option>
                 <option value={-1}>Last</option>
               </select>
-              <select
-                value={recurrence.weekdayOfMonth ?? 0}
-                onChange={(e) => handleWeekdayOfMonthChange(e.target.value)}
-                className="monthly-weekday-select"
-                disabled={disabled}
-              >
-                <option value={0}>Sunday</option>
-                <option value={1}>Monday</option>
-                <option value={2}>Tuesday</option>
-                <option value={3}>Wednesday</option>
-                <option value={4}>Thursday</option>
-                <option value={5}>Friday</option>
-                <option value={6}>Saturday</option>
-              </select>
+              <span className="monthly-weekday-locked">
+                {WEEKDAYS[recurrence.weekdayOfMonth ?? (dueDate ? new Date(dueDate).getDay() : new Date().getDay())]?.full}
+              </span>
             </>
           )}
         </div>

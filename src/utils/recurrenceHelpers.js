@@ -58,7 +58,11 @@ export const getNthWeekdayOfMonth = (monthDayjs, ordinal, weekday) => {
 
 // Format a recurrence object into a human-readable string. Used by both the
 // mission card badge and the recurrence selector preview — one source of truth.
-export const formatRecurrence = (recurrence) => {
+//
+// Pass `{ verbose: true }` for detail-view contexts (form preview, MissionCardFull):
+// includes the day-of-month or day-of-week detail for monthly. Default (short)
+// drops that detail since at-a-glance badges don't need it.
+export const formatRecurrence = (recurrence, { verbose = false } = {}) => {
   if (!recurrence || !recurrence.pattern || recurrence.pattern === RECURRENCE_PATTERNS.NONE) {
     return null;
   }
@@ -87,6 +91,7 @@ export const formatRecurrence = (recurrence) => {
 
     case 'monthly': {
       const base = n === 1 ? 'Every month' : `Every ${n} months`;
+      if (!verbose) return base;
       if (recurrence.monthlyMode === 'dayOfWeek'
         && recurrence.weekOfMonth != null
         && recurrence.weekdayOfMonth != null) {
@@ -106,10 +111,12 @@ export const formatRecurrence = (recurrence) => {
 };
 
 // Mission-shaped wrapper for `formatRecurrence`. Kept for the mission card
-// badge, which receives a mission object.
-export const getRecurrenceDisplayText = (mission) => {
+// badge, which receives a mission object. Pass `{ verbose: true }` for the
+// detail view (MissionCardFull) where the day-of-month/day-of-week detail
+// belongs.
+export const getRecurrenceDisplayText = (mission, options) => {
   if (!isRecurringMission(mission)) return null;
-  return formatRecurrence(mission.recurrence) || 'Recurring';
+  return formatRecurrence(mission.recurrence, options) || 'Recurring';
 };
 
 // Calculate the next due date based on recurrence pattern

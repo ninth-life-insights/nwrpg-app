@@ -148,7 +148,7 @@ const MissionCardFull = ({
     .sort();
   const isRecurring = isRecurringMission(displayMission);
   const isEvergreen = isEvergreenMission(displayMission);
-  const recurrenceText = getRecurrenceDisplayText(displayMission);
+  const recurrenceText = getRecurrenceDisplayText(displayMission, { verbose: true });
   const isCompleted = displayMission.status === MISSION_STATUS.COMPLETED;
   const isActive = displayMission.status === MISSION_STATUS.ACTIVE;
   const isExpired = displayMission.status === MISSION_STATUS.EXPIRED;
