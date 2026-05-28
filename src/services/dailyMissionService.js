@@ -362,6 +362,32 @@ export const addMissionToDailyMissions = async (userId, missionId) => {
   }
 };
 
+// Remove a mission from every future date it was planned for. Pass the mission's
+// `scheduledDates` array — each entry has a matching dailyHistory doc whose
+// `selectedMissionIds` should no longer reference this mission. Used on mission
+// delete so the mission stops appearing on days it was pre-planned for.
+// Note: this does NOT touch today's dailyMissions/config — use
+// `removeMissionFromDailyMissions` for that. The two stores are independent.
+export const removeMissionFromPlannedDates = async (userId, missionId, scheduledDates) => {
+  if (!Array.isArray(scheduledDates) || scheduledDates.length === 0) {
+    return { success: true, datesUpdated: 0 };
+  }
+  try {
+    const batch = writeBatch(db);
+    scheduledDates.forEach(date => {
+      const historyRef = doc(db, 'users', userId, 'dailyHistory', date);
+      batch.update(historyRef, {
+        selectedMissionIds: arrayRemove(missionId)
+      });
+    });
+    await batch.commit();
+    return { success: true, datesUpdated: scheduledDates.length };
+  } catch (error) {
+    console.error('Error removing mission from planned dates:', error);
+    throw error;
+  }
+};
+
 // Remove a mission from today's daily missions
 export const removeMissionFromDailyMissions = async (userId, missionId) => {
   try {

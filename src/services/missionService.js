@@ -297,7 +297,8 @@ export const deleteMission = async (userId, missionId) => {
     await updateDoc(missionRef, {
       status: MISSION_STATUS.DELETED,
       deletedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      scheduledDates: []
     });
 
     // Remove mission from quest if it's part of one
@@ -309,6 +310,17 @@ export const deleteMission = async (userId, missionId) => {
         console.error('Error removing mission from quest:', error);
         // Don't throw - mission is still deleted even if quest update fails
       }
+    }
+
+    // Remove mission from today's daily missions if it's currently selected,
+    // and from any future dates it was pre-planned for via EditDailyMissionsPage.
+    try {
+      const { removeMissionFromDailyMissions, removeMissionFromPlannedDates } = await import('./dailyMissionService');
+      await removeMissionFromDailyMissions(userId, missionId);
+      await removeMissionFromPlannedDates(userId, missionId, missionData.scheduledDates);
+    } catch (error) {
+      console.error('Error removing mission from daily missions:', error);
+      // Don't throw - mission is still deleted even if daily missions update fails
     }
   } catch (error) {
     console.error('Error deleting mission:', error);
