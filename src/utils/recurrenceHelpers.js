@@ -22,7 +22,6 @@ export const isEvergreenMission = (mission) => {
 };
 
 const WEEKDAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEKDAY_NAMES_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const ordinal = (n) => {
   const s = ['th', 'st', 'nd', 'rd'];
@@ -45,21 +44,18 @@ export const formatRecurrence = (recurrence) => {
 
     case 'weekly': {
       const sortedDays = [...weekdays].sort((a, b) => a - b);
-      const dayList = sortedDays.map(d => WEEKDAY_NAMES_SHORT[d]).join(', ');
 
+      // 7 days = "every day". 0 or 1 day = just "Every week" (the specific day
+      // is implied by the due date; saying it twice is noise). Only show the
+      // day list when there are multiple, since that's when it carries info.
       if (sortedDays.length === 7) {
         return n === 1 ? 'Every day' : `Every ${n} weeks`;
       }
-      if (sortedDays.length === 0) {
+      if (sortedDays.length <= 1) {
         return n === 1 ? 'Every week' : `Every ${n} weeks`;
       }
-      if (n === 1 && sortedDays.length === 1) {
-        return `Every ${WEEKDAY_NAMES_FULL[sortedDays[0]]}`;
-      }
-      if (n === 1) {
-        return `Every ${dayList}`;
-      }
-      return `Every ${n} weeks on ${dayList}`;
+      const dayList = sortedDays.map(d => WEEKDAY_NAMES_SHORT[d]).join(', ');
+      return n === 1 ? `Every ${dayList}` : `Every ${n} weeks on ${dayList}`;
     }
 
     case 'monthly': {

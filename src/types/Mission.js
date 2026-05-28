@@ -188,10 +188,6 @@ export const validateMission = (mission) => {
       errors.push('Recurring missions must have a due date');
     }
     
-    if (mission.recurrence && mission.recurrence.pattern === 'weekly' && mission.recurrence.weekdays.length === 0) {
-      errors.push('Weekly recurring missions must have at least one weekday selected');
-    }
-    
     if (mission.recurrence && mission.recurrence.interval < 1) {
       errors.push('Recurrence interval must be at least 1');
     }

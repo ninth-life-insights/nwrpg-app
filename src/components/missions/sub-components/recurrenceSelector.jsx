@@ -58,9 +58,14 @@ const RecurrenceSelector = ({
     };
 
   const handleIntervalChange = (interval) => {
+    // Allow temporarily-invalid values (empty, 0) during editing so the user
+    // can delete the existing digit before typing a new one. Submit-time
+    // validation (validateMission) rejects interval < 1, so bad values never
+    // hit the recurrence engine.
+    const parsed = parseInt(interval, 10);
     onRecurrenceChange({
       ...recurrence,
-      interval: Math.max(1, parseInt(interval) || 1)
+      interval: Number.isNaN(parsed) ? '' : parsed
     });
   };
 
