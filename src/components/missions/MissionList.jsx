@@ -21,8 +21,13 @@ import {
 import {
   applyMissionFiltersAndSort,
   getMissionListDisplayMissions,
-  normalizeMissionListFilters
+  groupMissionsByDueDate,
+  normalizeMissionListFilters,
+  sortByCompletedAtDesc
 } from '../../utils/missionListFilters';
+import { useRooms } from '../../contexts/RoomsContext';
+import { useQuests } from '../../contexts/QuestsContext';
+import './MissionList.css';
 
 // Drag and drop imports
 import {
@@ -58,15 +63,19 @@ const MissionList = ({
   onMissionCompletion = null,
   onMissionUncompletion = null,
   onRecurringMissionCreated = null,
-  onAchievementsUnlocked = null
+  onAchievementsUnlocked = null,
+  onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
+  const { roomsMap } = useRooms();
+  const { questsMap } = useQuests();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDragPrompt, setShowDragPrompt] = useState(false);
   const [dragPromptPosition, setDragPromptPosition] = useState(null);
   const [hasInitializedCustomOrder, setHasInitializedCustomOrder] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -89,7 +98,8 @@ const MissionList = ({
   const memoizedFilters = useMemo(() => normalizeMissionListFilters(filters), [
     filters.sortBy, filters.sortOrder, filters.skillFilter,
     filters.includeCompleted, filters.showArchive, filters.completedDateRange,
-    filters.roomFilter, filters.taskTypeFilter, filters.questFilter
+    filters.roomFilter, filters.taskTypeFilter, filters.questFilter,
+    filters.priorityFilter
   ]);
 
   const isCustomOrderMode = memoizedFilters.sortBy === 'custom';
@@ -137,6 +147,17 @@ const MissionList = ({
       
       const missionsWithDailyStatus = await addDailyMissionStatus(currentUser.uid, missionData);
       const processedMissions = applyMissionFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
+      console.log('[BACKDATE] loadMissions fetched', {
+        missionType,
+        count: processedMissions.length,
+        completedInFetch: processedMissions
+          .filter(m => m.status === 'completed')
+          .map(m => ({
+            id: m.id,
+            title: m.title,
+            completedAt: m.completedAt?.toDate?.()?.toISOString?.() ?? null,
+          })),
+      });
       setMissions(processedMissions);
     } catch (err) {
       console.error('Error loading missions:', err);
@@ -193,6 +214,15 @@ const MissionList = ({
     }
   };
 
+  // Lightweight in-place update for a single mission's priority flag.
+  // Avoids the full Firestore reload that onMissionChanged would trigger,
+  // which would re-mount the open MissionCardFull and close it.
+  const handlePriorityToggled = (missionId, isPriority) => {
+    setMissions(prev => prev.map(m =>
+      m.id === missionId ? { ...m, isPriority } : m
+    ));
+  };
+
   const handleAddMission = (newMission) => {
     if (!newMission.id) {
       console.error('BLOCKING: Cannot add mission without ID');
@@ -200,25 +230,7 @@ const MissionList = ({
       return;
     }
 
-    const enhanceMissionWithDailyStatus = async () => {
-      try {
-        const enhancedMissions = await addDailyMissionStatus(currentUser.uid, [newMission]);
-        const enhancedMission = enhancedMissions[0];
-        
-        setMissions(prev => {
-          const newMissions = [enhancedMission, ...prev];
-          return newMissions;
-        });
-      } catch (error) {
-        console.error('Error enhancing mission with daily status:', error);
-        setMissions(prev => {
-          const newMissions = [{...newMission, isDailyMission: false}, ...prev];
-          return newMissions;
-        });
-      }
-    };
-
-    enhanceMissionWithDailyStatus();
+    setMissions(prev => [newMission, ...prev]);
   };
 
   const handleMissionSelect = (mission) => {
@@ -331,7 +343,9 @@ const MissionList = ({
     missions,
     missionType,
     recentlyCompletedMissions,
-    searchQuery
+    searchQuery,
+    roomsMap,
+    questsMap
   });
 
   if (loading) {
@@ -434,6 +448,137 @@ const MissionList = ({
     );
   }
 
+  // Grouped view kicks in only when the user has explicitly chosen to sort by
+  // due date — that's the context where "Overdue / Today / This Week / Later"
+  // bucketing helps. Other sorts stay flat. Selection mode is always flat.
+  // When includeCompleted is on, completed missions render in their own
+  // "Done" group above the date buckets so they don't muddle the timeline.
+  const isDueDateGrouped = memoizedFilters.sortBy === 'dueDate' && !selectionMode;
+  // Sort the Done bucket by completedAt desc regardless of the active sort —
+  // dueDate sort puts completed missions in an arbitrary-looking order since
+  // many have past or null due dates. Most recently completed first matches
+  // user intent ("what did I just finish?").
+  const completedInGroupedView = isDueDateGrouped
+    ? sortByCompletedAtDesc(displayMissions.filter(m => m.status === 'completed'))
+    : [];
+  const activeForBuckets = isDueDateGrouped
+    ? displayMissions.filter(m => m.status !== 'completed')
+    : [];
+  const dueDateGroups = isDueDateGrouped ? groupMissionsByDueDate(activeForBuckets) : [];
+
+  const toggleGroup = (key) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const renderMissionItem = (mission, index, options = {}) => {
+    const { applyRecentMargin = true } = options;
+    const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
+    const isRecentlyCompleted = recentlyCompletedMissions.some(completed => completed.id === mission.id);
+
+    return (
+      <div
+        key={mission.id}
+        className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''} ${isRecentlyCompleted ? 'recently-completed' : ''}`}
+        onClick={() => {
+          if (!selectionMode) return;
+          handleMissionSelect(mission);
+        }}
+        onKeyDown={(e) => {
+          if (!selectionMode) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleMissionSelect(mission);
+          }
+        }}
+        role={selectionMode ? 'button' : undefined}
+        tabIndex={selectionMode ? 0 : undefined}
+        style={{
+          position: 'relative',
+          ...(selectionMode && {
+            cursor: 'pointer',
+            padding: '0.5px 4px',
+            margin: '0 4px',
+            maxWidth: '400px',
+            borderRadius: '12px',
+            border: isSelected ? '3px solid #2196f3' : '',
+            backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
+            transition: 'all 0.2s ease'
+          }),
+          ...(applyRecentMargin && isRecentlyCompleted && {
+            marginBottom: index === recentlyCompletedMissions.length - 1 ? '25px' : '8px'
+          })
+        }}
+      >
+        {/* Drag Prompt - appears near the mission that was attempted to drag */}
+        {showDragPrompt && dragPromptPosition === mission.id && (
+          <div className="drag-prompt-inline">
+            <button
+              className="drag-prompt-close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDragPrompt(false);
+              }}
+            >
+              ×
+            </button>
+            <div className="drag-prompt-content">
+              <p className="drag-prompt-text">
+                Switch to Custom Order to reorder missions
+              </p>
+              <button
+                className="drag-prompt-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSwitchToCustomOrder();
+                }}
+              >
+                Open Filters
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isSelected && selectionMode && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            backgroundColor: '#2196f3',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            zIndex: 10
+          }}>
+            ✓
+          </div>
+        )}
+
+        <MissionCard
+          mission={mission}
+          onToggleComplete={handleToggleComplete}
+          onMissionChanged={loadMissions}
+          onPriorityToggled={handlePriorityToggled}
+          onSelect={selectionMode ? handleMissionSelect : undefined}
+          selectionMode={selectionMode}
+          isRecentlyCompleted={isRecentlyCompleted}
+          isCustomOrderMode={isCustomOrderMode}
+          onRecentlyCompletedUpdated={onRecentlyCompletedUpdated}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className={selectionMode ? 'mission-list-selection-mode' : 'mission-list'}>
 
@@ -449,109 +594,54 @@ const MissionList = ({
           strategy={verticalListSortingStrategy}
           disabled={!isCustomOrderMode || selectionMode}
         >
-          <div style={{ textAlign: 'center' }}>
-            {displayMissions.map((mission, index) => {
-              const isSelected = selectionMode && selectedMissions.some(selected => selected.id === mission.id);
-              const isRecentlyCompleted = recentlyCompletedMissions.some(completed => completed.id === mission.id);
-              
-              return (
-                <div
-                  key={mission.id}
-                  className={`mission-wrapper ${selectionMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''} ${isRecentlyCompleted ? 'recently-completed' : ''}`}
-                  onClick={() => {
-                    if (!selectionMode) return;
-                    handleMissionSelect(mission);
-                  }}
-                  onKeyDown={(e) => {
-                    if (!selectionMode) return;
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleMissionSelect(mission);
-                    }
-                  }}
-                  role={selectionMode ? 'button' : undefined}
-                  tabIndex={selectionMode ? 0 : undefined}
-                  style={{
-                    position: 'relative',
-                    ...(selectionMode && {
-                      cursor: 'pointer',
-                      padding: '0.5px 4px',
-                      margin: '0 4px',
-                      maxWidth: '400px',
-                      borderRadius: '12px',
-                      border: isSelected ? '3px solid #2196f3' : '',
-                      backgroundColor: isSelected ? '#e3f2fd' : 'transparent',
-                      transition: 'all 0.2s ease'
-                    }),
-                    ...(isRecentlyCompleted && {
-                      marginBottom: index === recentlyCompletedMissions.length - 1 ? '25px' : '8px'
-                    })
-                  }}
-                >
-                  {/* Drag Prompt - appears near the mission that was attempted to drag */}
-                  {showDragPrompt && dragPromptPosition === mission.id && (
-                    <div className="drag-prompt-inline">
-                      <button 
-                        className="drag-prompt-close"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowDragPrompt(false);
-                        }}
-                      >
-                        ×
-                      </button>
-                      <div className="drag-prompt-content">
-                        <p className="drag-prompt-text">
-                          Switch to Custom Order to reorder missions
-                        </p>
-                        <button 
-                          className="drag-prompt-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSwitchToCustomOrder();
-                          }}
-                        >
-                          Open Filters
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {isSelected && selectionMode && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      backgroundColor: '#2196f3',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      zIndex: 10
-                    }}>
-                      ✓
-                    </div>
-                  )}
-                  
-                  <MissionCard
-                    key={mission.id}
-                    mission={mission}
-                    onToggleComplete={handleToggleComplete}
-                    onMissionChanged={loadMissions}
-                    onSelect={selectionMode ? handleMissionSelect : undefined}
-                    selectionMode={selectionMode}
-                    isRecentlyCompleted={isRecentlyCompleted}
-                    isCustomOrderMode={isCustomOrderMode}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          {isDueDateGrouped ? (
+            <div className="mission-due-groups">
+              {completedInGroupedView.length > 0 && (() => {
+                const isCollapsed = collapsedGroups.has('done');
+                return (
+                  <section className="mission-due-group mission-due-group--done">
+                    <button
+                      type="button"
+                      className="mission-due-group-header"
+                      onClick={() => toggleGroup('done')}
+                      aria-expanded={!isCollapsed}
+                    >
+                      <span className="material-icons-outlined mission-due-group-chevron">
+                        {isCollapsed ? 'chevron_right' : 'expand_more'}
+                      </span>
+                      <span className="mission-due-group-label">Done</span>
+                      <span className="mission-due-group-count">{completedInGroupedView.length}</span>
+                    </button>
+                    {!isCollapsed && completedInGroupedView.map((mission, i) => renderMissionItem(mission, i, { applyRecentMargin: false }))}
+                  </section>
+                );
+              })()}
+              {dueDateGroups.map(group => {
+                const isCollapsed = collapsedGroups.has(group.key);
+                return (
+                  <section key={group.key} className={`mission-due-group mission-due-group--${group.key}`}>
+                    <button
+                      type="button"
+                      className="mission-due-group-header"
+                      onClick={() => toggleGroup(group.key)}
+                      aria-expanded={!isCollapsed}
+                    >
+                      <span className="material-icons-outlined mission-due-group-chevron">
+                        {isCollapsed ? 'chevron_right' : 'expand_more'}
+                      </span>
+                      <span className="mission-due-group-label">{group.label}</span>
+                      <span className="mission-due-group-count">{group.missions.length}</span>
+                    </button>
+                    {!isCollapsed && group.missions.map((mission, i) => renderMissionItem(mission, i, { applyRecentMargin: false }))}
+                  </section>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              {displayMissions.map((mission, i) => renderMissionItem(mission, i))}
+            </div>
+          )}
         </SortableContext>
       </DndContext>
 

@@ -8,6 +8,7 @@ import { db } from '../services/firebase/config';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
 import { getUserProfile, updateUserProfile } from '../services/userService';
+import { getDeletedMissionsCount } from '../services/missionService';
 import { DAY_NAMES } from '../utils/weeklyReviewHelpers';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
@@ -30,6 +31,10 @@ const SettingsPage = () => {
   const [character, setCharacter] = useState(null);
   const [weekStartDay, setWeekStartDay] = useState(0); // default Sunday
   const [storyStyle, setStoryStyle] = useState('balanced');
+  // 'none' (no auto follow-up) or a positive number of days. Defaults to 30.
+  const [defaultFollowUpDays, setDefaultFollowUpDays] = useState(30);
+  // 'smart' (contextual, default) | 'dueDate' | 'completion'
+  const [recurrenceAnchorMode, setRecurrenceAnchorMode] = useState('smart');
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -37,8 +42,13 @@ const SettingsPage = () => {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
+  const [deletedCount, setDeletedCount] = useState(0);
+
   useEffect(() => {
     if (!currentUser) return;
+    getDeletedMissionsCount(currentUser.uid)
+      .then(setDeletedCount)
+      .catch(() => setDeletedCount(0));
     getNotificationPrefs(currentUser.uid).then(setPrefs);
     getUserProfile(currentUser.uid).then(profile => {
       if (profile?.weekStartDay != null) {
@@ -50,6 +60,14 @@ const SettingsPage = () => {
         setWeekStartDay(Number.isFinite(coerced) ? coerced : 0);
       }
       if (profile?.storyStyle) setStoryStyle(profile.storyStyle);
+      const followUp = profile?.defaultFollowUpDays;
+      if (followUp === 'none' || (typeof followUp === 'number' && followUp > 0)) {
+        setDefaultFollowUpDays(followUp);
+      }
+      const anchor = profile?.recurrenceAnchorMode;
+      if (anchor === 'smart' || anchor === 'dueDate' || anchor === 'completion') {
+        setRecurrenceAnchorMode(anchor);
+      }
     });
     getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
       if (snap.exists()) setCharacter(snap.data().character ?? null);
@@ -94,7 +112,7 @@ const SettingsPage = () => {
     try {
       await Promise.all([
         saveNotificationPrefs(currentUser.uid, prefs),
-        updateUserProfile(currentUser.uid, { weekStartDay, storyStyle }),
+        updateUserProfile(currentUser.uid, { weekStartDay, storyStyle, defaultFollowUpDays, recurrenceAnchorMode }),
       ]);
       await refreshSchedule();
       setSaved(true);
@@ -274,6 +292,27 @@ const SettingsPage = () => {
           </select>
         </div>
 
+        <div className="settings-row">
+          <div className="settings-row-label-group">
+            <span className="settings-label">Default follow-up window</span>
+            <span className="settings-hint">How long new missions stay active before showing up in your weekly review. You can override per mission.</span>
+          </div>
+          <select
+            value={defaultFollowUpDays}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDefaultFollowUpDays(v === 'none' ? 'none' : Number(v));
+            }}
+            className="settings-select"
+          >
+            <option value="14">14 days</option>
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="none">No follow-up</option>
+          </select>
+        </div>
+
         <StickyFooter>
           {saveError && <ErrorMessage message={saveError} />}
           <button
@@ -284,6 +323,31 @@ const SettingsPage = () => {
             {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
           </button>
         </StickyFooter>
+      </section>
+
+      <section className="settings-section">
+        <h2 className="settings-section-title">Recurring Missions</h2>
+        <div className="settings-row-label-group">
+          <span className="settings-label">Due Date Timing</span>
+          <span className="settings-hint">How should the date of the next recurring mission be determined?</span>
+        </div>
+        <div className="settings-style-picker" role="group" aria-label="Recurring missions anchor">
+          {[
+            { value: 'completion', label: 'Completion Date', hint: 'Next date shifts based on when you finish.' },
+            { value: 'smart', label: 'Smart', hint: 'Completion date, unless it repeats based on day of the week/month.' },
+            { value: 'dueDate', label: 'Due Date', hint: 'Anchors to the original due date, even when late.' },
+          ].map(({ value, label, hint }) => (
+            <button
+              key={value}
+              type="button"
+              className={`settings-style-option${recurrenceAnchorMode === value ? ' settings-style-option--active' : ''}`}
+              onClick={() => setRecurrenceAnchorMode(value)}
+            >
+              <span className="settings-style-option-label">{label}</span>
+              <span className="settings-style-option-hint">{hint}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="settings-section">
@@ -309,6 +373,23 @@ const SettingsPage = () => {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="settings-section">
+        <button
+          className="settings-nav-row"
+          onClick={() => navigate('/deleted-missions')}
+        >
+          <div className="settings-row-label-group">
+            <span className="settings-label">Deleted missions</span>
+            <span className="settings-hint">
+              {deletedCount === 0
+                ? 'Nothing to restore'
+                : `${deletedCount} ${deletedCount === 1 ? 'mission' : 'missions'} ready to restore`}
+            </span>
+          </div>
+          <span className="material-icons-outlined settings-nav-row-chevron">chevron_right</span>
+        </button>
       </section>
 
       <section className="settings-section">

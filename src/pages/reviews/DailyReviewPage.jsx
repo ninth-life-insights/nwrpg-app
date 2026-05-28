@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDailyMissions } from '../../contexts/DailyMissionsContext';
 import { getUserProfile } from '../../services/userService';
 import {
   generateDailySnapshot,
@@ -32,6 +33,7 @@ const TOTAL_STEPS = 4;
 
 const DailyReviewPage = () => {
   const { currentUser } = useAuth();
+  const { refreshDailyMissions } = useDailyMissions();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -67,6 +69,9 @@ const DailyReviewPage = () => {
         );
         setDailyMissions(missions);
         setEncounters(existingEncounters);
+        // getTodaysDailyMissions may auto-promote pre-planned history to the
+        // config doc; refresh the context so badges render correctly.
+        refreshDailyMissions();
       } catch (err) {
         console.error('Error initializing daily review:', err);
         setLoadError(getLoadErrorMessage(err, 'review'));
@@ -75,7 +80,7 @@ const DailyReviewPage = () => {
     init();
   }, [currentUser, reloadTrigger]);
 
-  const refreshDailyMissions = async () => {
+  const reloadDailyMissionsList = async () => {
     const missions = await getTodaysDailyMissions(currentUser.uid);
     setDailyMissions(missions);
   };
@@ -95,7 +100,7 @@ const DailyReviewPage = () => {
         }
       }
       // Refresh the daily mission list so status reflects in step 1
-      await refreshDailyMissions();
+      await reloadDailyMissionsList();
       return result;
     } catch (err) {
       console.error('Error toggling mission:', err);
@@ -183,7 +188,7 @@ const DailyReviewPage = () => {
           <DailyMissionsStep
             dailyMissions={dailyMissions}
             onToggleComplete={handleToggleComplete}
-            onMissionsUpdated={refreshDailyMissions}
+            onMissionsUpdated={reloadDailyMissionsList}
             onNext={handleNext}
             onSkipToSummary={goToSummary}
           />

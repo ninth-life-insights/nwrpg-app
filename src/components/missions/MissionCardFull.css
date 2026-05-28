@@ -44,7 +44,8 @@
 }
 
 .mission-modal-back,
-.more-button {
+.more-button,
+.priority-toggle-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -61,13 +62,34 @@
 }
 
 .mission-modal-back:hover,
-.more-button:hover {
+.more-button:hover,
+.priority-toggle-btn:hover {
   background-color: rgba(0, 0, 0, 0.06);
   color: var(--color-text-dark);
 }
 
-.more-button .material-icons {
+.more-button .material-icons,
+.priority-toggle-btn .material-icons {
   font-size: 22px;
+}
+
+.priority-toggle-btn.active,
+.priority-toggle-btn.active .material-icons {
+  color: #be185d !important;
+}
+
+.priority-toggle-btn.active {
+  background-color: #fce7f3;
+}
+
+.priority-toggle-btn.active:hover {
+  background-color: #fbcfe8;
+}
+
+.mission-detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 .mission-detail-content {
@@ -349,43 +371,186 @@
   color: white;
 }
 
-.action-button.story-exclusion-button {
-  background-color: transparent;
-  color: var(--color-text-medium);
-  border: 1px dashed var(--color-border);
+/* ===== COMPLETED BANNER + INLINE DATE PICKER ===== */
+.mission-detail-modal .completed-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-lg);
+}
+
+.mission-detail-modal .completed-banner-icon,
+.mission-detail-modal .completed-banner-icon.material-icons {
+  color: #059669 !important;
+  font-size: 28px !important;
+}
+
+.mission-detail-modal .completed-banner-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.mission-detail-modal .completed-banner-label {
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  color: #047857;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mission-detail-modal .completed-banner-date {
+  font-family: var(--font-family);
   font-size: var(--font-size-base);
-}
-
-.action-button.story-exclusion-button:hover:not(:disabled) {
-  background-color: rgba(0, 0, 0, 0.04);
   color: var(--color-text-dark);
+  font-weight: 600;
 }
 
-.action-button.story-exclusion-button.excluded {
-  border-style: solid;
-  border-color: #374151;
-  background: #374151;
+.mission-detail-modal .completed-banner-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition);
+}
+
+.mission-detail-modal .completed-banner-edit:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.mission-detail-modal .completed-banner-edit,
+.mission-detail-modal .completed-banner-edit .material-icons {
+  color: var(--color-text-medium) !important;
+  font-size: 20px !important;
+}
+
+.mission-detail-modal .completed-date-picker {
+  flex-basis: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed rgba(16, 185, 129, 0.3);
+  margin-top: var(--space-xs);
+}
+
+.mission-detail-modal .completed-date-picker-yesterday {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid #059669;
+  background: white;
+  color: #047857;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.mission-detail-modal .completed-date-picker-yesterday:hover:not(:disabled) {
+  background: #059669;
   color: white;
 }
 
-.action-button.story-exclusion-button.excluded:hover:not(:disabled) {
-  border-color: #991b1b;
-  background: #991b1b;
+.mission-detail-modal .completed-date-picker-yesterday:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mission-detail-modal .completed-date-picker-input {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--color-text-dark);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.mission-detail-modal .completed-date-picker-input:disabled {
+  opacity: 0.5;
+}
+
+.mission-detail-modal .completed-date-picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.mission-detail-modal .completed-date-picker-cancel,
+.mission-detail-modal .completed-date-picker-save {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.mission-detail-modal .completed-date-picker-cancel {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-medium);
+}
+
+.mission-detail-modal .completed-date-picker-cancel:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.mission-detail-modal .completed-date-picker-save {
+  background: #059669;
+  border: 1px solid #059669;
   color: white;
 }
 
-.action-button.story-exclusion-button:disabled {
+.mission-detail-modal .completed-date-picker-save:hover:not(:disabled) {
+  background: #047857;
+  border-color: #047857;
+}
+
+.mission-detail-modal .completed-date-picker-save:disabled,
+.mission-detail-modal .completed-date-picker-cancel:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 
 .info-icon {
-  font-size: 0.8em;
-  color: var(--color-text-light);
+  background: none;
+  border: none;
+  padding: 1px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  vertical-align: middle;
-  user-select: none;
+  color: var(--color-text-light);
+  transition: color var(--transition);
+  vertical-align: -2px;
+}
+
+.info-icon .material-icons-outlined {
+  font-size: 14px;
 }
 
 .info-icon:hover {

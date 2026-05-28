@@ -34,11 +34,19 @@ const AddMissionCard = ({
   autoOpenField = null,    // field to auto-expand on mount (e.g. 'dueDate', 'skill', 'room')
 }) => {
   const { currentUser } = useAuth();
-  
-  // Get default expiry date (30 days from now)
-  const getDefaultExpiryDate = () => {
+
+  // User's preferred default follow-up window. 'none' means no auto follow-up;
+  // a positive number is days. Defaults to 30; updated from profile on mount
+  // for create mode.
+  const [defaultFollowUpDays, setDefaultFollowUpDays] = useState(30);
+
+  // Format a date `days` from now as YYYY-MM-DD. Falls back to 30 for any
+  // non-positive-number input (e.g. 'none' or undefined) — callers should
+  // gate on the preference before calling this when 'none' is meaningful.
+  const getDefaultExpiryDate = (days = 30) => {
+    const numDays = typeof days === 'number' && days > 0 ? days : 30;
     const date = new Date();
-    date.setDate(date.getDate() + 30);
+    date.setDate(date.getDate() + numDays);
     return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
   };
 
@@ -65,11 +73,9 @@ const AddMissionCard = ({
           endDate: null,
           maxOccurrences: null
         },
-        priority: initialMission.priority || 'normal',
-        pinned: initialMission.pinned || false,
-        isDailyMission: initialMission.isDailyMission || false,
         questId: initialMission.questId || null,
         baseLocation: initialMission.baseLocation || null,
+        isPriority: initialMission.isPriority === true,
       };
     }
 
@@ -93,11 +99,9 @@ const AddMissionCard = ({
         endDate: null,
         maxOccurrences: null
       },
-      priority: 'normal',
-      pinned: false,
-      isDailyMission: false,
       questId: defaultQuestId || null,
       baseLocation: defaultRoomId || null,
+      isPriority: false,
     };
   };
 
@@ -114,16 +118,33 @@ const AddMissionCard = ({
   const { rooms } = useRooms();
   const [showRoomField, setShowRoomField] = useState(!!(mode === 'edit' && !!initialMission?.baseLocation) || autoOpenField === 'room');
 
-  // Load active quests and base name on mount
+  // Load active quests, base name, and default follow-up preference on mount.
+  // The follow-up preference only affects create mode: if 'none', the new
+  // mission opens with no follow-up date; if a number, it sets the duration.
   useEffect(() => {
     if (!currentUser) return;
     getActiveQuests(currentUser.uid)
       .then(setQuests)
       .catch(err => console.error('Could not load quests:', err));
     getUserProfile(currentUser.uid)
-      .then(profile => setBaseName(profile?.baseName || ''))
+      .then(profile => {
+        setBaseName(profile?.baseName || '');
+        if (mode === 'edit') return;
+        const pref = profile?.defaultFollowUpDays;
+        if (pref === 'none') {
+          setDefaultFollowUpDays('none');
+          setFormData(prev => prev.hasExpiryDate
+            ? { ...prev, expiryDate: '', hasExpiryDate: false }
+            : prev);
+        } else if (typeof pref === 'number' && pref > 0 && pref !== 30) {
+          setDefaultFollowUpDays(pref);
+          setFormData(prev => prev.hasExpiryDate
+            ? { ...prev, expiryDate: getDefaultExpiryDate(pref) }
+            : prev);
+        }
+      })
       .catch(() => {});
-  }, [currentUser]);
+  }, [currentUser, mode]);
 
   // Update form when initialMission changes (for edit mode)
   useEffect(() => {
@@ -241,10 +262,8 @@ const AddMissionCard = ({
       targetCount: formData.targetCount ? parseInt(formData.targetCount, 10) : null,
       recurrence: formData.recurrence,
       category: 'personal',
-      isDailyMission: formData.isDailyMission,
-      priority: formData.priority,
-      pinned: formData.pinned,
       baseLocation: formData.baseLocation || null,
+      isPriority: formData.isPriority === true,
     });
   };
 
@@ -290,11 +309,9 @@ const AddMissionCard = ({
         endDate: null,
         maxOccurrences: null
       },
-      priority: 'normal',
-      pinned: false,
-      isDailyMission: false,
       questId: null,
       baseLocation: null,
+      isPriority: false,
     });
 
     setShowDueDateField(false);
@@ -380,6 +397,17 @@ const AddMissionCard = ({
       <form className="add-mission-card" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
         <div className="add-mission-header">
           <h2>{mode === 'edit' ? 'Edit Mission' : 'Add Mission'}</h2>
+          <button
+            type="button"
+            className={`priority-toggle-btn ${formData.isPriority ? 'active' : ''}`}
+            onClick={() => setFormData(prev => ({ ...prev, isPriority: !prev.isPriority }))}
+            disabled={isSubmitting}
+            aria-label={formData.isPriority ? 'Remove priority' : 'Mark as priority'}
+            aria-pressed={formData.isPriority === true}
+            title={formData.isPriority ? 'Remove priority' : 'Mark as priority'}
+          >
+            <span className="material-icons">{formData.isPriority ? 'flag' : 'outlined_flag'}</span>
+          </button>
         </div>
         <div className="add-mission-body">
 
@@ -421,7 +449,7 @@ const AddMissionCard = ({
                   className={`difficulty-badge-button ${formData.difficulty === difficulty ? 'selected' : 'unselected'}`}
                   disabled={isSubmitting}
                 >
-                  <Badge variant="difficulty" difficulty={difficulty}>{difficulty}</Badge> 
+                  <Badge variant="difficulty" difficulty={difficulty}>{difficulty}</Badge>
                 </button>
               ))}
             </div>
@@ -516,21 +544,24 @@ const AddMissionCard = ({
                 className="ghost-badge"
                 disabled={isSubmitting}
               >
-                Edit expiration date
+                Edit follow-up window
               </button>
             )}
-            
+
             {!formData.hasExpiryDate && (
               <button
                 type="button"
                 onClick={() => {
-                  setFormData(prev => ({ ...prev, expiryDate: getDefaultExpiryDate(), hasExpiryDate: true }));
+                  // If preference is 'none', user is explicitly opting in for
+                  // this mission — give them a sensible 30-day default.
+                  const days = typeof defaultFollowUpDays === 'number' ? defaultFollowUpDays : 30;
+                  setFormData(prev => ({ ...prev, expiryDate: getDefaultExpiryDate(days), hasExpiryDate: true }));
                   setShowExpiryField(true);
                 }}
                 className="ghost-badge"
                 disabled={isSubmitting}
               >
-                + Expiration date
+                + Follow-up window
               </button>
             )}
           </div>
@@ -781,7 +812,7 @@ const AddMissionCard = ({
           {/* Expiry Date Field */}
           {(showExpiryField || (!formData.hasExpiryDate && showExpiryField)) && (
             <div className="optional-field-inline">
-              <label>Expires</label>
+              <label>Up for review by</label>
               {formData.hasExpiryDate ? (
                 <div className="field-with-remove">
                   <input

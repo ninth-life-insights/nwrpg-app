@@ -388,6 +388,8 @@
 .add-mission-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
   padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
@@ -398,6 +400,54 @@
   font-weight: 600;
   margin: 0;
   color: var(--color-text-dark);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Priority toggle in the form header — same shape as the MissionCardFull
+   header version (icon-only, circular). Color is intentionally !important
+   to win against Material Icons' inherit-from-text-parent default. */
+.add-mission-header .priority-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-sm);
+  border-radius: 50%;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.add-mission-header .priority-toggle-btn .material-icons {
+  font-size: 22px;
+}
+
+.add-mission-header .priority-toggle-btn:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--color-text-dark);
+}
+
+.add-mission-header .priority-toggle-btn.active,
+.add-mission-header .priority-toggle-btn.active .material-icons {
+  color: #be185d !important;
+}
+
+.add-mission-header .priority-toggle-btn.active {
+  background-color: #fce7f3;
+}
+
+.add-mission-header .priority-toggle-btn.active:hover:not(:disabled) {
+  background-color: #fbcfe8;
+}
+
+.add-mission-header .priority-toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .add-mission-body {
@@ -565,6 +615,12 @@
   animation: slideDown 0.2s ease-out;
 }
 
+/* When the due-date field is immediately followed by the recurrence section,
+   tighten the gap so the two read as a single grouped control. */
+.optional-field-inline:has(+ .recurrence-section) {
+  margin-bottom: var(--space-xs);
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -663,8 +719,6 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
-  max-height: 120px;
-  overflow-y: auto;
   padding: 4px 0;
 }
 

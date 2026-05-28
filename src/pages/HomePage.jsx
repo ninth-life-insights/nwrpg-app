@@ -20,6 +20,7 @@ import { addXP,
   getXPProgressInLevel, 
   getXPRequiredForLevel  
 } from '../services/userService';
+import { useDailyMissions } from '../contexts/DailyMissionsContext';
 import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModal';
 import MissionCard from '../components/missions/MissionCard';
 import MissionCardCondensed from '../components/missions/MissionCardCondensed.jsx';
@@ -36,6 +37,7 @@ import './HomePage.css';
 
 const HomePage = () => {
   const { currentUser } = useAuth();
+  const { refreshDailyMissions } = useDailyMissions();
   const [character, setCharacter] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
@@ -109,6 +111,11 @@ const HomePage = () => {
 
       setDailyMissions(todaysMissions);
       setDailyMissionStatus(status);
+
+      // getTodaysDailyMissions may auto-promote pre-planned history into the
+      // config doc on its first call of the day. Refresh the context so the
+      // daily badge appears immediately on cards rendering this load.
+      refreshDailyMissions();
 
     } catch (error) {
       console.error('Error fetching daily missions:', error);
@@ -393,10 +400,7 @@ const HomePage = () => {
             dailyMissions.map((mission) => (
               <MissionCardCondensed
                 key={mission.id}
-                mission={{
-                  ...mission,
-                  isDailyMission: true,
-                }}
+                mission={mission}
                 onToggleComplete={handleToggleComplete}
                 onMissionChanged={fetchDailyMissions}
               />

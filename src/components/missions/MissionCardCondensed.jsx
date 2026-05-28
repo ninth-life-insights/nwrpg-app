@@ -14,16 +14,22 @@ import {
   toDateString
 } from '../../utils/dateHelpers';
 import { useAuth } from '../../contexts/AuthContext';
-import { toggleMissionStoryExclusion } from '../../services/missionService';
+import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
+import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import dayjs from 'dayjs';
 import './MissionCardCondensed.css';
 
 const MissionCardCondensed = ({
   mission,
   onToggleComplete,
   onMissionChanged,
+  readOnly = false,
+  actionSlot = null,
+  onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
+  const isDailyMission = useIsDailyMission(mission.id);
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
@@ -32,8 +38,11 @@ const MissionCardCondensed = ({
   const [titleMinWidth, setTitleMinWidth] = useState(150);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
-  const [excludeLoading, setExcludeLoading] = useState(false);
-  const [excludedFromStory, setExcludedFromStory] = useState(mission.excludeFromStory === true);
+  const [yesterdayLoading, setYesterdayLoading] = useState(false);
+  const [markedYesterday, setMarkedYesterday] = useState(false);
+  // Local override for completedAt so a chip click here is visible to
+  // MissionCardFull when the user opens it — without forcing a parent reload.
+  const [completedAtOverride, setCompletedAtOverride] = useState(null);
 
   useLayoutEffect(() => {
     const el = titleRef.current;
@@ -47,7 +56,6 @@ const MissionCardCondensed = ({
   }, [mission.title]);
 
   useEffect(() => { setShowXpBadge(isCompleted); }, [isCompleted]);
-  useEffect(() => { setExcludedFromStory(mission.excludeFromStory === true); }, [mission.excludeFromStory]);
 
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -59,57 +67,80 @@ const MissionCardCondensed = ({
 
   const dueDateInfo = getDueDateInfo();
   const today = toDateString(new Date());
-  const completedDate = isCompleted && mission.completedAt
-    ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
+  // Effective completedAt prefers the local override — see MissionCard for
+  // the same reasoning.
+  const effectiveCompletedAt = completedAtOverride ?? mission.completedAt;
+  const completedDate = isCompleted && effectiveCompletedAt
+    ? toDateString(effectiveCompletedAt.toDate?.() ?? new Date(effectiveCompletedAt))
     : null;
   const isCompletedToday = completedDate === today;
-  const isExcluded = isCompletedToday && excludedFromStory;
 
   const handleToggleComplete = (e) => {
     e.stopPropagation();
     onToggleComplete(mission.id, isCompleted, mission.xpReward, mission.spReward);
   };
 
-  const handleToggleExclusion = async (e) => {
+  const handleMarkYesterday = async (e) => {
     e.stopPropagation();
-    if (excludeLoading || !currentUser) return;
-    setExcludeLoading(true);
-    const newExcluded = !excludedFromStory;
-    setExcludedFromStory(newExcluded);
+    if (yesterdayLoading || markedYesterday || !currentUser) return;
+    setYesterdayLoading(true);
+    setMarkedYesterday(true);
     try {
-      await toggleMissionStoryExclusion(currentUser.uid, mission.id);
+      const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      const result = await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
+      setCompletedAtOverride(result.completedAt);
+      onRecentlyCompletedUpdated?.(mission.id, { completedAt: result.completedAt });
     } catch (err) {
-      setExcludedFromStory(!newExcluded);
-      console.error('Failed to toggle story exclusion:', err);
+      setMarkedYesterday(false);
+      console.error('Failed to mark mission as completed yesterday:', err);
     } finally {
-      setExcludeLoading(false);
+      setYesterdayLoading(false);
     }
   };
 
+  // Precedence: completed > daily > priority. (Quest tint isn't applied on the
+  // condensed card.) Matches MissionCard's full ordering: daily > priority > quest.
+  const priorityClass = isDailyMission
+    ? 'daily'
+    : mission.isPriority ? 'priority' : '';
+  const cardClass = readOnly
+    ? 'mission-card-condensed readonly'
+    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${priorityClass}`;
+  const titleClass = readOnly
+    ? 'mcc-title'
+    : `mcc-title ${isCompleted ? 'completed' : ''}`;
+
   return (
   <>
-    <div className={`mission-card-condensed ${isCompleted ? 'completed' : ''} ${mission.isDailyMission ? 'daily' : ''}`}>
-      <div className="mcc-content" onClick={() => setViewingDetails(true)}>
+    <div className={cardClass}>
+      <div
+        className="mcc-content"
+        onClick={readOnly ? undefined : () => setViewingDetails(true)}
+        style={readOnly ? { cursor: 'default' } : undefined}
+      >
         <div className="mcc-row">
           <h3
             ref={titleRef}
-            className={`mcc-title ${isCompleted ? 'completed' : ''}`}
+            className={titleClass}
             style={{ minWidth: titleMinWidth }}
           >
             {mission.title}
+            {mission.isPriority && (
+              <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
+            )}
           </h3>
           <div className="mcc-badges">
-            {showXpBadge && mission.xpAwarded && (
+            {!readOnly && showXpBadge && mission.xpAwarded && (
               <span className="mcc-xp-badge">+{mission.xpAwarded} XP</span>
             )}
-            {isCompletedToday ? (
+            {!readOnly && (isCompletedToday || markedYesterday) ? (
               <button
                 type="button"
-                className={`mcc-story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
-                onClick={handleToggleExclusion}
-                disabled={excludeLoading}
+                className={`mcc-mark-yesterday-chip ${markedYesterday ? 'marked' : ''}`}
+                onClick={handleMarkYesterday}
+                disabled={yesterdayLoading || markedYesterday}
               >
-                {isExcluded ? 'Left out ✓' : "Leave out of today's story"}
+                {markedYesterday ? 'Moved to yesterday ✓' : 'Did this yesterday?'}
               </button>
             ) : (
               <>
@@ -129,31 +160,39 @@ const MissionCardCondensed = ({
         </div>
       </div>
 
-      <button
-        className={`mcc-toggle ${isCompleted ? 'completed' : ''}`}
-        onClick={handleToggleComplete}
-        aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
-      >
-        <svg
-          className={`mcc-check-icon ${isCompleted ? 'completed' : ''}`}
-          xmlns="http://www.w3.org/2000/svg"
-          height="18px"
-          viewBox="0 -960 960 960"
-          width="18px"
+      {readOnly ? (
+        actionSlot
+      ) : (
+        <button
+          className={`mcc-toggle ${isCompleted ? 'completed' : ''}`}
+          onClick={handleToggleComplete}
+          aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
         >
-          <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
-        </svg>
-      </button>
+          <svg
+            className={`mcc-check-icon ${isCompleted ? 'completed' : ''}`}
+            xmlns="http://www.w3.org/2000/svg"
+            height="18px"
+            viewBox="0 -960 960 960"
+            width="18px"
+          >
+            <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
+          </svg>
+        </button>
+      )}
     </div>
 
-    {viewingDetails && (
+    {!readOnly && viewingDetails && (
       <MissionCardFull
-        mission={mission}
+        mission={completedAtOverride
+          ? { ...mission, completedAt: completedAtOverride }
+          : mission}
         onClose={() => setViewingDetails(false)}
         onToggleComplete={onToggleComplete}
         onMissionChanged={onMissionChanged}
-        onExclusionToggled={(val) => setExcludedFromStory(val)}
-        excludedFromStory={excludedFromStory}
+        onCompletedAtChanged={(newTs) => {
+          setCompletedAtOverride(newTs);
+          onRecentlyCompletedUpdated?.(mission.id, { completedAt: newTs });
+        }}
       />
     )}
   </>

@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { RoomsProvider } from './contexts/RoomsContext';
 import { QuestsProvider } from './contexts/QuestsContext';
+import { DailyMissionsProvider } from './contexts/DailyMissionsContext';
 import { Navigate } from 'react-router-dom';
 import './App.css';
 
@@ -19,6 +20,7 @@ import DailyReviewPage from './pages/reviews/DailyReviewPage';
 import AdventureLogPage from './pages/reviews/AdventureLogPage';
 import AdventureLogDetailPage from './pages/reviews/AdventureLogDetailPage';
 import MissionBankPage from './pages/missions/MissionBankPage';
+import DeletedMissionsPage from './pages/missions/DeletedMissionsPage';
 import QuestBank from './pages/quests/QuestBankPage';
 import QuestDetailView from './components/quests/QuestDetailView';
 import SkillsPage from './pages/skills/SkillsPage';
@@ -67,6 +69,7 @@ function AppContent() {
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         <Route path="/daily-review" element={<ProtectedRoute><DailyReviewPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
+        <Route path="/deleted-missions" element={<ProtectedRoute><DeletedMissionsPage /></ProtectedRoute>} />
         <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
         <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
         <Route path="/quest-bank" element={<ProtectedRoute><QuestBank /></ProtectedRoute>} />
@@ -92,7 +95,9 @@ function App() {
         <NotificationProvider>
           <RoomsProvider>
             <QuestsProvider>
-              <AppContent />
+              <DailyMissionsProvider>
+                <AppContent />
+              </DailyMissionsProvider>
             </QuestsProvider>
           </RoomsProvider>
         </NotificationProvider>

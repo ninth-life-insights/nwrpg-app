@@ -141,12 +141,14 @@ export const prepareDailyMissionArchiveData = (missions) => {
         cleaned[key] = mission[key];
       }
     });
+    // Use helpers so new missions (which don't store xpReward/spReward)
+    // still get sensible values computed from difficulty + skill.
     return {
       id: cleaned.id,
       title: cleaned.title,
       difficulty: cleaned.difficulty,
-      xpReward: cleaned.xpReward,
-      spReward: cleaned.spReward,
+      xpReward: getMissionXPReward(mission),
+      spReward: getMissionSPReward(mission),
       skill: cleaned.skill,
       completed: isMissionCompleted(mission),
       completedAt: cleaned.completedAt

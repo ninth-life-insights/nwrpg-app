@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionList from '../../components/missions/MissionList';
 import MissionFilterModal from '../../components/missions/sub-components/MissionFilterModal';
+import EditDailyMissionsModal from '../../components/missions/EditDailyMissionsModal';
 import { getUserProfile } from '../../services/userService';
 import { getRooms } from '../../services/roomService';
 import { getAllQuests } from '../../services/questService';
@@ -17,6 +18,7 @@ const MissionBank = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showDailyPlanning, setShowDailyPlanning] = useState(false);
   const [filters, setFilters] = useState({
     sortBy: 'custom',
     sortOrder: 'asc',
@@ -26,7 +28,8 @@ const MissionBank = () => {
     completedDateRange: 'last7days',
     roomFilter: '',
     taskTypeFilter: '',
-    questFilter: ''
+    questFilter: '',
+    priorityFilter: ''
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,8 +106,18 @@ const MissionBank = () => {
   // Handle mission un-completion
   const handleMissionUncompletion = (uncompletedMissionId) => {
     // Remove from recently completed missions
-    setRecentlyCompletedMissions(prev => 
+    setRecentlyCompletedMissions(prev =>
       prev.filter(mission => mission.id !== uncompletedMissionId)
+    );
+  };
+
+  // Patch a recently-completed mission's cached fields when something edits
+  // them post-completion (e.g. backdating completedAt). Without this, the
+  // snapshot captured at completion time would mask the new value because
+  // getActiveMissions doesn't return completed missions on reload.
+  const handleRecentlyCompletedUpdated = (missionId, partialUpdate) => {
+    setRecentlyCompletedMissions(prev =>
+      prev.map(m => m.id === missionId ? { ...m, ...partialUpdate } : m)
     );
   };
 
@@ -141,7 +154,8 @@ const MissionBank = () => {
       completedDateRange: 'last7days',
       roomFilter: '',
       taskTypeFilter: '',
-      questFilter: ''
+      questFilter: '',
+      priorityFilter: ''
     });
     setSearchQuery('');
   };
@@ -161,6 +175,7 @@ const MissionBank = () => {
     filters.roomFilter !== '' ||
     filters.taskTypeFilter !== '' ||
     filters.questFilter !== '' ||
+    filters.priorityFilter !== '' ||
     searchQuery !== '';
 
   return (
@@ -172,50 +187,50 @@ const MissionBank = () => {
             <span className="material-icons">arrow_back</span>
           </button>
           <h1>Mission Bank</h1>
-        </div>
-
-        <div className="header-actions">
-          {/* Filter Button */}
           <button
-            onClick={handleShowFilters}
-            className={`filter-btn-header${hasActiveFilters ? ' filter-btn-active' : ''}`}
-            title="Filter & Sort"
+            onClick={() => setShowDailyPlanning(true)}
+            className="filter-btn-header"
+            title="Plan today's missions"
+            aria-label="Plan today's missions"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
-            </svg>
-            {hasActiveFilters && <span className="filter-active-dot" />}
-          </button>
-
-          {/* Add Mission Button */}
-          <button
-            onClick={handleShowAddMission}
-            className="add-mission-btn"
-          >
-            + Add Mission
+            <span className="material-icons">sunny</span>
           </button>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mission-bank-search">
-        <span className="material-icons search-icon">search</span>
-        <input
-          type="text"
-          className="mission-bank-search-input"
-          placeholder="Search missions..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button
-            className="search-clear-btn"
-            onClick={() => setSearchQuery('')}
-            aria-label="Clear search"
-          >
-            <span className="material-icons">close</span>
-          </button>
-        )}
+      {/* Search + filter row */}
+      <div className="mission-bank-search-row">
+        <div className="mission-bank-search">
+          <span className="material-icons search-icon">search</span>
+          <input
+            type="text"
+            className="mission-bank-search-input"
+            placeholder="Search missions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              className="search-clear-btn"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+            >
+              <span className="material-icons">close</span>
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={handleShowFilters}
+          className={`filter-btn-header${hasActiveFilters ? ' filter-btn-active' : ''}`}
+          title="Filter & Sort"
+          aria-label="Filter & Sort"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+          </svg>
+          {hasActiveFilters && <span className="filter-active-dot" />}
+        </button>
       </div>
 
       {loadError && <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); loadUserProfile(); }} className="mission-bank-load-error" />}
@@ -234,6 +249,7 @@ const MissionBank = () => {
         recentlyCompletedMissions={recentlyCompletedMissions}
         onMissionCompletion={handleMissionCompletion}
         onMissionUncompletion={handleMissionUncompletion}
+        onRecentlyCompletedUpdated={handleRecentlyCompletedUpdated}
         onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
       />
 
@@ -252,6 +268,24 @@ const MissionBank = () => {
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
+
+      {/* Floating "Add Mission" — primary create action lives in the thumb zone */}
+      <button
+        type="button"
+        className="add-mission-fab"
+        onClick={handleShowAddMission}
+        aria-label="Add Mission"
+      >
+        <span className="material-icons">add</span>
+        Add Mission
+      </button>
+
+      {/* Daily planning modal */}
+      {showDailyPlanning && (
+        <EditDailyMissionsModal
+          onClose={() => setShowDailyPlanning(false)}
+        />
+      )}
     </div>
   );
 };

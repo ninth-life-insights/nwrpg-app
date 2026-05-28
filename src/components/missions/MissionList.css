@@ -428,3 +428,122 @@
 .mission-wrapper {
   position: relative;
 }
+
+/* ========================================
+   Due-date grouping (sortBy === 'dueDate')
+   ======================================== */
+
+.mission-due-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.mission-due-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mission-due-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: var(--max-width-card);
+  margin: 0 auto var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition), transform var(--transition);
+  box-sizing: border-box;
+}
+
+.mission-due-group-header:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.mission-due-group-header:active {
+  transform: translateY(1px);
+}
+
+.mission-due-group-chevron {
+  font-size: 22px !important;
+  color: var(--color-text-medium);
+  flex-shrink: 0;
+}
+
+.mission-due-group-label {
+  flex: 1;
+  letter-spacing: 0.02em;
+}
+
+.mission-due-group-count {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  min-width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Overdue: white background, red outline + colored label/chevron */
+.mission-due-group--overdue .mission-due-group-header {
+  border-color: #fecaca;
+}
+
+.mission-due-group--overdue .mission-due-group-label,
+.mission-due-group--overdue .mission-due-group-chevron {
+  color: #b91c1c;
+}
+
+.mission-due-group--overdue .mission-due-group-count {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+/* Today: amber tint + colored label/chevron */
+.mission-due-group--today .mission-due-group-header {
+  background: #fff8eb;
+  border-color: #fed7aa;
+}
+
+.mission-due-group--today .mission-due-group-label,
+.mission-due-group--today .mission-due-group-chevron {
+  color: var(--color-warning);
+}
+
+.mission-due-group--today .mission-due-group-count {
+  background: #ffedd5;
+  border-color: #fed7aa;
+  color: var(--color-warning);
+}
+
+/* Done: muted neutral — they're past-tense, shouldn't draw attention */
+.mission-due-group--done .mission-due-group-header {
+  background: #f9fafb;
+  border-color: var(--color-border);
+}
+
+.mission-due-group--done .mission-due-group-label,
+.mission-due-group--done .mission-due-group-chevron {
+  color: var(--color-text-medium);
+}
+
+.mission-due-group--done .mission-due-group-count {
+  background: var(--color-bg-main);
+  border-color: var(--color-border);
+  color: var(--color-text-medium);
+}

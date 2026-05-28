@@ -31,10 +31,12 @@ export const fromDateString = (dateString) => {
 };
 
 // Format for user display - short format
+// Includes the year only when the date is in a different calendar year than today
 export const formatForUser = (dateString) => {
   const date = normalizeDateToDayjs(dateString);
   if (!date) return null;
-  return date.format('MMM D'); // "Jan 15"
+  const includeYear = date.year() !== dayjs().year();
+  return date.format(includeYear ? 'MMM D, YYYY' : 'MMM D');
 };
 
 // Format for user display - long format

@@ -1,7 +1,7 @@
 /* src/components/missions/sub-components/RecurrenceSelector.css */
 
 .recurrence-selector-compact {
-  margin: var(--space-sm) 0;
+  margin: 0 0 var(--space-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-sm);
@@ -40,7 +40,7 @@
 }
 
 .recurrence-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-primary);
   font-weight: 500;
   background: var(--color-primary-light);
@@ -53,15 +53,14 @@
 .weekday-picker-compact {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   margin-bottom: var(--space-xs);
-  padding-left: 50px; /* Align with dropdown */
 }
 
 .picker-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-medium);
-  min-width: 25px;
+  min-width: 50px;
 }
 
 .weekday-buttons-compact {
@@ -76,7 +75,7 @@
   padding: 2px 4px;
   width: 24px;
   height: 24px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-medium);
   cursor: pointer;
@@ -102,13 +101,58 @@
   cursor: not-allowed;
 }
 
+/* Monthly options */
+.monthly-options-compact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.monthly-mode-select,
+.monthly-week-select {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-main);
+  color: var(--color-text-dark);
+}
+
+.monthly-mode-select:focus,
+.monthly-week-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.monthly-weekday-locked {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+}
+
+.monthly-day-input {
+  width: 50px;
+  padding: 2px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.monthly-day-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
 /* Interval Picker */
 .interval-picker-compact {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   margin-bottom: var(--space-xs);
-  padding-left: 50px; /* Align with dropdown */
 }
 
 .interval-input-compact {
@@ -116,7 +160,7 @@
   padding: 2px 4px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   text-align: center;
 }
 
@@ -127,46 +171,12 @@
 }
 
 .interval-unit-compact {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-medium);
 }
 
-/* Custom Options Toggle */
-.custom-options-toggle {
-  display: flex;
-  justify-content: center;
-  margin: var(--space-xs) 0;
-}
-
-.toggle-btn-compact {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-  padding: var(--space-xs);
-  text-decoration: underline;
-  transition: color var(--transition);
-}
-
-.toggle-btn-compact:hover {
-  color: var(--color-primary-hover);
-}
-
-.toggle-btn-compact:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Advanced Options */
-.advanced-options-compact {
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--space-sm);
-  margin-top: var(--space-xs);
-}
-
 .end-options-compact label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-medium);
   margin-bottom: var(--space-xs);
   display: block;
@@ -180,9 +190,9 @@
 }
 
 .end-main-row label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-medium);
-  min-width: 35px;
+  min-width: 50px;
   margin-bottom: 0;
 }
 
@@ -191,7 +201,7 @@
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   background: var(--color-bg-main);
   color: var(--color-text-dark);
 }
@@ -212,7 +222,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-dark);
   cursor: pointer;
   margin-bottom: 0 !important;
@@ -223,7 +233,7 @@
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   margin-top: var(--space-xs);
 }
 
@@ -245,7 +255,7 @@
   padding: 2px 4px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   text-align: center;
 }
 
@@ -256,14 +266,14 @@
 }
 
 .max-occurrences-compact span {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-medium);
 }
 
 /* Error Styling */
 .error-text-compact {
   color: var(--color-error);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   margin-top: var(--space-xs);
   padding: var(--space-xs);
   background: var(--color-error-light, #fee2e2);
@@ -272,28 +282,9 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
-  .recurrence-main {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-xs);
-  }
-  
-  .recurrence-main label {
-    min-width: auto;
-  }
-  
   .weekday-picker-compact,
   .interval-picker-compact {
     padding-left: 0;
     flex-wrap: wrap;
-  }
-  
-  .end-options-row {
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-  
-  .recurrence-label {
-    align-self: flex-start;
   }
 }

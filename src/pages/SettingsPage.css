@@ -381,3 +381,23 @@
 .settings-logout-btn:hover {
   background: #fef2f2;
 }
+
+/* Navigation row (section that's a single button linking elsewhere) */
+.settings-nav-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  min-height: 44px;
+}
+
+.settings-nav-row-chevron {
+  color: var(--color-text-medium);
+  flex-shrink: 0;
+  font-size: 22px;
+}

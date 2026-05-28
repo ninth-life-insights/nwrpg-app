@@ -29,6 +29,15 @@
   border-color: #f7b946;
 }
 
+.mission-card-condensed.priority {
+  background-color: #fce7f3;
+  border-color: #ec4899;
+}
+
+.mission-card-condensed.readonly:hover {
+  transform: none;
+}
+
 /* Content takes all remaining space, clips overflow */
 .mcc-content {
   flex: 1;
@@ -87,11 +96,11 @@
   overflow: hidden;
 }
 
-.mission-card-condensed.completed .mcc-badges > *:not(.mcc-story-exclusion-chip) {
+.mission-card-condensed.completed .mcc-badges > *:not(.mcc-mark-yesterday-chip) {
   opacity: 0.6;
 }
 
-.mcc-story-exclusion-chip {
+.mcc-mark-yesterday-chip {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
@@ -105,25 +114,25 @@
   transition: all var(--transition);
 }
 
-.mcc-story-exclusion-chip:hover:not(:disabled) {
+.mcc-mark-yesterday-chip:hover:not(:disabled) {
+  border-style: solid;
   border-color: #4b5563;
   color: #4b5563;
 }
 
-.mcc-story-exclusion-chip.excluded {
+.mcc-mark-yesterday-chip.marked {
   border-style: solid;
   border-color: #374151;
   background: #374151;
   color: white;
+  cursor: default;
 }
 
-.mcc-story-exclusion-chip.excluded:hover:not(:disabled) {
-  border-color: #991b1b;
-  background: #991b1b;
-  color: white;
+.mcc-mark-yesterday-chip.marked:disabled {
+  opacity: 1;
 }
 
-.mcc-story-exclusion-chip:disabled {
+.mcc-mark-yesterday-chip:disabled:not(.marked) {
   opacity: 0.5;
   cursor: not-allowed;
 }

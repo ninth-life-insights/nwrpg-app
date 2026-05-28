@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
+import UndoActionToast from '../components/ui/UndoActionToast';
 import { useAuth } from './AuthContext';
 import { getNotificationPrefs } from '../services/notificationPrefsService';
 import {
@@ -27,6 +28,8 @@ export const NotificationProvider = ({ children }) => {
   // --- In-app modal state (level-up / skill-up) ---
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
+  const [actionToast, setActionToast] = useState(null);
+  const actionToastIdRef = useRef(0);
 
   // --- Push notification scheduling ---
   const { currentUser } = useAuth();
@@ -122,11 +125,29 @@ export const NotificationProvider = ({ children }) => {
     setSkillLevelUpInfo({ skillName, newLevel });
   }, []);
 
+  // Show an undo toast for an action on a mission. The id changes per call
+  // so the toast remounts and its auto-dismiss timer resets, which matters
+  // when multiple actions fire in rapid succession.
+  const showUndoToast = useCallback(({ label, missionTitle, onUndo }) => {
+    actionToastIdRef.current += 1;
+    setActionToast({ id: actionToastIdRef.current, label, missionTitle, onUndo });
+  }, []);
+
+  const notifyMissionDeleted = useCallback(({ missionTitle, onUndo }) => {
+    showUndoToast({ label: 'Mission deleted', missionTitle, onUndo });
+  }, [showUndoToast]);
+
+  const notifyMissionArchived = useCallback(({ missionTitle, onUndo }) => {
+    showUndoToast({ label: 'Mission archived', missionTitle, onUndo });
+  }, [showUndoToast]);
+
   return (
     <NotificationContext.Provider value={{
       notifyMissionCompletion,
       notifyLevelUp,
       notifySkillLevelUp,
+      notifyMissionDeleted,
+      notifyMissionArchived,
       refreshSchedule,
     }}>
       {children}
@@ -143,6 +164,16 @@ export const NotificationProvider = ({ children }) => {
           skillName={skillLevelUpInfo.skillName}
           newLevel={skillLevelUpInfo.newLevel}
           onClose={() => setSkillLevelUpInfo(null)}
+        />
+      )}
+
+      {actionToast && (
+        <UndoActionToast
+          key={actionToast.id}
+          label={actionToast.label}
+          missionTitle={actionToast.missionTitle}
+          onUndo={actionToast.onUndo}
+          onDismiss={() => setActionToast(null)}
         />
       )}
     </NotificationContext.Provider>

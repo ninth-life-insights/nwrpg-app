@@ -17,18 +17,21 @@ import {
   toDateString,
 } from '../../utils/dateHelpers';
 import { useAuth } from '../../contexts/AuthContext';
-import { toggleMissionStoryExclusion } from '../../services/missionService';
+import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import dayjs from 'dayjs';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
+import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import './MissionCard.css';
 
 const MissionCard = ({
   mission,
   onToggleComplete,
   onMissionChanged,
+  onPriorityToggled,
   onSelect,
   isRecentlyCompleted = false,
   selectionMode = false,
@@ -36,17 +39,22 @@ const MissionCard = ({
   hideDailyBadge = false,
   hideRoomBadge = false,
   hideQuestIndicator = false,
+  onRecentlyCompletedUpdated = null,
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
+  const isDailyMission = useIsDailyMission(mission.id);
   const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
-  const [excludeLoading, setExcludeLoading] = useState(false);
-  const [excludedFromStory, setExcludedFromStory] = useState(mission.excludeFromStory === true);
+  const [yesterdayLoading, setYesterdayLoading] = useState(false);
+  const [markedYesterday, setMarkedYesterday] = useState(false);
+  // Local override for completedAt so a chip click here is visible to
+  // MissionCardFull when the user opens it — without forcing a parent reload.
+  const [completedAtOverride, setCompletedAtOverride] = useState(null);
   
   // Drag and drop setup
   const {
@@ -73,7 +81,6 @@ const MissionCard = ({
   const recurrenceText = getRecurrenceDisplayText(mission);
 
   useEffect(() => { setShowXpBadge(isCompleted || isRecentlyCompleted); }, [isCompleted, isRecentlyCompleted]);
-  useEffect(() => { setExcludedFromStory(mission.excludeFromStory === true); }, [mission.excludeFromStory]);
   
   const getDueDateInfo = () => {
     if (!mission.dueDate) return null;
@@ -114,25 +121,42 @@ const MissionCard = ({
   const completionInfo = getCompletionTypeInfo();
 
   const today = toDateString(new Date());
-  const completedDate = isCompleted && mission.completedAt
-    ? toDateString(mission.completedAt.toDate?.() ?? new Date(mission.completedAt))
+  // Effective completedAt prefers the local override (set after the user
+  // backdates via this card's chip OR via MissionCardFull's picker). The prop
+  // can lag because MissionBankPage caches a snapshot at completion time and
+  // doesn't update it on backdate — using only the prop makes the chip
+  // re-appear as "Did this yesterday?" after a backdate, which reads as
+  // "the date didn't save."
+  const effectiveCompletedAt = completedAtOverride ?? mission.completedAt;
+  const completedDate = isCompleted && effectiveCompletedAt
+    ? toDateString(effectiveCompletedAt.toDate?.() ?? new Date(effectiveCompletedAt))
     : null;
   const isCompletedToday = completedDate === today;
-  const isExcluded = isCompletedToday && excludedFromStory;
 
-  const handleToggleExclusion = async (e) => {
+  const handleMarkYesterday = async (e) => {
     e.stopPropagation();
-    if (excludeLoading || !currentUser) return;
-    setExcludeLoading(true);
-    const newExcluded = !excludedFromStory;
-    setExcludedFromStory(newExcluded);
+    if (yesterdayLoading || markedYesterday || !currentUser) return;
+    setYesterdayLoading(true);
+    setMarkedYesterday(true);
     try {
-      await toggleMissionStoryExclusion(currentUser.uid, mission.id);
+      const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      console.log('[BACKDATE] MissionCard chip clicked', { missionId: mission.id, yesterday });
+      const result = await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
+      console.log('[BACKDATE] MissionCard chip → setCompletedAtOverride', {
+        missionId: mission.id,
+        newCompletedAt: result.completedAt?.toDate?.()?.toISOString?.() ?? null,
+      });
+      setCompletedAtOverride(result.completedAt);
+      // Patch the parent's recentlyCompletedMissions snapshot so the prop
+      // flowing back down on the next render also reflects the new date —
+      // protects against state loss if MissionCard remounts (StrictMode,
+      // sibling list churn, etc.).
+      onRecentlyCompletedUpdated?.(mission.id, { completedAt: result.completedAt });
     } catch (err) {
-      setExcludedFromStory(!newExcluded);
-      console.error('Failed to toggle story exclusion:', err);
+      setMarkedYesterday(false);
+      console.error('[BACKDATE] MissionCard chip FAILED:', err);
     } finally {
-      setExcludeLoading(false);
+      setYesterdayLoading(false);
     }
   };
 
@@ -160,7 +184,7 @@ const MissionCard = ({
   <div
     ref={setNodeRef}
     style={style}
-    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : mission.isDailyMission ? 'daily-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${mission.pinned ? 'pinned' : ''} ${isDragging ? 'dragging' : ''}`}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : isDailyMission ? 'daily-mission-card' : mission.isPriority ? 'priority-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${isDragging ? 'dragging' : ''}`}
   >
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (
@@ -200,26 +224,26 @@ const MissionCard = ({
             )}
             <h3 className={`mission-title ${isCompleted ? 'completed' : ''}`}>
               {mission.title}
+              {mission.isPriority && (
+                <span className="material-icons priority-flag" aria-label="Priority mission">flag</span>
+              )}
             </h3>
-            {mission.pinned && (
-              <span className="pin-indicator" title="Pinned mission">📌</span>
-            )}
           </div>
           
           <div className="badges">
 
-            {isCompletedToday && !selectionMode && (
+            {(isCompletedToday || markedYesterday) && !selectionMode && (
               <button
                 type="button"
-                className={`story-exclusion-chip ${isExcluded ? 'excluded' : ''}`}
-                onClick={handleToggleExclusion}
-                disabled={excludeLoading}
+                className={`mark-yesterday-chip ${markedYesterday ? 'marked' : ''}`}
+                onClick={handleMarkYesterday}
+                disabled={yesterdayLoading || markedYesterday}
               >
-                {isExcluded ? 'Left out ✓' : 'Leave out of today\'s story'}
+                {markedYesterday ? 'Moved to yesterday ✓' : 'Did this yesterday?'}
               </button>
             )}
 
-            {mission.isDailyMission && !hideDailyBadge && (
+            {isDailyMission && !hideDailyBadge && (
               <Badge variant="daily">Daily</Badge>
             )}
             
@@ -317,16 +341,34 @@ const MissionCard = ({
       </div>
     </div>
 
-    {viewingDetails && (
-      <MissionCardFull
-        mission={mission}
-        onClose={() => setViewingDetails(false)}
-        onToggleComplete={onToggleComplete}
-        onMissionChanged={onMissionChanged}
-        onExclusionToggled={(val) => setExcludedFromStory(val)}
-        excludedFromStory={excludedFromStory}
-      />
-    )}
+    {viewingDetails && (() => {
+      const effectiveMission = completedAtOverride
+        ? { ...mission, completedAt: completedAtOverride }
+        : mission;
+      console.log('[BACKDATE] MissionCard opening MissionCardFull', {
+        missionId: mission.id,
+        title: mission.title,
+        propCompletedAt: mission.completedAt?.toDate?.()?.toISOString?.()
+          ?? (mission.completedAt instanceof Date ? mission.completedAt.toISOString() : String(mission.completedAt)),
+        completedAtOverride: completedAtOverride?.toDate?.()?.toISOString?.() ?? null,
+        usingOverride: !!completedAtOverride,
+        effectiveCompletedAt: effectiveMission.completedAt?.toDate?.()?.toISOString?.()
+          ?? (effectiveMission.completedAt instanceof Date ? effectiveMission.completedAt.toISOString() : String(effectiveMission.completedAt)),
+      });
+      return (
+        <MissionCardFull
+          mission={effectiveMission}
+          onClose={() => setViewingDetails(false)}
+          onToggleComplete={onToggleComplete}
+          onMissionChanged={onMissionChanged}
+          onPriorityToggled={(val) => onPriorityToggled?.(mission.id, val)}
+          onCompletedAtChanged={(newTs) => {
+            setCompletedAtOverride(newTs);
+            onRecentlyCompletedUpdated?.(mission.id, { completedAt: newTs });
+          }}
+        />
+      );
+    })()}
   </>
   );
 };

@@ -1,0 +1,97 @@
+.undo-action-toast-wrapper {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  width: calc(100% - 32px);
+  max-width: 360px;
+  pointer-events: none;
+}
+
+.undo-action-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--color-text-dark);
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-md) var(--space-md) var(--space-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  pointer-events: all;
+  animation: undoActionToastSlideUp 0.3s ease-out;
+}
+
+@keyframes undoActionToastSlideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.undo-action-toast__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.undo-action-toast__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.undo-action-toast__name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: white;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo-action-toast__undo {
+  background: none;
+  border: none;
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.undo-action-toast__undo:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.undo-action-toast__undo:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.undo-action-toast__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+
+.undo-action-toast__close:hover {
+  color: white;
+}
+
+.undo-action-toast__close .material-icons {
+  font-size: 16px;
+}

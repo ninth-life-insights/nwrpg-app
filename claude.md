@@ -148,6 +148,40 @@ Modals currently using portal: `AddMissionCard`, `MissionCardFull`, `CreateCusto
 
 ---
 
+## CSS scope — global namespace gotcha
+
+There is no CSS module / scoped-CSS setup. Every selector in every imported `.css` file lives in **one global namespace**. When two page-level files (`MissionBankPage.css`, `QuestBankPage.css`, etc.) both declare unscoped utility-ish class names like `.top-header`, `.home-button`, `.header-actions`, `.filter-btn-header`, they **collide silently** — whichever file is bundled later wins the cascade. Your edits to the "losing" file appear to do nothing.
+
+**Symptoms**: CSS edits don't visibly take effect; layouts look like a different page's; everything seems to revert after each change.
+
+**Rule**: When adding or modifying rules in a page-level CSS file for a class name that's not obviously unique to that page, scope it to the page's root class. E.g. `.mission-bank-page .top-header { ... }` instead of bare `.top-header { ... }`. The page-root prefix bumps specificity from `(0,1,0)` to `(0,2,0)`, which wins regardless of bundle order.
+
+Before editing any page-level CSS class, grep `src/**/*.css` for the bare class name. If it appears in more than one file, scope yours.
+
+---
+
+## Material Icons — color inheritance gotcha
+
+Material Icons (`<span className="material-icons">name</span>` and the `material-icons-outlined` variant) render via a webfont. The icon glyph has **no color of its own** — it inherits from the nearest text-color rule. This causes recurring surprises:
+
+- Setting `color: white` on a button doesn't always cascade to the icon if any other selector with equal-or-higher specificity sets the icon's color.
+- Even with no other override, the inheritance can lose to source-order or global Material Icons rules depending on bundle order.
+
+**Bulletproof rule** when an icon needs a non-default color on a custom button or chip:
+
+```css
+.my-button,
+.my-button .material-icons {
+  color: <intended-color> !important;
+}
+```
+
+Targeting `.material-icons` directly via the descendant selector AND using `!important` together guarantees the color wins. Use both — pick one and you may still hit the inherit-from-text-parent bug. Examples already in the codebase: `.priority-toggle-btn.active`, `.priority-flag`, `.add-mission-fab`.
+
+If you skip this and the icon shows up gray (or black, or whatever the parent text color is), this is the cause.
+
+---
+
 ## Error Handling Patterns
 
 ### Principle

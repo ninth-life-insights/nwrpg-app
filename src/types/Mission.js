@@ -56,10 +56,9 @@ export const MISSION_SCHEMA = {
   
   // Difficulty and rewards
   difficulty: DIFFICULTY_LEVELS.EASY, // string - mission difficulty
-  xpReward: null,                     // number - calculated based on difficulty/completion type
-  xpAwarded: null,                    // number - keeps track of XP given if task is completed
+  xpAwarded: null,                    // number | null - XP granted at completion (server-managed)
+  spAwarded: null,                    // number | null - SP granted at completion (server-managed)
   skill: null,                        // string | null - associated skill
-  spReward: null,
   
   // Timestamps (Firestore Timestamp objects)
   createdAt: null,                    // Timestamp - when mission was created
@@ -75,7 +74,13 @@ export const MISSION_SCHEMA = {
   pattern: null,                // string - 'daily', 'weekly', 'monthly', 'yearly', 'custom'
   interval: 1,                  // number - every X days/weeks/months (e.g., every 2 weeks)
   weekdays: [],                 // array - [0,1,2,3,4,5,6] for weekly (0=Sunday)
-  dayOfMonth: null,             // number - for monthly (1-31) or null for "same day"
+  // For monthly, two modes:
+  //   'dayOfMonth' (default) — uses `dayOfMonth` (1-31). The 12th of every month.
+  //   'dayOfWeek' — uses `weekOfMonth` + `weekdayOfMonth`. The 2nd Tuesday of every month.
+  monthlyMode: 'dayOfMonth',
+  dayOfMonth: null,             // number - for monthly (1-31), used in 'dayOfMonth' mode
+  weekOfMonth: null,            // number - 1|2|3|4|-1 (-1 = last), used in 'dayOfWeek' mode
+  weekdayOfMonth: null,         // number - 0-6, used in 'dayOfWeek' mode
   endDate: null,                // Date - when to stop recurring (optional)
   maxOccurrences: null,         // number - max times to recur (optional)
   parentMissionId: null,        // string - ID of original recurring mission
@@ -94,23 +99,18 @@ export const MISSION_SCHEMA = {
   currentCount: 0,                    // number - current progress count
   
   // RPG elements
-  isDailyMission: false,              // boolean - is this a daily mission
-  quest: null,                        // object - if part of a quest
-  questID: null,                      // number - order in quest
+  // (isDailyMission is NOT stored — it's computed from dailyMissions/config
+  //  via DailyMissionsContext / useIsDailyMission at display time)
   forPartyMember: null,               // object - party member
   byPartyMember: null,
   baseLocation: null,
-  
-  // Future expansion fields
-  tags: [],                           // array - for filtering/organization
-  priority: 'normal',                 // string - 'low', 'normal', 'high'
-  pinned: false,
+
+  isPriority: false,                  // boolean - marks mission for visual emphasis + filtering
   
   // Metadata
   version: 1,                          // number - for future schema migrations
   customSortOrder: null,               // number | null - for manual drag-and-drop ordering
   scheduledDates: [],                  // string[] - future dates (YYYY-MM-DD) this mission is planned as a daily
-  excludeFromStory: false,             // boolean - exclude from daily story text generation; XP/SP still count
 };
 
 
@@ -118,19 +118,11 @@ export const MISSION_SCHEMA = {
 // Create a new mission object with default values
 
 export const createMissionTemplate = (overrides = {}) => {
+  // XP/SP rewards are no longer stored on the mission — they're computed at
+  // completion time from the mission's current difficulty + skill.
   return {
     ...MISSION_SCHEMA,
     ...overrides,
-    // Ensure XP is calculated if not provided
-    xpReward: overrides.xpReward || calculateXPReward(
-      overrides.difficulty || DIFFICULTY_LEVELS.EASY,
-      overrides.completionType || COMPLETION_TYPES.SIMPLE
-    ),
-
-    spReward: overrides.spReward || calculateSPReward(
-      overrides.difficulty || DIFFICULTY_LEVELS.EASY,
-      overrides.skill || null
-    ),
   };
 };
 
@@ -202,10 +194,6 @@ export const validateMission = (mission) => {
       errors.push('Recurring missions must have a due date');
     }
     
-    if (mission.recurrence && mission.recurrence.pattern === 'weekly' && mission.recurrence.weekdays.length === 0) {
-      errors.push('Weekly recurring missions must have at least one weekday selected');
-    }
-    
     if (mission.recurrence && mission.recurrence.interval < 1) {
       errors.push('Recurrence interval must be at least 1');
     }
@@ -247,12 +235,6 @@ export const hasSkill = (mission) => {
   return mission.skill && 
          typeof mission.skill === 'string' && 
          mission.skill.trim().length > 0;
-};
-
-
-// Check if mission is part of a quest
-export const isQuestMission = (mission) => {
-  return mission.quest !== null || mission.questID !== null;
 };
 
 
