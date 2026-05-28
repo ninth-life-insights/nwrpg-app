@@ -20,6 +20,8 @@ import { db } from './firebase/config';
 import { MISSION_STATUS, calculateXPReward, calculateSPReward } from '../types/Mission';
 import {
   calculateNextDueDate,
+  calculateNextDueDateFromCompletion,
+  resolveAnchorForRecurrence,
   shouldCreateNextOccurrence,
   createNextMissionInstance,
   isRecurringMission,
@@ -31,7 +33,7 @@ import {
   addSP,
   subtractSP,
   getUserProfile
- } from './userService';
+} from './userService';
  import { logActivityEvent } from './reviewService';
 import { checkAndAwardAchievements } from './achievementService';
 
@@ -504,9 +506,23 @@ const completeRecurringMission = async (userId, missionId, prefetchedData = null
     if (isRecurringMission(mission)) {
       const currentOccurrence = mission.occurrenceNumber || 1;
 
-      if (shouldCreateNextOccurrence(mission.recurrence, currentOccurrence, mission.dueDate)) {
-        const nextDueDate = calculateNextDueDate(mission.dueDate, mission.recurrence);
+      // Resolve which anchor to use based on the user's setting + recurrence
+      // shape. 'completion' uses the completion timestamp; 'dueDate' uses the
+      // current due date (the existing/legacy behavior).
+      let anchorMode = 'smart';
+      try {
+        const profile = await getUserProfile(userId);
+        if (profile?.recurrenceAnchorMode) anchorMode = profile.recurrenceAnchorMode;
+      } catch (e) {
+        // Profile fetch failed — fall back to Smart, which is the default.
+      }
+      const anchor = resolveAnchorForRecurrence(mission.recurrence, anchorMode);
+      const completionDateStr = dayjs().format('YYYY-MM-DD');
+      const nextDueDate = anchor === 'completion'
+        ? calculateNextDueDateFromCompletion(completionDateStr, mission.recurrence)
+        : calculateNextDueDate(mission.dueDate, mission.recurrence);
 
+      if (shouldCreateNextOccurrence(mission.recurrence, currentOccurrence, mission.dueDate, nextDueDate)) {
         if (nextDueDate) {
           // Create the next mission instance
           const nextMissionData = createNextMissionInstance(mission, nextDueDate);

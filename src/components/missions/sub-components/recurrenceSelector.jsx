@@ -1,7 +1,8 @@
 // src/components/missions/sub-components/RecurrenceSelector.js
 import React from 'react';
+import dayjs from 'dayjs';
 import './recurrenceSelector.css';
-import { RECURRENCE_PATTERNS, formatRecurrence } from '../../../utils/recurrenceHelpers';
+import { RECURRENCE_PATTERNS, formatRecurrence, calculateNextDueDate, calculateNextDueDateFromCompletion, resolveAnchorForRecurrence } from '../../../utils/recurrenceHelpers';
 
 const WEEKDAYS = [
   { value: 0, label: 'S', full: 'Sunday' },
@@ -25,6 +26,7 @@ const RecurrenceSelector = ({
   },
   onRecurrenceChange,
   dueDate,
+  anchorMode = 'smart',
   disabled = false,
   errors = {}
 }) => {
@@ -95,6 +97,41 @@ const RecurrenceSelector = ({
 
 const patternSelected = recurrence.pattern !== RECURRENCE_PATTERNS.NONE;
 const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
+
+// Live preview: plain-English summary + concrete next-due date. Catches
+// misconfigurations (recurrence end date before next occurrence; day-31 in a
+// short month) visually before save, so the abstract widget choices become
+// concrete dates the user can sanity-check.
+const previewSentence = (() => {
+  if (!patternSelected) return null;
+  if (!recurrenceLabel) return null;
+
+  // No due date yet — can't compute a real next occurrence. Nudge gently.
+  if (!dueDate) {
+    return `${recurrenceLabel}. Pick a due date to see when this will repeat.`;
+  }
+
+  // Resolve which anchor applies (Smart mode + recurrence shape, or an
+  // explicit override). For completion-anchored we show "If you finish today"
+  // so the user sees the date is hypothetical, not a calendar commitment.
+  const resolvedAnchor = resolveAnchorForRecurrence(recurrence, anchorMode);
+  const todayStr = dayjs().format('YYYY-MM-DD');
+  const nextRaw = resolvedAnchor === 'completion'
+    ? calculateNextDueDateFromCompletion(todayStr, recurrence)
+    : calculateNextDueDate(dueDate, recurrence);
+  if (!nextRaw) return `${recurrenceLabel}.`;
+
+  const next = dayjs(nextRaw);
+  const end = recurrence.endDate ? dayjs(recurrence.endDate) : null;
+  if (end && next.isAfter(end, 'day')) {
+    return `${recurrenceLabel}. Won't repeat — end date is before the next occurrence.`;
+  }
+
+  const formatted = next.format('ddd, MMM D, YYYY');
+  return resolvedAnchor === 'completion'
+    ? `${recurrenceLabel}. If you finish today, next due ${formatted}.`
+    : `${recurrenceLabel}. Next due ${formatted}.`;
+})();
 
   return (
     <div className="recurrence-selector-compact">
@@ -229,6 +266,15 @@ const showWeekdayPicker = recurrence.pattern === RECURRENCE_PATTERNS.WEEKLY;
               <span>times</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Live preview */}
+      {previewSentence && (
+        <div
+          className={`recurrence-preview-compact ${previewSentence.includes("Won't repeat") ? 'warning' : ''}`}
+        >
+          {previewSentence}
         </div>
       )}
 

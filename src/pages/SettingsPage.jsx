@@ -33,6 +33,8 @@ const SettingsPage = () => {
   const [storyStyle, setStoryStyle] = useState('balanced');
   // 'none' (no auto follow-up) or a positive number of days. Defaults to 30.
   const [defaultFollowUpDays, setDefaultFollowUpDays] = useState(30);
+  // 'smart' (contextual, default) | 'dueDate' | 'completion'
+  const [recurrenceAnchorMode, setRecurrenceAnchorMode] = useState('smart');
   const [permissionState, setPermissionState] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -61,6 +63,10 @@ const SettingsPage = () => {
       const followUp = profile?.defaultFollowUpDays;
       if (followUp === 'none' || (typeof followUp === 'number' && followUp > 0)) {
         setDefaultFollowUpDays(followUp);
+      }
+      const anchor = profile?.recurrenceAnchorMode;
+      if (anchor === 'smart' || anchor === 'dueDate' || anchor === 'completion') {
+        setRecurrenceAnchorMode(anchor);
       }
     });
     getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
@@ -106,7 +112,7 @@ const SettingsPage = () => {
     try {
       await Promise.all([
         saveNotificationPrefs(currentUser.uid, prefs),
-        updateUserProfile(currentUser.uid, { weekStartDay, storyStyle, defaultFollowUpDays }),
+        updateUserProfile(currentUser.uid, { weekStartDay, storyStyle, defaultFollowUpDays, recurrenceAnchorMode }),
       ]);
       await refreshSchedule();
       setSaved(true);
@@ -317,6 +323,31 @@ const SettingsPage = () => {
             {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
           </button>
         </StickyFooter>
+      </section>
+
+      <section className="settings-section">
+        <h2 className="settings-section-title">Recurring Missions</h2>
+        <div className="settings-row-label-group">
+          <span className="settings-label">When should the next one be due?</span>
+          <span className="settings-hint">Calendar-anchored keeps you on a schedule. Completion-anchored shifts with when you actually finish — better for chores that don't have a fixed day.</span>
+        </div>
+        <div className="settings-style-picker" role="group" aria-label="Recurring missions anchor">
+          {[
+            { value: 'smart', label: 'Smart', hint: 'Calendar when you pick a day, completion otherwise' },
+            { value: 'dueDate', label: 'Always due date', hint: 'Stays on the original schedule' },
+            { value: 'completion', label: 'Always completion', hint: 'Shifts based on when you finish' },
+          ].map(({ value, label, hint }) => (
+            <button
+              key={value}
+              type="button"
+              className={`settings-style-option${recurrenceAnchorMode === value ? ' settings-style-option--active' : ''}`}
+              onClick={() => setRecurrenceAnchorMode(value)}
+            >
+              <span className="settings-style-option-label">{label}</span>
+              <span className="settings-style-option-hint">{hint}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="settings-section">

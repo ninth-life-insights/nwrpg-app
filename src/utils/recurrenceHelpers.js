@@ -140,8 +140,100 @@ export const calculateNextDueDate = (currentDueDate, recurrence) => {
   }
 };
 
-// Check if recurrence should continue based on end conditions
-export const shouldCreateNextOccurrence = (recurrence, currentOccurrenceCount = 0, currentDueDate) => {
+// Completion-anchored next-due calculation. Implements the snap-to-weekday/
+// day-of-month rule: when the recurrence shape names a specific calendar day,
+// the next instance lands on the next matching day strictly after completion,
+// then adds (interval - 1) cycles to honor the cadence. When the shape has no
+// specific day (pure cadence), it's just `interval` units forward from the
+// completion date.
+//
+// completionDateString: YYYY-MM-DD (the date the mission was checked off)
+export const calculateNextDueDateFromCompletion = (completionDateString, recurrence) => {
+  if (!recurrence || recurrence.pattern === RECURRENCE_PATTERNS.NONE) return null;
+
+  const completion = dayjs(completionDateString);
+  const { pattern, interval = 1, weekdays = [], dayOfMonth } = recurrence;
+  const n = Math.max(1, interval);
+
+  switch (pattern) {
+    case RECURRENCE_PATTERNS.DAILY:
+    case 'daily':
+      return completion.add(n, 'day').format('YYYY-MM-DD');
+
+    case RECURRENCE_PATTERNS.WEEKLY: {
+      if (weekdays && weekdays.length > 0) {
+        // Snap forward to the next matching weekday strictly after completion.
+        let nextDate = completion.add(1, 'day');
+        let daysChecked = 0;
+        while (daysChecked < 7 && !weekdays.includes(nextDate.day())) {
+          nextDate = nextDate.add(1, 'day');
+          daysChecked++;
+        }
+        if (weekdays.includes(nextDate.day())) {
+          if (n > 1) nextDate = nextDate.add(n - 1, 'week');
+          return nextDate.format('YYYY-MM-DD');
+        }
+      }
+      return completion.add(n, 'week').format('YYYY-MM-DD');
+    }
+
+    case RECURRENCE_PATTERNS.MONTHLY: {
+      if (dayOfMonth) {
+        // Snap forward to the next matching day-of-month after completion.
+        let candidate = completion;
+        const candidateDay = Math.min(dayOfMonth, candidate.daysInMonth());
+        const snapped = candidate.date(candidateDay);
+        // If the snapped date is at or before completion, push to next month.
+        const next = snapped.isAfter(completion, 'day')
+          ? snapped
+          : candidate.add(1, 'month').date(Math.min(dayOfMonth, candidate.add(1, 'month').daysInMonth()));
+        if (n > 1) {
+          const future = next.add(n - 1, 'month');
+          return future.date(Math.min(dayOfMonth, future.daysInMonth())).format('YYYY-MM-DD');
+        }
+        return next.format('YYYY-MM-DD');
+      }
+      return completion.add(n, 'month').format('YYYY-MM-DD');
+    }
+
+    case RECURRENCE_PATTERNS.YEARLY:
+    case 'yearly':
+      return completion.add(n, 'year').format('YYYY-MM-DD');
+
+    default:
+      return null;
+  }
+};
+
+// Resolve which anchor to use for a recurring mission. Centralizes the Smart
+// mode logic: when the recurrence shape names a calendar day (weekday picker
+// for weekly, or dayOfMonth for monthly, or yearly), it's calendar-anchored;
+// otherwise it's cadence (completion-anchored). The explicit override modes
+// short-circuit this.
+export const resolveAnchorForRecurrence = (recurrence, anchorMode = 'smart') => {
+  if (anchorMode === 'dueDate' || anchorMode === 'completion') return anchorMode;
+  if (!recurrence || !recurrence.pattern) return 'dueDate';
+
+  switch (recurrence.pattern) {
+    case RECURRENCE_PATTERNS.DAILY:
+      return 'completion';
+    case RECURRENCE_PATTERNS.WEEKLY:
+      return recurrence.weekdays && recurrence.weekdays.length > 0 && recurrence.weekdays.length < 7
+        ? 'dueDate'
+        : 'completion';
+    case RECURRENCE_PATTERNS.MONTHLY:
+      return recurrence.dayOfMonth ? 'dueDate' : 'completion';
+    case RECURRENCE_PATTERNS.YEARLY:
+      return 'dueDate';
+    default:
+      return 'dueDate';
+  }
+};
+
+// Check if recurrence should continue based on end conditions.
+// `precomputedNextDate` lets callers using completion-anchored recurrence pass
+// the actual next due date (which differs from the due-date-anchored default).
+export const shouldCreateNextOccurrence = (recurrence, currentOccurrenceCount = 0, currentDueDate, precomputedNextDate = null) => {
   if (!recurrence || recurrence.pattern === RECURRENCE_PATTERNS.NONE) {
     return false;
   }
@@ -150,14 +242,16 @@ export const shouldCreateNextOccurrence = (recurrence, currentOccurrenceCount = 
   if (recurrence.endDate) {
     const endDate = dayjs(recurrence.endDate);
     const today = dayjs();
-    
+
     // If today is after the end date, stop creating new instances
     if (today.isAfter(endDate, 'day')) {
       return false;
     }
-    
+
     // Also check if the next calculated due date would be after the end date
-    const nextDueDate = dayjs(calculateNextDueDate(currentDueDate, recurrence));
+    const nextDueDate = precomputedNextDate
+      ? dayjs(precomputedNextDate)
+      : dayjs(calculateNextDueDate(currentDueDate, recurrence));
     if (nextDueDate.isAfter(endDate, 'day')) {
       return false;
     }

@@ -224,6 +224,26 @@
   color: var(--color-text-medium);
 }
 
+/* Live preview line */
+.recurrence-preview-compact {
+  margin-top: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+  background: var(--color-bg-main);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border);
+  font-style: italic;
+}
+
+.recurrence-preview-compact.warning {
+  color: var(--color-text-dark);
+  background: var(--color-warning-light, #fef3c7);
+  border-color: var(--color-warning, #f59e0b);
+  border-style: solid;
+  font-style: normal;
+}
+
 /* Error Styling */
 .error-text-compact {
   color: var(--color-error);
