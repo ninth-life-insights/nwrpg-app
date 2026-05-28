@@ -112,11 +112,13 @@ const compareMissions = (a, b, filters) => {
     case 'difficulty': {
       const difficultyOrder = { easy: 1, medium: 2, hard: 3 };
       comparison = (difficultyOrder[a.difficulty] || 2) - (difficultyOrder[b.difficulty] || 2);
+      if (comparison === 0) comparison = compareByCreatedAt(a, b);
       break;
     }
 
     case 'title':
       comparison = (a.title || '').localeCompare(b.title || '');
+      if (comparison === 0) comparison = compareByCreatedAt(a, b);
       break;
 
     default:
