@@ -258,8 +258,8 @@ export const groupMissionsByDueDate = (missions) => {
     ['overdue', 'Overdue'],
     ['today', 'Today'],
     ['tomorrow', 'Tomorrow'],
-    ['thisWeek', 'This Week'],
-    ['later', 'Later'],
+    ['thisWeek', 'Coming up'],
+    ['later', 'Future'],
     ['noDueDate', 'No due date'],
   ];
 
