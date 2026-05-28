@@ -328,14 +328,14 @@ const SettingsPage = () => {
       <section className="settings-section">
         <h2 className="settings-section-title">Recurring Missions</h2>
         <div className="settings-row-label-group">
-          <span className="settings-label">When should the next one be due?</span>
-          <span className="settings-hint">Calendar-anchored keeps you on a schedule. Completion-anchored shifts with when you actually finish — better for chores that don't have a fixed day.</span>
+          <span className="settings-label">Due Date Timing</span>
+          <span className="settings-hint">How should the date of the next recurring mission be determined?</span>
         </div>
         <div className="settings-style-picker" role="group" aria-label="Recurring missions anchor">
           {[
-            { value: 'smart', label: 'Smart', hint: 'Calendar when you pick a day, completion otherwise' },
-            { value: 'dueDate', label: 'Always due date', hint: 'Stays on the original schedule' },
-            { value: 'completion', label: 'Always completion', hint: 'Shifts based on when you finish' },
+            { value: 'completion', label: 'Completion Date', hint: 'Next date shifts based on when you finish.' },
+            { value: 'smart', label: 'Smart', hint: 'Completion date, unless it repeats based on day of the week/month.' },
+            { value: 'dueDate', label: 'Due Date', hint: 'Anchors to the original due date, even when late.' },
           ].map(({ value, label, hint }) => (
             <button
               key={value}
