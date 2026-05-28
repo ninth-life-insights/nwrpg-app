@@ -65,15 +65,19 @@ const compareByCreatedAt = (a, b) => {
   return aCreated - bCreated;
 };
 
-const compareByDueDate = (a, b) => {
+const compareByDueDate = (a, b, sortOrder = 'asc') => {
   const aDate = toJsDate(a.dueDate);
   const bDate = toJsDate(b.dueDate);
 
-  // Both undated: newest-created first (fresh ideas more relevant than stale ones).
+  // Undated missions always sort to the bottom, regardless of direction.
+  // Putting them at the top in DESC would imply they're "later than the
+  // latest date," which they aren't — they just have no date.
   if (!aDate && !bDate) return -compareByCreatedAt(a, b);
   if (!aDate) return 1;
   if (!bDate) return -1;
-  return aDate - bDate;
+
+  const diff = aDate - bDate;
+  return sortOrder === 'desc' ? -diff : diff;
 };
 
 const compareByCustomOrder = (a, b) => {
@@ -88,15 +92,17 @@ const compareByCustomOrder = (a, b) => {
 };
 
 const compareMissions = (a, b, filters) => {
+  // Due-date sort handles direction internally so undated missions stay
+  // pinned to the bottom regardless of asc/desc.
+  if (filters.sortBy === 'dueDate' || !filters.sortBy) {
+    return compareByDueDate(a, b, filters.sortOrder);
+  }
+
   let comparison = 0;
 
   switch (filters.sortBy) {
     case 'custom':
       comparison = compareByCustomOrder(a, b);
-      break;
-
-    case 'dueDate':
-      comparison = compareByDueDate(a, b);
       break;
 
     case 'createdAt':
@@ -114,7 +120,7 @@ const compareMissions = (a, b, filters) => {
       break;
 
     default:
-      comparison = compareByDueDate(a, b);
+      comparison = 0;
       break;
   }
 
