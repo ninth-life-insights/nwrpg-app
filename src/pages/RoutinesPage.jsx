@@ -19,28 +19,40 @@ const RoutinesPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  const loadPage = useCallback(async () => {
+  // Silent refresh — re-fetches missions + routines without toggling the
+  // loading skeleton. Passed to children so post-mutation refreshes don't
+  // unmount the section (and its portal'd modals) mid-interaction.
+  const refresh = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const activeMissions = await getActiveMissions(currentUser.uid);
+      setMissions(activeMissions);
+      await refreshRoutines();
+    } catch (err) {
+      console.error('Routines refresh failed:', err);
+    }
+  }, [currentUser, refreshRoutines]);
+
+  // Initial load — only on mount and on error retry. Toggles the loading
+  // skeleton; do NOT call from within mutation flows.
+  const initialLoad = useCallback(async () => {
     if (!currentUser) return;
     setLoading(true);
     setLoadError(null);
     try {
-      // Lazy-create the default routine on first visit. Idempotent — no-op
-      // when the doc already exists.
       await getOrCreateDefaultRoutine(currentUser.uid);
-      const activeMissions = await getActiveMissions(currentUser.uid);
-      setMissions(activeMissions);
-      await refreshRoutines();
+      await refresh();
     } catch (err) {
       console.error('Routines page load failed:', err);
       setLoadError("Your routine didn't load.");
     } finally {
       setLoading(false);
     }
-  }, [currentUser, refreshRoutines]);
+  }, [currentUser, refresh]);
 
   useEffect(() => {
-    loadPage();
-  }, [loadPage]);
+    initialLoad();
+  }, [initialLoad]);
 
   return (
     <div className="routines-page">
@@ -59,7 +71,7 @@ const RoutinesPage = () => {
       {loadError && (
         <ErrorMessage
           message={loadError}
-          onRetry={loadPage}
+          onRetry={initialLoad}
           className="routines-load-error"
         />
       )}
@@ -73,7 +85,7 @@ const RoutinesPage = () => {
           missions={missions}
           routineRootSet={routineRootSet}
           routineId={DEFAULT_ROUTINE_ID}
-          onSaved={loadPage}
+          onSaved={refresh}
         />
       )}
     </div>

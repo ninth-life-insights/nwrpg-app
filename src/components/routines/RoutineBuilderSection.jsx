@@ -82,25 +82,21 @@ const RoutineBuilderSection = ({
       </p>
 
       {rooms.length > 0 && (
-        <div className="routine-builder-filter" role="tablist" aria-label="Filter by room">
-          <button
-            type="button"
-            className={`routine-builder-pill ${roomFilter === '' ? 'is-active' : ''}`}
-            onClick={() => setRoomFilter('')}
+        <label className="routine-builder-filter">
+          <span className="routine-builder-filter-label">Room</span>
+          <select
+            className="routine-builder-filter-select"
+            value={roomFilter}
+            onChange={(e) => setRoomFilter(e.target.value)}
           >
-            All rooms
-          </button>
-          {rooms.map((room) => (
-            <button
-              key={room.id}
-              type="button"
-              className={`routine-builder-pill ${roomFilter === room.id ? 'is-active' : ''}`}
-              onClick={() => setRoomFilter(room.id)}
-            >
-              {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
-            </button>
-          ))}
-        </div>
+            <option value="">All rooms</option>
+            {rooms.map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
 
       <div className="routine-builder-top-actions">

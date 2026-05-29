@@ -1,7 +1,7 @@
 /* src/components/routines/RoutineBuilderSection.css */
 
 .routine-builder {
-  margin-top: var(--space-lg);
+  margin-top: var(--space-sm);
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
@@ -11,46 +11,40 @@
   margin: 0;
   color: var(--color-text-medium);
   font-size: var(--font-size-sm);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-/* Room filter pills */
+/* Room filter — compact native picker. Loses room icons but scales to any
+   number of rooms without horizontal scrolling. */
 .routine-builder-filter {
   display: flex;
-  gap: var(--space-xs);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
-.routine-builder-filter::-webkit-scrollbar {
-  height: 4px;
-}
-
-.routine-builder-pill {
-  flex-shrink: 0;
-  padding: var(--space-xs) var(--space-md);
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  color: var(--color-text-medium);
+.routine-builder-filter-label {
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--color-text-medium);
+  flex-shrink: 0;
+}
+
+.routine-builder-filter-select {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-white);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dark);
   cursor: pointer;
-  white-space: nowrap;
-  transition: all var(--transition);
+  box-sizing: border-box;
 }
 
-.routine-builder-pill:hover {
+.routine-builder-filter-select:focus {
+  outline: none;
   border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.routine-builder-pill.is-active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: white;
 }
 
 /* Top-level actions */
@@ -63,7 +57,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -105,9 +99,9 @@
   color: var(--color-text-medium);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  padding: 2px var(--space-sm);
+  padding: 1px var(--space-sm);
   border-radius: var(--radius-sm);
-  min-width: 20px;
+  min-width: 18px;
   text-align: center;
 }
 
@@ -115,6 +109,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+}
+
+/* Zero out the mission card's own vertical margin inside the builder list —
+   we rely on flex gap as the only between-card spacing. The card keeps its
+   auto horizontal margins for centering. */
+.routine-builder-group-list .mission-card-condensed {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* Per-bucket Add CTA — dashed, low-stakes "drop one more in" affordance */
@@ -126,7 +128,7 @@
   width: 100%;
   max-width: var(--max-width-card);
   margin: 0 auto;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   background: transparent;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);

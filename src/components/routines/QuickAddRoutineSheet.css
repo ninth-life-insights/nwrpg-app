@@ -95,11 +95,7 @@
 
 .quick-add-session-controls {
   display: flex;
-  gap: var(--space-sm);
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
+  gap: var(--space-md);
 }
 
 .quick-add-control {
