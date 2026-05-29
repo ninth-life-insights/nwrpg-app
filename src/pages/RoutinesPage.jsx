@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRoutines } from '../contexts/RoutineContext';
 import { getOrCreateDefaultRoutine } from '../services/routineService';
 import { getActiveMissions } from '../services/missionService';
+import { DEFAULT_ROUTINE_ID } from '../types/Routine';
 import RoutineBuilderSection from '../components/routines/RoutineBuilderSection';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import './RoutinesPage.css';
@@ -71,6 +72,8 @@ const RoutinesPage = () => {
         <RoutineBuilderSection
           missions={missions}
           routineRootSet={routineRootSet}
+          routineId={DEFAULT_ROUTINE_ID}
+          onSaved={loadPage}
         />
       )}
     </div>

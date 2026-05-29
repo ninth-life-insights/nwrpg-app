@@ -1,0 +1,274 @@
+/* src/components/routines/BatchCreateRoutineTasksModal.css */
+
+.batch-routine-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+@media (min-width: 480px) {
+  .batch-routine-overlay {
+    align-items: center;
+  }
+}
+
+.batch-routine-modal {
+  background: var(--color-bg-main);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100vw;
+  max-width: 480px;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: batchRoutineSlideUp 0.25s ease-out;
+}
+
+@media (min-width: 480px) {
+  .batch-routine-modal {
+    border-radius: var(--radius-xl);
+    max-height: 90dvh;
+  }
+}
+
+@keyframes batchRoutineSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@media (min-width: 480px) {
+  @keyframes batchRoutineSlideUp {
+    from { transform: translateY(20px) scale(0.97); opacity: 0; }
+    to   { transform: translateY(0) scale(1);        opacity: 1; }
+  }
+}
+
+.batch-routine-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.batch-routine-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.batch-routine-close,
+.batch-routine-close .material-icons {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  padding: 0;
+}
+
+.batch-routine-close {
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.batch-routine-close:hover {
+  color: var(--color-text-dark);
+}
+
+.batch-routine-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  box-sizing: border-box;
+}
+
+.batch-routine-intro {
+  margin: 0;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+}
+
+.batch-routine-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.batch-routine-row {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.batch-routine-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.batch-routine-row-number {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  background: var(--color-border);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.batch-routine-row-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.batch-routine-row-remove:hover {
+  color: var(--color-error);
+}
+
+.batch-routine-row-remove .material-icons {
+  font-size: 18px;
+}
+
+.batch-routine-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  background: var(--color-bg-white);
+  box-sizing: border-box;
+}
+
+.batch-routine-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.batch-routine-row-controls {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.batch-routine-control {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.batch-routine-control-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+}
+
+.batch-routine-select {
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-white);
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.batch-routine-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.batch-routine-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-medium);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  transition: all var(--transition);
+}
+
+.batch-routine-add-row:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.batch-routine-add-row .material-icons {
+  font-size: 18px;
+}
+
+.batch-routine-footer {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-bg-main);
+}
+
+.batch-routine-cancel {
+  flex: 1;
+  padding: var(--space-md);
+  background: var(--color-bg-white);
+  color: var(--color-text-medium);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.batch-routine-cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.batch-routine-save {
+  flex: 2;
+  padding: var(--space-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.batch-routine-save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.batch-routine-save:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}

@@ -36,6 +36,7 @@ import {
 } from './userService';
  import { logActivityEvent } from './reviewService';
 import { checkAndAwardAchievements } from './achievementService';
+import { batchAddMissionsToRoutine } from './routineService';
 
 // Always computes from the mission's current difficulty + isDailyMission flag.
 // Does NOT read any stored xpReward, so edits to difficulty before completion
@@ -836,6 +837,49 @@ export const updateMissionCompletedDate = async (userId, missionId, newDateStrin
   console.log('[BACKDATE] updateMissionCompletedDate ✓ batch committed for', missionId);
 
   return { completedAt: newTimestamp };
+};
+
+// Batch-create multiple recurring missions and add them to a routine in one
+// flow. Used by the routine builder's BatchCreateRoutineTasksModal.
+//
+// Two-write flow:
+//   1. Firestore writeBatch creates all N mission docs atomically.
+//   2. A separate update adds the new IDs to the routine's missionChainIds.
+//
+// If step 2 fails after step 1 commits, the missions exist as ordinary
+// recurring missions with no routine membership — harmless, recoverable via
+// the routine builder's "Add existing" flow. We don't roll back step 1 because
+// the cost of partial routine membership is low and the orphan missions are
+// still useful on their own.
+export const batchCreateRoutineMissions = async (userId, missions, routineId) => {
+  if (!Array.isArray(missions) || missions.length === 0) {
+    return [];
+  }
+  if (!routineId) {
+    throw new Error('batchCreateRoutineMissions requires a routineId');
+  }
+
+  const missionsRef = getUserMissionsRef(userId);
+  const batch = writeBatch(db);
+  const newIds = [];
+
+  for (const missionData of missions) {
+    const { id, ...dataWithoutId } = missionData;
+    const newRef = doc(missionsRef);
+    batch.set(newRef, {
+      ...dataWithoutId,
+      status: MISSION_STATUS.ACTIVE,
+      createdAt: serverTimestamp(),
+      completedAt: null
+    });
+    newIds.push(newRef.id);
+  }
+
+  await batch.commit();
+
+  await batchAddMissionsToRoutine(userId, routineId, newIds);
+
+  return newIds;
 };
 
 // Batch update multiple missions' custom sort orders
