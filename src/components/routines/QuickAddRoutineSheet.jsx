@@ -20,16 +20,49 @@ const FREQUENCY_LABELS = {
   [RECURRENCE_PATTERNS.YEARLY]:  'Yearly',
 };
 
+// Frequency-scaled "start when" offsets for staggering the first due date when
+// bulk-adding. Each offset is session-level — pick once, applies to every task
+// added until changed. Daily has no offsets (we picked Daily for "every day",
+// no point starting it tomorrow).
+const START_OFFSETS = {
+  [RECURRENCE_PATTERNS.WEEKLY]: [
+    { value: 'today',    label: 'Today',     add: () => dayjs() },
+    { value: 'tomorrow', label: 'Tomorrow',  add: () => dayjs().add(1, 'day') },
+    { value: '1w',       label: '+1 week',   add: () => dayjs().add(1, 'week') },
+    { value: '2w',       label: '+2 weeks',  add: () => dayjs().add(2, 'week') },
+  ],
+  [RECURRENCE_PATTERNS.MONTHLY]: [
+    { value: 'today', label: 'Today',     add: () => dayjs() },
+    { value: '1w',    label: 'Next week', add: () => dayjs().add(1, 'week') },
+    { value: '1m',    label: '+1 month',  add: () => dayjs().add(1, 'month') },
+    { value: '2m',    label: '+2 months', add: () => dayjs().add(2, 'month') },
+  ],
+  [RECURRENCE_PATTERNS.YEARLY]: [
+    { value: 'today', label: 'Today',      add: () => dayjs() },
+    { value: '1m',    label: 'Next month', add: () => dayjs().add(1, 'month') },
+    { value: '6m',    label: '+6 months',  add: () => dayjs().add(6, 'month') },
+    { value: '1y',    label: '+1 year',    add: () => dayjs().add(1, 'year') },
+  ],
+};
+
+const resolveStartDate = (frequency, offsetValue) => {
+  const options = START_OFFSETS[frequency];
+  if (!options) return dayjs();
+  const match = options.find((o) => o.value === offsetValue);
+  return match ? match.add() : dayjs();
+};
+
 // Build a v1 default recurrence shape from a frequency. Interval is always 1;
 // users refine atypical cadences ("every 3 days") via the existing edit flow.
-// Monthly captures today's day-of-month so the cadence is stable; everything
-// else uses defaults.
-const buildRecurrence = (frequency, today) => ({
+// Monthly captures the start-date's day-of-month so the cadence stays stable
+// against the chosen start, even when staggered (e.g. "+1 month" lands on the
+// same day-of-month as today).
+const buildRecurrence = (frequency, startDate) => ({
   pattern: frequency,
   interval: 1,
   weekdays: [],
   monthlyMode: 'dayOfMonth',
-  dayOfMonth: frequency === RECURRENCE_PATTERNS.MONTHLY ? today.date() : null,
+  dayOfMonth: frequency === RECURRENCE_PATTERNS.MONTHLY ? startDate.date() : null,
   weekOfMonth: null,
   weekdayOfMonth: null,
   endDate: null,
@@ -59,12 +92,15 @@ const QuickAddRoutineSheet = ({
 
   const [skill, setSkill] = useState(defaultSkill || '');
   const [roomId, setRoomId] = useState(defaultRoomId || '');
+  const [startOffset, setStartOffset] = useState('today');
   const [inputValue, setInputValue] = useState('');
   const [addedMissions, setAddedMissions] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [removingIds, setRemovingIds] = useState(new Set());
   const inputRef = useRef(null);
+
+  const offsetOptions = START_OFFSETS[frequency] || null;
 
   useModalBackButton(true, onClose);
 
@@ -83,16 +119,16 @@ const QuickAddRoutineSheet = ({
     setSaving(true);
     setSaveError(null);
 
-    const today = dayjs();
-    const todayString = today.format('YYYY-MM-DD');
+    const startDate = resolveStartDate(frequency, startOffset);
+    const startString = startDate.format('YYYY-MM-DD');
 
     const missionData = createMissionTemplate({
       title,
       dueType: DUE_TYPES.RECURRING,
-      dueDate: todayString,
+      dueDate: startString,
       baseLocation: roomId || null,
       skill: skill || null,
-      recurrence: buildRecurrence(frequency, today),
+      recurrence: buildRecurrence(frequency, startDate),
     });
 
     try {
@@ -185,6 +221,26 @@ const QuickAddRoutineSheet = ({
               </select>
             </label>
           </div>
+
+          {offsetOptions && (
+            <div className="quick-add-offset-row">
+              <span className="quick-add-offset-label">Start</span>
+              <div className="quick-add-offset-chips" role="radiogroup" aria-label="Start when">
+                {offsetOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={startOffset === opt.value}
+                    className={`quick-add-offset-chip ${startOffset === opt.value ? 'is-active' : ''}`}
+                    onClick={() => setStartOffset(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {addedMissions.length > 0 && (
             <ul className="quick-add-list" aria-label="Added in this session">

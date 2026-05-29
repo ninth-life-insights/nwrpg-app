@@ -185,6 +185,57 @@
   cursor: default;
 }
 
+/* Start-when chip row — session-level offset for the first due date. Hidden
+   for Daily (no point starting "every day" tomorrow). Label sits inline left;
+   chips wrap on narrow viewports. */
+.quick-add-offset-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.quick-add-offset-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.quick-add-offset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-add-offset-chip {
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+
+.quick-add-offset-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.quick-add-offset-chip.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
 /* In-session list of just-added tasks. Lightweight rows — title + minus.
    Order matters: list sits BETWEEN the session controls and the input so
    each new entry pushes down into the input's natural eye line. */

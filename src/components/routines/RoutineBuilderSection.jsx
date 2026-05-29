@@ -24,6 +24,10 @@ const BUCKETS = [
   { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  cta: 'Add to Yearly' },
 ];
 
+// Sentinel value for the "Unassigned" room filter option — selects missions
+// with no baseLocation (general routine items, personal care, etc).
+export const UNASSIGNED_ROOM_FILTER = '__unassigned__';
+
 // The Builder is a noticing surface, not a planning form. Each frequency
 // bucket is always visible (even empty) — the layout teaches the cadence model.
 // Adds happen contextually from each bucket via QuickAddRoutineSheet, which
@@ -48,7 +52,11 @@ const RoutineBuilderSection = ({
   const grouped = useMemo(() => {
     const routineMissions = (missions || []).filter((m) => {
       if (!isMissionInRoutineSet(m, routineRootSet)) return false;
-      if (roomFilter && m.baseLocation !== roomFilter) return false;
+      if (roomFilter === UNASSIGNED_ROOM_FILTER) {
+        if (m.baseLocation) return false;
+      } else if (roomFilter && m.baseLocation !== roomFilter) {
+        return false;
+      }
       return true;
     });
     return groupRoutineMissionsByFrequency(routineMissions);
@@ -89,7 +97,8 @@ const RoutineBuilderSection = ({
             value={roomFilter}
             onChange={(e) => setRoomFilter(e.target.value)}
           >
-            <option value="">All rooms</option>
+            <option value="">Any</option>
+            <option value={UNASSIGNED_ROOM_FILTER}>Unassigned</option>
             {rooms.map((room) => (
               <option key={room.id} value={room.id}>
                 {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
@@ -128,7 +137,11 @@ const RoutineBuilderSection = ({
         <QuickAddRoutineSheet
           frequency={addBucketFrequency}
           routineId={routineId}
-          defaultRoomId={roomFilter}
+          defaultRoomId={
+            // Unassigned filter and Any filter both default the sheet to
+            // "Unassigned" (empty string), since neither names a specific room.
+            roomFilter === UNASSIGNED_ROOM_FILTER ? '' : roomFilter
+          }
           onClose={() => setAddBucketFrequency(null)}
           onAdded={onSaved}
         />
