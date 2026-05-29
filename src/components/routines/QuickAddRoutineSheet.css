@@ -185,11 +185,64 @@
   cursor: default;
 }
 
-.quick-add-counter {
-  font-size: var(--font-size-sm);
+/* In-session list of just-added tasks. Lightweight rows — title + minus.
+   Order matters: list sits BETWEEN the session controls and the input so
+   each new entry pushes down into the input's natural eye line. */
+.quick-add-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quick-add-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.quick-add-list-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.quick-add-list-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-add-list-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
   color: var(--color-text-light);
-  text-align: center;
-  font-style: italic;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.quick-add-list-remove:hover {
+  color: var(--color-error);
+}
+
+.quick-add-list-remove:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.quick-add-list-remove .material-icons {
+  font-size: 20px;
 }
 
 .quick-add-routine-footer {

@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRooms } from '../../contexts/RoomsContext';
-import { createMission } from '../../services/missionService';
+import { createMission, deleteMission } from '../../services/missionService';
+import { removeMissionFromRoutine } from '../../services/routineService';
 import { createMissionTemplate, DUE_TYPES } from '../../types/Mission';
 import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
@@ -40,9 +41,11 @@ const buildRecurrence = (frequency, today) => ({
 // Per-bucket quick-capture sheet for adding recurring routine tasks. The
 // "session" is the open lifetime of the sheet: skill and room are locked
 // session-level controls, frequency is locked to the bucket. Each Enter
-// instantly writes one mission + adds it to the routine (Option A from the
-// design discussion — no batch buffer, no Save button). The counter is the
-// visible record; "Done" just closes.
+// instantly writes one mission + adds it to the routine and the row appears
+// in the "Added in this session" list above the input. Tapping the minus on
+// any row deletes that mission entirely (soft-delete + routine removal) —
+// these rows are fresh-out-of-the-oven, so removing means "undo add," not
+// "remove from routine but keep mission."
 const QuickAddRoutineSheet = ({
   frequency,
   routineId,
@@ -57,15 +60,15 @@ const QuickAddRoutineSheet = ({
   const [skill, setSkill] = useState(defaultSkill || '');
   const [roomId, setRoomId] = useState(defaultRoomId || '');
   const [inputValue, setInputValue] = useState('');
-  const [addedCount, setAddedCount] = useState(0);
+  const [addedMissions, setAddedMissions] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [removingIds, setRemovingIds] = useState(new Set());
   const inputRef = useRef(null);
 
   useModalBackButton(true, onClose);
 
   useEffect(() => {
-    // Autofocus on open so the keyboard appears immediately on mobile
     inputRef.current?.focus();
   }, []);
 
@@ -93,17 +96,37 @@ const QuickAddRoutineSheet = ({
     });
 
     try {
-      await createMission(currentUser.uid, missionData, { routineId });
+      const newId = await createMission(currentUser.uid, missionData, { routineId });
+      setAddedMissions((prev) => [...prev, { id: newId, title }]);
       setInputValue('');
-      setAddedCount((n) => n + 1);
       onAdded?.();
     } catch (err) {
       console.error('Quick add failed:', err);
       setSaveError(err?.message || "That task didn't save. Try again.");
     } finally {
       setSaving(false);
-      // Refocus so the next task can be typed immediately
       inputRef.current?.focus();
+    }
+  };
+
+  const handleUndoAdd = async (missionId) => {
+    if (removingIds.has(missionId)) return;
+    setRemovingIds((prev) => new Set(prev).add(missionId));
+    setSaveError(null);
+    try {
+      await removeMissionFromRoutine(currentUser.uid, routineId, missionId);
+      await deleteMission(currentUser.uid, missionId);
+      setAddedMissions((prev) => prev.filter((m) => m.id !== missionId));
+      onAdded?.();
+    } catch (err) {
+      console.error('Quick add undo failed:', err);
+      setSaveError("That task didn't remove. Try again.");
+    } finally {
+      setRemovingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(missionId);
+        return next;
+      });
     }
   };
 
@@ -163,6 +186,29 @@ const QuickAddRoutineSheet = ({
             </label>
           </div>
 
+          {addedMissions.length > 0 && (
+            <ul className="quick-add-list" aria-label="Added in this session">
+              {addedMissions.map((m) => {
+                const isRemoving = removingIds.has(m.id);
+                return (
+                  <li key={m.id} className="quick-add-list-item">
+                    <span className="quick-add-list-title">{m.title}</span>
+                    <button
+                      type="button"
+                      className="quick-add-list-remove"
+                      onClick={() => handleUndoAdd(m.id)}
+                      disabled={isRemoving}
+                      aria-label={`Undo adding ${m.title}`}
+                      title="Undo"
+                    >
+                      <span className="material-icons">remove_circle_outline</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
           <div className="quick-add-input-row">
             <input
               ref={inputRef}
@@ -187,12 +233,6 @@ const QuickAddRoutineSheet = ({
           </div>
 
           {saveError && <ErrorMessage message={saveError} />}
-
-          {addedCount > 0 && (
-            <div className="quick-add-counter">
-              {addedCount} added
-            </div>
-          )}
         </div>
 
         <div className="quick-add-routine-footer">
