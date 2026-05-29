@@ -22,6 +22,7 @@ const AddExistingRecurringModal = ({
   routineId,
   missions,
   routineRootSet,
+  roomFilter = '',
   onClose,
   onSaved,
 }) => {
@@ -34,19 +35,22 @@ const AddExistingRecurringModal = ({
   useModalBackButton(true, onClose);
 
   // Build a map of chain root → mission instance (the active instance we'll
-  // show in the list). Filter out non-recurring missions and any whose root is
-  // already in some routine.
+  // show in the list). Filter out non-recurring missions, any whose root is
+  // already in some routine, and (when a room filter is active on the page)
+  // any whose baseLocation doesn't match. The room filter narrows the picker
+  // so users browsing "Kitchen routines" only see Kitchen-eligible options.
   const eligibleMissions = useMemo(() => {
     const byRoot = new Map();
     for (const m of missions || []) {
       if (!isRecurringMission(m)) continue;
       if (isMissionInRoutineSet(m, routineRootSet)) continue;
+      if (roomFilter && m.baseLocation !== roomFilter) continue;
       const root = getMissionChainRoot(m);
       if (!root) continue;
       if (!byRoot.has(root)) byRoot.set(root, m);
     }
     return Array.from(byRoot.values());
-  }, [missions, routineRootSet]);
+  }, [missions, routineRootSet, roomFilter]);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();

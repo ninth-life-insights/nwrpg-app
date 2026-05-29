@@ -182,6 +182,20 @@ If you skip this and the icon shows up gray (or black, or whatever the parent te
 
 ---
 
+## Mission cards — self-contained width
+
+`MissionCard` and `MissionCardCondensed` are sized with `width: 100%`, `max-width: var(--max-width-card)`, and `box-sizing: border-box`. They take the full width of their parent up to 400px, and clip their internal content via flex `overflow: hidden`. You should not need to wrap them in a width-constraining container — drop them anywhere and they'll behave.
+
+If you find a card extending past its container, the bug is almost certainly NOT the surrounding page. Check whether the card's own width rules are still intact in `MissionCard.css` / `MissionCardCondensed.css`. (Earlier versions of the cards relied on the caller to constrain width, and every new surface that used them broke until that was fixed.)
+
+### Useful props on `MissionCardCondensed`
+
+- `readOnly` — disables the body click (no MissionCardFull) and removes the toggle button. Use for selection lists where the card is display-only.
+- `actionSlot` — replaces the right-side toggle button with arbitrary JSX. Works whether or not `readOnly` is set. Use it to swap in custom actions like "remove from routine" while keeping body-click-to-edit.
+- `hideRecurrenceBadge` — hides the "Every day / Every week / ..." badge. Use when the surrounding context already communicates the cadence (e.g., the routine builder buckets cards by frequency, so the badge would be noise).
+
+---
+
 ## Error Handling Patterns
 
 ### Principle

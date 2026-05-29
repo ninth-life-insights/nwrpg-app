@@ -36,7 +36,7 @@ import {
 } from './userService';
  import { logActivityEvent } from './reviewService';
 import { checkAndAwardAchievements } from './achievementService';
-import { batchAddMissionsToRoutine } from './routineService';
+import { addMissionToRoutine, batchAddMissionsToRoutine } from './routineService';
 
 // Always computes from the mission's current difficulty + isDailyMission flag.
 // Does NOT read any stored xpReward, so edits to difficulty before completion
@@ -52,25 +52,35 @@ const getUserMissionsRef = (userId) => {
   return collection(db, 'users', userId, 'missions');
 };
 
-// Create a new mission
-export const createMission = async (userId, missionData) => {
+// Create a new mission.
+//
+// options.routineId — when provided, the new mission's ID is also added to the
+// given routine's missionChainIds (two-write flow: create mission, then update
+// routine). If the routine update fails after the mission is created, the
+// orphan mission is just a regular recurring mission with no routine
+// membership — harmless, recoverable via the routine builder.
+export const createMission = async (userId, missionData, options = {}) => {
   try {
     const missionsRef = getUserMissionsRef(userId);
-    
+
     // Remove id field if it exists in the data being saved
     const { id, ...dataWithoutId } = missionData;
-    
+
     const docRef = await addDoc(missionsRef, {
       ...dataWithoutId,  // Don't include id field in the document
       status: MISSION_STATUS.ACTIVE,
       createdAt: serverTimestamp(),
       completedAt: null
     });
-    
+
     if (!docRef.id) {
       console.error('WARNING: docRef.id is null/undefined!');
     }
-    
+
+    if (options.routineId) {
+      await addMissionToRoutine(userId, options.routineId, docRef.id);
+    }
+
     return docRef.id;
   } catch (error) {
     console.error('Error creating mission:', error);
@@ -840,7 +850,8 @@ export const updateMissionCompletedDate = async (userId, missionId, newDateStrin
 };
 
 // Batch-create multiple recurring missions and add them to a routine in one
-// flow. Used by the routine builder's BatchCreateRoutineTasksModal.
+// flow. Available for future bulk-import surfaces; the current routine
+// builder uses createMission with { routineId } per-task (instant capture).
 //
 // Two-write flow:
 //   1. Firestore writeBatch creates all N mission docs atomically.

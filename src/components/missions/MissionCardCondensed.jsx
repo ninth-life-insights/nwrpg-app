@@ -26,6 +26,7 @@ const MissionCardCondensed = ({
   onMissionChanged,
   readOnly = false,
   actionSlot = null,
+  hideRecurrenceBadge = false,
   onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
@@ -144,7 +145,7 @@ const MissionCardCondensed = ({
               </button>
             ) : (
               <>
-                {isRecurring && (
+                {isRecurring && !hideRecurrenceBadge && (
                   <Badge variant="recurrence">{recurrenceText}</Badge>
                 )}
                 {dueDateInfo && (
@@ -160,24 +161,24 @@ const MissionCardCondensed = ({
         </div>
       </div>
 
-      {readOnly ? (
-        actionSlot
-      ) : (
-        <button
-          className={`mcc-toggle ${isCompleted ? 'completed' : ''}`}
-          onClick={handleToggleComplete}
-          aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
-        >
-          <svg
-            className={`mcc-check-icon ${isCompleted ? 'completed' : ''}`}
-            xmlns="http://www.w3.org/2000/svg"
-            height="18px"
-            viewBox="0 -960 960 960"
-            width="18px"
+      {actionSlot ? actionSlot : (
+        !readOnly && (
+          <button
+            className={`mcc-toggle ${isCompleted ? 'completed' : ''}`}
+            onClick={handleToggleComplete}
+            aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
           >
-            <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
-          </svg>
-        </button>
+            <svg
+              className={`mcc-check-icon ${isCompleted ? 'completed' : ''}`}
+              xmlns="http://www.w3.org/2000/svg"
+              height="18px"
+              viewBox="0 -960 960 960"
+              width="18px"
+            >
+              <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
+            </svg>
+          </button>
+        )
       )}
     </div>
 
