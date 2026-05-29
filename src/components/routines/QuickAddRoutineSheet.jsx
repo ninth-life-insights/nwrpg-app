@@ -131,9 +131,12 @@ const QuickAddRoutineSheet = ({
       recurrence: buildRecurrence(frequency, startDate),
     });
 
+    const offsetMatch = offsetOptions?.find((o) => o.value === startOffset);
+    const startLabel = offsetMatch ? offsetMatch.label : 'Today';
+
     try {
       const newId = await createMission(currentUser.uid, missionData, { routineId });
-      setAddedMissions((prev) => [...prev, { id: newId, title }]);
+      setAddedMissions((prev) => [...prev, { id: newId, title, startLabel }]);
       setInputValue('');
       onAdded?.();
     } catch (err) {
@@ -214,13 +217,39 @@ const QuickAddRoutineSheet = ({
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value)}
               >
-                <option value="">Unassigned</option>
+                <option value="">Personal</option>
                 {rooms.map((room) => (
                   <option key={room.id} value={room.id}>{room.name}</option>
                 ))}
               </select>
             </label>
           </div>
+
+          {addedMissions.length > 0 && (
+            <ul className="quick-add-list" aria-label="Added in this session">
+              {addedMissions.map((m) => {
+                const isRemoving = removingIds.has(m.id);
+                return (
+                  <li key={m.id} className="quick-add-list-item">
+                    <span className="quick-add-list-title">{m.title}</span>
+                    {m.startLabel && m.startLabel !== 'Today' && (
+                      <span className="quick-add-list-date">{m.startLabel}</span>
+                    )}
+                    <button
+                      type="button"
+                      className="quick-add-list-remove"
+                      onClick={() => handleUndoAdd(m.id)}
+                      disabled={isRemoving}
+                      aria-label={`Undo adding ${m.title}`}
+                      title="Undo"
+                    >
+                      <span className="material-icons">remove_circle_outline</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           {offsetOptions && (
             <div className="quick-add-offset-row">
@@ -240,29 +269,6 @@ const QuickAddRoutineSheet = ({
                 ))}
               </div>
             </div>
-          )}
-
-          {addedMissions.length > 0 && (
-            <ul className="quick-add-list" aria-label="Added in this session">
-              {addedMissions.map((m) => {
-                const isRemoving = removingIds.has(m.id);
-                return (
-                  <li key={m.id} className="quick-add-list-item">
-                    <span className="quick-add-list-title">{m.title}</span>
-                    <button
-                      type="button"
-                      className="quick-add-list-remove"
-                      onClick={() => handleUndoAdd(m.id)}
-                      disabled={isRemoving}
-                      aria-label={`Undo adding ${m.title}`}
-                      title="Undo"
-                    >
-                      <span className="material-icons">remove_circle_outline</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
           )}
 
           <div className="quick-add-input-row">

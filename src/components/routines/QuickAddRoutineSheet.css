@@ -270,6 +270,19 @@
   text-overflow: ellipsis;
 }
 
+/* Start-date badge on each added row. Only shown when the row's start isn't
+   today (today is the implicit default — no info to add). */
+.quick-add-list-date {
+  flex-shrink: 0;
+  padding: 1px var(--space-sm);
+  background: var(--color-border);
+  color: var(--color-text-medium);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .quick-add-list-remove {
   flex-shrink: 0;
   background: none;

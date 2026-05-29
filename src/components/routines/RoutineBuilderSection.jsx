@@ -24,9 +24,12 @@ const BUCKETS = [
   { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  cta: 'Add to Yearly' },
 ];
 
-// Sentinel value for the "Unassigned" room filter option — selects missions
-// with no baseLocation (general routine items, personal care, etc).
-export const UNASSIGNED_ROOM_FILTER = '__unassigned__';
+// Sentinel for the "no specific room" filter option — selects missions with
+// no baseLocation. User-facing label is "Personal" because the prototypical
+// case is non-cleaning routines (self-care, bills, calls, etc), not because
+// the data field literally means personal. Don't confuse the two if you're
+// adding more filter options.
+export const NO_ROOM_FILTER = '__no_room__';
 
 // The Builder is a noticing surface, not a planning form. Each frequency
 // bucket is always visible (even empty) — the layout teaches the cadence model.
@@ -52,7 +55,7 @@ const RoutineBuilderSection = ({
   const grouped = useMemo(() => {
     const routineMissions = (missions || []).filter((m) => {
       if (!isMissionInRoutineSet(m, routineRootSet)) return false;
-      if (roomFilter === UNASSIGNED_ROOM_FILTER) {
+      if (roomFilter === NO_ROOM_FILTER) {
         if (m.baseLocation) return false;
       } else if (roomFilter && m.baseLocation !== roomFilter) {
         return false;
@@ -98,7 +101,7 @@ const RoutineBuilderSection = ({
             onChange={(e) => setRoomFilter(e.target.value)}
           >
             <option value="">Any</option>
-            <option value={UNASSIGNED_ROOM_FILTER}>Unassigned</option>
+            <option value={NO_ROOM_FILTER}>Personal</option>
             {rooms.map((room) => (
               <option key={room.id} value={room.id}>
                 {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
@@ -138,9 +141,10 @@ const RoutineBuilderSection = ({
           frequency={addBucketFrequency}
           routineId={routineId}
           defaultRoomId={
-            // Unassigned filter and Any filter both default the sheet to
-            // "Unassigned" (empty string), since neither names a specific room.
-            roomFilter === UNASSIGNED_ROOM_FILTER ? '' : roomFilter
+            // "Personal" filter and "Any" filter both default the sheet to
+            // its own "Personal" room option (empty string), since neither
+            // names a specific room.
+            roomFilter === NO_ROOM_FILTER ? '' : roomFilter
           }
           onClose={() => setAddBucketFrequency(null)}
           onAdded={onSaved}

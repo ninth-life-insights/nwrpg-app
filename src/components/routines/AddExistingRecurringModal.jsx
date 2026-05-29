@@ -9,7 +9,7 @@ import {
   isMissionInRoutineSet,
 } from '../../utils/routineHelpers';
 import { isRecurringMission } from '../../utils/recurrenceHelpers';
-import { UNASSIGNED_ROOM_FILTER } from './RoutineBuilderSection';
+import { NO_ROOM_FILTER } from './RoutineBuilderSection';
 import { useModalBackButton } from '../../hooks/useModalBackButton';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -45,7 +45,7 @@ const AddExistingRecurringModal = ({
     for (const m of missions || []) {
       if (!isRecurringMission(m)) continue;
       if (isMissionInRoutineSet(m, routineRootSet)) continue;
-      if (roomFilter === UNASSIGNED_ROOM_FILTER) {
+      if (roomFilter === NO_ROOM_FILTER) {
         if (m.baseLocation) continue;
       } else if (roomFilter && m.baseLocation !== roomFilter) {
         continue;
