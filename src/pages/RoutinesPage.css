@@ -1,0 +1,70 @@
+/* src/pages/RoutinesPage.css */
+
+.routines-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+  padding-bottom: 100px;
+  font-family: var(--font-family);
+}
+
+/* Header — uses page-unique class names to avoid colliding with the unscoped
+   .top-header / .home-button declarations in MissionBankPage.css and
+   QuestBankPage.css. */
+.routines-page-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.routines-home-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: #f8f9fa;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.routines-home-btn:hover {
+  background: #e9ecef;
+  color: var(--color-text-medium);
+}
+
+.routines-home-btn .material-icons {
+  font-size: 24px;
+}
+
+.routines-page-title {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.routines-header-spacer {
+  width: 40px;
+  height: 40px;
+}
+
+.routines-loading {
+  text-align: center;
+  color: var(--color-text-light);
+  padding: var(--space-xl) 0;
+  font-size: var(--font-size-base);
+}
+
+.routines-load-error {
+  margin-bottom: var(--space-lg);
+}
