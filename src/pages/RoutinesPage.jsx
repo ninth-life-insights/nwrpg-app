@@ -6,6 +6,7 @@ import { useRoutines } from '../contexts/RoutineContext';
 import { getOrCreateDefaultRoutine } from '../services/routineService';
 import { getActiveMissions } from '../services/missionService';
 import { DEFAULT_ROUTINE_ID } from '../types/Routine';
+import RoutineTodaySection from '../components/routines/RoutineTodaySection';
 import RoutineBuilderSection from '../components/routines/RoutineBuilderSection';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import './RoutinesPage.css';
@@ -81,12 +82,19 @@ const RoutinesPage = () => {
       )}
 
       {!loading && !loadError && (
-        <RoutineBuilderSection
-          missions={missions}
-          routineRootSet={routineRootSet}
-          routineId={DEFAULT_ROUTINE_ID}
-          onSaved={refresh}
-        />
+        <>
+          <RoutineTodaySection
+            missions={missions}
+            routineRootSet={routineRootSet}
+            onSaved={refresh}
+          />
+          <RoutineBuilderSection
+            missions={missions}
+            routineRootSet={routineRootSet}
+            routineId={DEFAULT_ROUTINE_ID}
+            onSaved={refresh}
+          />
+        </>
       )}
     </div>
   );
