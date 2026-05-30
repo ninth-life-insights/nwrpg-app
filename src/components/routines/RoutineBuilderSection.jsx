@@ -118,7 +118,7 @@ const RoutineBuilderSection = ({
           onClick={() => setShowAddExisting(true)}
         >
           <span className="material-icons">playlist_add</span>
-          Add existing recurring
+          Add existing tasks
         </button>
       </div>
 

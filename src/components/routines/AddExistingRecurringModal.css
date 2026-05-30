@@ -57,11 +57,24 @@
   flex-shrink: 0;
 }
 
+.add-existing-routine-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .add-existing-routine-title {
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-text-dark);
   margin: 0;
+}
+
+.add-existing-routine-subtitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
 }
 
 .add-existing-routine-close {
@@ -123,7 +136,17 @@
 .add-existing-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
+}
+
+/* Skim-friendly card height inside the modal. The shared mission card's
+   default padding is good for the page list view, but tighter rows are easier
+   to scan when picking from a list. */
+.add-existing-list .mission-card-condensed {
+  padding-top: var(--space-xs);
+  padding-bottom: var(--space-xs);
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .add-existing-row {

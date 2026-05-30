@@ -25,17 +25,22 @@ const FREQUENCY_LABELS = {
 // added until changed. Daily has no offsets (we picked Daily for "every day",
 // no point starting it tomorrow).
 const START_OFFSETS = {
+  // Offsets stay within each frequency's window so staggering actually spreads
+  // tasks across the cycle (different weekdays for weekly, different weeks for
+  // monthly). Going beyond the window — e.g. "+2 weeks" on a weekly cadence —
+  // just delays the start without changing which day of the cycle the task
+  // lands on, which is the wrong tool for "don't pile up Tuesday."
   [RECURRENCE_PATTERNS.WEEKLY]: [
     { value: 'today',    label: 'Today',     add: () => dayjs() },
     { value: 'tomorrow', label: 'Tomorrow',  add: () => dayjs().add(1, 'day') },
-    { value: '1w',       label: '+1 week',   add: () => dayjs().add(1, 'week') },
-    { value: '2w',       label: '+2 weeks',  add: () => dayjs().add(2, 'week') },
+    { value: '2d',       label: '+2 days',   add: () => dayjs().add(2, 'day') },
+    { value: '3d',       label: '+3 days',   add: () => dayjs().add(3, 'day') },
   ],
   [RECURRENCE_PATTERNS.MONTHLY]: [
-    { value: 'today', label: 'Today',     add: () => dayjs() },
-    { value: '1w',    label: 'Next week', add: () => dayjs().add(1, 'week') },
-    { value: '1m',    label: '+1 month',  add: () => dayjs().add(1, 'month') },
-    { value: '2m',    label: '+2 months', add: () => dayjs().add(2, 'month') },
+    { value: 'today', label: 'Today',    add: () => dayjs() },
+    { value: '1w',    label: '+1 week',  add: () => dayjs().add(1, 'week') },
+    { value: '2w',    label: '+2 weeks', add: () => dayjs().add(2, 'week') },
+    { value: '3w',    label: '+3 weeks', add: () => dayjs().add(3, 'week') },
   ],
   [RECURRENCE_PATTERNS.YEARLY]: [
     { value: 'today', label: 'Today',      add: () => dayjs() },

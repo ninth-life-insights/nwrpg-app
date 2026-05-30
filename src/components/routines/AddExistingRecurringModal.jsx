@@ -2,7 +2,9 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRooms } from '../../contexts/RoomsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
+import { ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { batchAddMissionsToRoutine } from '../../services/routineService';
 import {
   getMissionChainRoot,
@@ -28,7 +30,19 @@ const AddExistingRecurringModal = ({
   onSaved,
 }) => {
   const { currentUser } = useAuth();
+  const { rooms } = useRooms();
   const { refreshRoutines } = useRoutines();
+
+  // Human-readable filter indicator. Only shown when a filter is active —
+  // helps users understand why the list isn't showing every recurring task.
+  const filterLabel = useMemo(() => {
+    if (!roomFilter) return null;
+    if (roomFilter === NO_ROOM_FILTER) return 'personal tasks';
+    const room = rooms.find((r) => r.id === roomFilter);
+    if (!room) return null;
+    const name = room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name;
+    return `tasks in ${name}`;
+  }, [roomFilter, rooms]);
   const [selectedRootIds, setSelectedRootIds] = useState(new Set());
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -108,7 +122,14 @@ const AddExistingRecurringModal = ({
     <div className="add-existing-routine-overlay" onClick={handleBackdropClick}>
       <div className="add-existing-routine-modal" role="dialog" aria-modal="true">
         <div className="add-existing-routine-header">
-          <h2 className="add-existing-routine-title">Add existing recurring</h2>
+          <div className="add-existing-routine-heading">
+            <h2 className="add-existing-routine-title">Add existing tasks</h2>
+            {filterLabel && (
+              <p className="add-existing-routine-subtitle">
+                Showing only {filterLabel}
+              </p>
+            )}
+          </div>
           <button
             className="add-existing-routine-close"
             onClick={onClose}
