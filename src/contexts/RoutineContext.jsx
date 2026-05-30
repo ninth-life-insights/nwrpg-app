@@ -47,9 +47,31 @@ export const RoutineProvider = ({ children }) => {
 
   const routineRootSet = useMemo(() => getRoutineMissionRootSet(routines), [routines]);
 
+  // Chain-root-id → position. Built from each routine's missionChainIds in
+  // order (first appearance wins for chain roots that live in multiple
+  // routines). Used by both builder and today-view to sort missions per the
+  // user's drag-to-reorder choices. The routine doc owns the order; the
+  // missions themselves carry no per-instance customSortOrder for routines.
+  const routineOrderMap = useMemo(() => {
+    const map = new Map();
+    for (const routine of routines) {
+      if (!Array.isArray(routine.missionChainIds)) continue;
+      for (const chainRootId of routine.missionChainIds) {
+        if (!chainRootId) continue;
+        if (!map.has(chainRootId)) map.set(chainRootId, map.size);
+      }
+    }
+    return map;
+  }, [routines]);
+
   return (
     <RoutineContext.Provider
-      value={{ routines, routineRootSet, refreshRoutines: fetchRoutines }}
+      value={{
+        routines,
+        routineRootSet,
+        routineOrderMap,
+        refreshRoutines: fetchRoutines,
+      }}
     >
       {children}
     </RoutineContext.Provider>

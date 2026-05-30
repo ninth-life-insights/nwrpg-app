@@ -1,18 +1,38 @@
 // src/components/routines/RoutineBuilderSection.jsx
 import { useMemo, useState } from 'react';
-import MissionCardCondensed from '../missions/MissionCardCondensed';
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import QuickAddRoutineSheet from './QuickAddRoutineSheet';
 import AddExistingRecurringModal from './AddExistingRecurringModal';
+import SortableRoutineCard from './SortableRoutineCard';
+// MissionCardCondensed is now wrapped by SortableRoutineCard; no direct import needed.
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
-import { removeMissionFromRoutine } from '../../services/routineService';
+import {
+  removeMissionFromRoutine,
+  reorderRoutineMissions,
+} from '../../services/routineService';
 import { ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import {
   isMissionInRoutineSet,
   groupRoutineMissionsByFrequency,
   getMissionChainRoot,
+  makeRoutineSortComparator,
 } from '../../utils/routineHelpers';
 import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
@@ -45,7 +65,7 @@ const RoutineBuilderSection = ({
 }) => {
   const { currentUser } = useAuth();
   const { rooms } = useRooms();
-  const { refreshRoutines } = useRoutines();
+  const { routines, routineOrderMap, refreshRoutines } = useRoutines();
 
   const [roomFilter, setRoomFilter] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
@@ -73,8 +93,77 @@ const RoutineBuilderSection = ({
       if (skillFilter && m.skill !== skillFilter) return false;
       return true;
     });
-    return groupRoutineMissionsByFrequency(routineMissions);
-  }, [missions, routineRootSet, roomFilter, skillFilter]);
+    // Sort by routine doc order before grouping — within-bucket order then
+    // reflects the user's drag-to-reorder choices.
+    const sorted = [...routineMissions].sort(
+      makeRoutineSortComparator(routineOrderMap)
+    );
+    return groupRoutineMissionsByFrequency(sorted);
+  }, [missions, routineRootSet, roomFilter, skillFilter, routineOrderMap]);
+
+  // Drag sensors — TouchSensor delays activation 150ms so a tap to open the
+  // mission still works. PointerSensor needs 8px movement so a click on the
+  // handle doesn't accidentally start a drag.
+  const sensors = useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Move items within a bucket. Translates the visible drag into a write to
+  // the routine doc's missionChainIds (replacing only the global indexes the
+  // bucket's items occupy, so other buckets keep their relative order).
+  const handleBucketDragEnd = async (event, bucketKey) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const bucketMissions = grouped[bucketKey] || [];
+    const oldIndex = bucketMissions.findIndex((m) => m.id === active.id);
+    const newIndex = bucketMissions.findIndex((m) => m.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newBucketMissions = arrayMove(bucketMissions, oldIndex, newIndex);
+    const newBucketRoots = newBucketMissions.map((m) => getMissionChainRoot(m));
+
+    const routine = routines.find((r) => r.id === routineId);
+    if (!routine) return;
+    const currentChainIds = Array.isArray(routine.missionChainIds)
+      ? routine.missionChainIds
+      : [];
+
+    // Find the global indexes the bucket's items currently occupy.
+    const bucketRootSet = new Set(
+      bucketMissions.map((m) => getMissionChainRoot(m))
+    );
+    const occupiedIndexes = [];
+    currentChainIds.forEach((id, i) => {
+      if (bucketRootSet.has(id)) occupiedIndexes.push(i);
+    });
+
+    // Write the new bucket order into those slots.
+    const newChainIds = [...currentChainIds];
+    newBucketRoots.forEach((rootId, i) => {
+      if (i < occupiedIndexes.length) {
+        newChainIds[occupiedIndexes[i]] = rootId;
+      }
+    });
+
+    setActionError(null);
+    try {
+      await reorderRoutineMissions(currentUser.uid, routineId, newChainIds);
+      await refreshRoutines();
+      onSaved?.();
+    } catch (err) {
+      console.error('Routine reorder failed:', err);
+      setActionError("That reorder didn't save. Try again.");
+    }
+  };
 
   const handleRemove = async (mission) => {
     const root = getMissionChainRoot(mission);
@@ -174,6 +263,7 @@ const RoutineBuilderSection = ({
       {BUCKETS.map((bucket) => (
         <FrequencyGroup
           key={bucket.key}
+          bucketKey={bucket.key}
           label={bucket.label}
           missions={grouped[bucket.key]}
           collapsed={collapsedBuckets.has(bucket.key)}
@@ -181,6 +271,8 @@ const RoutineBuilderSection = ({
           onAdd={() => setAddBucketFrequency(bucket.frequency)}
           onRemove={handleRemove}
           removingRootIds={removingRootIds}
+          sensors={sensors}
+          onDragEnd={handleBucketDragEnd}
         />
       ))}
 
@@ -212,6 +304,7 @@ const RoutineBuilderSection = ({
 };
 
 const FrequencyGroup = ({
+  bucketKey,
   label,
   missions,
   collapsed,
@@ -219,6 +312,8 @@ const FrequencyGroup = ({
   onAdd,
   onRemove,
   removingRootIds,
+  sensors,
+  onDragEnd,
 }) => {
   const list = missions || [];
   const isEmpty = list.length === 0;
@@ -269,34 +364,45 @@ const FrequencyGroup = ({
       </div>
 
       {showList && (
-        <div className="routine-builder-group-list">
-          {list.map((mission) => {
-            const root = getMissionChainRoot(mission);
-            const isRemoving = removingRootIds.has(root);
-            return (
-              <MissionCardCondensed
-                key={mission.id}
-                mission={mission}
-                hideRecurrenceBadge
-                actionSlot={
-                  <button
-                    type="button"
-                    className="routine-builder-remove"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemove(mission);
-                    }}
-                    disabled={isRemoving}
-                    title="Remove from routine"
-                    aria-label="Remove from routine"
-                  >
-                    <span className="material-icons">remove_circle_outline</span>
-                  </button>
-                }
-              />
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => onDragEnd(event, bucketKey)}
+        >
+          <SortableContext
+            items={list.map((m) => m.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="routine-builder-group-list">
+              {list.map((mission) => {
+                const root = getMissionChainRoot(mission);
+                const isRemoving = removingRootIds.has(root);
+                return (
+                  <SortableRoutineCard
+                    key={mission.id}
+                    mission={mission}
+                    hideRecurrenceBadge
+                    actionSlot={
+                      <button
+                        type="button"
+                        className="routine-builder-remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemove(mission);
+                        }}
+                        disabled={isRemoving}
+                        title="Remove from routine"
+                        aria-label="Remove from routine"
+                      >
+                        <span className="material-icons">remove_circle_outline</span>
+                      </button>
+                    }
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );

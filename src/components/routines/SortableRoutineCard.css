@@ -1,0 +1,50 @@
+/* src/components/routines/SortableRoutineCard.css */
+
+.sortable-routine-card {
+  /* Sortable transforms apply to this wrapper, not the card itself, so the
+     card's existing shadow/border behavior is preserved during drag. */
+  position: relative;
+}
+
+.sortable-routine-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.sortable-routine-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: grab;
+  padding: var(--space-xs);
+  color: var(--color-text-light);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+
+.sortable-routine-handle:hover {
+  color: var(--color-text-medium);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.sortable-routine-handle:active {
+  cursor: grabbing;
+}
+
+.sortable-routine-handle,
+.sortable-routine-handle .material-icons {
+  color: var(--color-text-light);
+}
+
+.sortable-routine-handle:hover,
+.sortable-routine-handle:hover .material-icons {
+  color: var(--color-text-medium);
+}
+
+.sortable-routine-handle .material-icons {
+  font-size: 22px;
+}

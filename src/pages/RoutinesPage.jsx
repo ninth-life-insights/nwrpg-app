@@ -17,7 +17,7 @@ import './RoutinesPage.css';
 // own page at /routine-builder, accessible via the header manage button.
 const RoutinesPage = () => {
   const { currentUser } = useAuth();
-  const { routineRootSet, refreshRoutines } = useRoutines();
+  const { routineRootSet, routineOrderMap, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
 
   const [missions, setMissions] = useState([]);
@@ -97,6 +97,7 @@ const RoutinesPage = () => {
         <RoutineTodaySection
           missions={missions}
           routineRootSet={routineRootSet}
+          routineOrderMap={routineOrderMap}
           onSaved={refresh}
         />
       )}

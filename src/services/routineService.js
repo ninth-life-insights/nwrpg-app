@@ -194,6 +194,31 @@ export const removeMissionFromRoutine = async (userId, routineId, chainRootId) =
   return { success: true };
 };
 
+// Replace the routine's missionChainIds with an explicit new order. Used by
+// the builder's drag-to-reorder flow — the array order IS the canonical
+// sort order for cards on routine surfaces, so reordering means writing the
+// new array as-is.
+//
+// Concurrency note: this overwrites the whole array (no arrayUnion), so a
+// concurrent add from another device could be lost if the user reorders
+// while the other device is mid-add. Acceptable trade-off for single-user
+// v1; revisit when party / shared chore charts arrive.
+export const reorderRoutineMissions = async (userId, routineId, orderedChainRootIds) => {
+  if (!Array.isArray(orderedChainRootIds)) {
+    throw new Error('orderedChainRootIds must be an array');
+  }
+  const routineRef = getRoutineRef(userId, routineId);
+  const snap = await getDoc(routineRef);
+  if (!snap.exists()) throw new Error('Routine not found');
+
+  await updateDoc(routineRef, {
+    missionChainIds: orderedChainRootIds,
+    updatedAt: serverTimestamp()
+  });
+
+  return { success: true };
+};
+
 // Batch-add multiple chain roots in one update. Used by the routine builder's
 // "Add existing recurring" multi-select flow and by batchCreateRoutineMissions.
 // Enforces the cap against the union of existing + new IDs.

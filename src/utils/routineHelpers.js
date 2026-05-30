@@ -71,17 +71,33 @@ export const groupRoutineMissionsByFrequency = (missions) => {
   return buckets;
 };
 
-// Stable sort key for "maintain order" semantics — completion state doesn't
-// reshuffle the list, mirroring a paper-checklist mental model. Uses each
+// Fallback sort key when no routine order map is provided — uses each
 // mission's own createdAt (when the doc was made or spawned). Imperfect for
 // long-running chains where the visible instance was spawned much later than
-// the original; drag-to-reorder (planned, mission-bank pattern) will layer
-// over this via a customSortOrder field once added.
+// the original; the routine order map (built from routine.missionChainIds)
+// is the authoritative source and overrides this when supplied.
 const createdAtMs = (m) => {
   const ca = m?.createdAt;
   if (!ca) return 0;
   if (ca.toDate) return ca.toDate().getTime();
   return new Date(ca).getTime();
+};
+
+// Build a sort comparator that prefers routine-doc order (mapped by chain
+// root) and falls back to createdAt for items missing from the map.
+export const makeRoutineSortComparator = (orderMap) => (a, b) => {
+  if (orderMap) {
+    const aRoot = getMissionChainRoot(a);
+    const bRoot = getMissionChainRoot(b);
+    const aOrder = orderMap.get(aRoot);
+    const bOrder = orderMap.get(bRoot);
+    const aHas = typeof aOrder === 'number';
+    const bHas = typeof bOrder === 'number';
+    if (aHas && bHas) return aOrder - bOrder;
+    if (aHas) return -1;
+    if (bHas) return 1;
+  }
+  return createdAtMs(a) - createdAtMs(b);
 };
 
 // Return routine missions relevant to a given view date.
@@ -102,7 +118,7 @@ const createdAtMs = (m) => {
 //
 // Defensive type filter: missions that are no longer `recurring` (e.g. user
 // flipped dueType post-membership) are silently dropped via isRecurringMission.
-export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput) => {
+export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput, orderMap = null) => {
   if (!Array.isArray(missions) || !rootSet) return [];
 
   const today = dayjs().startOf('day');
@@ -131,7 +147,7 @@ export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput) => {
         }
         return false;
       })
-      .sort((a, b) => createdAtMs(a) - createdAtMs(b));
+      .sort(makeRoutineSortComparator(orderMap));
   }
 
   // Future view — project each active instance forward.
@@ -162,7 +178,7 @@ export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput) => {
       }
       return current.isSame(viewDate, 'day');
     })
-    .sort((a, b) => createdAtMs(a) - createdAtMs(b));
+    .sort(makeRoutineSortComparator(orderMap));
 };
 
 // Backward-compatible alias. Callers that just want "today" can keep using

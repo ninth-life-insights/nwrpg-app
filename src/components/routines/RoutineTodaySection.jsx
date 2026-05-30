@@ -32,7 +32,7 @@ const BUCKETS = [
 // "switch the day I'm looking at" affordance across the app. Today's view
 // also surfaces completed-today items so progress through the day stays
 // visible.
-const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
+const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSaved }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
   const navigate = useNavigate();
@@ -43,8 +43,8 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
   const isViewToday = viewDate === todayString;
 
   const viewMissions = useMemo(
-    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate),
-    [missions, routineRootSet, viewDate]
+    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate, routineOrderMap),
+    [missions, routineRootSet, viewDate, routineOrderMap]
   );
 
   const groupedView = useMemo(
