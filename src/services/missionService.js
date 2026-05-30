@@ -108,6 +108,31 @@ export const getActiveMissions = async (userId) => {
   }
 };
 
+// Get completed missions whose completedAt is >= sinceDate. Used by the
+// routine today view to keep today's completions visible (alongside still-
+// active items) so the page reads as a to-do list with progress, not a
+// vanishing checklist.
+export const getCompletedMissionsSince = async (userId, sinceDate) => {
+  try {
+    const sinceTs = Timestamp.fromDate(sinceDate);
+    const missionsRef = getUserMissionsRef(userId);
+    const q = query(
+      missionsRef,
+      where('status', '==', 'completed'),
+      where('completedAt', '>=', sinceTs),
+      orderBy('completedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting completed missions since date:', error);
+    throw error;
+  }
+};
+
 // Get completed missions
 export const getCompletedMissions = async (userId) => {
   try {

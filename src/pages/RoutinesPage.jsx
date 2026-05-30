@@ -1,10 +1,14 @@
 // src/pages/RoutinesPage.jsx
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoutines } from '../contexts/RoutineContext';
 import { getOrCreateDefaultRoutine } from '../services/routineService';
-import { getActiveMissions } from '../services/missionService';
+import {
+  getActiveMissions,
+  getCompletedMissionsSince,
+} from '../services/missionService';
 import RoutineTodaySection from '../components/routines/RoutineTodaySection';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import './RoutinesPage.css';
@@ -23,8 +27,15 @@ const RoutinesPage = () => {
   const refresh = useCallback(async () => {
     if (!currentUser) return;
     try {
-      const activeMissions = await getActiveMissions(currentUser.uid);
-      setMissions(activeMissions);
+      // Fetch active + today's completed in parallel so the today view can
+      // show completed items alongside active ones (progress-through-the-day
+      // pattern, not a vanishing checklist).
+      const startOfToday = dayjs().startOf('day').toDate();
+      const [activeMissions, completedToday] = await Promise.all([
+        getActiveMissions(currentUser.uid),
+        getCompletedMissionsSince(currentUser.uid, startOfToday),
+      ]);
+      setMissions([...activeMissions, ...completedToday]);
       await refreshRoutines();
     } catch (err) {
       console.error('Routines refresh failed:', err);

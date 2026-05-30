@@ -3,32 +3,57 @@
 .routine-today {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   margin-bottom: var(--space-xl);
 }
 
 .routine-today-header {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.routine-today-date-row {
+  display: flex;
   align-items: center;
   gap: var(--space-sm);
 }
 
-.routine-today-title {
+/* Day-picker styled as a heading, not a form field. The dropdown arrow comes
+   from the native picker; on mobile this opens the OS date wheel which is
+   what we want. */
+.routine-today-date-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0 28px 0 0;
   margin: 0;
+  font-family: var(--font-family);
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-text-dark);
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'><path fill='%234b5563' d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right center;
 }
 
-.routine-today-count {
-  background: var(--color-primary);
-  color: white;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  padding: 2px var(--space-sm);
-  border-radius: 999px;
-  min-width: 22px;
-  text-align: center;
+.routine-today-date-select:focus {
+  outline: none;
+  color: var(--color-primary);
+}
+
+.routine-today-celebrate {
+  font-size: var(--font-size-xl);
+}
+
+.routine-today-subtitle {
+  margin: 0;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
 }
 
 .routine-today-empty {
@@ -118,4 +143,23 @@
 .routine-today-list .mission-card-condensed {
   margin-top: 0;
   margin-bottom: 0;
+}
+
+/* Bucket-level "skip this bucket to tomorrow" action. Subtle, link-styled —
+   appears below the items, not competing with the cards visually. Only
+   rendered when viewing today AND the bucket has at least one active item. */
+.routine-today-skip-btn {
+  align-self: center;
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.routine-today-skip-btn:hover {
+  color: var(--color-primary);
 }
