@@ -1,6 +1,7 @@
 // src/components/routines/RoutineTodaySection.jsx
 import { useMemo, useState } from 'react';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
+import AchievementToast from '../achievements/AchievementToast';
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -8,23 +9,41 @@ import {
   uncompleteMission,
   completeMissionWithRecurrence,
 } from '../../services/missionService';
-import { getTodaysRoutineMissions } from '../../utils/routineHelpers';
+import {
+  getTodaysRoutineMissions,
+  groupRoutineMissionsByFrequency,
+} from '../../utils/routineHelpers';
 import './RoutineTodaySection.css';
 
+const BUCKETS = [
+  { key: 'daily',   label: 'Daily' },
+  { key: 'weekly',  label: 'Weekly' },
+  { key: 'monthly', label: 'Monthly' },
+  { key: 'yearly',  label: 'Yearly' },
+];
+
 // "Today" surface for the routine page — the action view. Shows active routine
-// missions that are due today or overdue, sorted earliest first (so anything
-// hanging from yesterday surfaces above today's items). Completing a card
-// spawns the next instance via the existing recurrence flow, then the
-// completed mission drops out of this view automatically (the next instance
-// has a future dueDate and the completed one is no longer ACTIVE).
+// missions due today or overdue, sorted earliest-first via the helper, and
+// then grouped by frequency into mini-buckets so a flat wall of cards doesn't
+// hit her without context.
+//
+// Completing a card spawns the next instance via the existing recurrence flow;
+// the completed mission then drops out of this view (next instance has a
+// future dueDate, the completed one is no longer ACTIVE).
 const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
   const [actionError, setActionError] = useState(null);
+  const [newAchievements, setNewAchievements] = useState([]);
 
   const todayMissions = useMemo(
     () => getTodaysRoutineMissions(missions, routineRootSet),
     [missions, routineRootSet]
+  );
+
+  const groupedToday = useMemo(
+    () => groupRoutineMissionsByFrequency(todayMissions),
+    [todayMissions]
   );
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
@@ -38,6 +57,9 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
           missionId
         );
         notifyMissionCompletion(result);
+        if (result?.newlyAwardedAchievements?.length > 0) {
+          setNewAchievements(result.newlyAwardedAchievements);
+        }
       }
       await onSaved?.();
     } catch (err) {
@@ -68,18 +90,32 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
           Your routine is clear today. Take the win.
         </div>
       ) : (
-        <div className="routine-today-list">
-          {todayMissions.map((mission) => (
-            <MissionCardCondensed
-              key={mission.id}
-              mission={mission}
-              hideRecurrenceBadge
-              onToggleComplete={handleToggleComplete}
-              onMissionChanged={onSaved}
-            />
-          ))}
-        </div>
+        BUCKETS.map((bucket) => {
+          const list = groupedToday[bucket.key];
+          if (!list || list.length === 0) return null;
+          return (
+            <div key={bucket.key} className="routine-today-group">
+              <h3 className="routine-today-group-label">{bucket.label}</h3>
+              <div className="routine-today-list">
+                {list.map((mission) => (
+                  <MissionCardCondensed
+                    key={mission.id}
+                    mission={mission}
+                    hideRecurrenceBadge
+                    onToggleComplete={handleToggleComplete}
+                    onMissionChanged={onSaved}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })
       )}
+
+      <AchievementToast
+        achievements={newAchievements}
+        onDismiss={() => setNewAchievements([])}
+      />
     </section>
   );
 };

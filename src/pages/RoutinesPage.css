@@ -58,6 +58,42 @@
   height: 40px;
 }
 
+/* Manage-routine button on the right side of the header. Always-visible
+   access to the builder from the today (action) surface. */
+.routines-manage-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: #f8f9fa;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.routines-manage-btn:hover {
+  background: #e9ecef;
+  color: var(--color-text-medium);
+}
+
+.routines-manage-btn,
+.routines-manage-btn .material-icons {
+  color: var(--color-text-light);
+}
+
+.routines-manage-btn:hover,
+.routines-manage-btn:hover .material-icons {
+  color: var(--color-text-medium);
+}
+
+.routines-manage-btn .material-icons {
+  font-size: 22px;
+}
+
 .routines-loading {
   text-align: center;
   color: var(--color-text-light);

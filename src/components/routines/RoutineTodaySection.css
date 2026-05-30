@@ -42,6 +42,24 @@
   font-style: italic;
 }
 
+/* Sub-bucket within today — groups today's items by their cadence so a flat
+   wall of cards doesn't drop on her without context. Only non-empty buckets
+   render. */
+.routine-today-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.routine-today-group-label {
+  margin: 0 0 2px 0;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .routine-today-list {
   display: flex;
   flex-direction: column;

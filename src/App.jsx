@@ -34,6 +34,7 @@ import EditCharacterPage from './pages/character/EditCharacterPage';
 import WeeklyReviewPage from './pages/reviews/WeeklyReviewPage';
 import WeeklyLogDetailPage from './pages/reviews/WeeklyLogDetailPage';
 import RoutinesPage from './pages/RoutinesPage';
+import RoutineBuilderPage from './pages/RoutineBuilderPage';
 
 
 
@@ -72,6 +73,7 @@ function AppContent() {
         <Route path="/daily-review" element={<ProtectedRoute><DailyReviewPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />
+        <Route path="/routine-builder" element={<ProtectedRoute><RoutineBuilderPage /></ProtectedRoute>} />
         <Route path="/deleted-missions" element={<ProtectedRoute><DeletedMissionsPage /></ProtectedRoute>} />
         <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
         <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
