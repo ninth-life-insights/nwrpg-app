@@ -9,6 +9,7 @@ import MissionCardFull from '../../components/missions/MissionCardFull';
 import MissionList from '../../components/missions/MissionList';
 import MissionFilterModal from '../../components/missions/sub-components/MissionFilterModal';
 import Badge from '../../components/ui/Badge';
+import DatePickerPill from '../../components/ui/DatePickerPill';
 
 // Service imports - UPDATED for simplified system
 import {
@@ -74,7 +75,6 @@ const EditDailyMissionsPage = ({
   const { questsMap } = useQuests();
   const { refreshDailyMissions } = useDailyMissions();
   const [targetDate, setTargetDate] = useState(initialTargetDate || today);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [dailyMissions, setDailyMissions] = useState([null, null, null]);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showMissionBank, setShowMissionBank] = useState(false);
@@ -342,10 +342,6 @@ const handleAddNewMission = async (missionData) => {
     }
   };
 
-  const handleDateSelect = (date) => {
-    setTargetDate(date);
-    setShowDatePicker(false);
-  };
 
   // Check if enough slots are filled to save
   const allSlotsFilled = dailyMissions.every(mission => mission !== null);
@@ -386,13 +382,6 @@ const handleAddNewMission = async (missionData) => {
     return null;
   })();
 
-  // Human-readable date for the header pill
-  const targetDateDisplay = isTargetToday
-    ? `Today — ${fromDateString(targetDate).format('ddd, MMM D')}`
-    : targetDate === tomorrow
-      ? `Tomorrow — ${fromDateString(targetDate).format('ddd, MMM D')}`
-      : fromDateString(targetDate).format('ddd, MMM D');
-
   // Confirm button label
   const confirmLabel = (() => {
     if (saving) {
@@ -424,15 +413,11 @@ const handleAddNewMission = async (missionData) => {
 
         {/* Date selector pill — full page only */}
         {!isModal && (
-          <button
-            className={`date-selector-pill ${!isTargetToday ? 'future' : ''}`}
-            onClick={() => setShowDatePicker(true)}
-            aria-label="Change planning date"
-          >
-            <span className="date-selector-icon">📅</span>
-            <span className="date-selector-label">{targetDateDisplay}</span>
-            <span className="date-selector-caret">▾</span>
-          </button>
+          <DatePickerPill
+            value={targetDate}
+            onChange={setTargetDate}
+            heading="Plan for..."
+          />
         )}
 
         {/* Status */}
@@ -705,40 +690,6 @@ const handleAddNewMission = async (missionData) => {
         />
       )}
 
-      {/* Date Picker Sheet */}
-      {!isModal && showDatePicker && (
-        <div className="date-picker-overlay" onClick={() => setShowDatePicker(false)}>
-          <div className="date-picker-sheet" onClick={e => e.stopPropagation()}>
-            <p className="date-picker-heading">Plan for...</p>
-            <button
-              className={`date-picker-option ${targetDate === today ? 'active' : ''}`}
-              onClick={() => handleDateSelect(today)}
-            >
-              Today — {fromDateString(today).format('ddd, MMM D')}
-            </button>
-            <button
-              className={`date-picker-option ${targetDate === tomorrow ? 'active' : ''}`}
-              onClick={() => handleDateSelect(tomorrow)}
-            >
-              Tomorrow — {fromDateString(tomorrow).format('ddd, MMM D')}
-            </button>
-            <div className="date-picker-custom">
-              <label className="date-picker-custom-label" htmlFor="custom-date-input">Choose a date</label>
-              <input
-                id="custom-date-input"
-                type="date"
-                className="date-picker-input"
-                min={today}
-                defaultValue={targetDate !== today && targetDate !== tomorrow ? targetDate : ''}
-                onChange={e => { if (e.target.value) handleDateSelect(e.target.value); }}
-              />
-            </div>
-            <button className="date-picker-cancel" onClick={() => setShowDatePicker(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
