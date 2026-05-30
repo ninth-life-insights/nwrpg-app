@@ -119,6 +119,60 @@
   color: var(--color-text-light);
 }
 
+/* Search input — sits at top of body, above select-all */
+.add-existing-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.add-existing-search-icon,
+.add-existing-search-icon.material-icons {
+  position: absolute;
+  left: var(--space-sm);
+  color: var(--color-text-light) !important;
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.add-existing-search-input {
+  flex: 1;
+  width: 100%;
+  padding: var(--space-sm) 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-white);
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  box-sizing: border-box;
+}
+
+.add-existing-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.add-existing-search-clear {
+  position: absolute;
+  right: var(--space-xs);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.add-existing-search-clear:hover {
+  color: var(--color-text-dark);
+}
+
+.add-existing-search-clear .material-icons {
+  font-size: 18px;
+}
+
 .add-existing-select-all {
   display: flex;
   align-items: center;

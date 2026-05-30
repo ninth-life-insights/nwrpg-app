@@ -15,13 +15,14 @@ import {
   getMissionChainRoot,
 } from '../../utils/routineHelpers';
 import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
+import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './RoutineBuilderSection.css';
 
 const BUCKETS = [
-  { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily',   cta: 'Add to Daily' },
-  { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly',  cta: 'Add to Weekly' },
-  { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly', cta: 'Add to Monthly' },
-  { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  cta: 'Add to Yearly' },
+  { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily' },
+  { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly' },
+  { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly' },
+  { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly' },
 ];
 
 // Sentinel for the "no specific room" filter option — selects missions with
@@ -34,8 +35,8 @@ export const NO_ROOM_FILTER = '__no_room__';
 // The Builder is a noticing surface, not a planning form. Each frequency
 // bucket is always visible (even empty) — the layout teaches the cadence model.
 // Adds happen contextually from each bucket via QuickAddRoutineSheet, which
-// inherits the active room filter so common scenarios ("I'm noticing Kitchen
-// weekly stuff") become low-friction.
+// inherits the active filters so common scenarios ("I'm noticing Kitchen
+// cleaning stuff") become low-friction.
 const RoutineBuilderSection = ({
   missions,
   routineRootSet,
@@ -47,10 +48,19 @@ const RoutineBuilderSection = ({
   const { refreshRoutines } = useRoutines();
 
   const [roomFilter, setRoomFilter] = useState('');
+  const [skillFilter, setSkillFilter] = useState('');
   const [addBucketFrequency, setAddBucketFrequency] = useState(null);
   const [showAddExisting, setShowAddExisting] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [removingRootIds, setRemovingRootIds] = useState(new Set());
+  const [collapsedBuckets, setCollapsedBuckets] = useState(new Set());
+
+  // "Last used" session controls — persist across QuickAddRoutineSheet opens
+  // during this page visit so batch-setup (e.g. "I'm adding 6 cleaning tasks
+  // across 3 rooms") doesn't require re-picking Skill on every sheet open.
+  // null means "not yet set this session" — falls back to page filter or empty.
+  const [lastSkill, setLastSkill] = useState(null);
+  const [lastRoom, setLastRoom] = useState(null);
 
   const grouped = useMemo(() => {
     const routineMissions = (missions || []).filter((m) => {
@@ -60,10 +70,11 @@ const RoutineBuilderSection = ({
       } else if (roomFilter && m.baseLocation !== roomFilter) {
         return false;
       }
+      if (skillFilter && m.skill !== skillFilter) return false;
       return true;
     });
     return groupRoutineMissionsByFrequency(routineMissions);
-  }, [missions, routineRootSet, roomFilter]);
+  }, [missions, routineRootSet, roomFilter, skillFilter]);
 
   const handleRemove = async (mission) => {
     const root = getMissionChainRoot(mission);
@@ -86,30 +97,66 @@ const RoutineBuilderSection = ({
     }
   };
 
+  const toggleCollapsed = (key) => {
+    setCollapsedBuckets((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  // Resolve defaults for the QuickAddRoutineSheet. Order of precedence:
+  //   1. lastSkill / lastRoom from this session — user's most recent intent
+  //   2. Page filter — what they're currently looking at
+  //   3. Empty / "Personal"
+  // Page filter only seeds the room when it names a specific room (NO_ROOM
+  // and Any both fall through to the empty default).
+  const sheetDefaultSkill = lastSkill !== null ? lastSkill : skillFilter;
+  const sheetDefaultRoom = lastRoom !== null
+    ? lastRoom
+    : (roomFilter && roomFilter !== NO_ROOM_FILTER ? roomFilter : '');
+
   return (
     <section className="routine-builder">
       <p className="routine-builder-intro">
         Routines are the rhythms that keep things running. Add what should be automatic.
       </p>
 
-      {rooms.length > 0 && (
+      <div className="routine-builder-filters">
         <label className="routine-builder-filter">
-          <span className="routine-builder-filter-label">Room</span>
+          <span className="routine-builder-filter-label">Skill</span>
           <select
             className="routine-builder-filter-select"
-            value={roomFilter}
-            onChange={(e) => setRoomFilter(e.target.value)}
+            value={skillFilter}
+            onChange={(e) => setSkillFilter(e.target.value)}
           >
             <option value="">Any</option>
-            <option value={NO_ROOM_FILTER}>Personal</option>
-            {rooms.map((room) => (
-              <option key={room.id} value={room.id}>
-                {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
-              </option>
+            {AVAILABLE_SKILLS.map((s) => (
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </label>
-      )}
+
+        {rooms.length > 0 && (
+          <label className="routine-builder-filter">
+            <span className="routine-builder-filter-label">Room</span>
+            <select
+              className="routine-builder-filter-select"
+              value={roomFilter}
+              onChange={(e) => setRoomFilter(e.target.value)}
+            >
+              <option value="">Any</option>
+              <option value={NO_ROOM_FILTER}>Personal</option>
+              {rooms.map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
 
       <div className="routine-builder-top-actions">
         <button
@@ -128,8 +175,9 @@ const RoutineBuilderSection = ({
         <FrequencyGroup
           key={bucket.key}
           label={bucket.label}
-          ctaLabel={bucket.cta}
           missions={grouped[bucket.key]}
+          collapsed={collapsedBuckets.has(bucket.key)}
+          onToggleCollapsed={() => toggleCollapsed(bucket.key)}
           onAdd={() => setAddBucketFrequency(bucket.frequency)}
           onRemove={handleRemove}
           removingRootIds={removingRootIds}
@@ -140,12 +188,10 @@ const RoutineBuilderSection = ({
         <QuickAddRoutineSheet
           frequency={addBucketFrequency}
           routineId={routineId}
-          defaultRoomId={
-            // "Personal" filter and "Any" filter both default the sheet to
-            // its own "Personal" room option (empty string), since neither
-            // names a specific room.
-            roomFilter === NO_ROOM_FILTER ? '' : roomFilter
-          }
+          defaultRoomId={sheetDefaultRoom}
+          defaultSkill={sheetDefaultSkill}
+          onSkillChange={setLastSkill}
+          onRoomChange={setLastRoom}
           onClose={() => setAddBucketFrequency(null)}
           onAdded={onSaved}
         />
@@ -156,6 +202,7 @@ const RoutineBuilderSection = ({
           missions={missions}
           routineRootSet={routineRootSet}
           roomFilter={roomFilter}
+          skillFilter={skillFilter}
           onClose={() => setShowAddExisting(false)}
           onSaved={onSaved}
         />
@@ -164,15 +211,64 @@ const RoutineBuilderSection = ({
   );
 };
 
-const FrequencyGroup = ({ label, ctaLabel, missions, onAdd, onRemove, removingRootIds }) => {
+const FrequencyGroup = ({
+  label,
+  missions,
+  collapsed,
+  onToggleCollapsed,
+  onAdd,
+  onRemove,
+  removingRootIds,
+}) => {
   const list = missions || [];
+  const isEmpty = list.length === 0;
+  const showList = !isEmpty && !collapsed;
+
   return (
-    <div className="routine-builder-group">
-      <h3 className="routine-builder-group-label">
-        {label}
-        <span className="routine-builder-group-count">{list.length}</span>
-      </h3>
-      {list.length > 0 && (
+    <div className={`routine-builder-group ${isEmpty ? 'is-empty' : ''}`}>
+      <div
+        className="routine-builder-group-header"
+        onClick={isEmpty ? undefined : onToggleCollapsed}
+        role={isEmpty ? undefined : 'button'}
+        tabIndex={isEmpty ? undefined : 0}
+        onKeyDown={
+          isEmpty
+            ? undefined
+            : (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onToggleCollapsed();
+                }
+              }
+        }
+      >
+        <div className="routine-builder-group-titlewrap">
+          {!isEmpty && (
+            <span
+              className={`material-icons routine-builder-group-chevron ${collapsed ? 'is-collapsed' : ''}`}
+              aria-hidden="true"
+            >
+              expand_more
+            </span>
+          )}
+          <h3 className="routine-builder-group-label">{label}</h3>
+          <span className="routine-builder-group-count">{list.length}</span>
+        </div>
+        <button
+          type="button"
+          className="routine-builder-group-add"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd();
+          }}
+          aria-label={`Add to ${label}`}
+        >
+          <span className="material-icons">add</span>
+          Add
+        </button>
+      </div>
+
+      {showList && (
         <div className="routine-builder-group-list">
           {list.map((mission) => {
             const root = getMissionChainRoot(mission);
@@ -202,14 +298,6 @@ const FrequencyGroup = ({ label, ctaLabel, missions, onAdd, onRemove, removingRo
           })}
         </div>
       )}
-      <button
-        type="button"
-        className="routine-builder-add-bucket"
-        onClick={onAdd}
-      >
-        <span className="material-icons">add</span>
-        {ctaLabel}
-      </button>
     </div>
   );
 };

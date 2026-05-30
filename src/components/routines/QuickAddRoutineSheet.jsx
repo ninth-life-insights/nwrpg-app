@@ -89,6 +89,8 @@ const QuickAddRoutineSheet = ({
   routineId,
   defaultRoomId = '',
   defaultSkill = '',
+  onSkillChange,
+  onRoomChange,
   onClose,
   onAdded,
 }) => {
@@ -206,7 +208,10 @@ const QuickAddRoutineSheet = ({
               <select
                 className="quick-add-select"
                 value={skill}
-                onChange={(e) => setSkill(e.target.value)}
+                onChange={(e) => {
+                  setSkill(e.target.value);
+                  onSkillChange?.(e.target.value);
+                }}
               >
                 <option value="">None</option>
                 {AVAILABLE_SKILLS.map((s) => (
@@ -220,7 +225,10 @@ const QuickAddRoutineSheet = ({
               <select
                 className="quick-add-select"
                 value={roomId}
-                onChange={(e) => setRoomId(e.target.value)}
+                onChange={(e) => {
+                  setRoomId(e.target.value);
+                  onRoomChange?.(e.target.value);
+                }}
               >
                 <option value="">Personal</option>
                 {rooms.map((room) => (
@@ -300,16 +308,6 @@ const QuickAddRoutineSheet = ({
           </div>
 
           {saveError && <ErrorMessage message={saveError} />}
-        </div>
-
-        <div className="quick-add-routine-footer">
-          <button
-            type="button"
-            className="quick-add-done"
-            onClick={onClose}
-          >
-            Done
-          </button>
         </div>
       </div>
     </div>

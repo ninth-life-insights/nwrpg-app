@@ -14,12 +14,19 @@
   line-height: 1.4;
 }
 
-/* Room filter — compact native picker. Loses room icons but scales to any
-   number of rooms without horizontal scrolling. */
+/* Filter row — two compact native pickers side by side, wrap on narrow */
+.routine-builder-filters {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
 .routine-builder-filter {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex: 1;
+  min-width: 140px;
 }
 
 .routine-builder-filter-label {
@@ -84,10 +91,43 @@
   gap: var(--space-sm);
 }
 
-.routine-builder-group-label {
+/* Header row contains: chevron (non-empty only) + label + count + Add button.
+   Tap the title area to collapse/expand; the Add button stopPropagates so it
+   doesn't trigger a collapse toggle. */
+.routine-builder-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-xs) 0;
+  border-radius: var(--radius-sm);
+}
+
+.routine-builder-group-titlewrap {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.routine-builder-group:not(.is-empty) .routine-builder-group-header {
+  cursor: pointer;
+}
+
+.routine-builder-group-chevron,
+.routine-builder-group-chevron.material-icons {
+  font-size: 22px;
+  color: var(--color-text-medium) !important;
+  transition: transform var(--transition);
+  flex-shrink: 0;
+}
+
+.routine-builder-group-chevron.is-collapsed {
+  transform: rotate(-90deg);
+}
+
+.routine-builder-group-label {
   margin: 0;
   font-size: var(--font-size-lg);
   font-weight: 600;
@@ -105,6 +145,57 @@
   text-align: center;
 }
 
+/* Inline + Add button in the header. Small chip-style so it doesn't overpower
+   the title row. Material icon color pinned per CLAUDE.md gotcha. */
+.routine-builder-group-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.routine-builder-group-add:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.routine-builder-group-add,
+.routine-builder-group-add .material-icons {
+  color: var(--color-text-medium);
+}
+
+.routine-builder-group-add:hover,
+.routine-builder-group-add:hover .material-icons {
+  color: var(--color-primary);
+}
+
+.routine-builder-group-add .material-icons {
+  font-size: 16px;
+}
+
+/* Empty bucket — dimmed treatment so it doesn't compete visually with active
+   buckets but stays discoverable for the cadence model. */
+.routine-builder-group.is-empty .routine-builder-group-label,
+.routine-builder-group.is-empty .routine-builder-group-count {
+  color: var(--color-text-light);
+  opacity: 0.7;
+}
+
+.routine-builder-group.is-empty .routine-builder-group-add,
+.routine-builder-group.is-empty .routine-builder-group-add .material-icons {
+  color: var(--color-text-light);
+  opacity: 0.85;
+}
+
 .routine-builder-group-list {
   display: flex;
   flex-direction: column;
@@ -117,37 +208,6 @@
 .routine-builder-group-list .mission-card-condensed {
   margin-top: 0;
   margin-bottom: 0;
-}
-
-/* Per-bucket Add CTA — dashed, low-stakes "drop one more in" affordance */
-.routine-builder-add-bucket {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  width: 100%;
-  max-width: var(--max-width-card);
-  margin: 0 auto;
-  padding: var(--space-xs) var(--space-md);
-  background: transparent;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-light);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: all var(--transition);
-}
-
-.routine-builder-add-bucket:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: rgba(59, 130, 246, 0.04);
-}
-
-.routine-builder-add-bucket .material-icons {
-  font-size: 18px;
 }
 
 /* Remove-from-routine icon button on each card */
