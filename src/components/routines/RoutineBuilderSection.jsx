@@ -1,5 +1,5 @@
 // src/components/routines/RoutineBuilderSection.jsx
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -75,6 +75,14 @@ const RoutineBuilderSection = ({
   const [removingRootIds, setRemovingRootIds] = useState(new Set());
   const [collapsedBuckets, setCollapsedBuckets] = useState(new Set());
 
+  // Optimistic order overlay. Set immediately when the user drops a drag so
+  // the UI reflects the new position without waiting for the Firestore round
+  // trip. Cleared when the matching refresh completes; the seq ref guards
+  // against a stale completion clearing a newer drag's pending state.
+  const [pendingOrderMap, setPendingOrderMap] = useState(null);
+  const reorderSeqRef = useRef(0);
+  const effectiveOrderMap = pendingOrderMap || routineOrderMap;
+
   // "Last used" session controls — persist across QuickAddRoutineSheet opens
   // during this page visit so batch-setup (e.g. "I'm adding 6 cleaning tasks
   // across 3 rooms") doesn't require re-picking Skill on every sheet open.
@@ -96,10 +104,10 @@ const RoutineBuilderSection = ({
     // Sort by routine doc order before grouping — within-bucket order then
     // reflects the user's drag-to-reorder choices.
     const sorted = [...routineMissions].sort(
-      makeRoutineSortComparator(routineOrderMap)
+      makeRoutineSortComparator(effectiveOrderMap)
     );
     return groupRoutineMissionsByFrequency(sorted);
-  }, [missions, routineRootSet, roomFilter, skillFilter, routineOrderMap]);
+  }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap]);
 
   // Drag sensors — TouchSensor delays activation 150ms so a tap to open the
   // mission still works. PointerSensor needs 8px movement so a click on the
@@ -154,13 +162,28 @@ const RoutineBuilderSection = ({
       }
     });
 
+    // Optimistically reflect the new order in the UI before the round trip
+    // completes — otherwise the dragged card snaps back to its original
+    // slot until the refresh lands. The seq counter lets a newer drag's
+    // pending state survive an older drag's completion.
+    const optimisticMap = new Map();
+    newChainIds.forEach((id, i) => optimisticMap.set(id, i));
+    const mySeq = ++reorderSeqRef.current;
+    setPendingOrderMap(optimisticMap);
+
     setActionError(null);
     try {
       await reorderRoutineMissions(currentUser.uid, routineId, newChainIds);
       await refreshRoutines();
       onSaved?.();
+      if (reorderSeqRef.current === mySeq) {
+        setPendingOrderMap(null);
+      }
     } catch (err) {
       console.error('Routine reorder failed:', err);
+      if (reorderSeqRef.current === mySeq) {
+        setPendingOrderMap(null);
+      }
       setActionError("That reorder didn't save. Try again.");
     }
   };
