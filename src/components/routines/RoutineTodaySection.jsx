@@ -1,5 +1,6 @@
 // src/components/routines/RoutineTodaySection.jsx
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
 import AchievementToast from '../achievements/AchievementToast';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -33,6 +34,7 @@ const BUCKETS = [
 const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
+  const navigate = useNavigate();
   const [actionError, setActionError] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
 
@@ -73,6 +75,10 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
   };
 
   const isEmpty = todayMissions.length === 0;
+  // Differentiate "no routine yet" (brand-new user) from "routine exists but
+  // today is quiet" — the first deserves an inviting prompt toward the builder,
+  // the second is a take-the-win moment.
+  const hasNoRoutineYet = routineRootSet.size === 0;
 
   return (
     <section className="routine-today">
@@ -85,7 +91,23 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
 
       {actionError && <ErrorMessage message={actionError} />}
 
-      {isEmpty ? (
+      {isEmpty && hasNoRoutineYet ? (
+        <div className="routine-today-onboarding">
+          <h3 className="routine-today-onboarding-title">
+            No routine yet
+          </h3>
+          <p className="routine-today-onboarding-body">
+            Build the rhythms that keep things running.
+          </p>
+          <button
+            type="button"
+            className="routine-today-onboarding-cta"
+            onClick={() => navigate('/routine-builder')}
+          >
+            Start building
+          </button>
+        </div>
+      ) : isEmpty ? (
         <div className="routine-today-empty">
           Your routine is clear today. Take the win.
         </div>

@@ -64,10 +64,9 @@ const RoutinesPage = () => {
         <button
           className="routines-manage-btn"
           onClick={() => navigate('/routine-builder')}
-          aria-label="Open routine builder"
-          title="Manage routine"
         >
-          <span className="material-icons">tune</span>
+          <span className="material-icons">edit</span>
+          Edit routine
         </button>
       </div>
 

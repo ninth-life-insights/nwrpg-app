@@ -13,7 +13,7 @@
    QuestBankPage.css. */
 .routines-page-header {
   display: grid;
-  grid-template-columns: 40px 1fr 40px;
+  grid-template-columns: 40px 1fr auto;
   align-items: center;
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
@@ -58,40 +58,40 @@
   height: 40px;
 }
 
-/* Manage-routine button on the right side of the header. Always-visible
-   access to the builder from the today (action) surface. */
+/* Builder-access button on the right side of the header. Always-visible
+   path from the today (action) surface to the builder. Icon + full text
+   label — no shorthand, no guessing what it does. */
 .routines-manage-btn {
-  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
   height: 40px;
-  padding: 0;
+  padding: 0 var(--space-md);
   background: #f8f9fa;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
   cursor: pointer;
-  color: var(--color-text-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: all var(--transition);
 }
 
 .routines-manage-btn:hover {
   background: #e9ecef;
-  color: var(--color-text-medium);
 }
 
 .routines-manage-btn,
 .routines-manage-btn .material-icons {
-  color: var(--color-text-light);
+  color: var(--color-text-medium) !important;
 }
 
 .routines-manage-btn:hover,
 .routines-manage-btn:hover .material-icons {
-  color: var(--color-text-medium);
+  color: var(--color-text-dark) !important;
 }
 
 .routines-manage-btn .material-icons {
-  font-size: 22px;
+  font-size: 18px;
 }
 
 .routines-loading {
