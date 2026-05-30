@@ -71,6 +71,19 @@ export const groupRoutineMissionsByFrequency = (missions) => {
   return buckets;
 };
 
+// Stable sort key for "maintain order" semantics — completion state doesn't
+// reshuffle the list, mirroring a paper-checklist mental model. Uses each
+// mission's own createdAt (when the doc was made or spawned). Imperfect for
+// long-running chains where the visible instance was spawned much later than
+// the original; drag-to-reorder (planned, mission-bank pattern) will layer
+// over this via a customSortOrder field once added.
+const createdAtMs = (m) => {
+  const ca = m?.createdAt;
+  if (!ca) return 0;
+  if (ca.toDate) return ca.toDate().getTime();
+  return new Date(ca).getTime();
+};
+
 // Return routine missions relevant to a given view date.
 //
 //   viewDate === today:  active items with dueDate <= today (so overdue
@@ -118,49 +131,38 @@ export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput) => {
         }
         return false;
       })
-      .sort((a, b) => {
-        // Active items above completed within the same view; among active,
-        // earlier dueDate first (overdue surfaces first).
-        const aActive = a.status === MISSION_STATUS.ACTIVE;
-        const bActive = b.status === MISSION_STATUS.ACTIVE;
-        if (aActive !== bActive) return aActive ? -1 : 1;
-        if (aActive) {
-          const ad = dayjs(a.dueDate);
-          const bd = dayjs(b.dueDate);
-          if (ad.isSame(bd, 'day')) return 0;
-          return ad.isBefore(bd, 'day') ? -1 : 1;
-        }
-        return 0;
-      });
+      .sort((a, b) => createdAtMs(a) - createdAtMs(b));
   }
 
   // Future view — project each active instance forward.
-  return missions.filter((m) => {
-    if (!m || m.status !== MISSION_STATUS.ACTIVE) return false;
-    if (!isRecurringMission(m)) return false;
-    if (!isMissionInRoutineSet(m, rootSet)) return false;
-    if (!m.dueDate || m.dueDate === '') return false;
+  return missions
+    .filter((m) => {
+      if (!m || m.status !== MISSION_STATUS.ACTIVE) return false;
+      if (!isRecurringMission(m)) return false;
+      if (!isMissionInRoutineSet(m, rootSet)) return false;
+      if (!m.dueDate || m.dueDate === '') return false;
 
-    let current = dayjs(m.dueDate).startOf('day');
-    if (current.isSame(viewDate, 'day')) return true;
-    if (current.isAfter(viewDate, 'day')) return false;
+      let current = dayjs(m.dueDate).startOf('day');
+      if (current.isSame(viewDate, 'day')) return true;
+      if (current.isAfter(viewDate, 'day')) return false;
 
-    // Iterate forward through the recurrence pattern. Each iteration computes
-    // the next due date from `current` — same math the spawn-on-complete flow
-    // uses, so projection matches reality.
-    let safety = 0;
-    while (current.isBefore(viewDate, 'day') && safety++ < 500) {
-      const next = calculateNextDueDate(
-        current.format('YYYY-MM-DD'),
-        m.recurrence
-      );
-      if (!next) return false;
-      const nextDate = dayjs(next).startOf('day');
-      if (nextDate.isAfter(viewDate, 'day')) return false;
-      current = nextDate;
-    }
-    return current.isSame(viewDate, 'day');
-  });
+      // Iterate forward through the recurrence pattern. Each iteration
+      // computes the next due date from `current` — same math the spawn-on-
+      // complete flow uses, so projection matches reality.
+      let safety = 0;
+      while (current.isBefore(viewDate, 'day') && safety++ < 500) {
+        const next = calculateNextDueDate(
+          current.format('YYYY-MM-DD'),
+          m.recurrence
+        );
+        if (!next) return false;
+        const nextDate = dayjs(next).startOf('day');
+        if (nextDate.isAfter(viewDate, 'day')) return false;
+        current = nextDate;
+      }
+      return current.isSame(viewDate, 'day');
+    })
+    .sort((a, b) => createdAtMs(a) - createdAtMs(b));
 };
 
 // Backward-compatible alias. Callers that just want "today" can keep using

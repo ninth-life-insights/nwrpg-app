@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
 import AchievementToast from '../achievements/AchievementToast';
+import DatePickerPill from '../ui/DatePickerPill';
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -16,7 +17,6 @@ import {
   getRoutineMissionsForDate,
   groupRoutineMissionsByFrequency,
 } from '../../utils/routineHelpers';
-import { fromDateString } from '../../utils/dateHelpers';
 import { MISSION_STATUS } from '../../types/Mission';
 import './RoutineTodaySection.css';
 
@@ -39,22 +39,8 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
   const [actionError, setActionError] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
   const [viewDate, setViewDate] = useState(() => dayjs().format('YYYY-MM-DD'));
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
   const todayString = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
-  const tomorrowString = useMemo(
-    () => dayjs().add(1, 'day').format('YYYY-MM-DD'),
-    []
-  );
   const isViewToday = viewDate === todayString;
-  const isViewTomorrow = viewDate === tomorrowString;
-
-  // Match EditDailyMissionsPage's pill label format exactly.
-  const viewDateDisplay = isViewToday
-    ? `Today — ${fromDateString(viewDate).format('ddd, MMM D')}`
-    : isViewTomorrow
-    ? `Tomorrow — ${fromDateString(viewDate).format('ddd, MMM D')}`
-    : fromDateString(viewDate).format('ddd, MMM D');
 
   const viewMissions = useMemo(
     () => getRoutineMissionsForDate(missions, routineRootSet, viewDate),
@@ -91,11 +77,6 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
     if (totalCount === 0) return 'Nothing scheduled';
     return totalCount === 1 ? '1 scheduled' : `${totalCount} scheduled`;
   }, [isViewToday, totalCount, activeCount, completedCount, allDone]);
-
-  const handleDateSelect = (newDate) => {
-    setViewDate(newDate);
-    setShowDatePicker(false);
-  };
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     setActionError(null);
@@ -151,16 +132,11 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
   return (
     <section className="routine-today">
       <div className="routine-today-header">
-        <button
-          type="button"
-          className={`date-selector-pill ${!isViewToday ? 'future' : ''}`}
-          onClick={() => setShowDatePicker(true)}
-          aria-label="Change view date"
-        >
-          <span className="date-selector-icon">📅</span>
-          <span className="date-selector-label">{viewDateDisplay}</span>
-          <span className="date-selector-caret">▾</span>
-        </button>
+        <DatePickerPill
+          value={viewDate}
+          onChange={setViewDate}
+          heading="View day..."
+        />
         {subtitleText && (
           <p className="routine-today-subtitle">{subtitleText}</p>
         )}
@@ -227,52 +203,6 @@ const RoutineTodaySection = ({ missions, routineRootSet, onSaved }) => {
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
-
-      {/* Date picker — same UX as the daily planning page */}
-      {showDatePicker && (
-        <div className="date-picker-overlay" onClick={() => setShowDatePicker(false)}>
-          <div className="date-picker-sheet" onClick={(e) => e.stopPropagation()}>
-            <p className="date-picker-heading">View day...</p>
-            <button
-              className={`date-picker-option ${viewDate === todayString ? 'active' : ''}`}
-              onClick={() => handleDateSelect(todayString)}
-            >
-              Today — {fromDateString(todayString).format('ddd, MMM D')}
-            </button>
-            <button
-              className={`date-picker-option ${viewDate === tomorrowString ? 'active' : ''}`}
-              onClick={() => handleDateSelect(tomorrowString)}
-            >
-              Tomorrow — {fromDateString(tomorrowString).format('ddd, MMM D')}
-            </button>
-            <div className="date-picker-custom">
-              <label className="date-picker-custom-label" htmlFor="routine-view-date-input">
-                Choose a date
-              </label>
-              <input
-                id="routine-view-date-input"
-                type="date"
-                className="date-picker-input"
-                min={todayString}
-                defaultValue={
-                  viewDate !== todayString && viewDate !== tomorrowString
-                    ? viewDate
-                    : ''
-                }
-                onChange={(e) => {
-                  if (e.target.value) handleDateSelect(e.target.value);
-                }}
-              />
-            </div>
-            <button
-              className="date-picker-cancel"
-              onClick={() => setShowDatePicker(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </section>
   );
 };
