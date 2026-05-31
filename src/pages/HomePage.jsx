@@ -24,6 +24,7 @@ import { useDailyMissions } from '../contexts/DailyMissionsContext';
 import EditDailyMissionsModal from '../components/missions/EditDailyMissionsModal';
 import MissionCard from '../components/missions/MissionCard';
 import MissionCardCondensed from '../components/missions/MissionCardCondensed.jsx';
+import RoutineUpNextCard from '../components/routines/RoutineUpNextCard';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
@@ -57,6 +58,10 @@ const HomePage = () => {
   const [actionError, setActionError] = useState(null);
   const [weeklyReviewEligible, setWeeklyReviewEligible] = useState(false);
   const [showWeeklyReviewSheet, setShowWeeklyReviewSheet] = useState(false);
+  // All missions kept in state (not just daily priority IDs) so the
+  // RoutineUpNextCard can filter to today's routine items without a second
+  // fetch. null = still loading, [] = loaded but empty.
+  const [allMissions, setAllMissions] = useState(null);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -153,6 +158,7 @@ const HomePage = () => {
           setCharacter(userDoc.data().character);
         }
         setUserProfile(profile);
+        setAllMissions(allMissions);
         setBaseName(profile?.baseName || '');
         if (entireBaseRoom?.icon) setBaseIcon(entireBaseRoom.icon);
 
@@ -418,6 +424,8 @@ const HomePage = () => {
             </div>
           )}
         </div>
+
+        <RoutineUpNextCard missions={allMissions} />
 
         <div className="action-buttons">
           <button className="action-button primary" onClick={QuestBankClick}>
