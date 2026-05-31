@@ -42,7 +42,7 @@ const BUCKETS = [
   { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily',   icon: 'today' },
   { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly',  icon: 'view_week' },
   { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly', icon: 'calendar_month' },
-  { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  icon: 'cake' },
+  { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  icon: 'view_timeline' },
 ];
 
 // Sentinel for the "no specific room" filter option — selects missions with

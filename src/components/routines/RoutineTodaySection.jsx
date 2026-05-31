@@ -24,7 +24,7 @@ const BUCKETS = [
   { key: 'daily',   label: 'Daily',   icon: 'today' },
   { key: 'weekly',  label: 'Weekly',  icon: 'view_week' },
   { key: 'monthly', label: 'Monthly', icon: 'calendar_month' },
-  { key: 'yearly',  label: 'Yearly',  icon: 'cake' },
+  { key: 'yearly',  label: 'Yearly',  icon: 'view_timeline' },
 ];
 
 // "Today" surface for the routine page — the action view. The date-picker
