@@ -21,7 +21,7 @@ import { MISSION_STATUS } from '../../types/Mission';
 import './RoutineTodaySection.css';
 
 const BUCKETS = [
-  { key: 'daily',   label: 'Daily',   icon: 'wb_sunny' },
+  { key: 'daily',   label: 'Daily',   icon: 'today' },
   { key: 'weekly',  label: 'Weekly',  icon: 'view_week' },
   { key: 'monthly', label: 'Monthly', icon: 'calendar_month' },
   { key: 'yearly',  label: 'Yearly',  icon: 'cake' },

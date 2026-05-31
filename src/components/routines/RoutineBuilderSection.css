@@ -7,13 +7,6 @@
   gap: var(--space-lg);
 }
 
-.routine-builder-intro {
-  margin: 0;
-  color: var(--color-text-medium);
-  font-size: var(--font-size-sm);
-  line-height: 1.4;
-}
-
 /* Filter row — two compact native pickers side by side, wrap on narrow */
 .routine-builder-filters {
   display: flex;

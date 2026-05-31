@@ -8,6 +8,7 @@ import { getActiveMissions } from '../services/missionService';
 import { DEFAULT_ROUTINE_ID } from '../types/Routine';
 import RoutineBuilderSection from '../components/routines/RoutineBuilderSection';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import PageHeader from '../components/ui/PageHeader';
 import './RoutinesPage.css';
 
 // Builder lives on its own page so the today view (/routines) stays a clean
@@ -53,17 +54,10 @@ const RoutineBuilderPage = () => {
 
   return (
     <div className="routines-page">
-      <div className="routines-page-header">
-        <button
-          className="routines-home-btn"
-          onClick={() => navigate('/routines')}
-          aria-label="Back to today"
-        >
-          <span className="material-icons">arrow_back</span>
-        </button>
-        <h1 className="routines-page-title">Routine builder</h1>
-        <div className="routines-header-spacer" />
-      </div>
+      <PageHeader
+        title="Routine builder"
+        onBack={() => navigate('/routines')}
+      />
 
       {loadError && (
         <ErrorMessage

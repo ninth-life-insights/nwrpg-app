@@ -1,4 +1,8 @@
-/* src/pages/RoutinesPage.css */
+/* src/pages/RoutinesPage.css
+   Shared by RoutinesPage (today view) and RoutineBuilderPage (builder view)
+   via the .routines-page class. Page header is rendered by the shared
+   PageHeader component; this file owns only the page-wrapper and the
+   page-specific right-action button. */
 
 .routines-page {
   max-width: 1200px;
@@ -10,60 +14,10 @@
   font-family: var(--font-family);
 }
 
-/* Header — uses page-unique class names to avoid colliding with the unscoped
-   .top-header / .home-button declarations in MissionBankPage.css and
-   QuestBankPage.css. */
-.routines-page-header {
-  display: grid;
-  grid-template-columns: 40px 1fr auto;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-md);
-  border-bottom: 2px solid var(--color-border-yellow);
-}
-
-.routines-home-btn {
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  background: #f8f9fa;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  color: var(--color-text-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition);
-}
-
-.routines-home-btn:hover {
-  background: #e9ecef;
-  color: var(--color-text-medium);
-}
-
-.routines-home-btn .material-icons {
-  font-size: 24px;
-}
-
-.routines-page-title {
-  margin: 0;
-  text-align: center;
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-text-dark);
-}
-
-.routines-header-spacer {
-  width: 40px;
-  height: 40px;
-}
-
-/* Builder-access button on the right side of the header. Always-visible
-   path from the today (action) surface to the builder. Icon + full text
-   label — no shorthand, no guessing what it does. */
-.routines-manage-btn {
+/* "Edit routine" pill in the page header — caller-supplied via PageHeader's
+   action prop. Pill shape, icon + label, neutral background, warm-tinted
+   hover so it blends with the routine page's cream theme. */
+.routines-edit-btn {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
@@ -78,21 +32,22 @@
   transition: all var(--transition);
 }
 
-.routines-manage-btn:hover {
-  background: #e9ecef;
+.routines-edit-btn:hover {
+  background: var(--color-bg-main);
+  border-color: var(--color-border-yellow);
 }
 
-.routines-manage-btn,
-.routines-manage-btn .material-icons {
+.routines-edit-btn,
+.routines-edit-btn .material-icons {
   color: var(--color-text-medium) !important;
 }
 
-.routines-manage-btn:hover,
-.routines-manage-btn:hover .material-icons {
-  color: var(--color-text-dark) !important;
+.routines-edit-btn:hover,
+.routines-edit-btn:hover .material-icons {
+  color: #92400e !important;
 }
 
-.routines-manage-btn .material-icons {
+.routines-edit-btn .material-icons {
   font-size: 18px;
 }
 

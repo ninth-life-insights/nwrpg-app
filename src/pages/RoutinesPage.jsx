@@ -11,6 +11,7 @@ import {
 } from '../services/missionService';
 import RoutineTodaySection from '../components/routines/RoutineTodaySection';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import PageHeader from '../components/ui/PageHeader';
 import './RoutinesPage.css';
 
 // /routines is the action surface — today's items only. Builder lives on its
@@ -63,23 +64,20 @@ const RoutinesPage = () => {
 
   return (
     <div className="routines-page">
-      <div className="routines-page-header">
-        <button
-          className="routines-home-btn"
-          onClick={() => navigate('/home')}
-          aria-label="Back to home"
-        >
-          <span className="material-icons">arrow_back</span>
-        </button>
-        <h1 className="routines-page-title">Routines</h1>
-        <button
-          className="routines-manage-btn"
-          onClick={() => navigate('/routine-builder')}
-        >
-          <span className="material-icons">edit</span>
-          Edit routine
-        </button>
-      </div>
+      <PageHeader
+        title="Routines"
+        onBack={() => navigate('/home')}
+        action={
+          <button
+            type="button"
+            className="routines-edit-btn"
+            onClick={() => navigate('/routine-builder')}
+          >
+            <span className="material-icons">edit</span>
+            Edit routine
+          </button>
+        }
+      />
 
       {loadError && (
         <ErrorMessage

@@ -1,0 +1,64 @@
+/* src/components/ui/PageHeader.css
+   Shared page header. Visual treatment matches the established pattern in
+   MissionBank / QuestBank / etc — back button + centered title + optional
+   right action, with a neutral bottom rule. */
+
+.page-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.page-header-back {
+  justify-self: start;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: #f8f9fa;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.page-header-back:hover {
+  background: #e9ecef;
+}
+
+.page-header-back,
+.page-header-back .material-icons {
+  color: var(--color-text-light) !important;
+}
+
+.page-header-back:hover,
+.page-header-back:hover .material-icons {
+  color: var(--color-text-medium) !important;
+}
+
+.page-header-back .material-icons {
+  font-size: 24px;
+}
+
+.page-header-title {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.page-header-action {
+  justify-self: end;
+}
+
+.page-header-spacer {
+  width: 40px;
+  height: 40px;
+}

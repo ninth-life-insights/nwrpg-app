@@ -39,7 +39,7 @@ import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './RoutineBuilderSection.css';
 
 const BUCKETS = [
-  { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily',   icon: 'wb_sunny' },
+  { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily',   icon: 'today' },
   { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly',  icon: 'view_week' },
   { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly', icon: 'calendar_month' },
   { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  icon: 'cake' },
@@ -231,10 +231,6 @@ const RoutineBuilderSection = ({
 
   return (
     <section className="routine-builder">
-      <p className="routine-builder-intro">
-        Routines are the rhythms that keep things running. Add what should be automatic.
-      </p>
-
       <div className="routine-builder-filters">
         <label className="routine-builder-filter">
           <span className="routine-builder-filter-label">Skill</span>
