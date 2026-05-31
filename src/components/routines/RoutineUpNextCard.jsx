@@ -1,39 +1,66 @@
 // src/components/routines/RoutineUpNextCard.jsx
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { useRoutines } from '../../contexts/RoutineContext';
+import {
+  uncompleteMission,
+  completeMissionWithRecurrence,
+} from '../../services/missionService';
 import { getRoutineMissionsForDate } from '../../utils/routineHelpers';
 import { MISSION_STATUS } from '../../types/Mission';
+import MissionCardCondensed from '../missions/MissionCardCondensed';
 import './RoutineUpNextCard.css';
 
-// Compact "up next in your routine" affordance for the home page. Lives
-// inside the daily-missions section's yellow-bordered card so it reads as
-// part of the same today-focused interaction block — secondary to the three
-// daily-priority cards above it. Three render states:
+// "Next up in your routine" preview on the home page. Sits BELOW the
+// Quests / Mission Bank action tiles inside the same daily-missions card,
+// mirroring the way QuestCard shows its next mission: small "Next up" label
+// then a real condensed mission card she can act on directly. Tapping the
+// toggle completes the routine task with normal recurrence + notification
+// behavior. The label is also a tap target → /routines for the full view.
 //
-//   - has-no-routine-yet: tap → /routine-builder, prompts setup
-//   - all-clear: tap → /routines, quiet ✓ confirmation
-//   - active: shows next incomplete item + "+ N more today" + arrow to /routines
-//
-// Loading: pass `missions === null` to render a quiet skeleton (so the
-// "clear today" copy doesn't flash before data arrives).
-const RoutineUpNextCard = ({ missions }) => {
-  const navigate = useNavigate();
+// Three render states:
+//   loading           — quiet placeholder
+//   no routine yet    — "Set up your routine →" inline link
+//   clear today       — "Routine clear today" small confirmation row
+//   active            — label + card + "+N more today" + chevron
+const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
+  const { currentUser } = useAuth();
+  const { notifyMissionCompletion } = useNotifications();
   const { routineRootSet, routineOrderMap } = useRoutines();
+  const navigate = useNavigate();
 
   const loading = missions === null;
   const hasNoRoutineYet = !loading && routineRootSet.size === 0;
 
   const todayActive = useMemo(() => {
     if (!missions) return [];
-    const todayItems = getRoutineMissionsForDate(
+    const items = getRoutineMissionsForDate(
       missions,
       routineRootSet,
       undefined,
       routineOrderMap
     );
-    return todayItems.filter((m) => m.status === MISSION_STATUS.ACTIVE);
+    return items.filter((m) => m.status === MISSION_STATUS.ACTIVE);
   }, [missions, routineRootSet, routineOrderMap]);
+
+  const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
+    try {
+      if (isCurrentlyCompleted) {
+        await uncompleteMission(currentUser.uid, missionId);
+      } else {
+        const result = await completeMissionWithRecurrence(
+          currentUser.uid,
+          missionId
+        );
+        notifyMissionCompletion(result);
+      }
+      onMissionChanged?.();
+    } catch (err) {
+      console.error('Routine up-next toggle failed:', err);
+    }
+  };
 
   if (loading) {
     return <div className="routine-up-next routine-up-next--loading" aria-hidden="true" />;
@@ -43,11 +70,13 @@ const RoutineUpNextCard = ({ missions }) => {
     return (
       <button
         type="button"
-        className="routine-up-next routine-up-next--empty"
+        className="routine-up-next-link"
         onClick={() => navigate('/routine-builder')}
       >
-        <span className="routine-up-next-label">Routine</span>
-        <span className="routine-up-next-cta">Set up your rhythm →</span>
+        <span className="routine-up-next-link-label">Set up your routine</span>
+        <span className="material-icons routine-up-next-link-arrow" aria-hidden="true">
+          chevron_right
+        </span>
       </button>
     );
   }
@@ -56,11 +85,13 @@ const RoutineUpNextCard = ({ missions }) => {
     return (
       <button
         type="button"
-        className="routine-up-next routine-up-next--clear"
+        className="routine-up-next-link routine-up-next-link--clear"
         onClick={() => navigate('/routines')}
       >
-        <span className="routine-up-next-label">Routine</span>
-        <span className="routine-up-next-clear-text">Clear today ✓</span>
+        <span className="routine-up-next-link-label">Routine clear today ✓</span>
+        <span className="material-icons routine-up-next-link-arrow" aria-hidden="true">
+          chevron_right
+        </span>
       </button>
     );
   }
@@ -69,27 +100,29 @@ const RoutineUpNextCard = ({ missions }) => {
   const remainingCount = todayActive.length - 1;
 
   return (
-    <button
-      type="button"
-      className="routine-up-next"
-      onClick={() => navigate('/routines')}
-      aria-label="View routine"
-    >
-      <div className="routine-up-next-head">
-        <span className="routine-up-next-label">Up next in your routine</span>
-        <span className="material-icons routine-up-next-arrow" aria-hidden="true">
-          chevron_right
-        </span>
-      </div>
-      <div className="routine-up-next-body">
-        <span className="routine-up-next-mission">{nextUp.title}</span>
-        {remainingCount > 0 && (
-          <span className="routine-up-next-rest">
-            +{remainingCount} more today
+    <div className="routine-up-next">
+      <button
+        type="button"
+        className="routine-up-next-header"
+        onClick={() => navigate('/routines')}
+      >
+        <span className="routine-up-next-label">Next up in your routine</span>
+        <span className="routine-up-next-header-end">
+          {remainingCount > 0 && (
+            <span className="routine-up-next-more">+{remainingCount} more</span>
+          )}
+          <span className="material-icons routine-up-next-arrow" aria-hidden="true">
+            chevron_right
           </span>
-        )}
-      </div>
-    </button>
+        </span>
+      </button>
+      <MissionCardCondensed
+        mission={nextUp}
+        hideRecurrenceBadge
+        onToggleComplete={handleToggleComplete}
+        onMissionChanged={onMissionChanged}
+      />
+    </div>
   );
 };
 

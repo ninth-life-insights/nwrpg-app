@@ -1,118 +1,140 @@
 /* src/components/routines/RoutineUpNextCard.css
-   Compact next-up affordance inside the home page's daily-missions card.
-   Subordinate to the three daily-priority mission cards above it — dashed
-   yellow border + warm cream surface so it reads as "suggested context"
-   rather than "another mission to act on." */
+   "Next up in your routine" outer card on the home page. Mirrors the
+   QuestCard pattern: a wrapper container with header + next-mission
+   section, so the contextual routine info reads as its own block instead of
+   blending into the daily missions above.
+
+   Color: warm amber palette (cream surface + orange-brown border) so it
+   stays in the page's warm family but is clearly distinct from the
+   yellow-bordered Daily Missions card. If/when theme-color dark variants
+   land, this is a single-file swap. */
 
 .routine-up-next {
+  background: #ffedd5;
+  border: 2px solid #d97706;
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin: var(--space-md) 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 100%;
-  max-width: var(--max-width-card);
-  margin: var(--space-md) auto var(--space-sm) auto;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-bg-main);
-  border: 1.5px dashed var(--color-border-yellow);
-  border-radius: var(--radius-md);
-  text-align: left;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-card);
 }
 
-.routine-up-next:hover {
-  border-color: #f59e0b;
-  background: #fff8d4;
-}
-
-.routine-up-next:active {
-  transform: translateY(1px);
-}
-
-.routine-up-next-head {
+/* Header — small title row, label + chevron, tappable to navigate to
+   /routines for the full surface. */
+.routine-up-next-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-family);
+  color: #92400e;
+  transition: color var(--transition);
+}
+
+.routine-up-next-header:hover {
+  color: #78350f;
 }
 
 .routine-up-next-label {
   font-size: var(--font-size-xs);
   font-weight: 700;
-  color: var(--color-text-light);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .routine-up-next-arrow,
 .routine-up-next-arrow.material-icons {
-  font-size: 18px;
-  color: var(--color-text-medium) !important;
+  font-size: 20px;
+  color: #92400e !important;
 }
 
-.routine-up-next-body {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  min-width: 0;
+.routine-up-next-header:hover .routine-up-next-arrow,
+.routine-up-next-header:hover .routine-up-next-arrow.material-icons {
+  color: #78350f !important;
 }
 
-.routine-up-next-mission {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text-dark);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Make the wrapped mission card sit cleanly inside the outer wrapper —
+   zero out its own margin so the outer padding controls spacing. */
+.routine-up-next .mission-card-condensed {
+  margin: 0;
 }
 
-.routine-up-next-rest {
-  flex-shrink: 0;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-medium);
-  font-weight: 500;
-}
-
-/* Empty (no routine yet) — inviting one-line CTA */
-.routine-up-next--empty {
-  display: flex;
-  flex-direction: row;
+/* "+N more" sits inline next to the chevron in the header so the slot
+   stays at two visible rows (label row + mission card) instead of three. */
+.routine-up-next-header-end {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
+  flex-shrink: 0;
 }
 
-.routine-up-next-cta {
-  font-size: var(--font-size-sm);
+.routine-up-next-more {
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: #92400e;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-/* All clear today — quiet confirmation row */
-.routine-up-next--clear {
+/* "Set up your routine" / "Routine clear today" — quieter one-line link rows
+   for the empty + all-done states. Match the same warm amber palette so the
+   slot reads consistently across states. */
+.routine-up-next-link {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
+  justify-content: center;
+  gap: var(--space-xs);
+  width: 100%;
+  background: #ffedd5;
+  border: 2px solid #d97706;
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  margin: var(--space-md) 0;
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-family);
+  color: #92400e;
+  transition: color var(--transition), background var(--transition);
+  box-shadow: var(--shadow-card);
 }
 
-.routine-up-next-clear-text {
+.routine-up-next-link:hover {
+  color: #78350f;
+}
+
+.routine-up-next-link-label {
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+.routine-up-next-link-arrow,
+.routine-up-next-link-arrow.material-icons {
+  font-size: 18px;
+  color: #92400e !important;
+}
+
+.routine-up-next-link--clear .routine-up-next-link-label {
   color: var(--color-success);
 }
 
-/* Loading skeleton — preserves layout height so the layout doesn't jump */
+.routine-up-next-link--clear .routine-up-next-link-arrow,
+.routine-up-next-link--clear .routine-up-next-link-arrow.material-icons {
+  color: var(--color-success) !important;
+}
+
 .routine-up-next--loading {
-  min-height: 60px;
-  border-color: var(--color-border);
+  min-height: 80px;
   background: transparent;
+  border: 2px dashed var(--color-border);
   cursor: default;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.3;
 }

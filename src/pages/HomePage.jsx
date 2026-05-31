@@ -208,9 +208,18 @@ const HomePage = () => {
     fetchUserData();
   }, [currentUser]);
 
-  // SIMPLIFIED: Function to refresh daily missions after editing
+  // SIMPLIFIED: Function to refresh daily missions after editing. Also
+  // re-fetches allMissions so the routine "Next up" preview reflects the
+  // latest state (a completion spawns a child instance; the previous active
+  // one drops out of today's view).
   const handleDailyMissionsUpdate = async () => {
     await fetchDailyMissions();
+    try {
+      const refreshed = await getAllMissions(currentUser.uid);
+      setAllMissions(refreshed);
+    } catch (err) {
+      console.error('Error refreshing all missions:', err);
+    }
   };
 
   // REMOVED: Complex reset logic - no longer needed
@@ -425,7 +434,10 @@ const HomePage = () => {
           )}
         </div>
 
-        <RoutineUpNextCard missions={allMissions} />
+        <RoutineUpNextCard
+          missions={allMissions}
+          onMissionChanged={handleDailyMissionsUpdate}
+        />
 
         <div className="action-buttons">
           <button className="action-button primary" onClick={QuestBankClick}>
