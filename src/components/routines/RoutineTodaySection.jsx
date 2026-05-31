@@ -21,10 +21,10 @@ import { MISSION_STATUS } from '../../types/Mission';
 import './RoutineTodaySection.css';
 
 const BUCKETS = [
-  { key: 'daily',   label: 'Daily' },
-  { key: 'weekly',  label: 'Weekly' },
-  { key: 'monthly', label: 'Monthly' },
-  { key: 'yearly',  label: 'Yearly' },
+  { key: 'daily',   label: 'Daily',   icon: 'wb_sunny' },
+  { key: 'weekly',  label: 'Weekly',  icon: 'view_week' },
+  { key: 'monthly', label: 'Monthly', icon: 'calendar_month' },
+  { key: 'yearly',  label: 'Yearly',  icon: 'cake' },
 ];
 
 // "Today" surface for the routine page — the action view. The date-picker
@@ -162,7 +162,7 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSave
         <div className="routine-today-empty">
           {isViewToday
             ? 'Your routine is clear today. Take the win.'
-            : 'Nothing on your routine for this day.'}
+            : 'Quiet day — nothing scheduled.'}
         </div>
       ) : (
         BUCKETS.map((bucket) => {
@@ -173,7 +173,12 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSave
           ).length;
           return (
             <div key={bucket.key} className="routine-today-group">
-              <h3 className="routine-today-group-label">{bucket.label}</h3>
+              <h3 className="routine-today-group-label">
+                <span className="material-icons routine-today-group-icon">
+                  {bucket.icon}
+                </span>
+                {bucket.label}
+              </h3>
               <div className="routine-today-list">
                 {list.map((mission) => (
                   <MissionCardCondensed

@@ -5,6 +5,8 @@
   margin: 0 auto;
   padding: var(--space-lg) var(--space-xl);
   padding-bottom: 100px;
+  min-height: 100vh;
+  background: var(--color-bg-main);
   font-family: var(--font-family);
 }
 
@@ -18,7 +20,7 @@
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
   padding-bottom: var(--space-md);
-  border-bottom: 2px solid var(--color-border);
+  border-bottom: 2px solid var(--color-border-yellow);
 }
 
 .routines-home-btn {

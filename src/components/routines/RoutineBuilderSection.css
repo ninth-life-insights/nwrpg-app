@@ -134,9 +134,19 @@
   color: var(--color-text-dark);
 }
 
+.routine-builder-group-icon,
+.routine-builder-group-icon.material-icons {
+  font-size: 22px;
+  color: #d97706 !important;
+  flex-shrink: 0;
+}
+
+/* Warm yellow-tinted count pill — picks up the cream/yellow theme used on
+   the profile + daily missions cards, so the routine builder visually
+   belongs to the same family. */
 .routine-builder-group-count {
-  background: var(--color-border);
-  color: var(--color-text-medium);
+  background: var(--color-border-yellow);
+  color: #92400e;
   font-size: var(--font-size-xs);
   font-weight: 600;
   padding: 1px var(--space-sm);
@@ -164,8 +174,9 @@
 }
 
 .routine-builder-group-add:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background: var(--color-bg-main);
+  border-color: var(--color-border-yellow);
+  color: #92400e;
 }
 
 .routine-builder-group-add,
@@ -184,10 +195,20 @@
 
 /* Empty bucket — dimmed treatment so it doesn't compete visually with active
    buckets but stays discoverable for the cadence model. */
-.routine-builder-group.is-empty .routine-builder-group-label,
-.routine-builder-group.is-empty .routine-builder-group-count {
+.routine-builder-group.is-empty .routine-builder-group-label {
   color: var(--color-text-light);
   opacity: 0.7;
+}
+
+.routine-builder-group.is-empty .routine-builder-group-count {
+  background: var(--color-border);
+  color: var(--color-text-light);
+  opacity: 0.7;
+}
+
+.routine-builder-group.is-empty .routine-builder-group-icon,
+.routine-builder-group.is-empty .routine-builder-group-icon.material-icons {
+  opacity: 0.45;
 }
 
 .routine-builder-group.is-empty .routine-builder-group-add,

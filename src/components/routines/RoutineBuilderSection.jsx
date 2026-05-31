@@ -39,10 +39,10 @@ import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './RoutineBuilderSection.css';
 
 const BUCKETS = [
-  { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily' },
-  { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly' },
-  { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly' },
-  { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly' },
+  { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily',   icon: 'wb_sunny' },
+  { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly',  icon: 'view_week' },
+  { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly', icon: 'calendar_month' },
+  { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  icon: 'cake' },
 ];
 
 // Sentinel for the "no specific room" filter option — selects missions with
@@ -288,6 +288,7 @@ const RoutineBuilderSection = ({
           key={bucket.key}
           bucketKey={bucket.key}
           label={bucket.label}
+          icon={bucket.icon}
           missions={grouped[bucket.key]}
           collapsed={collapsedBuckets.has(bucket.key)}
           onToggleCollapsed={() => toggleCollapsed(bucket.key)}
@@ -329,6 +330,7 @@ const RoutineBuilderSection = ({
 const FrequencyGroup = ({
   bucketKey,
   label,
+  icon,
   missions,
   collapsed,
   onToggleCollapsed,
@@ -367,6 +369,11 @@ const FrequencyGroup = ({
               aria-hidden="true"
             >
               expand_more
+            </span>
+          )}
+          {icon && (
+            <span className="material-icons routine-builder-group-icon" aria-hidden="true">
+              {icon}
             </span>
           )}
           <h3 className="routine-builder-group-label">{label}</h3>
