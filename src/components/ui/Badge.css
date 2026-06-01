@@ -15,7 +15,9 @@
 .badge-skill,
 .badge-recurrence,
 .badge-quest,
-.badge-quest-card {
+.badge-quest-card,
+.badge-routine,
+.badge-routine-paused {
   text-transform: none !important; /* Override to use normal casing */
 }
 
@@ -65,6 +67,23 @@
 .badge-skill {
   background-color: #f3e8ff;
   color: #7c3aed;
+  font-size: 12px;
+}
+
+/* Variant: Routine — small purple tag identifying a mission as part of the
+   user's routine. Picks up the same palette family as the home routine
+   card so the routine concept reads consistently across surfaces. */
+.badge-routine {
+  background-color: #ede9fe;
+  color: #5b21b6;
+  font-size: 12px;
+}
+
+/* Variant: Routine paused — muted treatment so a paused routine item looks
+   visibly "out of the picture" while still marked as a routine member. */
+.badge-routine-paused {
+  background-color: #e5e7eb;
+  color: #6b7280;
   font-size: 12px;
 }
 

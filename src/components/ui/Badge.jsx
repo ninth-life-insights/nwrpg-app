@@ -19,6 +19,15 @@ const Badge = ({
   if (!icon && variant === 'evergreen') {
     defaultIcon = 'all_inclusive';
   }
+
+  // Routine variants — small purple tag identifying a mission as part of
+  // the user's routine. Paused variant uses a muted gray + pause glyph.
+  if (!icon && variant === 'routine') {
+    defaultIcon = 'loop';
+  }
+  if (!icon && variant === 'routine-paused') {
+    defaultIcon = 'pause_circle_outline';
+  }
   
   // Handle difficulty stars
   if (!icon && variant === 'difficulty' && difficulty) {
