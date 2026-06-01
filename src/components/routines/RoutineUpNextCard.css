@@ -10,8 +10,8 @@
    land, this is a single-file swap. */
 
 .routine-up-next {
-  background: #ffedd5;
-  border: 2px solid #d97706;
+  background: #e8e1f5;
+  border: none;
   border-radius: var(--radius-lg);
   padding: var(--space-md);
   margin: var(--space-md) 0;
@@ -31,40 +31,51 @@
   width: 100%;
   background: none;
   border: none;
+  outline: none;
   padding: 0;
   cursor: pointer;
   text-align: left;
   font-family: var(--font-family);
-  color: #92400e;
+  color: #000000;
   transition: color var(--transition);
 }
 
+.routine-up-next-header:focus-visible {
+  outline: 2px solid #5b21b6;
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .routine-up-next-header:hover {
-  color: #78350f;
+  color: #4c1d95;
 }
 
 .routine-up-next-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
+  padding-left: var(--space-sm);
 }
 
 .routine-up-next-arrow,
 .routine-up-next-arrow.material-icons {
   font-size: 20px;
-  color: #92400e !important;
+  color: #5b21b6 !important;
 }
 
 .routine-up-next-header:hover .routine-up-next-arrow,
 .routine-up-next-header:hover .routine-up-next-arrow.material-icons {
-  color: #78350f !important;
+  color: #4c1d95 !important;
 }
 
 /* Make the wrapped mission card sit cleanly inside the outer wrapper —
-   zero out its own margin so the outer padding controls spacing. */
+   zero out its own margin so the outer padding controls spacing, and
+   swap its cream background to white so it pops against the colored
+   wrapper as the "content" inside the container. Yellow border on the
+   card stays, so it still reads as part of the mission-card family. */
 .routine-up-next .mission-card-condensed {
   margin: 0;
+  background-color: var(--color-bg-white);
 }
 
 /* "+N more" sits inline next to the chevron in the header so the slot
@@ -79,7 +90,7 @@
 .routine-up-next-more {
   font-size: var(--font-size-xs);
   font-weight: 600;
-  color: #92400e;
+  color: #5b21b6;
   text-transform: none;
   letter-spacing: 0;
 }
@@ -93,21 +104,21 @@
   justify-content: center;
   gap: var(--space-xs);
   width: 100%;
-  background: #ffedd5;
-  border: 2px solid #d97706;
+  background: #e5ddf0;
+  border: 1px solid #c4b5fd;
   border-radius: var(--radius-lg);
   padding: var(--space-sm) var(--space-md);
   margin: var(--space-md) 0;
   cursor: pointer;
   text-align: center;
   font-family: var(--font-family);
-  color: #92400e;
+  color: #5b21b6;
   transition: color var(--transition), background var(--transition);
   box-shadow: var(--shadow-card);
 }
 
 .routine-up-next-link:hover {
-  color: #78350f;
+  color: #4c1d95;
 }
 
 .routine-up-next-link-label {
@@ -118,7 +129,7 @@
 .routine-up-next-link-arrow,
 .routine-up-next-link-arrow.material-icons {
   font-size: 18px;
-  color: #92400e !important;
+  color: #5b21b6 !important;
 }
 
 .routine-up-next-link--clear .routine-up-next-link-label {

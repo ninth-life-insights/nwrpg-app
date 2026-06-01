@@ -106,7 +106,7 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
         className="routine-up-next-header"
         onClick={() => navigate('/routines')}
       >
-        <span className="routine-up-next-label">Next up in your routine</span>
+        <span className="routine-up-next-label">Today's Routine</span>
         <span className="routine-up-next-header-end">
           {remainingCount > 0 && (
             <span className="routine-up-next-more">+{remainingCount} more</span>
