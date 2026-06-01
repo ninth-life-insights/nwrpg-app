@@ -10,7 +10,7 @@
    land, this is a single-file swap. */
 
 .routine-up-next {
-  background: #e8e1f5;
+  background: #eae5f1;
   border: none;
   border-radius: var(--radius-lg);
   padding: var(--space-md);
@@ -36,18 +36,13 @@
   cursor: pointer;
   text-align: left;
   font-family: var(--font-family);
-  color: #000000;
-  transition: color var(--transition);
+  color: var(--color-text-dark);
 }
 
 .routine-up-next-header:focus-visible {
-  outline: 2px solid #5b21b6;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
-}
-
-.routine-up-next-header:hover {
-  color: #4c1d95;
 }
 
 .routine-up-next-label {
@@ -60,12 +55,7 @@
 .routine-up-next-arrow,
 .routine-up-next-arrow.material-icons {
   font-size: 20px;
-  color: #5b21b6 !important;
-}
-
-.routine-up-next-header:hover .routine-up-next-arrow,
-.routine-up-next-header:hover .routine-up-next-arrow.material-icons {
-  color: #4c1d95 !important;
+  color: var(--color-text-dark) !important;
 }
 
 /* Make the wrapped mission card sit cleanly inside the outer wrapper —
@@ -90,7 +80,7 @@
 .routine-up-next-more {
   font-size: var(--font-size-xs);
   font-weight: 600;
-  color: #5b21b6;
+  color: var(--color-text-dark);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -112,13 +102,13 @@
   cursor: pointer;
   text-align: center;
   font-family: var(--font-family);
-  color: #5b21b6;
+  color: var(--color-primary);
   transition: color var(--transition), background var(--transition);
   box-shadow: var(--shadow-card);
 }
 
 .routine-up-next-link:hover {
-  color: #4c1d95;
+  color: var(--color-primary-hover);
 }
 
 .routine-up-next-link-label {
@@ -129,7 +119,7 @@
 .routine-up-next-link-arrow,
 .routine-up-next-link-arrow.material-icons {
   font-size: 18px;
-  color: #5b21b6 !important;
+  color: var(--color-primary) !important;
 }
 
 .routine-up-next-link--clear .routine-up-next-link-label {

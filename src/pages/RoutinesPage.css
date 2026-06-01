@@ -10,7 +10,7 @@
   padding: var(--space-lg) var(--space-xl);
   padding-bottom: 100px;
   min-height: 100vh;
-  background: var(--color-bg-main);
+  background: #eae5f1;
   font-family: var(--font-family);
 }
 
