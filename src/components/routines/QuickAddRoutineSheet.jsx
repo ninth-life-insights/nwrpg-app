@@ -77,10 +77,10 @@ const buildRecurrence = (frequency, startDate, interval = 1) => ({
   nextDueDate: null,
 });
 
-// Which frequencies surface an interval stepper in the sheet. Daily and
-// yearly skip — daily intervals (every-3-days) are rare enough to live in
-// the edit flow, yearly almost always means interval=1.
+// Which frequencies surface an interval stepper in the sheet. Yearly skips —
+// yearly almost always means interval=1.
 const INTERVAL_UNITS = {
+  [RECURRENCE_PATTERNS.DAILY]: 'days',
   [RECURRENCE_PATTERNS.WEEKLY]: 'weeks',
   [RECURRENCE_PATTERNS.MONTHLY]: 'months',
 };
@@ -151,10 +151,13 @@ const QuickAddRoutineSheet = ({
 
     const offsetMatch = offsetOptions?.find((o) => o.value === startOffset);
     const startLabel = offsetMatch ? offsetMatch.label : 'Today';
+    const intervalLabel = intervalUnit && interval > 1
+      ? `Every ${interval} ${intervalUnit}`
+      : null;
 
     try {
       const newId = await createMission(currentUser.uid, missionData, { routineId });
-      setAddedMissions((prev) => [...prev, { id: newId, title, startLabel }]);
+      setAddedMissions((prev) => [...prev, { id: newId, title, startLabel, intervalLabel }]);
       setInputValue('');
       onAdded?.();
     } catch (err) {
@@ -256,6 +259,9 @@ const QuickAddRoutineSheet = ({
                 return (
                   <li key={m.id} className="quick-add-list-item">
                     <span className="quick-add-list-title">{m.title}</span>
+                    {m.intervalLabel && (
+                      <span className="quick-add-list-interval">{m.intervalLabel}</span>
+                    )}
                     {m.startLabel && m.startLabel !== 'Today' && (
                       <span className="quick-add-list-date">{m.startLabel}</span>
                     )}
