@@ -84,6 +84,12 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
         className="routine-up-next-link routine-up-next-link--paused"
         onClick={() => navigate('/routines')}
       >
+        <span
+          className="material-icons routine-up-next-link-leading-icon"
+          aria-hidden="true"
+        >
+          pause_circle
+        </span>
         <span className="routine-up-next-link-label">
           Routine paused until {resumeLabel}
         </span>

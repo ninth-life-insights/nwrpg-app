@@ -9,6 +9,7 @@
   
   /* Backgrounds */
   --color-bg-main: #fefce8;        /* Your main card background */
+    --color-bg-secondary: #eae5f1;     /* Dusty lavender new secondary bg */
   --color-bg-white: #ffffff;
   --color-bg-overlay: rgba(0, 0, 0, 0.5);
   

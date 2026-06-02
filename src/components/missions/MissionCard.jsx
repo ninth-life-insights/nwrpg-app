@@ -25,6 +25,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
+import { useRoutines } from '../../contexts/RoutineContext';
+import { isMissionInRoutineSet } from '../../utils/routineHelpers';
 import './MissionCard.css';
 
 const MissionCard = ({
@@ -39,15 +41,22 @@ const MissionCard = ({
   hideDailyBadge = false,
   hideRoomBadge = false,
   hideQuestIndicator = false,
+  hideRoutineBadge = false,
   onRecentlyCompletedUpdated = null,
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
+  const { routineRootSet, pausedRootSet } = useRoutines();
   const isDailyMission = useIsDailyMission(mission.id);
   const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const quest = mission.questId ? questsMap[mission.questId] ?? null : null;
+  const isRoutineMember = isMissionInRoutineSet(mission, routineRootSet);
+  const isRoutinePausedMember =
+    isRoutineMember &&
+    pausedRootSet &&
+    pausedRootSet.has(mission.parentMissionId || mission.id);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
   const [yesterdayLoading, setYesterdayLoading] = useState(false);
@@ -246,7 +255,16 @@ const MissionCard = ({
             {isDailyMission && !hideDailyBadge && (
               <Badge variant="daily">Daily</Badge>
             )}
-            
+
+            {/* Routine badge */}
+            {isRoutineMember && !hideRoutineBadge && (
+              isRoutinePausedMember ? (
+                <Badge variant="routine-paused">Routine paused</Badge>
+              ) : (
+                <Badge variant="routine">Routine</Badge>
+              )
+            )}
+
             {/* Recurrence badge */}
             {isRecurring && (
               <Badge variant="recurrence">

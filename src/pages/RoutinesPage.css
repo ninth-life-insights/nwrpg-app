@@ -11,7 +11,7 @@
   padding: var(--space-lg) var(--space-xl);
   padding-bottom: 120px;
   min-height: 100vh;
-  background: #eae5f1;
+  background: var(--color-bg-secondary);
   font-family: var(--font-family);
 }
 

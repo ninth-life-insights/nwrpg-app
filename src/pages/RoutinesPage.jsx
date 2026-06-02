@@ -127,7 +127,7 @@ const RoutinesPage = () => {
             onSaved={refresh}
           />
 
-          <StickyFooter bgColor="#eae5f1">
+          <StickyFooter bgColor="var(--color-bg-secondary)">
             <button
               type="button"
               className="routines-open-builder-btn"

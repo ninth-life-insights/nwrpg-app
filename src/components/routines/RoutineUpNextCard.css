@@ -10,7 +10,7 @@
    land, this is a single-file swap. */
 
 .routine-up-next {
-  background: #eae5f1;
+  background: var(--color-bg-secondary);
   border: none;
   border-radius: var(--radius-lg);
   padding: var(--space-md);
@@ -141,6 +141,15 @@
 .routine-up-next-link--paused .routine-up-next-link-arrow,
 .routine-up-next-link--paused .routine-up-next-link-arrow.material-icons {
   color: var(--color-text-medium) !important;
+}
+
+/* Leading pause icon for the paused state — sits before the label to give
+   immediate visual recognition that the routine is currently paused. */
+.routine-up-next-link-leading-icon,
+.routine-up-next-link-leading-icon.material-icons {
+  font-size: 20px;
+  color: var(--color-text-medium) !important;
+  margin-right: var(--space-xs);
 }
 
 .routine-up-next--loading {
