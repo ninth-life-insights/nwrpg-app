@@ -57,14 +57,15 @@ const resolveStartDate = (frequency, offsetValue) => {
   return match ? match.add() : dayjs();
 };
 
-// Build a v1 default recurrence shape from a frequency. Interval is always 1;
-// users refine atypical cadences ("every 3 days") via the existing edit flow.
-// Monthly captures the start-date's day-of-month so the cadence stays stable
-// against the chosen start, even when staggered (e.g. "+1 month" lands on the
-// same day-of-month as today).
-const buildRecurrence = (frequency, startDate) => ({
+// Build a recurrence shape from a frequency + interval. Monthly captures the
+// start-date's day-of-month so the cadence stays stable against the chosen
+// start, even when staggered (e.g. "+1 month" lands on the same day-of-month
+// as today). Interval defaults to 1; for weekly/monthly the quick-add sheet
+// surfaces a stepper so the user can capture "every 2 weeks" / "every 3
+// months" inline without dropping into the edit flow.
+const buildRecurrence = (frequency, startDate, interval = 1) => ({
   pattern: frequency,
-  interval: 1,
+  interval: Math.max(1, interval || 1),
   weekdays: [],
   monthlyMode: 'dayOfMonth',
   dayOfMonth: frequency === RECURRENCE_PATTERNS.MONTHLY ? startDate.date() : null,
@@ -75,6 +76,14 @@ const buildRecurrence = (frequency, startDate) => ({
   parentMissionId: null,
   nextDueDate: null,
 });
+
+// Which frequencies surface an interval stepper in the sheet. Daily and
+// yearly skip — daily intervals (every-3-days) are rare enough to live in
+// the edit flow, yearly almost always means interval=1.
+const INTERVAL_UNITS = {
+  [RECURRENCE_PATTERNS.WEEKLY]: 'weeks',
+  [RECURRENCE_PATTERNS.MONTHLY]: 'months',
+};
 
 // Per-bucket quick-capture sheet for adding recurring routine tasks. The
 // "session" is the open lifetime of the sheet: skill and room are locked
@@ -100,6 +109,7 @@ const QuickAddRoutineSheet = ({
   const [skill, setSkill] = useState(defaultSkill || '');
   const [roomId, setRoomId] = useState(defaultRoomId || '');
   const [startOffset, setStartOffset] = useState('today');
+  const [interval, setInterval] = useState(1);
   const [inputValue, setInputValue] = useState('');
   const [addedMissions, setAddedMissions] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -108,6 +118,7 @@ const QuickAddRoutineSheet = ({
   const inputRef = useRef(null);
 
   const offsetOptions = START_OFFSETS[frequency] || null;
+  const intervalUnit = INTERVAL_UNITS[frequency] || null;
 
   useModalBackButton(true, onClose);
 
@@ -135,7 +146,7 @@ const QuickAddRoutineSheet = ({
       dueDate: startString,
       baseLocation: roomId || null,
       skill: skill || null,
-      recurrence: buildRecurrence(frequency, startDate),
+      recurrence: buildRecurrence(frequency, startDate, interval),
     });
 
     const offsetMatch = offsetOptions?.find((o) => o.value === startOffset);
@@ -281,6 +292,23 @@ const QuickAddRoutineSheet = ({
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {intervalUnit && (
+            <div className="quick-add-interval-row">
+              <span className="quick-add-interval-label">Every</span>
+              <select
+                className="quick-add-interval-select"
+                value={interval}
+                onChange={(e) => setInterval(Number(e.target.value))}
+                aria-label={`Every N ${intervalUnit}`}
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span className="quick-add-interval-unit">{intervalUnit}</span>
             </div>
           )}
 

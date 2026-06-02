@@ -236,6 +236,40 @@
   color: white;
 }
 
+/* Interval picker — sits below the start chips for weekly/monthly. Inline
+   "Every [N] weeks" row so the user can capture biweekly / quarterly
+   cadences without dropping into the full edit flow. */
+.quick-add-interval-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.quick-add-interval-label,
+.quick-add-interval-unit {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.quick-add-interval-select {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-white);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dark);
+  cursor: pointer;
+  min-width: 56px;
+}
+
+.quick-add-interval-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
 /* In-session list of just-added tasks. Lightweight rows — title + minus.
    Order matters: list sits BETWEEN the session controls and the input so
    each new entry pushes down into the input's natural eye line. */

@@ -283,16 +283,24 @@ export const findNextOccurrenceOnOrAfter = (fromDateInput, recurrence) => {
 };
 
 // Resume a single mission's dueDate after a routine pause. Branches on
-// recurrence pattern: short-cycle (daily/weekly/monthly) snaps to the next
-// natural occurrence, long-cycle (yearly) shifts forward by the pause
-// duration so the task doesn't disappear for a full year.
+// recurrence pattern: short-cycle (daily/weekly/monthly) walks the
+// recurrence forward FROM THE MISSION'S CURRENT DUEDATE until landing on or
+// after the resume date, so cycle anchors (every-N-weeks, every-N-months)
+// are respected. Long-cycle (yearly) shifts forward by the pause duration
+// so the task doesn't disappear for a full year.
 //
 //   mission         — routine member mission with an active dueDate
 //   resumeDate      — the day pause ended (string or dayjs)
-//   shiftDays       — number of days the pause covered
+//   shiftDays       — number of days the pause covered (used for yearly only)
 //
 // Returns a YYYY-MM-DD string. If pattern is unrecognized, returns today
 // as a defensive default.
+//
+// Why iterate from mission.dueDate (not from resumeDate): for interval > 1
+// (biweekly, quarterly, etc.), the cadence is anchored to the original
+// dueDate. Resuming on a matching weekday that doesn't align with the
+// every-N-weeks rhythm would silently shift the cycle. Walking forward
+// from dueDate via calculateNextDueDate preserves the anchor.
 export const recalcDueDateForResume = (mission, resumeDate, shiftDays) => {
   if (!mission || !mission.recurrence) {
     return dayjs(resumeDate).format('YYYY-MM-DD');
@@ -307,11 +315,32 @@ export const recalcDueDateForResume = (mission, resumeDate, shiftDays) => {
     return current.add(shiftDays, 'day').format('YYYY-MM-DD');
   }
 
-  // Daily / Weekly / Monthly → snap to the next natural occurrence on or
-  // after resume. Cycle-aware so the cadence pattern is respected.
-  const next = findNextOccurrenceOnOrAfter(resume, mission.recurrence);
-  if (next) return next;
+  // Daily / Weekly / Monthly → walk the recurrence forward from the
+  // mission's current dueDate until landing on or after resume.
+  if (!mission.dueDate || mission.dueDate === '') {
+    // No anchor to walk from — fall back to resume-relative snap.
+    const snapped = findNextOccurrenceOnOrAfter(resume, mission.recurrence);
+    return snapped || resume.format('YYYY-MM-DD');
+  }
 
-  // Custom / unknown patterns → safe default: due today on resume.
-  return resume.format('YYYY-MM-DD');
+  let current = dayjs(mission.dueDate).startOf('day');
+  // If already on or after resume, no change needed (mission was scheduled
+  // ahead of the pause window).
+  if (!current.isBefore(resume, 'day')) {
+    return current.format('YYYY-MM-DD');
+  }
+
+  let safety = 0;
+  while (current.isBefore(resume, 'day') && safety++ < 1000) {
+    const next = calculateNextDueDate(
+      current.format('YYYY-MM-DD'),
+      mission.recurrence
+    );
+    if (!next) break;
+    const nextDate = dayjs(next).startOf('day');
+    if (!nextDate.isAfter(current, 'day')) break; // defensive: avoid infinite loop on stuck pattern
+    current = nextDate;
+  }
+
+  return current.format('YYYY-MM-DD');
 };
