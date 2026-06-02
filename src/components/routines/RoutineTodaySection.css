@@ -197,26 +197,6 @@
   cursor: default;
 }
 
-/* Pause routine link — quiet text link below the today content, only shown
-   when not paused. Subordinate to the cards above, not competing for action
-   weight. */
-.routine-today-pause-link {
-  background: none;
-  border: none;
-  align-self: center;
-  padding: var(--space-xs) var(--space-sm);
-  color: var(--color-text-light);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: color var(--transition);
-  margin-top: var(--space-sm);
-}
-
-.routine-today-pause-link:hover {
-  color: var(--color-primary);
-}
-
 /* Bucket-level "skip this bucket to tomorrow" action. Subtle, link-styled —
    appears below the items, not competing with the cards visually. Only
    rendered when viewing today AND the bucket has at least one active item. */

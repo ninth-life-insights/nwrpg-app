@@ -16,6 +16,7 @@ import SignupPage from './pages/auth/SignupPage';
 import CharacterCreationPage from './pages/character/CharacterCreationPage';
 
 import HomePage from './pages/HomePage';
+import HomePageSandbox from './pages/HomePageSandbox';
 import EditDailyMissionsPage from './pages/missions/EditDailyMissionsPage';
 import DailyReviewPage from './pages/reviews/DailyReviewPage';
 import AdventureLogPage from './pages/reviews/AdventureLogPage';
@@ -69,6 +70,7 @@ function AppContent() {
         <Route path="/sign-up" element={<PublicRoute><SignupPage /></PublicRoute>} />
         <Route path="/character-creation" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/home-sandbox" element={<ProtectedRoute><HomePageSandbox /></ProtectedRoute>} />
         <Route path="/edit-daily-missions" element={<ProtectedRoute><EditDailyMissionsPage /></ProtectedRoute>} />
         <Route path="/daily-review" element={<ProtectedRoute><DailyReviewPage /></ProtectedRoute>} />
         <Route path="/mission-bank" element={<ProtectedRoute><MissionBankPage /></ProtectedRoute>} />

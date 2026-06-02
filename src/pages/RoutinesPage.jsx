@@ -1,30 +1,47 @@
 // src/pages/RoutinesPage.jsx
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoutines } from '../contexts/RoutineContext';
-import { getOrCreateDefaultRoutine } from '../services/routineService';
+import {
+  getOrCreateDefaultRoutine,
+  isRoutinePaused,
+} from '../services/routineService';
 import { DEFAULT_ROUTINE_ID } from '../types/Routine';
 import {
   getActiveMissions,
   getCompletedMissionsSince,
 } from '../services/missionService';
 import RoutineTodaySection from '../components/routines/RoutineTodaySection';
+import PauseRoutineDialog from '../components/routines/PauseRoutineDialog';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import PageHeader from '../components/ui/PageHeader';
+import StickyFooter from '../components/ui/StickyFooter';
 import './RoutinesPage.css';
 
 // /routines is the action surface — today's items only. Builder lives on its
-// own page at /routine-builder, accessible via the header manage button.
+// own page at /routine-builder, accessible via the prominent primary CTA.
+// Pause sits in the page header as a small icon-and-label action so it's
+// always discoverable on first load.
 const RoutinesPage = () => {
   const { currentUser } = useAuth();
-  const { routineRootSet, routineOrderMap, refreshRoutines } = useRoutines();
+  const { routines, routineRootSet, routineOrderMap, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
 
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [showPauseDialog, setShowPauseDialog] = useState(false);
+  const [pauseDialogInitial, setPauseDialogInitial] = useState(null);
+
+  // Pause state for the default routine — drives header action visibility
+  // and the today section's paused-state branch.
+  const defaultRoutine = useMemo(
+    () => routines.find((r) => r.id === DEFAULT_ROUTINE_ID) || null,
+    [routines]
+  );
+  const paused = !!defaultRoutine && isRoutinePaused(defaultRoutine);
 
   const refresh = useCallback(async () => {
     if (!currentUser) return;
@@ -63,20 +80,27 @@ const RoutinesPage = () => {
     initialLoad();
   }, [initialLoad]);
 
+  const openPauseDialog = (initial = null) => {
+    setPauseDialogInitial(initial);
+    setShowPauseDialog(true);
+  };
+
   return (
     <div className="routines-page">
       <PageHeader
         title="Routines"
         onBack={() => navigate('/home')}
         action={
-          <button
-            type="button"
-            className="routines-edit-btn"
-            onClick={() => navigate('/routine-builder')}
-          >
-            <span className="material-icons">edit</span>
-            Edit routine
-          </button>
+          !paused && !loading && (
+            <button
+              type="button"
+              className="routines-pause-btn"
+              onClick={() => openPauseDialog(null)}
+            >
+              <span className="material-icons">pause_circle</span>
+              Pause
+            </button>
+          )
         }
       />
 
@@ -93,12 +117,35 @@ const RoutinesPage = () => {
       )}
 
       {!loading && !loadError && (
-        <RoutineTodaySection
-          missions={missions}
-          routineRootSet={routineRootSet}
-          routineOrderMap={routineOrderMap}
+        <>
+          <RoutineTodaySection
+            missions={missions}
+            routineRootSet={routineRootSet}
+            routineOrderMap={routineOrderMap}
+            routineId={DEFAULT_ROUTINE_ID}
+            onOpenPauseDialog={openPauseDialog}
+            onSaved={refresh}
+          />
+
+          <StickyFooter bgColor="#eae5f1">
+            <button
+              type="button"
+              className="routines-open-builder-btn"
+              onClick={() => navigate('/routine-builder')}
+            >
+              <span className="material-icons">build</span>
+              Open Routine Builder
+            </button>
+          </StickyFooter>
+        </>
+      )}
+
+      {showPauseDialog && (
+        <PauseRoutineDialog
           routineId={DEFAULT_ROUTINE_ID}
-          onSaved={refresh}
+          initialDate={pauseDialogInitial}
+          onClose={() => setShowPauseDialog(false)}
+          onPaused={refresh}
         />
       )}
     </div>

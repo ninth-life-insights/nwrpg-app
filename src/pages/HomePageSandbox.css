@@ -1,0 +1,646 @@
+/* src/pages/HomePageSandbox.css */
+/* Temporary sandbox styles. Verbatim duplicate of HomePage.css, with every
+   selector scoped under .home-sandbox-page so that visual experiments here
+   don't leak into the production HomePage (which shares many class names
+   like .profile-section, .section-title, etc.). */
+
+.home-sandbox-page {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  font-family: var(--font-family);
+  padding: var(--space-md);
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.home-sandbox-page .loading {
+  text-align: center;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-lg);
+  margin: var(--space-xl) 0;
+}
+
+/* Header */
+.home-sandbox-page .homepage-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 44px 44px;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.home-sandbox-page .header-button {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-xs);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-dark);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  justify-content: center;
+  min-height: 44px;
+}
+
+.home-sandbox-page .header-button:hover {
+  background: #f9fafb;
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.home-sandbox-page .header-button svg {
+  color: var(--color-text-medium);
+  width: 18px;
+  height: 18px;
+}
+
+.home-sandbox-page .settings-button,
+.home-sandbox-page .adventure-log-button {
+  width: 44px;
+  height: 44px;
+  justify-content: center;
+  padding: var(--space-xs);
+}
+
+.home-sandbox-page .settings-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.home-sandbox-page .material-icons {
+  font-size: 16px;
+  color: #4c4b50;
+}
+
+.home-sandbox-page .material-icons-outlined {
+  font-family: 'Material Icons Outlined';
+  font-size: 24px;
+  color: #4c4b50;
+}
+
+.home-sandbox-page .material-icons-light {
+  font-family: 'Material Icons Outlined';
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 100;
+}
+
+/* Profile Section */
+.home-sandbox-page .profile-section {
+  background: var(--color-bg-white);
+  border: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  box-shadow: var(--shadow-card);
+}
+
+.home-sandbox-page .profile-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.home-sandbox-page .avatar-container {
+  flex-shrink: 0;
+}
+
+.home-sandbox-page .character-avatar {
+  width: 120px;
+  height: 130px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.home-sandbox-page .character-avatar-image {
+  width: 120px;
+  height: 130px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+  display: block;
+}
+
+.home-sandbox-page .avatar-class {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: var(--space-xs);
+}
+
+.home-sandbox-page .profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-sandbox-page .character-name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  margin: 0 0 var(--space-xs) 0;
+  line-height: 1.2;
+}
+
+.home-sandbox-page .character-title {
+  font-size: var(--font-size-sm) !important;
+  font-style: italic !important;
+  color: var(--color-text-medium);
+  margin: 0 0 var(--space-sm) 0;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.home-sandbox-page .level-info {
+  margin-bottom: var(--space-xs);
+}
+
+.home-sandbox-page .current-level {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.home-sandbox-page .xp-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.home-sandbox-page .xp-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.home-sandbox-page .xp-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.home-sandbox-page .xp-counter {
+  font-size: 11px;
+  color: var(--color-text-medium);
+  font-weight: 500;
+}
+
+/* Daily Missions Section */
+.home-sandbox-page .daily-missions-section {
+  background: var(--color-bg-white);
+  border: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md) var(--space-xs);
+  box-shadow: var(--shadow-card);
+}
+
+.home-sandbox-page .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.home-sandbox-page .section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.home-sandbox-page .edit-button {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs);
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--color-text-medium);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-sandbox-page .edit-button:hover {
+  background: #f9fafb;
+  color: var(--color-text-dark);
+}
+
+.home-sandbox-page .missions-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: var(--space-sm);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.home-sandbox-page .missions-overview .mission-card,
+.home-sandbox-page .missions-overview .mission-card-condensed {
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: var(--space-sm) 0;
+}
+
+.home-sandbox-page .mission-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: #f9fafb;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.home-sandbox-page .mission-item.completed {
+  opacity: 0.7;
+  background: #e5e7eb;
+}
+
+.home-sandbox-page .mission-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.home-sandbox-page .mission-item.completed .mission-checkbox {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+
+.home-sandbox-page .mission-checkbox svg {
+  width: 10px;
+  height: 10px;
+}
+
+.home-sandbox-page .checkbox-empty {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+.home-sandbox-page .mission-title {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dark);
+  font-weight: 500;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.home-sandbox-page .mission-item.completed .mission-title {
+  text-decoration: line-through;
+  color: var(--color-text-light);
+}
+
+.home-sandbox-page .no-missions {
+  text-align: center;
+  padding: var(--space-lg);
+  background: #f9fafb;
+  border-radius: var(--radius-md);
+  color: var(--color-text-medium);
+}
+
+.home-sandbox-page .no-missions p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.home-sandbox-page .no-missions p:first-child {
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+/* Action Buttons */
+.home-sandbox-page .action-buttons {
+  display: flex !important;
+  gap: var(--space-sm);
+}
+
+.home-sandbox-page .action-button {
+  flex: 1 !important;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 40px;
+  position: relative;
+}
+
+.home-sandbox-page .notification-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.home-sandbox-page .action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.home-sandbox-page .action-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.home-sandbox-page .action-button.primary {
+  background: var(--color-primary);
+}
+
+.home-sandbox-page .action-button.primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.home-sandbox-page .action-button.secondary {
+  background: var(--color-text-light);
+}
+
+.home-sandbox-page .action-button.secondary:hover {
+  background: var(--color-text-medium);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .home-sandbox-page {
+    padding: var(--space-sm);
+    gap: var(--space-md);
+  }
+}
+
+
+/* ── Home shortcuts row (Skills + Achievements + Base widget) ─── */
+
+.home-sandbox-page .home-shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  align-items: stretch;
+}
+
+.home-sandbox-page .home-shortcut-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.home-sandbox-page .home-shortcut-btn {
+  flex: 1;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 40px;
+}
+
+.home-sandbox-page .home-shortcut-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.home-sandbox-page .home-base-widget {
+  background: var(--color-bg-white);
+  border: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-sm) var(--space-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  text-align: center;
+}
+
+.home-sandbox-page .home-base-widget:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.home-sandbox-page .home-base-widget--has-image {
+  display: flex;
+  flex-direction: row;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+}
+
+.home-sandbox-page .home-base-widget-icon-img {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  align-self: center;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-left: var(--space-sm);
+}
+
+.home-sandbox-page .home-base-widget-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.home-sandbox-page .home-base-widget--has-image .home-base-widget-content {
+  align-self: center;
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-sm);
+  gap: var(--space-xs);
+}
+
+.home-sandbox-page .home-base-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.home-sandbox-page .home-base-widget--has-image .home-base-widget-header {
+  justify-content: flex-start;
+  margin-bottom: 0;
+}
+
+.home-sandbox-page .home-base-widget-header .material-icons {
+  font-size: 18px;
+  color: var(--color-text-medium);
+}
+
+.home-sandbox-page .home-base-widget-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.home-sandbox-page .home-base-stats {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--space-xs);
+}
+
+.home-sandbox-page .home-base-widget--has-image .home-base-stats {
+  gap: 0;
+}
+
+.home-sandbox-page .home-base-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.home-sandbox-page .home-base-stat-number {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  line-height: 1;
+}
+
+.home-sandbox-page .home-base-stat-number--late {
+  color: #ef4444;
+}
+
+.home-sandbox-page .home-base-stat-label {
+  font-size: 10px;
+  color: var(--color-text-medium);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Weekly review badge dot ─────────────────────────────────── */
+
+.home-sandbox-page .header-button--weekly-ready {
+  border-color: var(--color-primary);
+  position: relative;
+}
+
+.home-sandbox-page .header-weekly-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-warning, #f59e0b);
+  border: 1.5px solid var(--color-bg-white);
+  pointer-events: none;
+}
+
+/* ── Weekly review bottom sheet ──────────────────────────────── */
+
+.home-sandbox-page .review-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.home-sandbox-page .review-sheet {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-xl) var(--space-lg) calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
+  width: 100%;
+  max-width: var(--max-width-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.home-sandbox-page .review-sheet-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+  text-align: center;
+}
+
+.home-sandbox-page .review-sheet-sub {
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
+  margin: 0;
+  text-align: center;
+}
+
+.home-sandbox-page .review-sheet-primary-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background var(--transition);
+}
+
+.home-sandbox-page .review-sheet-primary-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+.home-sandbox-page .review-sheet-secondary-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--space-xs) 0;
+  text-align: center;
+  transition: color var(--transition);
+}
+
+.home-sandbox-page .review-sheet-secondary-btn:hover {
+  color: var(--color-text-dark);
+}

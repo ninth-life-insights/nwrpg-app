@@ -1,29 +1,30 @@
 /* src/pages/RoutinesPage.css
    Shared by RoutinesPage (today view) and RoutineBuilderPage (builder view)
    via the .routines-page class. Page header is rendered by the shared
-   PageHeader component; this file owns only the page-wrapper and the
-   page-specific right-action button. */
+   PageHeader component; this file owns the page-wrapper, the page-header
+   action ("Pause" button), and the prominent "Open Routine Builder"
+   primary CTA that sits at the top of the today content. */
 
 .routines-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--space-lg) var(--space-xl);
-  padding-bottom: 100px;
+  padding-bottom: 120px;
   min-height: 100vh;
   background: #eae5f1;
   font-family: var(--font-family);
 }
 
-/* "Edit routine" pill in the page header — caller-supplied via PageHeader's
-   action prop. Pill shape, icon + label, neutral background, warm-tinted
-   hover so it blends with the routine page's cream theme. */
-.routines-edit-btn {
+/* Pause action in the page header — secondary chrome treatment so it doesn't
+   compete with the primary builder CTA below. Icon + short label so it's
+   discoverable at a glance from the top of the screen. */
+.routines-pause-btn {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
   height: 40px;
   padding: 0 var(--space-md);
-  background: #f8f9fa;
+  background: var(--color-bg-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
@@ -32,23 +33,63 @@
   transition: all var(--transition);
 }
 
-.routines-edit-btn:hover {
-  background: var(--color-bg-main);
-  border-color: var(--color-border-yellow);
+.routines-pause-btn:hover {
+  background: #f3f4f6;
+  border-color: var(--color-text-light);
 }
 
-.routines-edit-btn,
-.routines-edit-btn .material-icons {
+.routines-pause-btn,
+.routines-pause-btn .material-icons {
   color: var(--color-text-medium) !important;
 }
 
-.routines-edit-btn:hover,
-.routines-edit-btn:hover .material-icons {
-  color: #92400e !important;
+.routines-pause-btn:hover,
+.routines-pause-btn:hover .material-icons {
+  color: var(--color-text-dark) !important;
 }
 
-.routines-edit-btn .material-icons {
+.routines-pause-btn .material-icons {
   font-size: 18px;
+}
+
+/* Primary "Open Routine Builder" CTA — lives inside the StickyFooter at
+   the bottom of the page, so it's always visible regardless of scroll
+   position. Matches the app's sticky footer pattern (e.g. EditDailyMissionsPage,
+   SettingsPage, CharacterCreationPage). */
+.routines-open-builder-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  box-shadow: var(--shadow-card);
+}
+
+.routines-open-builder-btn:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.routines-open-builder-btn:active {
+  transform: translateY(0);
+}
+
+.routines-open-builder-btn,
+.routines-open-builder-btn .material-icons {
+  color: white !important;
+}
+
+.routines-open-builder-btn .material-icons {
+  font-size: 20px;
 }
 
 .routines-loading {

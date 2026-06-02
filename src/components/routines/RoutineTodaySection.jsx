@@ -6,7 +6,6 @@ import MissionCardCondensed from '../missions/MissionCardCondensed';
 import AchievementToast from '../achievements/AchievementToast';
 import DatePickerPill from '../ui/DatePickerPill';
 import ErrorMessage from '../ui/ErrorMessage';
-import PauseRoutineDialog from './PauseRoutineDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useRoutines } from '../../contexts/RoutineContext';
@@ -39,7 +38,14 @@ const BUCKETS = [
 // "switch the day I'm looking at" affordance across the app. Today's view
 // also surfaces completed-today items so progress through the day stays
 // visible.
-const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, routineId, onSaved }) => {
+const RoutineTodaySection = ({
+  missions,
+  routineRootSet,
+  routineOrderMap,
+  routineId,
+  onOpenPauseDialog,
+  onSaved,
+}) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
   const { routines, pausedRootSet, refreshRoutines } = useRoutines();
@@ -47,8 +53,6 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, routin
   const [actionError, setActionError] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
   const [viewDate, setViewDate] = useState(() => dayjs().format('YYYY-MM-DD'));
-  const [showPauseDialog, setShowPauseDialog] = useState(false);
-  const [pauseDialogInitial, setPauseDialogInitial] = useState(null);
   const [resuming, setResuming] = useState(false);
   const todayString = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
   const isViewToday = viewDate === todayString;
@@ -163,11 +167,6 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, routin
     }
   };
 
-  const openPauseDialog = (initial = null) => {
-    setPauseDialogInitial(initial);
-    setShowPauseDialog(true);
-  };
-
   return (
     <section className="routine-today">
       <div className="routine-today-header">
@@ -196,7 +195,7 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, routin
             <button
               type="button"
               className="routine-today-paused-btn-secondary"
-              onClick={() => openPauseDialog(routine.pausedUntil)}
+              onClick={() => onOpenPauseDialog?.(routine.pausedUntil)}
               disabled={resuming}
             >
               Change end date
@@ -272,29 +271,10 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, routin
         })
       )}
 
-      {!paused && !hasNoRoutineYet && isViewToday && (
-        <button
-          type="button"
-          className="routine-today-pause-link"
-          onClick={() => openPauseDialog(null)}
-        >
-          Pause routine →
-        </button>
-      )}
-
       <AchievementToast
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
-
-      {showPauseDialog && (
-        <PauseRoutineDialog
-          routineId={routineId}
-          initialDate={pauseDialogInitial}
-          onClose={() => setShowPauseDialog(false)}
-          onPaused={onSaved}
-        />
-      )}
     </section>
   );
 };
