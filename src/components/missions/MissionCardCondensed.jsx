@@ -15,8 +15,10 @@ import {
 } from '../../utils/dateHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
+import { useRoutines } from '../../contexts/RoutineContext';
 import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import { isMissionInRoutineSet } from '../../utils/routineHelpers';
 import dayjs from 'dayjs';
 import './MissionCardCondensed.css';
 
@@ -27,14 +29,21 @@ const MissionCardCondensed = ({
   readOnly = false,
   actionSlot = null,
   hideRecurrenceBadge = false,
+  hideRoutineBadge = false,
   onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
+  const { routineRootSet, pausedRootSet } = useRoutines();
   const isDailyMission = useIsDailyMission(mission.id);
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
+  const isRoutineMember = isMissionInRoutineSet(mission, routineRootSet);
+  const isRoutinePausedMember =
+    isRoutineMember &&
+    pausedRootSet &&
+    pausedRootSet.has(mission.parentMissionId || mission.id);
   const titleRef = useRef(null);
   const [titleMinWidth, setTitleMinWidth] = useState(150);
   const [showXpBadge, setShowXpBadge] = useState(false);
@@ -145,6 +154,13 @@ const MissionCardCondensed = ({
               </button>
             ) : (
               <>
+                {isRoutineMember && !hideRoutineBadge && (
+                  isRoutinePausedMember ? (
+                    <Badge variant="routine-paused">Routine paused</Badge>
+                  ) : (
+                    <Badge variant="routine">Routine</Badge>
+                  )
+                )}
                 {isRecurring && !hideRecurrenceBadge && (
                   <Badge variant="recurrence">{recurrenceText}</Badge>
                 )}

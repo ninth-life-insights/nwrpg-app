@@ -35,8 +35,12 @@ export const ROUTINE_SCHEMA = {
   canDelete: true,                 // boolean - default routine has false
   status: ROUTINE_STATUS.ACTIVE,   // string - ACTIVE | DELETED
 
-  // Pause/skip — declared in v1 schema, behavior in v2
+  // Pause / vacation mode. When pausedUntil is set and >= today, the routine
+  // is hidden across routine surfaces. pausedSince records when the pause
+  // was applied so resume can shift long-cycle (yearly) tasks forward by the
+  // actual pause duration.
   pausedUntil: null,               // string | null - 'YYYY-MM-DD' (local time, dayjs)
+  pausedSince: null,               // string | null - 'YYYY-MM-DD' (when pause was set)
 
   // Timestamps
   createdAt: null,                 // Timestamp

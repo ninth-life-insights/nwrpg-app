@@ -8,7 +8,9 @@ import {
   uncompleteMission,
   completeMissionWithRecurrence,
 } from '../../services/missionService';
+import { isRoutinePaused } from '../../services/routineService';
 import { getRoutineMissionsForDate } from '../../utils/routineHelpers';
+import { fromDateString } from '../../utils/dateHelpers';
 import { MISSION_STATUS } from '../../types/Mission';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
 import './RoutineUpNextCard.css';
@@ -28,11 +30,18 @@ import './RoutineUpNextCard.css';
 const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
-  const { routineRootSet, routineOrderMap } = useRoutines();
+  const { routines, routineRootSet, routineOrderMap, pausedRootSet } = useRoutines();
   const navigate = useNavigate();
 
   const loading = missions === null;
   const hasNoRoutineYet = !loading && routineRootSet.size === 0;
+
+  // First paused routine (v1 has a single default routine, so this is "the"
+  // routine if it's paused). Drives the paused-state render branch.
+  const pausedRoutine = useMemo(
+    () => routines.find((r) => isRoutinePaused(r)) || null,
+    [routines]
+  );
 
   const todayActive = useMemo(() => {
     if (!missions) return [];
@@ -40,10 +49,11 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
       missions,
       routineRootSet,
       undefined,
-      routineOrderMap
+      routineOrderMap,
+      pausedRootSet
     );
     return items.filter((m) => m.status === MISSION_STATUS.ACTIVE);
-  }, [missions, routineRootSet, routineOrderMap]);
+  }, [missions, routineRootSet, routineOrderMap, pausedRootSet]);
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     try {
@@ -64,6 +74,24 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
 
   if (loading) {
     return <div className="routine-up-next routine-up-next--loading" aria-hidden="true" />;
+  }
+
+  if (pausedRoutine) {
+    const resumeLabel = fromDateString(pausedRoutine.pausedUntil).format('ddd, MMM D');
+    return (
+      <button
+        type="button"
+        className="routine-up-next-link routine-up-next-link--paused"
+        onClick={() => navigate('/routines')}
+      >
+        <span className="routine-up-next-link-label">
+          Routine paused until {resumeLabel}
+        </span>
+        <span className="material-icons routine-up-next-link-arrow" aria-hidden="true">
+          chevron_right
+        </span>
+      </button>
+    );
   }
 
   if (hasNoRoutineYet) {
@@ -119,6 +147,7 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
       <MissionCardCondensed
         mission={nextUp}
         hideRecurrenceBadge
+        hideRoutineBadge
         onToggleComplete={handleToggleComplete}
         onMissionChanged={onMissionChanged}
       />

@@ -6,17 +6,24 @@ import MissionCardCondensed from '../missions/MissionCardCondensed';
 import AchievementToast from '../achievements/AchievementToast';
 import DatePickerPill from '../ui/DatePickerPill';
 import ErrorMessage from '../ui/ErrorMessage';
+import PauseRoutineDialog from './PauseRoutineDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useRoutines } from '../../contexts/RoutineContext';
 import {
   uncompleteMission,
   completeMissionWithRecurrence,
   updateMission,
 } from '../../services/missionService';
 import {
+  resumeRoutine,
+  isRoutinePaused,
+} from '../../services/routineService';
+import {
   getRoutineMissionsForDate,
   groupRoutineMissionsByFrequency,
 } from '../../utils/routineHelpers';
+import { fromDateString } from '../../utils/dateHelpers';
 import { MISSION_STATUS } from '../../types/Mission';
 import './RoutineTodaySection.css';
 
@@ -32,19 +39,30 @@ const BUCKETS = [
 // "switch the day I'm looking at" affordance across the app. Today's view
 // also surfaces completed-today items so progress through the day stays
 // visible.
-const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSaved }) => {
+const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, routineId, onSaved }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
+  const { routines, pausedRootSet, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
   const [actionError, setActionError] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
   const [viewDate, setViewDate] = useState(() => dayjs().format('YYYY-MM-DD'));
+  const [showPauseDialog, setShowPauseDialog] = useState(false);
+  const [pauseDialogInitial, setPauseDialogInitial] = useState(null);
+  const [resuming, setResuming] = useState(false);
   const todayString = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
   const isViewToday = viewDate === todayString;
 
+  // Find the routine being displayed (default for v1) and its pause state.
+  const routine = useMemo(
+    () => routines.find((r) => r.id === routineId) || null,
+    [routines, routineId]
+  );
+  const paused = !!routine && isRoutinePaused(routine);
+
   const viewMissions = useMemo(
-    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate, routineOrderMap),
-    [missions, routineRootSet, viewDate, routineOrderMap]
+    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet),
+    [missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet]
   );
 
   const groupedView = useMemo(
@@ -129,6 +147,27 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSave
 
   const hasNoRoutineYet = routineRootSet.size === 0;
 
+  const handleResumeNow = async () => {
+    if (resuming) return;
+    setResuming(true);
+    setActionError(null);
+    try {
+      await resumeRoutine(currentUser.uid, routineId);
+      await refreshRoutines();
+      await onSaved?.();
+    } catch (err) {
+      console.error('Resume routine failed:', err);
+      setActionError("Resuming didn't go through. Try again.");
+    } finally {
+      setResuming(false);
+    }
+  };
+
+  const openPauseDialog = (initial = null) => {
+    setPauseDialogInitial(initial);
+    setShowPauseDialog(true);
+  };
+
   return (
     <section className="routine-today">
       <div className="routine-today-header">
@@ -137,14 +176,42 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSave
           onChange={setViewDate}
           heading="View day..."
         />
-        {subtitleText && (
+        {!paused && subtitleText && (
           <p className="routine-today-subtitle">{subtitleText}</p>
         )}
       </div>
 
       {actionError && <ErrorMessage message={actionError} />}
 
-      {hasNoRoutineYet ? (
+      {paused ? (
+        <div className="routine-today-paused">
+          <span className="material-icons routine-today-paused-icon" aria-hidden="true">
+            bedtime
+          </span>
+          <h3 className="routine-today-paused-title">Routine paused</h3>
+          <p className="routine-today-paused-body">
+            Resumes {fromDateString(routine.pausedUntil).format('ddd, MMM D')}
+          </p>
+          <div className="routine-today-paused-actions">
+            <button
+              type="button"
+              className="routine-today-paused-btn-secondary"
+              onClick={() => openPauseDialog(routine.pausedUntil)}
+              disabled={resuming}
+            >
+              Change end date
+            </button>
+            <button
+              type="button"
+              className="routine-today-paused-btn-primary"
+              onClick={handleResumeNow}
+              disabled={resuming}
+            >
+              {resuming ? 'Resuming…' : 'Resume now'}
+            </button>
+          </div>
+        </div>
+      ) : hasNoRoutineYet ? (
         <div className="routine-today-onboarding">
           <h3 className="routine-today-onboarding-title">No routine yet</h3>
           <p className="routine-today-onboarding-body">
@@ -185,6 +252,7 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSave
                     key={mission.id}
                     mission={mission}
                     hideRecurrenceBadge
+                    hideRoutineBadge
                     onToggleComplete={handleToggleComplete}
                     onMissionChanged={onSaved}
                   />
@@ -204,10 +272,29 @@ const RoutineTodaySection = ({ missions, routineRootSet, routineOrderMap, onSave
         })
       )}
 
+      {!paused && !hasNoRoutineYet && isViewToday && (
+        <button
+          type="button"
+          className="routine-today-pause-link"
+          onClick={() => openPauseDialog(null)}
+        >
+          Pause routine →
+        </button>
+      )}
+
       <AchievementToast
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
       />
+
+      {showPauseDialog && (
+        <PauseRoutineDialog
+          routineId={routineId}
+          initialDate={pauseDialogInitial}
+          onClose={() => setShowPauseDialog(false)}
+          onPaused={onSaved}
+        />
+      )}
     </section>
   );
 };

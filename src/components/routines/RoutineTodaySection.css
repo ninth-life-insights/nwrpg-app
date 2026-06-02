@@ -119,6 +119,104 @@
   margin-bottom: 0;
 }
 
+/* Paused state — replaces the buckets entirely when the routine is paused.
+   Centered, calm, with explicit countdown and primary "Resume now" CTA. */
+.routine-today-paused {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.routine-today-paused-icon,
+.routine-today-paused-icon.material-icons {
+  font-size: 32px;
+  color: var(--color-text-medium) !important;
+  margin-bottom: var(--space-xs);
+}
+
+.routine-today-paused-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.routine-today-paused-body {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
+}
+
+.routine-today-paused-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.routine-today-paused-btn-secondary,
+.routine-today-paused-btn-primary {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.routine-today-paused-btn-secondary {
+  background: var(--color-bg-white);
+  color: var(--color-text-medium);
+  border: 1px solid var(--color-border);
+}
+
+.routine-today-paused-btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.routine-today-paused-btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+}
+
+.routine-today-paused-btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.routine-today-paused-btn-secondary:disabled,
+.routine-today-paused-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Pause routine link — quiet text link below the today content, only shown
+   when not paused. Subordinate to the cards above, not competing for action
+   weight. */
+.routine-today-pause-link {
+  background: none;
+  border: none;
+  align-self: center;
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition);
+  margin-top: var(--space-sm);
+}
+
+.routine-today-pause-link:hover {
+  color: var(--color-primary);
+}
+
 /* Bucket-level "skip this bucket to tomorrow" action. Subtle, link-styled —
    appears below the items, not competing with the cards visually. Only
    rendered when viewing today AND the bucket has at least one active item. */

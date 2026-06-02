@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoutines } from '../contexts/RoutineContext';
 import { getOrCreateDefaultRoutine } from '../services/routineService';
+import { DEFAULT_ROUTINE_ID } from '../types/Routine';
 import {
   getActiveMissions,
   getCompletedMissionsSince,
@@ -96,6 +97,7 @@ const RoutinesPage = () => {
           missions={missions}
           routineRootSet={routineRootSet}
           routineOrderMap={routineOrderMap}
+          routineId={DEFAULT_ROUTINE_ID}
           onSaved={refresh}
         />
       )}

@@ -408,6 +408,7 @@ const FrequencyGroup = ({
                     key={mission.id}
                     mission={mission}
                     hideRecurrenceBadge
+                    hideRoutineBadge
                     actionSlot={
                       <button
                         type="button"

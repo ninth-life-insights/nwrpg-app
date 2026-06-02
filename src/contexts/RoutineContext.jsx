@@ -1,7 +1,8 @@
 // src/contexts/RoutineContext.jsx
-import { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import dayjs from 'dayjs';
 import { useAuth } from './AuthContext';
-import { getRoutines } from '../services/routineService';
+import { getRoutines, resumeRoutine, isRoutinePaused } from '../services/routineService';
 import { getRoutineMissionRootSet } from '../utils/routineHelpers';
 import { logError } from '../utils/errorBuffer';
 
@@ -25,6 +26,10 @@ export const useRoutines = () => {
 export const RoutineProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const [routines, setRoutines] = useState([]);
+  // Guards against re-triggering an in-flight auto-resume. The routines
+  // state changes when resume completes (post-refetch), which would
+  // otherwise re-fire the effect during the brief in-flight window.
+  const autoResumeInFlight = useRef(false);
 
   const fetchRoutines = useCallback(async () => {
     if (!currentUser) return;
@@ -45,6 +50,36 @@ export const RoutineProvider = ({ children }) => {
     fetchRoutines();
   }, [currentUser, fetchRoutines]);
 
+  // Auto-resume any routine whose pausedUntil has passed. Detected on each
+  // routine fetch — when the user opens the app after a pause expires, the
+  // resume runs silently, due dates recalc, and views show the active state
+  // as if it were never paused. Idempotent: a no-pause routine won't trigger
+  // resume work.
+  useEffect(() => {
+    if (!currentUser || routines.length === 0) return;
+    if (autoResumeInFlight.current) return;
+
+    const todayStr = dayjs().format('YYYY-MM-DD');
+    const expired = routines.filter(
+      (r) => r.pausedSince && r.pausedUntil && r.pausedUntil < todayStr
+    );
+    if (expired.length === 0) return;
+
+    autoResumeInFlight.current = true;
+    (async () => {
+      for (const r of expired) {
+        try {
+          await resumeRoutine(currentUser.uid, r.id);
+        } catch (err) {
+          console.error('Auto-resume failed for routine', r.id, err);
+          logError('routine-auto-resume', err);
+        }
+      }
+      await fetchRoutines();
+      autoResumeInFlight.current = false;
+    })();
+  }, [routines, currentUser, fetchRoutines]);
+
   const routineRootSet = useMemo(() => getRoutineMissionRootSet(routines), [routines]);
 
   // Chain-root-id → position. Built from each routine's missionChainIds in
@@ -64,12 +99,28 @@ export const RoutineProvider = ({ children }) => {
     return map;
   }, [routines]);
 
+  // Chain roots whose routine is currently paused. Routine surfaces (today
+  // view, home next-up card, future projections) filter these out so the
+  // user doesn't see items from a routine she's intentionally muted.
+  const pausedRootSet = useMemo(() => {
+    const set = new Set();
+    for (const r of routines) {
+      if (!isRoutinePaused(r)) continue;
+      if (!Array.isArray(r.missionChainIds)) continue;
+      for (const id of r.missionChainIds) {
+        if (id) set.add(id);
+      }
+    }
+    return set;
+  }, [routines]);
+
   return (
     <RoutineContext.Provider
       value={{
         routines,
         routineRootSet,
         routineOrderMap,
+        pausedRootSet,
         refreshRoutines: fetchRoutines,
       }}
     >

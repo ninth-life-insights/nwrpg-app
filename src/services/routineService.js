@@ -8,11 +8,14 @@ import {
   getDocs,
   setDoc,
   query,
+  where,
   orderBy,
   serverTimestamp,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  writeBatch
 } from 'firebase/firestore';
+import dayjs from 'dayjs';
 import { db } from './firebase/config';
 import {
   ROUTINE_STATUS,
@@ -20,6 +23,7 @@ import {
   DEFAULT_ROUTINE_NAME,
   MAX_MISSIONS_PER_ROUTINE
 } from '../types/Routine';
+import { recalcDueDateForResume } from '../utils/routineHelpers';
 
 const getUserRoutinesRef = (userId) =>
   collection(db, 'users', userId, 'routines');
@@ -217,6 +221,139 @@ export const reorderRoutineMissions = async (userId, routineId, orderedChainRoot
   });
 
   return { success: true };
+};
+
+// Pause the routine until a given date (YYYY-MM-DD). Hides the routine
+// across surfaces until that date passes. Also stamps pausedSince = today
+// so resume math can shift long-cycle (yearly) tasks by the actual pause
+// duration without catapulting them a full year out.
+//
+// Validation:
+//   - pausedUntilDate must parse as a valid date
+//   - must be strictly after today (today as end date would degenerate to
+//     a no-op pause)
+export const pauseRoutine = async (userId, routineId, pausedUntilDate) => {
+  if (!pausedUntilDate) {
+    throw new Error('pausedUntilDate is required');
+  }
+  const until = dayjs(pausedUntilDate);
+  if (!until.isValid()) {
+    throw new Error('pausedUntilDate must be a valid date');
+  }
+  const today = dayjs().startOf('day');
+  if (!until.isAfter(today, 'day')) {
+    throw new Error('Pause end date must be after today');
+  }
+
+  const routineRef = getRoutineRef(userId, routineId);
+  const snap = await getDoc(routineRef);
+  if (!snap.exists()) throw new Error('Routine not found');
+
+  await updateDoc(routineRef, {
+    pausedUntil: until.format('YYYY-MM-DD'),
+    pausedSince: today.format('YYYY-MM-DD'),
+    updatedAt: serverTimestamp()
+  });
+
+  return { success: true };
+};
+
+// Resume a paused routine. Clears the pause fields AND recalculates each
+// routine mission's dueDate so tasks "wake up" at the next natural occurrence
+// rather than sitting stale at their pre-pause due dates.
+//
+// Recalc strategy (see recalcDueDateForResume):
+//   - Daily / Weekly / Monthly → snap to next matching occurrence on/after
+//     today (cycle-aware)
+//   - Yearly → shift by pause duration in days (avoids pushing the task out
+//     a whole year for a short pause)
+//
+// Idempotent: calling resume on a not-paused routine just clears any stale
+// pause fields and returns without recalc. Auto-resume callers (page loads
+// detecting expired pausedUntil) can rely on this safely.
+export const resumeRoutine = async (userId, routineId) => {
+  const routineRef = getRoutineRef(userId, routineId);
+  const snap = await getDoc(routineRef);
+  if (!snap.exists()) throw new Error('Routine not found');
+
+  const routine = snap.data();
+  const pausedSince = routine.pausedSince;
+  const chainRootIds = Array.isArray(routine.missionChainIds)
+    ? routine.missionChainIds
+    : [];
+
+  // No pause to resume from (or nothing to recalc) — just clear any stale
+  // pause fields and bail.
+  if (!pausedSince || chainRootIds.length === 0) {
+    await updateDoc(routineRef, {
+      pausedUntil: null,
+      pausedSince: null,
+      updatedAt: serverTimestamp()
+    });
+    return { success: true, missionsUpdated: 0 };
+  }
+
+  // Fetch all active missions and filter to routine members. Firestore can't
+  // cleanly OR across parentMissionId and id in a single query, so we do the
+  // chain-root resolution client-side.
+  const missionsRef = collection(db, 'users', userId, 'missions');
+  const activeQ = query(missionsRef, where('status', '==', 'active'));
+  const missionsSnap = await getDocs(activeQ);
+  const activeMissions = missionsSnap.docs.map((d) => ({
+    id: d.id,
+    ...d.data()
+  }));
+
+  const chainRootSet = new Set(chainRootIds);
+  const routineMissions = activeMissions.filter((m) => {
+    const root = m.parentMissionId || m.id;
+    return chainRootSet.has(root);
+  });
+
+  const today = dayjs().startOf('day');
+  const since = dayjs(pausedSince).startOf('day');
+  const shiftDays = Math.max(0, today.diff(since, 'day'));
+
+  // Recalc each routine mission's dueDate and pack the writes into a single
+  // batch with the pause-clear update on the routine doc, so resume is
+  // atomic from the user's point of view.
+  const batch = writeBatch(db);
+  let updated = 0;
+  for (const m of routineMissions) {
+    const newDueDate = recalcDueDateForResume(m, today, shiftDays);
+    if (newDueDate && newDueDate !== m.dueDate) {
+      const missionRef = doc(db, 'users', userId, 'missions', m.id);
+      batch.update(missionRef, {
+        dueDate: newDueDate,
+        updatedAt: serverTimestamp()
+      });
+      updated++;
+    }
+  }
+
+  batch.update(routineRef, {
+    pausedUntil: null,
+    pausedSince: null,
+    updatedAt: serverTimestamp()
+  });
+
+  await batch.commit();
+
+  return { success: true, missionsUpdated: updated };
+};
+
+// Convenience: is this routine currently paused (pausedUntil is set and
+// has not yet been reached)? Caller passes the routine doc directly; this
+// is a pure check, not a Firestore read.
+//
+// YYYY-MM-DD strings sort lexicographically, which matches calendar order,
+// so we compare strings directly without parsing through dayjs.
+export const isRoutinePaused = (routine, asOfDate = null) => {
+  if (!routine || !routine.pausedUntil) return false;
+  const todayStr = asOfDate
+    ? dayjs(asOfDate).format('YYYY-MM-DD')
+    : dayjs().format('YYYY-MM-DD');
+  return routine.pausedUntil >= todayStr;
 };
 
 // Batch-add multiple chain roots in one update. Used by the routine builder's

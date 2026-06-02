@@ -5,6 +5,7 @@ import {
   isRecurringMission,
   RECURRENCE_PATTERNS,
   calculateNextDueDate,
+  getNthWeekdayOfMonth,
 } from './recurrenceHelpers';
 
 // Resolve the "chain root" mission ID for a mission. Recurring missions form a
@@ -118,7 +119,13 @@ export const makeRoutineSortComparator = (orderMap) => (a, b) => {
 //
 // Defensive type filter: missions that are no longer `recurring` (e.g. user
 // flipped dueType post-membership) are silently dropped via isRecurringMission.
-export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput, orderMap = null) => {
+export const getRoutineMissionsForDate = (
+  missions,
+  rootSet,
+  viewDateInput,
+  orderMap = null,
+  pausedRootSet = null
+) => {
   if (!Array.isArray(missions) || !rootSet) return [];
 
   const today = dayjs().startOf('day');
@@ -127,12 +134,22 @@ export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput, orde
     : today;
   const isToday = viewDate.isSame(today, 'day');
 
+  // Paused chain roots are excluded from all routine view filters. Today
+  // view, future projection, home next-up card — all hide a paused
+  // routine's items until pause ends and auto-resume re-schedules them.
+  const isPausedMember = (m) => {
+    if (!pausedRootSet || pausedRootSet.size === 0) return false;
+    const root = getMissionChainRoot(m);
+    return root != null && pausedRootSet.has(root);
+  };
+
   if (isToday) {
     return missions
       .filter((m) => {
         if (!m) return false;
         if (!isRecurringMission(m)) return false;
         if (!isMissionInRoutineSet(m, rootSet)) return false;
+        if (isPausedMember(m)) return false;
 
         if (m.status === MISSION_STATUS.ACTIVE) {
           if (!m.dueDate || m.dueDate === '') return false;
@@ -156,6 +173,7 @@ export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput, orde
       if (!m || m.status !== MISSION_STATUS.ACTIVE) return false;
       if (!isRecurringMission(m)) return false;
       if (!isMissionInRoutineSet(m, rootSet)) return false;
+      if (isPausedMember(m)) return false;
       if (!m.dueDate || m.dueDate === '') return false;
 
       let current = dayjs(m.dueDate).startOf('day');
@@ -185,3 +203,115 @@ export const getRoutineMissionsForDate = (missions, rootSet, viewDateInput, orde
 // this; the date-aware version is preferred for new code.
 export const getTodaysRoutineMissions = (missions, rootSet) =>
   getRoutineMissionsForDate(missions, rootSet, dayjs());
+
+// Given a starting date and a recurrence config, find the first valid
+// occurrence on or after that date. Used by routine resume to "wake up"
+// short-cycle tasks (daily/weekly/monthly) at the next natural occurrence
+// rather than catapulting them forward by the pause duration.
+//
+// Yearly is NOT handled here — callers should use simple-shift for yearly so
+// a 1-week pause doesn't push a yearly task an entire year out. See
+// recalcDueDateForResume below.
+export const findNextOccurrenceOnOrAfter = (fromDateInput, recurrence) => {
+  if (!recurrence || !recurrence.pattern) return null;
+  const from = dayjs(fromDateInput).startOf('day');
+  const { pattern, weekdays = [], dayOfMonth, monthlyMode } = recurrence;
+
+  switch (pattern) {
+    case RECURRENCE_PATTERNS.DAILY:
+    case 'daily':
+      return from.format('YYYY-MM-DD');
+
+    case RECURRENCE_PATTERNS.WEEKLY: {
+      if (!Array.isArray(weekdays) || weekdays.length === 0) {
+        // No specific weekdays → treat resume as the new cycle start
+        return from.format('YYYY-MM-DD');
+      }
+      // Scan today + next 6 days for the first matching weekday
+      for (let i = 0; i < 7; i++) {
+        const candidate = from.add(i, 'day');
+        if (weekdays.includes(candidate.day())) {
+          return candidate.format('YYYY-MM-DD');
+        }
+      }
+      // Defensive fallback (shouldn't reach)
+      return from.format('YYYY-MM-DD');
+    }
+
+    case RECURRENCE_PATTERNS.MONTHLY: {
+      // Day-of-week mode (e.g. "2nd Tuesday of the month"). Find the matching
+      // weekday this month; if it's already passed, jump to next month.
+      if (
+        monthlyMode === 'dayOfWeek' &&
+        recurrence.weekOfMonth != null &&
+        recurrence.weekdayOfMonth != null
+      ) {
+        const thisMonth = getNthWeekdayOfMonth(
+          from,
+          recurrence.weekOfMonth,
+          recurrence.weekdayOfMonth
+        );
+        if (!thisMonth.isBefore(from, 'day')) {
+          return thisMonth.format('YYYY-MM-DD');
+        }
+        const nextMonth = getNthWeekdayOfMonth(
+          from.add(1, 'month'),
+          recurrence.weekOfMonth,
+          recurrence.weekdayOfMonth
+        );
+        return nextMonth.format('YYYY-MM-DD');
+      }
+      // Day-of-month mode (default). If today.date() <= dayOfMonth and that
+      // day exists in the current month, use it. Otherwise next month's
+      // matching day (clamped to that month's length).
+      if (!dayOfMonth) return from.format('YYYY-MM-DD');
+      const thisMonthClamped = Math.min(dayOfMonth, from.daysInMonth());
+      if (from.date() <= thisMonthClamped) {
+        return from.date(thisMonthClamped).format('YYYY-MM-DD');
+      }
+      const nextMonth = from.add(1, 'month');
+      const nextMonthClamped = Math.min(dayOfMonth, nextMonth.daysInMonth());
+      return nextMonth.date(nextMonthClamped).format('YYYY-MM-DD');
+    }
+
+    default:
+      // Yearly, custom, or unknown — caller decides. Return null so the
+      // recalc function knows to fall through to the simple-shift branch
+      // (or whatever the caller wants for unhandled patterns).
+      return null;
+  }
+};
+
+// Resume a single mission's dueDate after a routine pause. Branches on
+// recurrence pattern: short-cycle (daily/weekly/monthly) snaps to the next
+// natural occurrence, long-cycle (yearly) shifts forward by the pause
+// duration so the task doesn't disappear for a full year.
+//
+//   mission         — routine member mission with an active dueDate
+//   resumeDate      — the day pause ended (string or dayjs)
+//   shiftDays       — number of days the pause covered
+//
+// Returns a YYYY-MM-DD string. If pattern is unrecognized, returns today
+// as a defensive default.
+export const recalcDueDateForResume = (mission, resumeDate, shiftDays) => {
+  if (!mission || !mission.recurrence) {
+    return dayjs(resumeDate).format('YYYY-MM-DD');
+  }
+  const pattern = mission.recurrence.pattern;
+  const resume = dayjs(resumeDate).startOf('day');
+
+  // Yearly → simple shift by pause duration. A short pause on a yearly task
+  // should delay it by ~the pause length, not push it out a whole year.
+  if (pattern === RECURRENCE_PATTERNS.YEARLY || pattern === 'yearly') {
+    const current = dayjs(mission.dueDate || resume).startOf('day');
+    return current.add(shiftDays, 'day').format('YYYY-MM-DD');
+  }
+
+  // Daily / Weekly / Monthly → snap to the next natural occurrence on or
+  // after resume. Cycle-aware so the cadence pattern is respected.
+  const next = findNextOccurrenceOnOrAfter(resume, mission.recurrence);
+  if (next) return next;
+
+  // Custom / unknown patterns → safe default: due today on resume.
+  return resume.format('YYYY-MM-DD');
+};
