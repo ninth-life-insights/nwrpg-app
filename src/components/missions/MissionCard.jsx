@@ -256,15 +256,6 @@ const MissionCard = ({
               <Badge variant="daily">Daily</Badge>
             )}
 
-            {/* Routine badge */}
-            {isRoutineMember && !hideRoutineBadge && (
-              isRoutinePausedMember ? (
-                <Badge variant="routine-paused">Routine paused</Badge>
-              ) : (
-                <Badge variant="routine">Routine</Badge>
-              )
-            )}
-
             {/* Recurrence badge */}
             {isRecurring && (
               <Badge variant="recurrence">
@@ -282,6 +273,15 @@ const MissionCard = ({
               <Badge variant={`due-${dueDateInfo.status}`}>
                 {dueDateInfo.display}
               </Badge>
+            )}
+
+            {/* Routine badge */}
+            {isRoutineMember && !hideRoutineBadge && (
+              isRoutinePausedMember ? (
+                <Badge variant="routine-paused">Routine paused</Badge>
+              ) : (
+                <Badge variant="routine">Routine</Badge>
+              )
             )}
 
             {/* Room badge */}

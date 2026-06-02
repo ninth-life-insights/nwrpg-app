@@ -154,18 +154,18 @@ const MissionCardCondensed = ({
               </button>
             ) : (
               <>
+                {isRecurring && !hideRecurrenceBadge && (
+                  <Badge variant="recurrence">{recurrenceText}</Badge>
+                )}
+                {dueDateInfo && (
+                  <Badge variant={`due-${dueDateInfo.status}`}>{dueDateInfo.display}</Badge>
+                )}
                 {isRoutineMember && !hideRoutineBadge && (
                   isRoutinePausedMember ? (
                     <Badge variant="routine-paused">Routine paused</Badge>
                   ) : (
                     <Badge variant="routine">Routine</Badge>
                   )
-                )}
-                {isRecurring && !hideRecurrenceBadge && (
-                  <Badge variant="recurrence">{recurrenceText}</Badge>
-                )}
-                {dueDateInfo && (
-                  <Badge variant={`due-${dueDateInfo.status}`}>{dueDateInfo.display}</Badge>
                 )}
                 <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
                 {missionHasSkill && (
