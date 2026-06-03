@@ -1,5 +1,6 @@
 // src/components/routines/RoutineBuilderSection.jsx
 import { useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
   PointerSensor,
@@ -66,6 +67,7 @@ const RoutineBuilderSection = ({
   const { currentUser } = useAuth();
   const { rooms } = useRooms();
   const { routines, routineOrderMap, refreshRoutines } = useRoutines();
+  const navigate = useNavigate();
 
   const [roomFilter, setRoomFilter] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
@@ -274,6 +276,14 @@ const RoutineBuilderSection = ({
         >
           <span className="material-icons">playlist_add</span>
           Add existing tasks
+        </button>
+        <button
+          type="button"
+          className="routine-builder-cta"
+          onClick={() => navigate('/routine-builder/week-view')}
+        >
+          <span className="material-icons">view_week</span>
+          Week view
         </button>
       </div>
 

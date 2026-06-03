@@ -1,0 +1,120 @@
+/* src/components/routines/RoutineWeekGrid.css
+   Workload heatmap for weekly-pattern routine tasks. Seven columns wide,
+   ordered by the user's chosen weekStartDay. Each column tints based on
+   how loaded it is so overload is visible at a glance. */
+
+.routine-week-grid {
+  width: 100%;
+}
+
+.routine-week-grid.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.routine-week-grid-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: var(--font-size-base);
+  max-width: 320px;
+  padding: 0 var(--space-lg);
+}
+
+/* Grid is a 7-column equal-width track. On narrow viewports cells get
+   skinny — pills truncate via ellipsis rather than wrapping the whole
+   layout. The grid scrolls vertically with the page, not horizontally;
+   we accept narrow columns for the at-a-glance heatmap read. */
+.routine-week-grid-columns {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-xs);
+  align-items: stretch;
+}
+
+.routine-week-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 240px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+/* Heatmap tiers. Background tint scales with count so a heavy column
+   reads "hot" without needing legend labels. Tints use the theme primary
+   at low opacity so they sit with the rest of the page. */
+.routine-week-col.tier-empty {
+  background: var(--color-bg-white);
+}
+.routine-week-col.tier-light {
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-white));
+}
+.routine-week-col.tier-medium {
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-bg-white));
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+}
+.routine-week-col.tier-heavy {
+  background: color-mix(in srgb, var(--color-primary) 28%, var(--color-bg-white));
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+}
+
+.routine-week-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.routine-week-col-day {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.routine-week-col-count {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  min-width: 18px;
+  text-align: right;
+}
+
+.routine-week-col.tier-heavy .routine-week-col-count,
+.routine-week-col.tier-medium .routine-week-col-count {
+  color: var(--color-text-dark);
+}
+
+.routine-week-col-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-xs);
+  min-width: 0;
+}
+
+/* Task pill — title only in Phase 1. Truncates with ellipsis on overflow
+   so even very narrow columns don't break the grid. */
+.routine-week-pill {
+  padding: 4px var(--space-xs);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
