@@ -60,15 +60,16 @@
 }
 
 /* Each row: weekday label rail on the left, pills wrap on the right.
-   flex: 1 share = 1 day's worth of vertical space. min-height is the
-   floor below which a row will overflow rather than squish — short
-   viewports (e.g. iPhone SE) hit it and accept a small scroll. */
+   flex-basis: auto means each row's natural size is its content — a
+   1-pill row stays compact, a wrapping row grows. flex-grow distributes
+   excess viewport space equally so the dashboard fills without making
+   light rows artificially tall. */
 .routine-week-row {
   display: grid;
   grid-template-columns: 72px 1fr;
   align-items: stretch;
-  flex: 1 1 0;
-  min-height: 64px;
+  flex: 1 1 auto;
+  min-height: 56px;
   border-radius: var(--radius-lg);
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);
@@ -149,15 +150,17 @@
 
 /* Weekend pair — Sat + Sun share a row when adjacent in the display
    order. Two equal halves separated by a hairline. No outer tint on
-   the pair itself; each half tints independently. Gets 2x the flex
-   share of a single row so it carries the visual volume of two days. */
+   the pair itself; each half tints independently. Gets 2x the flex-grow
+   share of a single row so excess viewport space distributes correctly
+   (the pair represents two days). Basis is content so a quiet weekend
+   stays compact, a busy one expands. */
 .routine-week-row-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
   align-items: stretch;
-  flex: 2 1 0;
-  min-height: 128px;
+  flex: 2 1 auto;
+  min-height: 112px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background: var(--color-bg-white);

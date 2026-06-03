@@ -278,7 +278,6 @@ const RoutineWeekGrid = ({
 
 const DayRow = ({ dayNum, missions }) => {
   const tier = getHeatmapTier(missions.length);
-  const growShare = Math.min(3, Math.max(1, missions.length));
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${dayNum}`,
     data: { dayNum },
@@ -289,7 +288,6 @@ const DayRow = ({ dayNum, missions }) => {
       className={`routine-week-row tier-${tier} ${isOver ? 'is-drop-target' : ''}`}
       role="listitem"
       aria-label={`${DAY_LONG[dayNum]}, ${missions.length} ${missions.length === 1 ? 'task' : 'tasks'}`}
-      style={{ flexGrow: growShare }}
     >
       <div className="routine-week-row-label">
         <span className="routine-week-row-day">{DAY_SHORT[dayNum]}</span>
@@ -313,13 +311,11 @@ const DayRow = ({ dayNum, missions }) => {
 };
 
 const WeekendPairRow = ({ satMissions, sunMissions }) => {
-  const growShare = Math.min(6, Math.max(2, satMissions.length + sunMissions.length));
   return (
     <div
       className="routine-week-row-pair"
       role="listitem"
       aria-label="Weekend"
-      style={{ flexGrow: growShare }}
     >
       <WeekendHalf dayNum={6} missions={satMissions} />
       <WeekendHalf dayNum={0} missions={sunMissions} />
