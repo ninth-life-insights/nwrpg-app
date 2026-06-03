@@ -1,7 +1,9 @@
 /* src/components/routines/RoutineWeekGrid.css
-   Workload heatmap for weekly-pattern routine tasks. Seven columns wide,
-   ordered by the user's chosen weekStartDay. Each column tints based on
-   how loaded it is so overload is visible at a glance. */
+   Workload heatmap for weekly-pattern routine tasks. Mobile-first stack of
+   horizontal rows — one per weekday, ordered by the user's chosen
+   weekStartDay. Sat + Sun collapse into a side-by-side "weekend pair" when
+   they're adjacent in the display order. Each row/half tints based on how
+   loaded it is so overload is visible at a glance. */
 
 .routine-week-grid {
   width: 100%;
@@ -11,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  min-height: 240px;
 }
 
 .routine-week-grid-empty {
@@ -23,95 +25,177 @@
   padding: 0 var(--space-lg);
 }
 
-/* Grid is a 7-column equal-width track. On narrow viewports cells get
-   skinny — pills truncate via ellipsis rather than wrapping the whole
-   layout. The grid scrolls vertically with the page, not horizontally;
-   we accept narrow columns for the at-a-glance heatmap read. */
-.routine-week-grid-columns {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--space-xs);
-  align-items: stretch;
-}
-
-.routine-week-col {
+.routine-week-rows {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  min-height: 240px;
-  border-radius: var(--radius-md);
+  gap: var(--space-md);
+}
+
+/* Each row: weekday label rail on the left, pills wrap on the right.
+   Generous min-height — overload should be visible spatially, but empty
+   rows still get real breathing room so the page reads calm, not cramped. */
+.routine-week-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: stretch;
+  min-height: 96px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);
   overflow: hidden;
   transition: background var(--transition), border-color var(--transition);
 }
 
-/* Heatmap tiers. Background tint scales with count so a heavy column
-   reads "hot" without needing legend labels. Tints use the theme primary
-   at low opacity so they sit with the rest of the page. */
-.routine-week-col.tier-empty {
+/* Heatmap tiers — shared between full rows and weekend halves. Tint
+   scales with count so a heavy row reads "hot" without needing a legend. */
+.routine-week-row.tier-empty,
+.routine-week-half.tier-empty {
   background: var(--color-bg-white);
 }
-.routine-week-col.tier-light {
+.routine-week-row.tier-light,
+.routine-week-half.tier-light {
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-white));
 }
-.routine-week-col.tier-medium {
+.routine-week-row.tier-medium,
+.routine-week-half.tier-medium {
   background: color-mix(in srgb, var(--color-primary) 16%, var(--color-bg-white));
   border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
 }
-.routine-week-col.tier-heavy {
+.routine-week-row.tier-heavy,
+.routine-week-half.tier-heavy {
   background: color-mix(in srgb, var(--color-primary) 28%, var(--color-bg-white));
   border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
 }
 
-.routine-week-col-header {
+.routine-week-row-label {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-xs) var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.4);
-  flex-shrink: 0;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--space-md) var(--space-sm);
+  border-right: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.45);
 }
 
-.routine-week-col-day {
+.routine-week-row-day {
   font-size: var(--font-size-xs);
   font-weight: 700;
   color: var(--color-text-medium);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
-.routine-week-col-count {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
+.routine-week-row-count {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
   color: var(--color-text-light);
-  min-width: 18px;
-  text-align: right;
+  line-height: 1;
 }
 
-.routine-week-col.tier-heavy .routine-week-col-count,
-.routine-week-col.tier-medium .routine-week-col-count {
+.routine-week-row.tier-medium .routine-week-row-count,
+.routine-week-row.tier-heavy .routine-week-row-count {
   color: var(--color-text-dark);
 }
 
-.routine-week-col-body {
-  flex: 1;
+.routine-week-row-body {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--space-xs);
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
   min-width: 0;
 }
 
-/* Task pill — title only in Phase 1. Truncates with ellipsis on overflow
-   so even very narrow columns don't break the grid. */
+/* Empty-row placeholder — a quiet dash so empty days still read as
+   "intentionally empty," not "broken." */
+.routine-week-row-empty {
+  color: var(--color-text-light);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+/* Weekend pair — Sat + Sun share a row when adjacent in the display
+   order. Two equal halves separated by a hairline. No outer tint on
+   the pair itself; each half tints independently. Height runs ~2x the
+   single-row min-height so the pair carries the visual volume of two
+   days rather than reading as a single squashed slot. */
+.routine-week-row-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  align-items: stretch;
+  min-height: 192px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-white);
+  overflow: hidden;
+}
+
+/* Each half: day label + count at the top, pills wrap below. Internal
+   layout is vertical because the halves are too narrow on mobile for a
+   side label rail. */
+.routine-week-half {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  min-width: 0;
+  transition: background var(--transition);
+}
+
+.routine-week-half + .routine-week-half {
+  border-left: 1px solid var(--color-border);
+}
+
+.routine-week-half-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.routine-week-half-day {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.routine-week-half-count {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-light);
+  line-height: 1;
+}
+
+.routine-week-half.tier-medium .routine-week-half-count,
+.routine-week-half.tier-heavy .routine-week-half-count {
+  color: var(--color-text-dark);
+}
+
+.routine-week-half-body {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+/* Task pill — title-only in Phase 1. Slightly larger font and padding
+   than a typical chip so each task feels like a real noticeable unit,
+   not a tiny tag. Long titles truncate with ellipsis. */
 .routine-week-pill {
-  padding: 4px var(--space-xs);
+  max-width: 100%;
+  padding: 6px var(--space-sm);
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-dark);
   white-space: nowrap;
   overflow: hidden;

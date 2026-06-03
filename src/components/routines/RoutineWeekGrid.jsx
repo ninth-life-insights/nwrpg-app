@@ -80,6 +80,25 @@ const RoutineWeekGrid = ({
     [missions, routineRootSet, pausedRootSet]
   );
 
+  // Collapse adjacent Sat + Sun into a single "weekend pair" row when the
+  // chosen weekStartDay puts them next to each other. With weekStartDay=Sun
+  // they're at opposite ends of the display order — pairing the bookends
+  // would feel wrong, so we just render normally.
+  const renderableRows = useMemo(() => {
+    const rows = [];
+    for (let i = 0; i < columnOrder.length; i++) {
+      const dayNum = columnOrder[i];
+      const nextDayNum = columnOrder[i + 1];
+      if (dayNum === 6 && nextDayNum === 0) {
+        rows.push({ type: 'weekend' });
+        i += 1;
+      } else {
+        rows.push({ type: 'day', dayNum });
+      }
+    }
+    return rows;
+  }, [columnOrder]);
+
   const totalCount = columnOrder.reduce((acc, d) => acc + byDay[d].length, 0);
 
   if (totalCount === 0) {
@@ -95,35 +114,100 @@ const RoutineWeekGrid = ({
 
   return (
     <div className="routine-week-grid">
-      <div className="routine-week-grid-columns" role="list">
-        {columnOrder.map((dayNum) => {
-          const list = byDay[dayNum];
-          const tier = getHeatmapTier(list.length);
+      <div className="routine-week-rows" role="list">
+        {renderableRows.map((row) => {
+          if (row.type === 'weekend') {
+            return (
+              <WeekendPairRow
+                key="weekend"
+                satMissions={byDay[6]}
+                sunMissions={byDay[0]}
+              />
+            );
+          }
           return (
-            <div
-              key={dayNum}
-              className={`routine-week-col tier-${tier}`}
-              role="listitem"
-              aria-label={`${DAY_LONG[dayNum]}, ${list.length} ${list.length === 1 ? 'task' : 'tasks'}`}
-            >
-              <div className="routine-week-col-header">
-                <span className="routine-week-col-day">{DAY_SHORT[dayNum]}</span>
-                <span className="routine-week-col-count">{list.length}</span>
-              </div>
-              <div className="routine-week-col-body">
-                {list.map((mission) => (
-                  <div
-                    key={`${dayNum}-${mission.id}`}
-                    className="routine-week-pill"
-                    title={mission.title}
-                  >
-                    {mission.title}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <DayRow
+              key={row.dayNum}
+              dayNum={row.dayNum}
+              missions={byDay[row.dayNum]}
+            />
           );
         })}
+      </div>
+    </div>
+  );
+};
+
+const DayRow = ({ dayNum, missions }) => {
+  const tier = getHeatmapTier(missions.length);
+  return (
+    <div
+      className={`routine-week-row tier-${tier}`}
+      role="listitem"
+      aria-label={`${DAY_LONG[dayNum]}, ${missions.length} ${missions.length === 1 ? 'task' : 'tasks'}`}
+    >
+      <div className="routine-week-row-label">
+        <span className="routine-week-row-day">{DAY_SHORT[dayNum]}</span>
+        <span className="routine-week-row-count">{missions.length}</span>
+      </div>
+      <div className="routine-week-row-body">
+        {missions.length === 0 ? (
+          <span className="routine-week-row-empty" aria-hidden="true">—</span>
+        ) : (
+          missions.map((mission) => (
+            <div
+              key={`${dayNum}-${mission.id}`}
+              className="routine-week-pill"
+              title={mission.title}
+            >
+              {mission.title}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Sat + Sun share a row when they sit next to each other in the column
+// order. The pair container has no tint of its own; each half tints based
+// on its own count, so a packed Saturday next to a clear Sunday still
+// reads correctly. Internal layout is label-on-top + pills-below since
+// the halves are too narrow on mobile for a side label rail.
+const WeekendPairRow = ({ satMissions, sunMissions }) => {
+  return (
+    <div className="routine-week-row-pair" role="listitem" aria-label="Weekend">
+      <WeekendHalf dayNum={6} missions={satMissions} />
+      <WeekendHalf dayNum={0} missions={sunMissions} />
+    </div>
+  );
+};
+
+const WeekendHalf = ({ dayNum, missions }) => {
+  const tier = getHeatmapTier(missions.length);
+  return (
+    <div
+      className={`routine-week-half tier-${tier}`}
+      aria-label={`${DAY_LONG[dayNum]}, ${missions.length} ${missions.length === 1 ? 'task' : 'tasks'}`}
+    >
+      <div className="routine-week-half-header">
+        <span className="routine-week-half-day">{DAY_SHORT[dayNum]}</span>
+        <span className="routine-week-half-count">{missions.length}</span>
+      </div>
+      <div className="routine-week-half-body">
+        {missions.length === 0 ? (
+          <span className="routine-week-row-empty" aria-hidden="true">—</span>
+        ) : (
+          missions.map((mission) => (
+            <div
+              key={`${dayNum}-${mission.id}`}
+              className="routine-week-pill"
+              title={mission.title}
+            >
+              {mission.title}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
