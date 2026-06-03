@@ -1,12 +1,27 @@
 // src/components/routines/RoutineWeekGrid.jsx
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import dayjs from 'dayjs';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+} from '@dnd-kit/core';
 import {
   isMissionInRoutineSet,
   getMissionChainRoot,
+  findNextOccurrenceOnOrAfter,
 } from '../../utils/routineHelpers';
 import { isRecurringMission, RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
 import { getHeatmapTier } from '../../utils/heatmapTier';
+import { useAuth } from '../../contexts/AuthContext';
+import { updateMission } from '../../services/missionService';
+import ErrorMessage from '../ui/ErrorMessage';
 import './RoutineWeekGrid.css';
 
 // Day numbering matches dayjs: 0=Sun, 1=Mon, …, 6=Sat. Short labels keep
@@ -22,18 +37,30 @@ const buildColumnOrder = (weekStartDay) => {
   return Array.from({ length: 7 }, (_, i) => (start + i) % 7);
 };
 
+// Resolve a mission's effective weekdays, preferring an optimistic
+// override (pending drop) over the persisted recurrence.weekdays. Returns
+// a sanitized integer array.
+const getEffectiveWeekdays = (mission, pendingOverrides) => {
+  const override = pendingOverrides?.get(mission.id);
+  const source = override ?? mission.recurrence?.weekdays;
+  return Array.isArray(source)
+    ? source.filter((d) => typeof d === 'number' && d >= 0 && d <= 6)
+    : [];
+};
+
 // Pattern-bound bucketing for weekly-pattern routine tasks.
 //
 //   - Tasks with `weekdays` set → one pill per weekday in the array.
 //   - Tasks with empty `weekdays` (loose weekly) → land on whichever day
-//     their `dueDate` currently falls on. This makes them draggable later
-//     (the drag-to-formalize affordance we discussed in planning).
+//     their `dueDate` currently falls on. Dragging a loose-weekly task
+//     formalizes it into a single-weekday cadence.
 //
-// Returns: { byDay: { 0: [missions], 1: [...], ... 6: [...] }, looseCount }
-const bucketWeeklyMissions = (missions, routineRootSet, pausedRootSet) => {
+// Pending optimistic overrides (post-drop, pre-Firestore round trip) win
+// over the persisted weekdays so the pill visibly lands where the user
+// dropped it without waiting for the refresh.
+const bucketWeeklyMissions = (missions, routineRootSet, pausedRootSet, pendingOverrides) => {
   const byDay = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-  let looseCount = 0;
-  if (!Array.isArray(missions) || !routineRootSet) return { byDay, looseCount };
+  if (!Array.isArray(missions) || !routineRootSet) return { byDay };
 
   for (const mission of missions) {
     if (!mission) continue;
@@ -45,27 +72,33 @@ const bucketWeeklyMissions = (missions, routineRootSet, pausedRootSet) => {
       if (root != null && pausedRootSet.has(root)) continue;
     }
 
-    const weekdays = Array.isArray(mission.recurrence?.weekdays)
-      ? mission.recurrence.weekdays.filter((d) => typeof d === 'number' && d >= 0 && d <= 6)
-      : [];
+    const weekdays = getEffectiveWeekdays(mission, pendingOverrides);
 
     if (weekdays.length > 0) {
       for (const d of weekdays) {
         byDay[d].push(mission);
       }
-    } else {
-      // Loose weekly — anchor on the dueDate's weekday for now. If there's
-      // no dueDate, count it as loose-uncolumned (rare; reserved for future
-      // "Unscheduled" zone if it becomes a real problem).
-      if (mission.dueDate) {
-        const d = dayjs(mission.dueDate).day();
-        byDay[d].push(mission);
-        looseCount += 1;
-      }
+    } else if (mission.dueDate) {
+      // Loose weekly — anchor on the dueDate's weekday.
+      const d = dayjs(mission.dueDate).day();
+      byDay[d].push(mission);
     }
   }
 
-  return { byDay, looseCount };
+  return { byDay };
+};
+
+// Compute the new weekdays array given a drag's source and target day.
+// Single-weekday: replace. Multi-weekday: remove source, add target,
+// dedup. Loose-weekly ([]): formalize to [target].
+const computeNewWeekdays = (currentWeekdays, sourceDayNum, targetDayNum) => {
+  if (!Array.isArray(currentWeekdays) || currentWeekdays.length === 0) {
+    return [targetDayNum];
+  }
+  const set = new Set(currentWeekdays);
+  set.delete(sourceDayNum);
+  set.add(targetDayNum);
+  return Array.from(set).sort((a, b) => a - b);
 };
 
 const RoutineWeekGrid = ({
@@ -73,11 +106,32 @@ const RoutineWeekGrid = ({
   routineRootSet,
   pausedRootSet,
   weekStartDay = 1,
+  onMutated,
 }) => {
+  const { currentUser } = useAuth();
+  // Optimistic pending state — keyed by missionId, holds the post-drop
+  // weekdays so the UI reflects the move without waiting for Firestore.
+  // Cleared once the next refresh's prop data carries the same change.
+  const [pendingWeekdays, setPendingWeekdays] = useState(() => new Map());
+  const [activeDrag, setActiveDrag] = useState(null);
+  const [mutationError, setMutationError] = useState(null);
+
+  // Drag sensors mirror the builder's: long-press on touch (lets tap
+  // pass through), distance threshold on pointer (no accidental drags).
+  const sensors = useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor)
+  );
+
   const columnOrder = useMemo(() => buildColumnOrder(weekStartDay), [weekStartDay]);
   const { byDay } = useMemo(
-    () => bucketWeeklyMissions(missions, routineRootSet, pausedRootSet),
-    [missions, routineRootSet, pausedRootSet]
+    () => bucketWeeklyMissions(missions, routineRootSet, pausedRootSet, pendingWeekdays),
+    [missions, routineRootSet, pausedRootSet, pendingWeekdays]
   );
 
   // Collapse adjacent Sat + Sun into a single "weekend pair" row when the
@@ -101,6 +155,72 @@ const RoutineWeekGrid = ({
 
   const totalCount = columnOrder.reduce((acc, d) => acc + byDay[d].length, 0);
 
+  const handleDragStart = useCallback((event) => {
+    const data = event.active?.data?.current;
+    if (data) setActiveDrag(data);
+  }, []);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDrag(null);
+  }, []);
+
+  const handleDragEnd = useCallback(async (event) => {
+    const dragData = event.active?.data?.current;
+    const dropData = event.over?.data?.current;
+    setActiveDrag(null);
+    if (!dragData || !dropData) return;
+
+    const { missionId, sourceDayNum, mission } = dragData;
+    const targetDayNum = dropData.dayNum;
+    if (typeof targetDayNum !== 'number') return;
+    if (sourceDayNum === targetDayNum) return;
+
+    // Compute the new weekdays from whatever the user sees right now
+    // (existing pending override wins so chained drags compose).
+    const currentWeekdays = pendingWeekdays.get(missionId)
+      ?? mission.recurrence?.weekdays
+      ?? [];
+    const newWeekdays = computeNewWeekdays(currentWeekdays, sourceDayNum, targetDayNum);
+
+    // Optimistic apply — the UI flips before the round trip lands.
+    setPendingWeekdays((prev) => {
+      const next = new Map(prev);
+      next.set(missionId, newWeekdays);
+      return next;
+    });
+    setMutationError(null);
+
+    // Build the full recurrence (Firestore overwrites nested objects)
+    // and snap dueDate to the next occurrence under the new cadence.
+    const newRecurrence = { ...mission.recurrence, weekdays: newWeekdays };
+    const todayStr = dayjs().format('YYYY-MM-DD');
+    const newDueDate =
+      findNextOccurrenceOnOrAfter(todayStr, newRecurrence) || mission.dueDate;
+
+    try {
+      await updateMission(currentUser.uid, missionId, {
+        recurrence: newRecurrence,
+        dueDate: newDueDate,
+      });
+      await onMutated?.();
+      // Clear the override — the refreshed prop data now carries the change.
+      setPendingWeekdays((prev) => {
+        const next = new Map(prev);
+        next.delete(missionId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Routine task move failed:', err);
+      // Revert optimistic state on error.
+      setPendingWeekdays((prev) => {
+        const next = new Map(prev);
+        next.delete(missionId);
+        return next;
+      });
+      setMutationError("That task didn't move. Try again.");
+    }
+  }, [currentUser, onMutated, pendingWeekdays]);
+
   if (totalCount === 0) {
     return (
       <div className="routine-week-grid is-empty">
@@ -113,40 +233,60 @@ const RoutineWeekGrid = ({
   }
 
   return (
-    <div className="routine-week-grid">
-      <div className="routine-week-rows" role="list">
-        {renderableRows.map((row) => {
-          if (row.type === 'weekend') {
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className="routine-week-grid">
+        {mutationError && (
+          <ErrorMessage message={mutationError} className="routine-week-grid-error" />
+        )}
+        <div className="routine-week-rows" role="list">
+          {renderableRows.map((row) => {
+            if (row.type === 'weekend') {
+              return (
+                <WeekendPairRow
+                  key="weekend"
+                  satMissions={byDay[6]}
+                  sunMissions={byDay[0]}
+                />
+              );
+            }
             return (
-              <WeekendPairRow
-                key="weekend"
-                satMissions={byDay[6]}
-                sunMissions={byDay[0]}
+              <DayRow
+                key={row.dayNum}
+                dayNum={row.dayNum}
+                missions={byDay[row.dayNum]}
               />
             );
-          }
-          return (
-            <DayRow
-              key={row.dayNum}
-              dayNum={row.dayNum}
-              missions={byDay[row.dayNum]}
-            />
-          );
-        })}
+          })}
+        </div>
       </div>
-    </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeDrag ? (
+          <div className="routine-week-pill is-drag-overlay">
+            {activeDrag.title}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 };
 
 const DayRow = ({ dayNum, missions }) => {
   const tier = getHeatmapTier(missions.length);
-  // Flex-grow proportional to task count, capped so one packed day can't
-  // dominate the viewport. 1:1 floor, 3:1 ceiling — heavier days visibly
-  // expand, lighter days visibly compress, but nobody collapses.
   const growShare = Math.min(3, Math.max(1, missions.length));
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${dayNum}`,
+    data: { dayNum },
+  });
   return (
     <div
-      className={`routine-week-row tier-${tier}`}
+      ref={setNodeRef}
+      className={`routine-week-row tier-${tier} ${isOver ? 'is-drop-target' : ''}`}
       role="listitem"
       aria-label={`${DAY_LONG[dayNum]}, ${missions.length} ${missions.length === 1 ? 'task' : 'tasks'}`}
       style={{ flexGrow: growShare }}
@@ -160,13 +300,11 @@ const DayRow = ({ dayNum, missions }) => {
           <span className="routine-week-row-empty" aria-hidden="true">—</span>
         ) : (
           missions.map((mission) => (
-            <div
+            <DraggablePill
               key={`${dayNum}-${mission.id}`}
-              className="routine-week-pill"
-              title={mission.title}
-            >
-              {mission.title}
-            </div>
+              mission={mission}
+              dayNum={dayNum}
+            />
           ))
         )}
       </div>
@@ -174,15 +312,7 @@ const DayRow = ({ dayNum, missions }) => {
   );
 };
 
-// Sat + Sun share a row when they sit next to each other in the column
-// order. The pair container has no tint of its own; each half tints based
-// on its own count, so a packed Saturday next to a clear Sunday still
-// reads correctly. Internal layout is label-on-top + pills-below since
-// the halves are too narrow on mobile for a side label rail.
 const WeekendPairRow = ({ satMissions, sunMissions }) => {
-  // Pair's grow share scales with combined task count, anchored at 2 (two
-  // days worth) and capped at 6 (3x — matching the single-row ceiling so
-  // pair-to-row proportions stay consistent under load).
   const growShare = Math.min(6, Math.max(2, satMissions.length + sunMissions.length));
   return (
     <div
@@ -199,9 +329,14 @@ const WeekendPairRow = ({ satMissions, sunMissions }) => {
 
 const WeekendHalf = ({ dayNum, missions }) => {
   const tier = getHeatmapTier(missions.length);
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${dayNum}`,
+    data: { dayNum },
+  });
   return (
     <div
-      className={`routine-week-half tier-${tier}`}
+      ref={setNodeRef}
+      className={`routine-week-half tier-${tier} ${isOver ? 'is-drop-target' : ''}`}
       aria-label={`${DAY_LONG[dayNum]}, ${missions.length} ${missions.length === 1 ? 'task' : 'tasks'}`}
     >
       <div className="routine-week-half-header">
@@ -213,16 +348,41 @@ const WeekendHalf = ({ dayNum, missions }) => {
           <span className="routine-week-row-empty" aria-hidden="true">—</span>
         ) : (
           missions.map((mission) => (
-            <div
+            <DraggablePill
               key={`${dayNum}-${mission.id}`}
-              className="routine-week-pill"
-              title={mission.title}
-            >
-              {mission.title}
-            </div>
+              mission={mission}
+              dayNum={dayNum}
+            />
           ))
         )}
       </div>
+    </div>
+  );
+};
+
+// Each pill is its own draggable. Identity baked into the id keeps
+// multi-weekday tasks distinct — dragging the Wed pill doesn't move the
+// Mon and Fri pills of the same mission.
+const DraggablePill = ({ mission, dayNum }) => {
+  const dragId = `${mission.id}__${dayNum}`;
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: dragId,
+    data: {
+      missionId: mission.id,
+      sourceDayNum: dayNum,
+      mission,
+      title: mission.title,
+    },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`routine-week-pill ${isDragging ? 'is-dragging-source' : ''}`}
+      title={mission.title}
+    >
+      {mission.title}
     </div>
   );
 };

@@ -25,6 +25,18 @@ const RoutineWeekViewPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
+  // Lightweight refresh — re-pulls active missions after a drag mutation
+  // without re-fetching the profile (weekStartDay doesn't change here).
+  const refreshMissions = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const activeMissions = await getActiveMissions(currentUser.uid);
+      setMissions(activeMissions);
+    } catch (err) {
+      console.error('Routine week view refresh failed:', err);
+    }
+  }, [currentUser]);
+
   const initialLoad = useCallback(async () => {
     if (!currentUser) return;
     setLoading(true);
@@ -75,6 +87,7 @@ const RoutineWeekViewPage = () => {
           routineRootSet={routineRootSet}
           pausedRootSet={pausedRootSet}
           weekStartDay={weekStartDay}
+          onMutated={refreshMissions}
         />
       )}
     </div>
