@@ -8,12 +8,15 @@
 /* Dashboard layout — the week view hard-fits the viewport so nothing
    scrolls. Internal flex distribution handles the proportions. Higher-
    specificity selector overrides the shared .routines-page padding-bottom
-   (which exists for sticky-footer pages the week view doesn't have). */
+   (which exists for sticky-footer pages the week view doesn't have).
+   box-sizing keeps the page wrapper's padding inside the 100dvh budget
+   so the page doesn't quietly extend past the viewport. */
 .routines-page.routine-week-view-page {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  padding-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  box-sizing: border-box;
   overflow: hidden;
 }
 
