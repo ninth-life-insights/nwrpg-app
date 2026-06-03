@@ -5,8 +5,30 @@
    they're adjacent in the display order. Each row/half tints based on how
    loaded it is so overload is visible at a glance. */
 
+/* Dashboard layout — the week view hard-fits the viewport so nothing
+   scrolls. Internal flex distribution handles the proportions. Higher-
+   specificity selector overrides the shared .routines-page padding-bottom
+   (which exists for sticky-footer pages the week view doesn't have). */
+.routines-page.routine-week-view-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding-bottom: var(--space-md);
+  overflow: hidden;
+}
+
+/* PageHeader carries a margin-bottom by default; trim it here so more
+   of the viewport reaches the grid. */
+.routine-week-view-page .page-header {
+  margin-bottom: var(--space-md);
+}
+
 .routine-week-grid {
   width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .routine-week-grid.is-empty {
@@ -25,20 +47,28 @@
   padding: 0 var(--space-lg);
 }
 
+/* Rows container fills remaining vertical space inside the grid. Each
+   row gets a flex share so all 7 days expand to fill the viewport — a
+   true dashboard, no scroll on standard phone heights. min-height: 0
+   on the container lets the children actually shrink to fit. */
 .routine-week-rows {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  min-height: 0;
 }
 
 /* Each row: weekday label rail on the left, pills wrap on the right.
-   Generous min-height — overload should be visible spatially, but empty
-   rows still get real breathing room so the page reads calm, not cramped. */
+   flex: 1 share = 1 day's worth of vertical space. min-height is the
+   floor below which a row will overflow rather than squish — short
+   viewports (e.g. iPhone SE) hit it and accept a small scroll. */
 .routine-week-row {
   display: grid;
   grid-template-columns: 72px 1fr;
   align-items: stretch;
-  min-height: 96px;
+  flex: 1 1 0;
+  min-height: 64px;
   border-radius: var(--radius-lg);
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);
@@ -72,8 +102,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: var(--space-md) var(--space-sm);
+  gap: 4px;
+  padding: var(--space-sm);
   border-right: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.45);
 }
@@ -103,9 +133,10 @@
   flex-wrap: wrap;
   align-content: center;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md);
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
   min-width: 0;
+  overflow: hidden;
 }
 
 /* Empty-row placeholder — a quiet dash so empty days still read as
@@ -118,15 +149,15 @@
 
 /* Weekend pair — Sat + Sun share a row when adjacent in the display
    order. Two equal halves separated by a hairline. No outer tint on
-   the pair itself; each half tints independently. Height runs ~2x the
-   single-row min-height so the pair carries the visual volume of two
-   days rather than reading as a single squashed slot. */
+   the pair itself; each half tints independently. Gets 2x the flex
+   share of a single row so it carries the visual volume of two days. */
 .routine-week-row-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
   align-items: stretch;
-  min-height: 192px;
+  flex: 2 1 0;
+  min-height: 128px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background: var(--color-bg-white);
@@ -139,8 +170,10 @@
 .routine-week-half {
   display: flex;
   flex-direction: column;
-  padding: var(--space-sm) var(--space-md) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   transition: background var(--transition);
 }
 
@@ -153,7 +186,8 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  flex-shrink: 0;
 }
 
 .routine-week-half-day {

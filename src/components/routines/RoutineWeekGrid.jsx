@@ -140,11 +140,16 @@ const RoutineWeekGrid = ({
 
 const DayRow = ({ dayNum, missions }) => {
   const tier = getHeatmapTier(missions.length);
+  // Flex-grow proportional to task count, capped so one packed day can't
+  // dominate the viewport. 1:1 floor, 3:1 ceiling — heavier days visibly
+  // expand, lighter days visibly compress, but nobody collapses.
+  const growShare = Math.min(3, Math.max(1, missions.length));
   return (
     <div
       className={`routine-week-row tier-${tier}`}
       role="listitem"
       aria-label={`${DAY_LONG[dayNum]}, ${missions.length} ${missions.length === 1 ? 'task' : 'tasks'}`}
+      style={{ flexGrow: growShare }}
     >
       <div className="routine-week-row-label">
         <span className="routine-week-row-day">{DAY_SHORT[dayNum]}</span>
@@ -175,8 +180,17 @@ const DayRow = ({ dayNum, missions }) => {
 // reads correctly. Internal layout is label-on-top + pills-below since
 // the halves are too narrow on mobile for a side label rail.
 const WeekendPairRow = ({ satMissions, sunMissions }) => {
+  // Pair's grow share scales with combined task count, anchored at 2 (two
+  // days worth) and capped at 6 (3x — matching the single-row ceiling so
+  // pair-to-row proportions stay consistent under load).
+  const growShare = Math.min(6, Math.max(2, satMissions.length + sunMissions.length));
   return (
-    <div className="routine-week-row-pair" role="listitem" aria-label="Weekend">
+    <div
+      className="routine-week-row-pair"
+      role="listitem"
+      aria-label="Weekend"
+      style={{ flexGrow: growShare }}
+    >
       <WeekendHalf dayNum={6} missions={satMissions} />
       <WeekendHalf dayNum={0} missions={sunMissions} />
     </div>

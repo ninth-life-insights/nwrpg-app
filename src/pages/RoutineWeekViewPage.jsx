@@ -51,7 +51,7 @@ const RoutineWeekViewPage = () => {
   }, [initialLoad]);
 
   return (
-    <div className="routines-page">
+    <div className="routines-page routine-week-view-page">
       <PageHeader
         title="Week view"
         onBack={() => navigate('/routine-builder')}
