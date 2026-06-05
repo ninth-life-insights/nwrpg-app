@@ -267,7 +267,7 @@
 .routine-week-pill {
   position: relative;
   max-width: 100%;
-  padding: 6px var(--space-md) 6px calc(var(--space-md) + 4px);
+  padding: 6px var(--space-md) 6px calc(var(--space-md) + 10px);
   background: var(--color-bg-main);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-sm);
@@ -285,27 +285,30 @@
   transition: opacity var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
-/* Difficulty stripe — saturated green/amber/red along the left edge.
-   Reusing the app's status colors keeps the encoding consistent with
-   the rest of the UI's success/warning/error language. */
+/* Difficulty stripe — 5px wide left edge in fresh green / gold / soft
+   red. Wider than a typical accent so the encoding is unmistakable;
+   medium uses a clearly yellow gold (not amber) to stay distinct from
+   hard at a glance. The app's --color-success/warning/error are tuned
+   for status badges and too narrow a hue gap for difficulty here, so
+   we use stripe-specific values local to this component. */
 .routine-week-pill::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 8px;
   background: var(--color-text-light);
 }
 
 .routine-week-pill[data-difficulty="easy"]::before {
-  background: var(--color-success);
+  background: #86efac;
 }
 .routine-week-pill[data-difficulty="medium"]::before {
-  background: var(--color-warning);
+  background: #fcd34d;
 }
 .routine-week-pill[data-difficulty="hard"]::before {
-  background: var(--color-error);
+  background: #fca5a5;
 }
 
 .routine-week-pill:hover {
