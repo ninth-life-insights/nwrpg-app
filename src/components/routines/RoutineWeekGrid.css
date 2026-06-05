@@ -18,6 +18,7 @@
   padding-bottom: var(--space-sm);
   box-sizing: border-box;
   overflow: hidden;
+
 }
 
 /* PageHeader carries a margin-bottom by default; trim it here so more
@@ -63,10 +64,9 @@
 }
 
 /* Each row: weekday label rail on the left, pills wrap on the right.
-   flex-basis: auto means each row's natural size is its content — a
-   1-pill row stays compact, a wrapping row grows. flex-grow distributes
-   excess viewport space equally so the dashboard fills without making
-   light rows artificially tall. */
+   Row body is always clean white; the heatmap lives on the label rail
+   and (subtly) on the row's border. flex-basis: auto so a 1-pill row
+   stays compact and a wrapping row grows. */
 .routine-week-row {
   display: grid;
   grid-template-columns: 72px 1fr;
@@ -77,30 +77,23 @@
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);
   overflow: hidden;
-  transition: background var(--transition), border-color var(--transition);
+  transition: border-color var(--transition);
 }
 
-/* Heatmap tiers — shared between full rows and weekend halves. Tint
-   scales with count so a heavy row reads "hot" without needing a legend. */
-.routine-week-row.tier-empty,
-.routine-week-half.tier-empty {
-  background: var(--color-bg-white);
-}
-.routine-week-row.tier-light,
-.routine-week-half.tier-light {
-  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-white));
-}
+/* Heatmap on the row outline — a subtle perimeter cue that scales with
+   load. Stays restrained so the label rail does the heavy lifting. */
 .routine-week-row.tier-medium,
 .routine-week-half.tier-medium {
-  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-bg-white));
-  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
 }
 .routine-week-row.tier-heavy,
 .routine-week-half.tier-heavy {
-  background: color-mix(in srgb, var(--color-primary) 28%, var(--color-bg-white));
-  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+  border-color: var(--color-primary);
 }
 
+/* Label rail — this is where the heatmap actually lives. White at empty,
+   tinted at the upper tiers. Heavy uses full primary with inverted text
+   for the most saturated read. */
 .routine-week-row-label {
   display: flex;
   flex-direction: column;
@@ -109,7 +102,20 @@
   gap: 4px;
   padding: var(--space-sm);
   border-right: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.45);
+  background: var(--color-bg-white);
+  transition: background var(--transition);
+}
+
+.routine-week-row.tier-light .routine-week-row-label {
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg-white));
+}
+.routine-week-row.tier-medium .routine-week-row-label {
+  background: color-mix(in srgb, var(--color-primary) 30%, var(--color-bg-white));
+  border-right-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+.routine-week-row.tier-heavy .routine-week-row-label {
+  background: var(--color-primary);
+  border-right-color: var(--color-primary);
 }
 
 .routine-week-row-day {
@@ -127,9 +133,13 @@
   line-height: 1;
 }
 
-.routine-week-row.tier-medium .routine-week-row-count,
-.routine-week-row.tier-heavy .routine-week-row-count {
+.routine-week-row.tier-medium .routine-week-row-day,
+.routine-week-row.tier-medium .routine-week-row-count {
   color: var(--color-text-dark);
+}
+.routine-week-row.tier-heavy .routine-week-row-day,
+.routine-week-row.tier-heavy .routine-week-row-count {
+  color: var(--color-bg-white);
 }
 
 .routine-week-row-body {
@@ -170,17 +180,16 @@
   overflow: hidden;
 }
 
-/* Each half: day label + count at the top, pills wrap below. Internal
-   layout is vertical because the halves are too narrow on mobile for a
-   side label rail. */
+/* Each half: tinted header strip at the top (the heatmap surface),
+   white pill body below. No outer padding — header and body manage
+   their own padding so the tint goes edge-to-edge. */
 .routine-week-half {
   display: flex;
   flex-direction: column;
-  padding: var(--space-sm) var(--space-md);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  transition: background var(--transition);
+  background: var(--color-bg-white);
 }
 
 .routine-week-half + .routine-week-half {
@@ -192,8 +201,23 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.routine-week-half.tier-light .routine-week-half-header {
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg-white));
+}
+.routine-week-half.tier-medium .routine-week-half-header {
+  background: color-mix(in srgb, var(--color-primary) 30%, var(--color-bg-white));
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+.routine-week-half.tier-heavy .routine-week-half-header {
+  background: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .routine-week-half-day {
@@ -211,9 +235,13 @@
   line-height: 1;
 }
 
-.routine-week-half.tier-medium .routine-week-half-count,
-.routine-week-half.tier-heavy .routine-week-half-count {
+.routine-week-half.tier-medium .routine-week-half-day,
+.routine-week-half.tier-medium .routine-week-half-count {
   color: var(--color-text-dark);
+}
+.routine-week-half.tier-heavy .routine-week-half-day,
+.routine-week-half.tier-heavy .routine-week-half-count {
+  color: var(--color-bg-white);
 }
 
 .routine-week-half-body {
@@ -223,18 +251,19 @@
   align-content: center;
   align-items: center;
   gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
   min-width: 0;
 }
 
-/* Task pill — title-only in Phase 1. Slightly larger font and padding
-   than a typical chip so each task feels like a real noticeable unit,
-   not a tiny tag. Long titles truncate with ellipsis. Grab cursor on
-   pointer devices; touch uses long-press (TouchSensor delay). */
+/* Task pill — sticky-note yellow on white rows so each task reads as
+   a tactile little object. Reuses the app's existing yellow tokens
+   (--color-bg-main for fill, --color-border-yellow for outline) so it
+   feels native to the rest of the UI. */
 .routine-week-pill {
   max-width: 100%;
   padding: 6px var(--space-sm);
-  background: var(--color-bg-white);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
   color: var(--color-text-dark);
