@@ -18,10 +18,15 @@ import {
   findNextOccurrenceOnOrAfter,
 } from '../../utils/routineHelpers';
 import { isRecurringMission, RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
-import { getHeatmapTier } from '../../utils/heatmapTier';
+import { getHeatmapTier, computeLoadScore } from '../../utils/heatmapTier';
 import { useAuth } from '../../contexts/AuthContext';
-import { updateMission } from '../../services/missionService';
+import {
+  updateMission,
+  uncompleteMission,
+  completeMissionWithRecurrence,
+} from '../../services/missionService';
 import ErrorMessage from '../ui/ErrorMessage';
+import MissionCardFull from '../missions/MissionCardFull';
 import './RoutineWeekGrid.css';
 
 // Day numbering matches dayjs: 0=Sun, 1=Mon, …, 6=Sat. Short labels keep
@@ -115,6 +120,12 @@ const RoutineWeekGrid = ({
   const [pendingWeekdays, setPendingWeekdays] = useState(() => new Map());
   const [activeDrag, setActiveDrag] = useState(null);
   const [mutationError, setMutationError] = useState(null);
+  // Mission currently open in the MissionCardFull modal — opened by a
+  // tap on a pill, edited inline, closed without disrupting the grid's
+  // layout. Tap vs drag is resolved by @dnd-kit's activation constraints
+  // (a click without 8px of movement / 150ms of touch hold doesn't trigger
+  // a drag), so the same pill is both clickable and draggable cleanly.
+  const [editingMission, setEditingMission] = useState(null);
 
   // Drag sensors mirror the builder's: long-press on touch (lets tap
   // pass through), distance threshold on pointer (no accidental drags).
@@ -133,6 +144,18 @@ const RoutineWeekGrid = ({
     () => bucketWeeklyMissions(missions, routineRootSet, pausedRootSet, pendingWeekdays),
     [missions, routineRootSet, pausedRootSet, pendingWeekdays]
   );
+
+  // Busiest day across all 7 (treating weekend pair as two independent
+  // days). Drives the relative heatmap so a sparse week and a packed
+  // week both use the full color range.
+  const maxScore = useMemo(() => {
+    let max = 0;
+    for (let d = 0; d <= 6; d += 1) {
+      const score = computeLoadScore(byDay[d]);
+      if (score > max) max = score;
+    }
+    return max;
+  }, [byDay]);
 
   // Collapse adjacent Sat + Sun into a single "weekend pair" row when the
   // chosen weekStartDay puts them next to each other. With weekStartDay=Sun
@@ -221,6 +244,28 @@ const RoutineWeekGrid = ({
     }
   }, [currentUser, onMutated, pendingWeekdays]);
 
+  const handlePillOpen = useCallback((mission) => {
+    setEditingMission(mission);
+  }, []);
+
+  // Toggle handler mirrors RoutineTodaySection — completion from the
+  // week view spawns the next instance via the same flow as elsewhere,
+  // so a "I already did this" click from the planning view stays
+  // consistent with the rest of the app.
+  const handleToggleComplete = useCallback(async (missionId, isCurrentlyCompleted) => {
+    if (!currentUser) return;
+    try {
+      if (isCurrentlyCompleted) {
+        await uncompleteMission(currentUser.uid, missionId);
+      } else {
+        await completeMissionWithRecurrence(currentUser.uid, missionId);
+      }
+      await onMutated?.();
+    } catch (err) {
+      console.error('Routine week toggle failed:', err);
+    }
+  }, [currentUser, onMutated]);
+
   if (totalCount === 0) {
     return (
       <div className="routine-week-grid is-empty">
@@ -251,6 +296,8 @@ const RoutineWeekGrid = ({
                   key="weekend"
                   satMissions={byDay[6]}
                   sunMissions={byDay[0]}
+                  maxScore={maxScore}
+                  onPillOpen={handlePillOpen}
                 />
               );
             }
@@ -259,6 +306,8 @@ const RoutineWeekGrid = ({
                 key={row.dayNum}
                 dayNum={row.dayNum}
                 missions={byDay[row.dayNum]}
+                maxScore={maxScore}
+                onPillOpen={handlePillOpen}
               />
             );
           })}
@@ -267,17 +316,29 @@ const RoutineWeekGrid = ({
 
       <DragOverlay dropAnimation={null}>
         {activeDrag ? (
-          <div className="routine-week-pill is-drag-overlay">
+          <div
+            className="routine-week-pill is-drag-overlay"
+            data-difficulty={activeDrag.mission?.difficulty || 'easy'}
+          >
             {activeDrag.title}
           </div>
         ) : null}
       </DragOverlay>
+
+      {editingMission && (
+        <MissionCardFull
+          mission={editingMission}
+          onClose={() => setEditingMission(null)}
+          onToggleComplete={handleToggleComplete}
+          onMissionChanged={onMutated}
+        />
+      )}
     </DndContext>
   );
 };
 
-const DayRow = ({ dayNum, missions }) => {
-  const tier = getHeatmapTier(missions.length);
+const DayRow = ({ dayNum, missions, maxScore, onPillOpen }) => {
+  const tier = getHeatmapTier(computeLoadScore(missions), maxScore);
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${dayNum}`,
     data: { dayNum },
@@ -302,6 +363,7 @@ const DayRow = ({ dayNum, missions }) => {
               key={`${dayNum}-${mission.id}`}
               mission={mission}
               dayNum={dayNum}
+              onOpen={onPillOpen}
             />
           ))
         )}
@@ -310,21 +372,21 @@ const DayRow = ({ dayNum, missions }) => {
   );
 };
 
-const WeekendPairRow = ({ satMissions, sunMissions }) => {
+const WeekendPairRow = ({ satMissions, sunMissions, maxScore, onPillOpen }) => {
   return (
     <div
       className="routine-week-row-pair"
       role="listitem"
       aria-label="Weekend"
     >
-      <WeekendHalf dayNum={6} missions={satMissions} />
-      <WeekendHalf dayNum={0} missions={sunMissions} />
+      <WeekendHalf dayNum={6} missions={satMissions} maxScore={maxScore} onPillOpen={onPillOpen} />
+      <WeekendHalf dayNum={0} missions={sunMissions} maxScore={maxScore} onPillOpen={onPillOpen} />
     </div>
   );
 };
 
-const WeekendHalf = ({ dayNum, missions }) => {
-  const tier = getHeatmapTier(missions.length);
+const WeekendHalf = ({ dayNum, missions, maxScore, onPillOpen }) => {
+  const tier = getHeatmapTier(computeLoadScore(missions), maxScore);
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${dayNum}`,
     data: { dayNum },
@@ -348,6 +410,7 @@ const WeekendHalf = ({ dayNum, missions }) => {
               key={`${dayNum}-${mission.id}`}
               mission={mission}
               dayNum={dayNum}
+              onOpen={onPillOpen}
             />
           ))
         )}
@@ -358,8 +421,11 @@ const WeekendHalf = ({ dayNum, missions }) => {
 
 // Each pill is its own draggable. Identity baked into the id keeps
 // multi-weekday tasks distinct — dragging the Wed pill doesn't move the
-// Mon and Fri pills of the same mission.
-const DraggablePill = ({ mission, dayNum }) => {
+// Mon and Fri pills of the same mission. Also tap-to-open: the @dnd-kit
+// activation constraints (8px pointer / 150ms touch) mean a click
+// without movement falls through to onClick, so the same pill is both
+// draggable and clickable cleanly.
+const DraggablePill = ({ mission, dayNum, onOpen }) => {
   const dragId = `${mission.id}__${dayNum}`;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: dragId,
@@ -370,12 +436,20 @@ const DraggablePill = ({ mission, dayNum }) => {
       title: mission.title,
     },
   });
+  const handleClick = (e) => {
+    // Defensive: if a drag was in flight, don't also open the modal.
+    if (isDragging) return;
+    e.stopPropagation();
+    onOpen?.(mission);
+  };
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={handleClick}
       className={`routine-week-pill ${isDragging ? 'is-dragging-source' : ''}`}
+      data-difficulty={mission.difficulty || 'easy'}
       title={mission.title}
     >
       {mission.title}

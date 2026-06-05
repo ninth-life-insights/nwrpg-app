@@ -147,7 +147,9 @@
   flex-wrap: wrap;
   align-content: center;
   align-items: center;
-  gap: var(--space-xs);
+  /* row-gap × column-gap — extra vertical breathing room between
+     wrapped pills so the row reads as a stack of cards, not a tag cloud. */
+  gap: var(--space-sm) var(--space-xs);
   padding: var(--space-sm) var(--space-md);
   min-width: 0;
   overflow: hidden;
@@ -250,7 +252,7 @@
   flex-wrap: wrap;
   align-content: center;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm) var(--space-xs);
   padding: var(--space-sm) var(--space-md);
   min-width: 0;
 }
@@ -259,10 +261,13 @@
    the app's generic badges (which are flat, light-weight, 11-12px) by
    bolder type and card-style elevation. Reads as "a thing I'm going to
    do" rather than "a label." Reuses the app's yellow tokens so it stays
-   native to the broader UI. */
+   native to the broader UI. A left-edge stripe (::before) encodes
+   difficulty in green/amber/red — small enough to not compete with
+   the yellow body, large enough to scan at a glance. */
 .routine-week-pill {
+  position: relative;
   max-width: 100%;
-  padding: 6px var(--space-md);
+  padding: 6px var(--space-md) 6px calc(var(--space-md) + 4px);
   background: var(--color-bg-main);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-sm);
@@ -278,6 +283,29 @@
   user-select: none;
   -webkit-user-select: none;
   transition: opacity var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+/* Difficulty stripe — saturated green/amber/red along the left edge.
+   Reusing the app's status colors keeps the encoding consistent with
+   the rest of the UI's success/warning/error language. */
+.routine-week-pill::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-text-light);
+}
+
+.routine-week-pill[data-difficulty="easy"]::before {
+  background: var(--color-success);
+}
+.routine-week-pill[data-difficulty="medium"]::before {
+  background: var(--color-warning);
+}
+.routine-week-pill[data-difficulty="hard"]::before {
+  background: var(--color-error);
 }
 
 .routine-week-pill:hover {
