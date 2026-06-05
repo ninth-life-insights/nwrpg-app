@@ -255,18 +255,21 @@
   min-width: 0;
 }
 
-/* Task pill — sticky-note yellow on white rows so each task reads as
-   a tactile little object. Reuses the app's existing yellow tokens
-   (--color-bg-main for fill, --color-border-yellow for outline) so it
-   feels native to the rest of the UI. */
+/* Mission pill — sticky-note yellow on white rows. Differentiated from
+   the app's generic badges (which are flat, light-weight, 11-12px) by
+   bolder type and card-style elevation. Reads as "a thing I'm going to
+   do" rather than "a label." Reuses the app's yellow tokens so it stays
+   native to the broader UI. */
 .routine-week-pill {
   max-width: 100%;
-  padding: 6px var(--space-sm);
+  padding: 6px var(--space-md);
   background: var(--color-bg-main);
   border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  font-size: 13px;
+  font-weight: 600;
   color: var(--color-text-dark);
+  box-shadow: var(--shadow-card);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -274,7 +277,17 @@
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  transition: opacity var(--transition);
+  transition: opacity var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.routine-week-pill:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.routine-week-pill:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-card);
 }
 
 .routine-week-pill:active {
