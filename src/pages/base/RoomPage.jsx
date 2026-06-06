@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRoom, updateRoom, updateRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
+import { getRoom, updateRoom, updateRoomCleanliness, confirmRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { getUserProfile } from '../../services/userService';
 import { useRooms } from '../../contexts/RoomsContext';
 import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
@@ -131,10 +131,16 @@ const RoomPage = () => {
   };
 
   const handleCleanlinessSave = async () => {
-    if (localCleanliness === room.cleanliness) return;
     setActionError(null);
     try {
-      await updateRoomCleanliness(currentUser.uid, roomId, localCleanliness);
+      // Any slider release counts as a check. If the value changed, save it;
+      // otherwise just bump the freshness timestamp so a stale room can be
+      // re-confirmed at the same level.
+      if (localCleanliness !== room.cleanliness) {
+        await updateRoomCleanliness(currentUser.uid, roomId, localCleanliness);
+      } else {
+        await confirmRoomCleanliness(currentUser.uid, roomId);
+      }
       // Mirror the server-side timestamp bump locally so staleness state
       // updates immediately instead of waiting for a refetch.
       setRoom(prev => ({ ...prev, cleanliness: localCleanliness, cleanlinessUpdatedAt: new Date() }));
