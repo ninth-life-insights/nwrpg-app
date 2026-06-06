@@ -17,7 +17,7 @@
   min-height: 100dvh;
   padding: var(--space-lg) 0 var(--space-md);
   box-sizing: border-box;
-  background: var(--color-bg-main);
+  background: var(--color-bg-secondary);
 }
 
 .routine-month-view-page .page-header {
@@ -178,18 +178,13 @@
   color: var(--color-text-placeholder);
 }
 
-/* Today's cell — warm dot beside the date number rather than a cool
-   ring around the whole cell. Reads less like an error state, more
-   like a friendly "you are here." */
-.routine-month-cell.is-today .routine-month-cell-date::after {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-left: 4px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  vertical-align: middle;
+/* Today's cell — date number itself goes bold + primary color, so it
+   reads as "this is today" rather than a mystery accent dot. Only
+   applies to in-month today (out-of-month today gets no special
+   treatment to avoid confusion across month boundaries). */
+.routine-month-cell.is-today:not(.is-out-of-month) .routine-month-cell-date {
+  color: var(--color-primary);
+  font-weight: 800;
 }
 
 /* Drop-target — temporary intense fill during drag-over so the user
@@ -201,11 +196,11 @@
 }
 
 .routine-month-cell-date {
+  align-self: flex-start;
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text-medium);
   line-height: 1;
-  margin-bottom: 3px;
 }
 
 .routine-month-cell.tier-heavy .routine-month-cell-date,
@@ -213,21 +208,30 @@
   color: var(--color-text-dark);
 }
 
-/* Literal count badge — sits in the cell footer, accessible to AT via
-   aria-label. Heatmap tint behind it carries the relative signal; the
-   count provides the absolute. */
+/* Count badge — the primary signal in this view. White circle centered
+   in the cell, with the literal count inside. White stays consistent
+   against every heatmap tier so the badge always pops. Slight shadow
+   makes it sit forward like a poker chip rather than a flat label. */
 .routine-month-cell-count {
-  margin-top: auto;
-  font-size: 13px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--color-bg-white);
+  border-radius: 50%;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--color-text-medium);
+  color: var(--color-text-dark);
   line-height: 1;
-  text-align: right;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.routine-month-cell.tier-medium .routine-month-cell-count,
+/* Heavy-tier badge picks up the primary border so it reads as "loaded"
+   even without comparing to other cells. */
 .routine-month-cell.tier-heavy .routine-month-cell-count {
-  color: var(--color-text-dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 1.5px var(--color-primary);
 }
 
 /* Cell click affordance — only cells with tasks behave as buttons.
@@ -318,10 +322,10 @@
 .routine-month-sheet-body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  padding: var(--space-sm) var(--space-lg) var(--space-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 1px;
 }
 
 .routine-month-sheet-empty {
