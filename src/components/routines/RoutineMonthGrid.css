@@ -202,30 +202,160 @@
   color: var(--color-text-dark);
 }
 
-/* Bars area — vertical stack of compact bars, one per mission. Wraps
-   to additional column if many tasks land on the same day. */
-.routine-month-cell-bars {
-  flex: 1;
+/* Summary dots — one per mission, color by difficulty. Encodes both
+   count (literal number of dots) and the difficulty mix at a glance.
+   Caps at 6; overflow shown as a "+N" label so very busy days don't
+   spill out of the cell. */
+.routine-month-cell-summary {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  margin-top: auto;
 }
 
-/* Mission chip — g-cal style. Truncated title gives ~6-8 chars of
-   preview at mobile cell widths; full title on hover (title attr) and
-   on tap (MissionCardFull). Difficulty drives the whole chip's
-   background — at this density a left-edge stripe disappears, but a
-   full pastel fill carries clean. */
-.routine-month-bar {
-  min-height: 15px;
-  padding: 1px 4px;
-  border-radius: 3px;
+.routine-month-cell-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: var(--color-text-light);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.routine-month-cell-dot[data-difficulty="easy"] {
+  background: #86efac;
+}
+.routine-month-cell-dot[data-difficulty="medium"] {
+  background: #fcd34d;
+}
+.routine-month-cell-dot[data-difficulty="hard"] {
+  background: #fca5a5;
+}
+
+.routine-month-cell-overflow {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-text-medium);
+  line-height: 1;
+  margin-left: 1px;
+}
+
+/* Cell click affordance — only cells with tasks behave as buttons.
+   Subtle hover/focus treatments so users discover the interaction. */
+.routine-month-cell.has-tasks {
+  cursor: pointer;
+}
+
+.routine-month-cell.has-tasks:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-white));
+}
+
+.routine-month-cell.is-focused {
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-bg-white));
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+.routine-month-cell.is-focused .routine-month-cell-date {
   color: var(--color-text-dark);
+}
+
+/* === Bottom detail sheet === */
+
+/* Sheet — bottom-anchored panel, no backdrop. Calendar above stays
+   visible so dragging a pill up onto a cell is a single fluid move.
+   Sheet has its own scroll for long task lists; the page wrapper does
+   not budge. */
+.routine-month-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-white);
+  border-top: 1px solid var(--color-border);
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 50dvh;
+  animation: routineMonthSheetIn 0.22s ease-out;
+}
+
+@keyframes routineMonthSheetIn {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.routine-month-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.routine-month-sheet-title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.routine-month-sheet-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.routine-month-sheet-close,
+.routine-month-sheet-close .material-icons {
+  color: var(--color-text-light) !important;
+}
+
+.routine-month-sheet-close:hover,
+.routine-month-sheet-close:hover .material-icons {
+  color: var(--color-text-dark) !important;
+}
+
+.routine-month-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.routine-month-sheet-empty {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  padding: var(--space-md) 0;
+}
+
+/* Sheet pill — mirrors the week view's mission pill (sticky-note yellow,
+   bolder type, difficulty stripe on left, card shadow). Same visual
+   language so dragging from the sheet feels like grabbing one of the
+   "real" mission objects, not a stand-in. */
+.routine-month-pill {
+  position: relative;
+  padding: 8px var(--space-md) 8px calc(var(--space-md) + 10px);
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border-yellow);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-dark);
+  box-shadow: var(--shadow-card);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -233,36 +363,47 @@
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  transition: opacity var(--transition), transform var(--transition);
+  transition: opacity var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
-.routine-month-bar:active {
+.routine-month-pill:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.routine-month-pill:active {
   cursor: grabbing;
+  transform: translateY(0);
+  box-shadow: var(--shadow-card);
 }
 
-.routine-month-bar.is-dragging-source {
-  opacity: 0.3;
+.routine-month-pill::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: var(--color-text-light);
 }
 
-.routine-month-bar.is-drag-overlay {
-  min-height: 18px;
-  padding: 2px 6px;
-  font-size: 11px;
-  width: auto;
-  max-width: 140px;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transform: rotate(-1deg);
-}
-
-/* Difficulty colors — same pastel palette as the week view's stripes
-   so the visual language stays consistent across views. */
-.routine-month-bar[data-difficulty="easy"] {
+.routine-month-pill[data-difficulty="easy"]::before {
   background: #86efac;
 }
-.routine-month-bar[data-difficulty="medium"] {
+.routine-month-pill[data-difficulty="medium"]::before {
   background: #fcd34d;
 }
-.routine-month-bar[data-difficulty="hard"] {
+.routine-month-pill[data-difficulty="hard"]::before {
   background: #fca5a5;
+}
+
+.routine-month-pill.is-dragging-source {
+  opacity: 0.35;
+}
+
+.routine-month-pill.is-drag-overlay {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  border-color: var(--color-primary);
+  transform: rotate(-1deg);
+  background: var(--color-bg-main);
 }

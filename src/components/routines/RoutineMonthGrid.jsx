@@ -154,6 +154,10 @@ const RoutineMonthGrid = ({
   const [activeDrag, setActiveDrag] = useState(null);
   const [mutationError, setMutationError] = useState(null);
   const [editingMission, setEditingMission] = useState(null);
+  // The day currently surfaced in the bottom detail sheet. Tap a cell
+  // with tasks → opens the sheet for that day. Tap the same cell again
+  // → closes. Tap a different cell → switches focus.
+  const [focusedDate, setFocusedDate] = useState(null);
 
   const sensors = useSensors(
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
@@ -260,6 +264,15 @@ const RoutineMonthGrid = ({
     setEditingMission(mission);
   }, []);
 
+  const handleCellClick = useCallback((date, dateMissions) => {
+    if (!dateMissions || dateMissions.length === 0) {
+      // Tap-empty closes any open sheet so the calendar reads quiet.
+      setFocusedDate(null);
+      return;
+    }
+    setFocusedDate((prev) => (prev && prev.isSame(date, 'day') ? null : date));
+  }, []);
+
   const handleToggleComplete = useCallback(async (missionId, isCurrentlyCompleted) => {
     if (!currentUser) return;
     try {
@@ -280,6 +293,13 @@ const RoutineMonthGrid = ({
 
   const monthLabel = displayedMonth.format('MMMM YYYY');
   const isViewingThisMonth = displayedMonth.isSame(dayjs(), 'month');
+
+  // Effective missions for the focused day — reads through the pending
+  // overlay so when a task is dragged out of the focused day onto a
+  // different cell, the sheet's list updates immediately.
+  const focusedMissions = focusedDate
+    ? (byDate.get(focusedDate.date()) || [])
+    : [];
 
   return (
     <DndContext
@@ -335,6 +355,7 @@ const RoutineMonthGrid = ({
               : [];
             const tier = getHeatmapTier(computeLoadScore(dateMissions), maxScore);
             const isToday = cell.date.isSame(today, 'day');
+            const isFocused = focusedDate && focusedDate.isSame(cell.date, 'day');
             return (
               <CalendarCell
                 key={cell.date.format('YYYY-MM-DD')}
@@ -342,18 +363,28 @@ const RoutineMonthGrid = ({
                 missions={dateMissions}
                 isCurrentMonth={cell.isCurrentMonth}
                 isToday={isToday}
+                isFocused={isFocused}
                 tier={tier}
-                onBarOpen={handleBarOpen}
+                onClick={handleCellClick}
               />
             );
           })}
         </div>
       </div>
 
+      {focusedDate && (
+        <MonthDayDetailSheet
+          date={focusedDate}
+          missions={focusedMissions}
+          onClose={() => setFocusedDate(null)}
+          onPillOpen={handleBarOpen}
+        />
+      )}
+
       <DragOverlay dropAnimation={null}>
         {activeDrag ? (
           <div
-            className="routine-month-bar is-drag-overlay"
+            className="routine-month-pill is-drag-overlay"
             data-difficulty={activeDrag.mission?.difficulty || 'easy'}
           >
             {activeDrag.title}
@@ -373,10 +404,20 @@ const RoutineMonthGrid = ({
   );
 };
 
-// One cell in the calendar grid. Out-of-month cells fade and don't
-// participate in drag (no useDroppable). In-month cells accept drops
-// from any pill in the grid.
-const CalendarCell = ({ date, missions, isCurrentMonth, isToday, tier, onBarOpen }) => {
+// One cell in the calendar grid. Shows date + heatmap tint + a small
+// difficulty-dot summary that doubles as count signal. Tapping the cell
+// surfaces the day's full task list in the bottom detail sheet (where
+// pills are draggable). Out-of-month cells fade and don't participate
+// in drag or click.
+const CalendarCell = ({
+  date,
+  missions,
+  isCurrentMonth,
+  isToday,
+  isFocused,
+  tier,
+  onClick,
+}) => {
   const droppableId = `cell-${date.format('YYYY-MM-DD')}`;
   const { setNodeRef, isOver } = useDroppable({
     id: droppableId,
@@ -389,35 +430,109 @@ const CalendarCell = ({ date, missions, isCurrentMonth, isToday, tier, onBarOpen
     `tier-${tier}`,
     isCurrentMonth ? '' : 'is-out-of-month',
     isToday ? 'is-today' : '',
+    isFocused ? 'is-focused' : '',
     isOver ? 'is-drop-target' : '',
+    missions.length > 0 && isCurrentMonth ? 'has-tasks' : '',
   ].filter(Boolean).join(' ');
 
+  const handleClick = () => {
+    if (!isCurrentMonth) return;
+    onClick?.(date, missions);
+  };
+
   return (
-    <div ref={setNodeRef} className={classes}>
+    <div
+      ref={setNodeRef}
+      className={classes}
+      onClick={handleClick}
+      role={isCurrentMonth ? 'button' : undefined}
+      tabIndex={isCurrentMonth ? 0 : undefined}
+      onKeyDown={
+        isCurrentMonth
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleClick();
+              }
+            }
+          : undefined
+      }
+    >
       <div className="routine-month-cell-date">{date.date()}</div>
       {isCurrentMonth && missions.length > 0 && (
-        <div className="routine-month-cell-bars">
-          {missions.map((mission) => (
-            <DraggableBar
-              key={`${date.format('YYYY-MM-DD')}-${mission.id}`}
-              mission={mission}
-              sourceDate={date}
-              onOpen={onBarOpen}
-            />
-          ))}
-        </div>
+        <CellSummary missions={missions} />
       )}
     </div>
   );
 };
 
-// Compact difficulty-colored chip — the month-view equivalent of the
-// week view's pill. Truncated title gives ~6-8 chars of preview at
-// mobile cell widths; full title on hover via title attribute and on
-// tap via MissionCardFull. Difficulty drives the chip background color
-// (whole chip, not just a stripe — at this density the stripe
-// disappears).
-const DraggableBar = ({ mission, sourceDate, onOpen }) => {
+// Difficulty-dot row + count. Up to 6 dots in a wrap-friendly row; if
+// more tasks, dots cap at 5 and a "+N" overflow label finishes the
+// signal. Encodes both volume and difficulty mix without a chip wall.
+const CellSummary = ({ missions }) => {
+  const count = missions.length;
+  const maxDots = 6;
+  const visible = count <= maxDots ? missions : missions.slice(0, 5);
+  const overflow = count - visible.length;
+  return (
+    <div className="routine-month-cell-summary">
+      {visible.map((m, i) => (
+        <span
+          key={`${m.id}-${i}`}
+          className="routine-month-cell-dot"
+          data-difficulty={m.difficulty || 'easy'}
+        />
+      ))}
+      {overflow > 0 && (
+        <span className="routine-month-cell-overflow">+{overflow}</span>
+      )}
+    </div>
+  );
+};
+
+// Bottom sheet — anchored to the bottom of the viewport, no backdrop so
+// the calendar stays visible (and droppable) above. Renders the focused
+// day's pills as draggable; drag a pill up onto any visible cell to
+// re-anchor it. Tap close (or tap the focused cell again, or pick a
+// different cell) to dismiss.
+const MonthDayDetailSheet = ({ date, missions, onClose, onPillOpen }) => {
+  const dateLabel = date.format('dddd, MMMM D');
+  return (
+    <div className="routine-month-sheet" role="dialog" aria-label={dateLabel}>
+      <div className="routine-month-sheet-header">
+        <h3 className="routine-month-sheet-title">{dateLabel}</h3>
+        <button
+          type="button"
+          className="routine-month-sheet-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <span className="material-icons">close</span>
+        </button>
+      </div>
+      <div className="routine-month-sheet-body">
+        {missions.length === 0 ? (
+          <p className="routine-month-sheet-empty">
+            All tasks moved off this day.
+          </p>
+        ) : (
+          missions.map((mission) => (
+            <SheetPill
+              key={mission.id}
+              mission={mission}
+              sourceDate={date}
+              onOpen={onPillOpen}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Draggable pill rendered inside the detail sheet. Same drag data shape
+// as the week view's DraggablePill so handleDragEnd handles it uniformly.
+const SheetPill = ({ mission, sourceDate, onOpen }) => {
   const dragId = `${mission.id}__${sourceDate.format('YYYY-MM-DD')}`;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: dragId,
@@ -439,7 +554,7 @@ const DraggableBar = ({ mission, sourceDate, onOpen }) => {
       {...listeners}
       {...attributes}
       onClick={handleClick}
-      className={`routine-month-bar ${isDragging ? 'is-dragging-source' : ''}`}
+      className={`routine-month-pill ${isDragging ? 'is-dragging-source' : ''}`}
       data-difficulty={mission.difficulty || 'easy'}
       title={mission.title}
     >
