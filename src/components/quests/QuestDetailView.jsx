@@ -350,9 +350,12 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
       {/* Quest Header */}
       <div className={`quest-detail-header ${isCompleted ? 'completed' : ''}`}>
         <div className="header-top">
-          <button className="back-button" onClick={handleBack}>
+          <button
+            className="back-button"
+            onClick={handleBack}
+            aria-label={isModal ? 'Close' : 'Back'}
+          >
             <span className="material-icons">{isModal ? 'close' : 'arrow_back'}</span>
-            {!isModal && 'Back'}
           </button>
           <div className="header-top-right">
             <button
@@ -544,7 +547,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
 
       {actionError && <ErrorMessage message={actionError} className="quest-action-error" />}
 
-      <StickyFooter bgColor="var(--color-bg-white)" className="quest-detail-footer">
+      <StickyFooter bgColor="#1e3a8a" className="quest-detail-footer">
         {!isCompleted && (
           <button
             type="button"
