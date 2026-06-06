@@ -369,12 +369,6 @@
   cursor: not-allowed;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 480px) {
-  .add-quest-actions {
-    flex-direction: column;
-  }
-}
 /* Quest Reward Section */
 .quest-reward-section {
   padding: var(--space-md) 0;
