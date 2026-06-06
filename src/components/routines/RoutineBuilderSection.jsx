@@ -39,10 +39,15 @@ import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './RoutineBuilderSection.css';
 
+// View paths attach to the buckets they visualize — categorically "Week
+// view" lives with "Weekly," "Month view" lives with "Monthly." Putting
+// them up at the top-actions row implied they were peers with creation
+// actions, which they aren't (they're alternate visualizations of the
+// cadence, scoped to the same bucket).
 const BUCKETS = [
   { key: 'daily',   frequency: RECURRENCE_PATTERNS.DAILY,   label: 'Daily',   icon: 'today' },
-  { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly',  icon: 'view_week' },
-  { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly', icon: 'calendar_month' },
+  { key: 'weekly',  frequency: RECURRENCE_PATTERNS.WEEKLY,  label: 'Weekly',  icon: 'view_week',      viewPath: '/routine-builder/week-view',  viewLabel: 'Week view' },
+  { key: 'monthly', frequency: RECURRENCE_PATTERNS.MONTHLY, label: 'Monthly', icon: 'calendar_month', viewPath: '/routine-builder/month-view', viewLabel: 'Month view' },
   { key: 'yearly',  frequency: RECURRENCE_PATTERNS.YEARLY,  label: 'Yearly',  icon: 'view_timeline' },
 ];
 
@@ -277,22 +282,6 @@ const RoutineBuilderSection = ({
           <span className="material-icons">playlist_add</span>
           Add existing tasks
         </button>
-        <button
-          type="button"
-          className="routine-builder-cta"
-          onClick={() => navigate('/routine-builder/week-view')}
-        >
-          <span className="material-icons">view_week</span>
-          Week view
-        </button>
-        <button
-          type="button"
-          className="routine-builder-cta"
-          onClick={() => navigate('/routine-builder/month-view')}
-        >
-          <span className="material-icons">calendar_month</span>
-          Month view
-        </button>
       </div>
 
       {actionError && <ErrorMessage message={actionError} />}
@@ -307,6 +296,8 @@ const RoutineBuilderSection = ({
           collapsed={collapsedBuckets.has(bucket.key)}
           onToggleCollapsed={() => toggleCollapsed(bucket.key)}
           onAdd={() => setAddBucketFrequency(bucket.frequency)}
+          onView={bucket.viewPath ? () => navigate(bucket.viewPath) : undefined}
+          viewLabel={bucket.viewLabel}
           onRemove={handleRemove}
           removingRootIds={removingRootIds}
           sensors={sensors}
@@ -349,6 +340,8 @@ const FrequencyGroup = ({
   collapsed,
   onToggleCollapsed,
   onAdd,
+  onView,
+  viewLabel,
   onRemove,
   removingRootIds,
   sensors,
@@ -393,18 +386,34 @@ const FrequencyGroup = ({
           <h3 className="routine-builder-group-label">{label}</h3>
           <span className="routine-builder-group-count">{list.length}</span>
         </div>
-        <button
-          type="button"
-          className="routine-builder-group-add"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAdd();
-          }}
-          aria-label={`Add to ${label}`}
-        >
-          <span className="material-icons">add</span>
-          Add
-        </button>
+        <div className="routine-builder-group-actions">
+          {onView && (
+            <button
+              type="button"
+              className="routine-builder-group-view"
+              onClick={(e) => {
+                e.stopPropagation();
+                onView();
+              }}
+              aria-label={viewLabel || `Open ${label} view`}
+            >
+              <span className="material-icons">open_in_full</span>
+              {viewLabel || 'View'}
+            </button>
+          )}
+          <button
+            type="button"
+            className="routine-builder-group-add"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdd();
+            }}
+            aria-label={`Add to ${label}`}
+          >
+            <span className="material-icons">add</span>
+            Add
+          </button>
+        </div>
       </div>
 
       {showList && (

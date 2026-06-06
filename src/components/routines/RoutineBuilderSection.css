@@ -186,6 +186,61 @@
   font-size: 16px;
 }
 
+/* Bucket-level action cluster — View and Add sit side-by-side as peers,
+   both scoped to the same cadence. View is intentionally styled identical
+   to Add so neither dominates; the meaning of each button is carried by
+   its label, not by visual weight. */
+.routine-builder-group-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.routine-builder-group-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.routine-builder-group-view:hover {
+  background: var(--color-bg-main);
+  border-color: var(--color-border-yellow);
+  color: var(--color-primary);
+}
+
+.routine-builder-group-view,
+.routine-builder-group-view .material-icons {
+  color: var(--color-text-medium);
+}
+
+.routine-builder-group-view:hover,
+.routine-builder-group-view:hover .material-icons {
+  color: var(--color-primary);
+}
+
+.routine-builder-group-view .material-icons {
+  font-size: 16px;
+}
+
+/* Empty buckets — dim the view button too so the whole header reads as
+   "not yet populated" without breaking the discoverability of the
+   visualization affordance. */
+.routine-builder-group.is-empty .routine-builder-group-view,
+.routine-builder-group.is-empty .routine-builder-group-view .material-icons {
+  opacity: 0.55;
+}
+
 /* Empty bucket — dimmed treatment so it doesn't compete visually with active
    buckets but stays discoverable for the cadence model. */
 .routine-builder-group.is-empty .routine-builder-group-label {
