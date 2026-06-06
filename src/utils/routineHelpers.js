@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { MISSION_STATUS } from '../types/Mission';
 import {
   isRecurringMission,
+  isEvergreenMission,
   RECURRENCE_PATTERNS,
   calculateNextDueDate,
   getNthWeekdayOfMonth,
@@ -38,15 +39,21 @@ export const isMissionInRoutineSet = (mission, rootSet) => {
   return root != null && rootSet.has(root);
 };
 
-// Group recurring missions by recurrence pattern for the Builder's bird's-eye
-// view. Non-recurring missions are filtered out defensively — if a user changes
-// a routine-member's dueType away from RECURRING, it should drop out of the
-// grouping rather than crash or land in an unexpected bucket.
+// Group routine missions by frequency bucket for the Builder's bird's-eye
+// view. Recurring missions bucket by their recurrence pattern. Evergreen
+// missions default to the Daily bucket — they have no schedule but "always
+// available" reads as a daily standing task in the routine model. (User-
+// facing affordance to promote evergreens into other buckets is a v2 idea.)
+// Non-recurring + non-evergreen missions are filtered out defensively.
 export const groupRoutineMissionsByFrequency = (missions) => {
   const buckets = { daily: [], weekly: [], monthly: [], yearly: [] };
   if (!Array.isArray(missions)) return buckets;
 
   for (const mission of missions) {
+    if (isEvergreenMission(mission)) {
+      buckets.daily.push(mission);
+      continue;
+    }
     if (!isRecurringMission(mission)) continue;
     const pattern = mission.recurrence?.pattern;
     switch (pattern) {
@@ -147,11 +154,15 @@ export const getRoutineMissionsForDate = (
     return missions
       .filter((m) => {
         if (!m) return false;
-        if (!isRecurringMission(m)) return false;
+        const isEvergreen = isEvergreenMission(m);
+        if (!isRecurringMission(m) && !isEvergreen) return false;
         if (!isMissionInRoutineSet(m, rootSet)) return false;
         if (isPausedMember(m)) return false;
 
         if (m.status === MISSION_STATUS.ACTIVE) {
+          // Evergreens have no schedule — they're always "today" for
+          // routine purposes.
+          if (isEvergreen) return true;
           if (!m.dueDate || m.dueDate === '') return false;
           return !dayjs(m.dueDate).isAfter(viewDate, 'day');
         }

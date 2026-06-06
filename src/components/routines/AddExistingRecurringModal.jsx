@@ -10,7 +10,7 @@ import {
   getMissionChainRoot,
   isMissionInRoutineSet,
 } from '../../utils/routineHelpers';
-import { isRecurringMission } from '../../utils/recurrenceHelpers';
+import { isRecurringMission, isEvergreenMission } from '../../utils/recurrenceHelpers';
 import { NO_ROOM_FILTER } from './RoutineBuilderSection';
 import { useModalBackButton } from '../../hooks/useModalBackButton';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
@@ -58,14 +58,16 @@ const AddExistingRecurringModal = ({
   }, [roomFilter, skillFilter, rooms]);
 
   // Build a map of chain root → mission instance (the active instance we'll
-  // show in the list). Filter out non-recurring missions, any whose root is
-  // already in some routine, and (when filters are active on the page) any
-  // that don't match. The page filters narrow the picker so users browsing
-  // "Kitchen routines" only see Kitchen-eligible options.
+  // show in the list). Filter out non-routine-eligible missions (anything
+  // that isn't recurring OR evergreen), any whose root is already in some
+  // routine, and (when filters are active on the page) any that don't match.
+  // Evergreens are eligible because the builder defaults them to the Daily
+  // bucket — they're "always available" standing tasks that fit the routine
+  // model alongside recurring cadences.
   const eligibleMissions = useMemo(() => {
     const byRoot = new Map();
     for (const m of missions || []) {
-      if (!isRecurringMission(m)) continue;
+      if (!isRecurringMission(m) && !isEvergreenMission(m)) continue;
       if (isMissionInRoutineSet(m, routineRootSet)) continue;
       if (roomFilter === NO_ROOM_FILTER) {
         if (m.baseLocation) continue;
