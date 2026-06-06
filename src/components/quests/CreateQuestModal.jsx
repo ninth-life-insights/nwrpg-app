@@ -246,7 +246,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
 
           {/* Quest Reward */}
           <div className="quest-reward-section">
-            <div className="quest-reward-label">Quest Reward <span className="quest-reward-optional">(optional)</span></div>
+            <div className="quest-reward-label">Quest Reward</div>
             {pendingAchievement ? (
               <div className="quest-reward-preview">
                 <AchievementBadge color={pendingAchievement.badgeColor} badgeSymbol={pendingAchievement.badgeSymbol} size="sm" />
@@ -265,7 +265,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
                 onClick={() => setShowAchievementModal(true)}
                 disabled={isSubmitting}
               >
-                + Add Achievement Reward
+                + Add Custom Achievement
               </button>
             )}
           </div>

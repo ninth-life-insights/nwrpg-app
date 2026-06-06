@@ -192,15 +192,6 @@ const QuestBank = () => {
             </button>
           )}
 
-          {/* Add Quest Button */}
-          {!includeArchived && (
-            <button
-              onClick={handleShowAddQuest}
-              className="add-quest-btn"
-            >
-              + Add Quest
-            </button>
-          )}
         </div>
       </div>
 
@@ -234,6 +225,17 @@ const QuestBank = () => {
           })
         )}
       </div>
+
+      {!includeArchived && (
+        <button
+          className="add-quest-fab"
+          onClick={handleShowAddQuest}
+          aria-label="Add Quest"
+        >
+          <span className="material-icons">add</span>
+          Add Quest
+        </button>
+      )}
 
       {/* Quest Creation Modal */}
       <CreateQuestModal

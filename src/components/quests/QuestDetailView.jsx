@@ -526,7 +526,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
               className="quest-reward-add-btn"
               onClick={() => setShowRewardModal(true)}
             >
-              + Add Achievement Reward
+              + Add Custom Achievement
             </button>
           )}
         </div>

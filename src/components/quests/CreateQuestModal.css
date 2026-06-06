@@ -390,11 +390,6 @@
   color: var(--color-text-medium);
 }
 
-.quest-reward-optional {
-  font-weight: 400;
-  color: var(--color-text-light);
-}
-
 .quest-reward-add-btn {
   background: none;
   border: 1.5px dashed var(--color-border);
