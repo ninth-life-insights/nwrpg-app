@@ -266,49 +266,16 @@
 
 /* ========================================
    Drag and Drop Styles
+   ----------------------------------------
+   Base .mission-card and .drag-handle styles live in MissionCard.css.
+   Only drag-state styles belong here.
    ======================================== */
-
-.drag-handle {
-  cursor: grab;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-  transition: color 0.2s ease;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -webkit-touch-callout: none; /* Prevent iOS callout menu */
-  touch-action: none;
-}
-
-.drag-handle:hover {
-  color: #2196f3;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-.drag-handle svg {
-  width: 20px;
-  height: 20px;
-}
-
-.drag-handle.hidden {
-  display: none;
-}
-
-.mission-card {
-  touch-action: none;
-  user-select: none; /* Allow text selection by default */
-}
 
 .mission-card.dragging {
   opacity: 0.5;
   transform: scale(0.98);
-  user-select: none; /* Prevent text selection while dragging */
+  touch-action: none; /* suppress page scroll only while a drag is active */
+  user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
 }
