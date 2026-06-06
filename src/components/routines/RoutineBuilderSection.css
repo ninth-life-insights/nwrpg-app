@@ -47,9 +47,10 @@
   border-color: var(--color-primary);
 }
 
-/* Top-level actions */
+/* Top-level actions — single routine-level CTA centered in its row. */
 .routine-builder-top-actions {
   display: flex;
+  justify-content: center;
   gap: var(--space-sm);
 }
 
