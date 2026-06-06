@@ -145,6 +145,26 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.quest-detail-header__ghost-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: 1.5px dashed rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.quest-detail-header__ghost-prompt:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  color: white;
+}
+
 .quest-meta {
   display: flex;
   align-items: center;

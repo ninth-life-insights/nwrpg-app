@@ -1,6 +1,6 @@
 // src/components/quests/QuestDetailView.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuests } from '../../contexts/QuestsContext';
@@ -58,6 +58,15 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const [editedTitle, setEditedTitle] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const [editedDifficulty, setEditedDifficulty] = useState(null);
+
+  const descriptionInputRef = useRef(null);
+
+  const handleAddDescription = () => {
+    setIsEditMode(true);
+    setTimeout(() => {
+      descriptionInputRef.current?.focus();
+    }, 0);
+  };
 
   useEffect(() => {
     if (currentUser && questId) {
@@ -339,6 +348,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
           <div className="quest-description-section">
             {isEditMode ? (
               <textarea
+                ref={descriptionInputRef}
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="quest-description-input"
@@ -349,6 +359,15 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
               <p className="quest-description">{quest.description}</p>
             )}
           </div>
+        )}
+        {!isEditMode && !quest.description && !isCompleted && (
+          <button
+            type="button"
+            className="quest-detail-header__ghost-prompt"
+            onClick={handleAddDescription}
+          >
+            + Add description
+          </button>
         )}
 
         <div className="quest-meta">
@@ -401,7 +420,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
       </div>
 
       {/* Quest Reward */}
-      {(questAchievement || isEditMode) && (
+      {(questAchievement || !isCompleted) && (
         <div className="quest-reward-display">
           {questAchievement ? (
             <>
