@@ -32,6 +32,7 @@ import {
 } from '../../services/missionService';
 import ErrorMessage from '../ui/ErrorMessage';
 import MissionCardFull from '../missions/MissionCardFull';
+import MissionCardCondensed from '../missions/MissionCardCondensed';
 import './RoutineMonthGrid.css';
 
 const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -192,6 +193,11 @@ const RoutineMonthGrid = ({
   }, [byDate]);
 
   const today = useMemo(() => dayjs().startOf('day'), []);
+
+  // isDragActive doubles as a "soft-close" signal for the detail sheet
+  // — while a pill is in flight, the sheet fades and stops intercepting
+  // pointers so cells behind it become reachable drop targets.
+  const isDragActive = activeDrag !== null;
 
   const handleDragStart = useCallback((event) => {
     const data = event.active?.data?.current;
@@ -376,8 +382,10 @@ const RoutineMonthGrid = ({
         <MonthDayDetailSheet
           date={focusedDate}
           missions={focusedMissions}
+          isDragActive={isDragActive}
           onClose={() => setFocusedDate(null)}
-          onPillOpen={handleBarOpen}
+          onToggleComplete={handleToggleComplete}
+          onMissionChanged={onMutated}
         />
       )}
 
@@ -466,39 +474,47 @@ const CalendarCell = ({
   );
 };
 
-// Difficulty-dot row + count. Up to 6 dots in a wrap-friendly row; if
-// more tasks, dots cap at 5 and a "+N" overflow label finishes the
-// signal. Encodes both volume and difficulty mix without a chip wall.
+// Literal count — accessible (a number is unambiguous to screen
+// readers and low-vision users) and faster to parse than a row of
+// dots. Heatmap tint already carries the relative-load signal; the
+// count provides the absolute. aria-label spells it out for AT.
 const CellSummary = ({ missions }) => {
   const count = missions.length;
-  const maxDots = 6;
-  const visible = count <= maxDots ? missions : missions.slice(0, 5);
-  const overflow = count - visible.length;
   return (
-    <div className="routine-month-cell-summary">
-      {visible.map((m, i) => (
-        <span
-          key={`${m.id}-${i}`}
-          className="routine-month-cell-dot"
-          data-difficulty={m.difficulty || 'easy'}
-        />
-      ))}
-      {overflow > 0 && (
-        <span className="routine-month-cell-overflow">+{overflow}</span>
-      )}
+    <div
+      className="routine-month-cell-count"
+      aria-label={`${count} ${count === 1 ? 'task' : 'tasks'}`}
+    >
+      {count}
     </div>
   );
 };
 
 // Bottom sheet — anchored to the bottom of the viewport, no backdrop so
 // the calendar stays visible (and droppable) above. Renders the focused
-// day's pills as draggable; drag a pill up onto any visible cell to
-// re-anchor it. Tap close (or tap the focused cell again, or pick a
-// different cell) to dismiss.
-const MonthDayDetailSheet = ({ date, missions, onClose, onPillOpen }) => {
+// day's missions using the same MissionCardCondensed cards the rest of
+// the app uses, with a drag handle on the right side (same pattern as
+// SortableRoutineCard). Tap card body → MissionCardFull. Drag handle →
+// move to a different cell.
+//
+// During a drag the sheet soft-closes — fades to a faint silhouette and
+// drops pointer-events — so cells behind it become reachable drop targets
+// for the in-flight pill without forcing the user to dismiss and reopen.
+const MonthDayDetailSheet = ({
+  date,
+  missions,
+  isDragActive,
+  onClose,
+  onToggleComplete,
+  onMissionChanged,
+}) => {
   const dateLabel = date.format('dddd, MMMM D');
   return (
-    <div className="routine-month-sheet" role="dialog" aria-label={dateLabel}>
+    <div
+      className={`routine-month-sheet ${isDragActive ? 'is-soft-closed' : ''}`}
+      role="dialog"
+      aria-label={dateLabel}
+    >
       <div className="routine-month-sheet-header">
         <h3 className="routine-month-sheet-title">{dateLabel}</h3>
         <button
@@ -517,11 +533,12 @@ const MonthDayDetailSheet = ({ date, missions, onClose, onPillOpen }) => {
           </p>
         ) : (
           missions.map((mission) => (
-            <SheetPill
+            <DraggableMissionCard
               key={mission.id}
               mission={mission}
               sourceDate={date}
-              onOpen={onPillOpen}
+              onToggleComplete={onToggleComplete}
+              onMissionChanged={onMissionChanged}
             />
           ))
         )}
@@ -530,9 +547,17 @@ const MonthDayDetailSheet = ({ date, missions, onClose, onPillOpen }) => {
   );
 };
 
-// Draggable pill rendered inside the detail sheet. Same drag data shape
-// as the week view's DraggablePill so handleDragEnd handles it uniformly.
-const SheetPill = ({ mission, sourceDate, onOpen }) => {
+// Wraps MissionCardCondensed with a drag handle on the right side —
+// mirrors SortableRoutineCard, but uses useDraggable (cross-container
+// drag onto a calendar cell) instead of useSortable (within-list
+// reorder). Card body keeps its normal tap-to-edit behavior; only the
+// handle initiates drag.
+const DraggableMissionCard = ({
+  mission,
+  sourceDate,
+  onToggleComplete,
+  onMissionChanged,
+}) => {
   const dragId = `${mission.id}__${sourceDate.format('YYYY-MM-DD')}`;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: dragId,
@@ -543,22 +568,34 @@ const SheetPill = ({ mission, sourceDate, onOpen }) => {
       title: mission.title,
     },
   });
-  const handleClick = (e) => {
-    if (isDragging) return;
-    e.stopPropagation();
-    onOpen?.(mission);
-  };
+
+  const dragHandle = (
+    <button
+      type="button"
+      className="routine-month-drag-handle"
+      {...attributes}
+      {...listeners}
+      style={{ touchAction: 'none' }}
+      aria-label="Drag to move task"
+      title="Drag to move"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <span className="material-icons">drag_indicator</span>
+    </button>
+  );
+
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      onClick={handleClick}
-      className={`routine-month-pill ${isDragging ? 'is-dragging-source' : ''}`}
-      data-difficulty={mission.difficulty || 'easy'}
-      title={mission.title}
+      className={`routine-month-card-wrap ${isDragging ? 'is-dragging-source' : ''}`}
     >
-      {mission.title}
+      <MissionCardCondensed
+        mission={mission}
+        onToggleComplete={onToggleComplete}
+        onMissionChanged={onMissionChanged}
+        hideRoutineBadge
+        actionSlot={dragHandle}
+      />
     </div>
   );
 };

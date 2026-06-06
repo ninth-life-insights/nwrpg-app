@@ -8,14 +8,16 @@
 /* Edge-to-edge layout for the month view — calendar cells need every
    pixel of horizontal real estate on mobile. Page strips its left/right
    padding; chrome elements (header, toolbar) carry their own inset so
-   they don't crash against the screen edge. */
+   they don't crash against the screen edge. Background picks up the
+   app's cream tone (--color-bg-main) so the calendar reads as part of
+   the broader UI's warm palette rather than a sterile spreadsheet. */
 .routines-page.routine-month-view-page {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
   padding: var(--space-lg) 0 var(--space-md);
   box-sizing: border-box;
-  background: var(--color-bg-white);
+  background: var(--color-bg-main);
 }
 
 .routine-month-view-page .page-header {
@@ -123,23 +125,24 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0;
   padding: 0;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-yellow);
+  background: var(--color-bg-white);
 }
 
 /* Edge-shared grid cells, g-cal style — no per-cell radius, no gap;
    borders are right + bottom only so adjacent cells share a single
-   hairline. Top edge of the grid sits on the cells container's
-   border-top. */
+   hairline. Borders pick up a warmer yellow tone to fit the cream
+   canvas instead of reading as cool spreadsheet gridlines. */
 .routine-month-cell {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   min-height: 80px;
-  padding: 4px 4px 5px;
+  padding: 5px 6px 6px;
   background: var(--color-bg-white);
-  border-right: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border-yellow);
+  border-bottom: 1px solid var(--color-border-yellow);
   overflow: hidden;
   transition: background var(--transition), border-color var(--transition);
 }
@@ -175,10 +178,18 @@
   color: var(--color-text-placeholder);
 }
 
-/* Today's cell — subtle primary-colored ring inside the cell so it
-   stands out without competing with the heatmap. */
-.routine-month-cell.is-today {
-  box-shadow: inset 0 0 0 2px var(--color-primary);
+/* Today's cell — warm dot beside the date number rather than a cool
+   ring around the whole cell. Reads less like an error state, more
+   like a friendly "you are here." */
+.routine-month-cell.is-today .routine-month-cell-date::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  vertical-align: middle;
 }
 
 /* Drop-target — temporary intense fill during drag-over so the user
@@ -202,42 +213,21 @@
   color: var(--color-text-dark);
 }
 
-/* Summary dots — one per mission, color by difficulty. Encodes both
-   count (literal number of dots) and the difficulty mix at a glance.
-   Caps at 6; overflow shown as a "+N" label so very busy days don't
-   spill out of the cell. */
-.routine-month-cell-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 3px;
+/* Literal count badge — sits in the cell footer, accessible to AT via
+   aria-label. Heatmap tint behind it carries the relative signal; the
+   count provides the absolute. */
+.routine-month-cell-count {
   margin-top: auto;
-}
-
-.routine-month-cell-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-text-light);
-  flex-shrink: 0;
-}
-
-.routine-month-cell-dot[data-difficulty="easy"] {
-  background: #86efac;
-}
-.routine-month-cell-dot[data-difficulty="medium"] {
-  background: #fcd34d;
-}
-.routine-month-cell-dot[data-difficulty="hard"] {
-  background: #fca5a5;
-}
-
-.routine-month-cell-overflow {
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text-medium);
   line-height: 1;
-  margin-left: 1px;
+  text-align: right;
+}
+
+.routine-month-cell.tier-medium .routine-month-cell-count,
+.routine-month-cell.tier-heavy .routine-month-cell-count {
+  color: var(--color-text-dark);
 }
 
 /* Cell click affordance — only cells with tasks behave as buttons.
@@ -342,42 +332,80 @@
   padding: var(--space-md) 0;
 }
 
-/* Sheet pill — mirrors the week view's mission pill (sticky-note yellow,
-   bolder type, difficulty stripe on left, card shadow). Same visual
-   language so dragging from the sheet feels like grabbing one of the
-   "real" mission objects, not a stand-in. */
-.routine-month-pill {
+/* Soft-close during drag — sheet fades to a faint silhouette and stops
+   capturing pointers so cells behind it become reachable drop targets.
+   The DragOverlay (which floats above everything) keeps the in-flight
+   pill fully opaque, so the user sees: a ghost sheet, a clear floating
+   pill, and the calendar cells underneath. */
+.routine-month-sheet.is-soft-closed {
+  opacity: 0.18;
+  pointer-events: none;
+  transition: opacity 0.12s ease-out;
+}
+
+/* Sheet card wrapper — full opacity normally, dims when this specific
+   card is the drag source. Drag handle is a small grip on the right
+   side of the MissionCardCondensed; tap the card body to edit. */
+.routine-month-card-wrap {
+  transition: opacity var(--transition);
+}
+
+.routine-month-card-wrap.is-dragging-source {
+  opacity: 0.4;
+}
+
+.routine-month-drag-handle {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.routine-month-drag-handle:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.routine-month-drag-handle:active {
+  cursor: grabbing;
+}
+
+.routine-month-drag-handle,
+.routine-month-drag-handle .material-icons {
+  color: var(--color-text-light) !important;
+}
+
+.routine-month-drag-handle .material-icons {
+  font-size: 20px;
+}
+
+/* In-flight pill (DragOverlay) — sticky-note style with full title.
+   Same visual language as the week view's drag overlay so the gesture
+   feels consistent across views. */
+.routine-month-pill.is-drag-overlay {
   position: relative;
-  padding: 8px var(--space-md) 8px calc(var(--space-md) + 10px);
+  padding: 8px var(--space-md) 8px calc(var(--space-md) + 12px);
   background: var(--color-bg-main);
-  border: 1px solid var(--color-border-yellow);
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
   color: var(--color-text-dark);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transform: rotate(-1deg);
+  max-width: 240px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: opacity var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
-.routine-month-pill:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  transform: translateY(-1px);
-}
-
-.routine-month-pill:active {
-  cursor: grabbing;
-  transform: translateY(0);
-  box-shadow: var(--shadow-card);
-}
-
-.routine-month-pill::before {
+.routine-month-pill.is-drag-overlay::before {
   content: '';
   position: absolute;
   left: 0;
@@ -387,23 +415,12 @@
   background: var(--color-text-light);
 }
 
-.routine-month-pill[data-difficulty="easy"]::before {
+.routine-month-pill.is-drag-overlay[data-difficulty="easy"]::before {
   background: #86efac;
 }
-.routine-month-pill[data-difficulty="medium"]::before {
+.routine-month-pill.is-drag-overlay[data-difficulty="medium"]::before {
   background: #fcd34d;
 }
-.routine-month-pill[data-difficulty="hard"]::before {
+.routine-month-pill.is-drag-overlay[data-difficulty="hard"]::before {
   background: #fca5a5;
-}
-
-.routine-month-pill.is-dragging-source {
-  opacity: 0.35;
-}
-
-.routine-month-pill.is-drag-overlay {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  border-color: var(--color-primary);
-  transform: rotate(-1deg);
-  background: var(--color-bg-main);
 }
