@@ -378,11 +378,6 @@ const FrequencyGroup = ({
               expand_more
             </span>
           )}
-          {icon && (
-            <span className="material-icons routine-builder-group-icon" aria-hidden="true">
-              {icon}
-            </span>
-          )}
           <h3 className="routine-builder-group-label">{label}</h3>
           <span className="routine-builder-group-count">{list.length}</span>
         </div>
@@ -397,7 +392,7 @@ const FrequencyGroup = ({
               }}
               aria-label={viewLabel || `Open ${label} view`}
             >
-              <span className="material-icons">open_in_full</span>
+              <span className="material-icons">zoom_out_map</span>
               {viewLabel || 'View'}
             </button>
           )}

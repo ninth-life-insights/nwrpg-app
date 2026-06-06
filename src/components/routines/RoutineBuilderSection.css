@@ -186,10 +186,11 @@
   font-size: 16px;
 }
 
-/* Bucket-level action cluster — View and Add sit side-by-side as peers,
-   both scoped to the same cadence. View is intentionally styled identical
-   to Add so neither dominates; the meaning of each button is carried by
-   its label, not by visual weight. */
+/* Bucket-level action cluster — View and Add sit side-by-side as peers
+   scoped to the same cadence. They're styled differently on purpose:
+   Add is a neutral outlined chip ("create more of this"), View is a
+   filled warm-yellow pill ("open a bigger visualization") so the eye
+   can tell at a glance which category each action belongs to. */
 .routine-builder-group-actions {
   display: inline-flex;
   align-items: center;
@@ -200,12 +201,11 @@
 .routine-builder-group-view {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   padding: var(--space-xs) var(--space-sm);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-medium);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
   font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
@@ -214,19 +214,13 @@
 }
 
 .routine-builder-group-view:hover {
-  background: var(--color-bg-main);
-  border-color: var(--color-border-yellow);
-  color: var(--color-primary);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .routine-builder-group-view,
 .routine-builder-group-view .material-icons {
-  color: var(--color-text-medium);
-}
-
-.routine-builder-group-view:hover,
-.routine-builder-group-view:hover .material-icons {
-  color: var(--color-primary);
+  color: var(--color-bg-white) !important;
 }
 
 .routine-builder-group-view .material-icons {
