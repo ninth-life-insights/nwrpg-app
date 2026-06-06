@@ -141,6 +141,14 @@ export const NotificationProvider = ({ children }) => {
     showUndoToast({ label: 'Mission archived', missionTitle, onUndo });
   }, [showUndoToast]);
 
+  const notifyQuestDeleted = useCallback(({ questTitle, onUndo }) => {
+    showUndoToast({ label: 'Quest deleted', missionTitle: questTitle, onUndo });
+  }, [showUndoToast]);
+
+  const notifyQuestArchived = useCallback(({ questTitle, onUndo }) => {
+    showUndoToast({ label: 'Quest archived', missionTitle: questTitle, onUndo });
+  }, [showUndoToast]);
+
   return (
     <NotificationContext.Provider value={{
       notifyMissionCompletion,
@@ -148,6 +156,8 @@ export const NotificationProvider = ({ children }) => {
       notifySkillLevelUp,
       notifyMissionDeleted,
       notifyMissionArchived,
+      notifyQuestDeleted,
+      notifyQuestArchived,
       refreshSchedule,
     }}>
       {children}

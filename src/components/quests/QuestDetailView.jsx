@@ -1,6 +1,7 @@
 // src/components/quests/QuestDetailView.js
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuests } from '../../contexts/QuestsContext';
@@ -9,6 +10,7 @@ import { db } from '../../services/firebase/config';
 import QuestMissionList from './QuestMissionList';
 import AddMissionCard from '../missions/AddMissionCard';
 import Badge from '../ui/Badge';
+import StickyFooter from '../ui/StickyFooter';
 import { useNotifications } from '../../contexts/NotificationContext';
 import {
   getQuest,
@@ -16,6 +18,7 @@ import {
   deleteQuest,
   completeQuest,
   archiveQuest,
+  restoreQuest,
   updateQuestStatus,
   removeMissionFromQuest,
   reorderQuestMissions
@@ -49,10 +52,21 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const [actionError, setActionError] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showAddMission, setShowAddMission] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
-  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-  const { notifyMissionCompletion } = useNotifications();
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef(null);
+  const { notifyMissionCompletion, notifyQuestArchived, notifyQuestDeleted } = useNotifications();
+
+  useEffect(() => {
+    if (!showActionsMenu) return;
+    const handleClickOutside = (e) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target)) {
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showActionsMenu]);
   
   // Inline editing state
   const [editedTitle, setEditedTitle] = useState('');
@@ -165,41 +179,59 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     }
   };
 
-  const handleDeleteQuest = () => {
-    setShowDeleteConfirm(true);
-  };
-
-  const deleteQuestConfirmed = async () => {
+  const handleArchiveQuest = async () => {
     setActionError(null);
-    try {
-      await deleteQuest(currentUser.uid, questId);
-      setShowDeleteConfirm(false);
-      await refreshQuests();
-      if (isModal) onClose();
-      else navigate('/quests');
-    } catch (err) {
-      console.error('Error deleting quest:', err);
-      setShowDeleteConfirm(false);
-      setActionError("That quest didn't delete. Try again.");
-    }
-  };
-
-  const handleArchiveQuest = () => {
-    setShowArchiveConfirm(true);
-  };
-
-  const archiveQuestConfirmed = async () => {
-    setActionError(null);
+    setShowActionsMenu(false);
+    const questTitle = quest.title;
     try {
       await archiveQuest(currentUser.uid, questId);
-      setShowArchiveConfirm(false);
       await refreshQuests();
+      notifyQuestArchived({
+        questTitle,
+        onUndo: async () => {
+          await restoreQuest(currentUser.uid, questId);
+          await refreshQuests();
+        },
+      });
       if (isModal) onClose();
       else navigate('/quest-bank');
     } catch (err) {
       console.error('Error archiving quest:', err);
-      setShowArchiveConfirm(false);
       setActionError("That quest didn't archive. Try again.");
+    }
+  };
+
+  const handleDeleteQuest = async () => {
+    setActionError(null);
+    setShowActionsMenu(false);
+    const questTitle = quest.title;
+    const linkedAchievementId = quest.achievement;
+    try {
+      await deleteQuest(currentUser.uid, questId);
+      await refreshQuests();
+      notifyQuestDeleted({
+        questTitle,
+        onUndo: async () => {
+          const questRef = doc(db, 'users', currentUser.uid, 'quests', questId);
+          await updateDoc(questRef, {
+            status: QUEST_STATUS.ACTIVE,
+            deletedAt: null,
+          });
+          if (linkedAchievementId) {
+            const achRef = doc(db, 'users', currentUser.uid, 'achievements', linkedAchievementId);
+            await updateDoc(achRef, {
+              status: 'pending',
+              deletedAt: null,
+            });
+          }
+          await refreshQuests();
+        },
+      });
+      if (isModal) onClose();
+      else navigate('/quest-bank');
+    } catch (err) {
+      console.error('Error deleting quest:', err);
+      setActionError("That quest didn't delete. Try again.");
     }
   };
 
@@ -322,12 +354,54 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
             <span className="material-icons">{isModal ? 'close' : 'arrow_back'}</span>
             {!isModal && 'Back'}
           </button>
-          <button
-            className={`edit-button ${isEditMode ? 'active' : ''}`}
-            onClick={handleToggleEditMode}
-          >
-            {isEditMode ? 'Done' : 'Edit'}
-          </button>
+          <div className="header-top-right">
+            <button
+              className={`edit-button ${isEditMode ? 'active' : ''}`}
+              onClick={handleToggleEditMode}
+            >
+              {isEditMode ? 'Done' : 'Edit'}
+            </button>
+            {(quest.status !== QUEST_STATUS.ARCHIVED || !isModal) && (
+              <div className="quest-actions-menu" ref={actionsMenuRef}>
+                <button
+                  type="button"
+                  className="quest-actions-menu__trigger"
+                  onClick={() => setShowActionsMenu((open) => !open)}
+                  aria-label="More actions"
+                  aria-haspopup="menu"
+                  aria-expanded={showActionsMenu}
+                >
+                  <span className="material-icons">more_vert</span>
+                </button>
+                {showActionsMenu && (
+                  <div className="quest-actions-menu__dropdown" role="menu">
+                    {quest.status !== QUEST_STATUS.ARCHIVED && (
+                      <button
+                        type="button"
+                        className="quest-actions-menu__item"
+                        onClick={handleArchiveQuest}
+                        role="menuitem"
+                      >
+                        <span className="material-icons">archive</span>
+                        Archive
+                      </button>
+                    )}
+                    {!isModal && (
+                      <button
+                        type="button"
+                        className="quest-actions-menu__item quest-actions-menu__item--danger"
+                        onClick={handleDeleteQuest}
+                        role="menuitem"
+                      >
+                        <span className="material-icons">delete</span>
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <h1 className={`quest-title ${isCompleted ? 'completed' : ''}`}>
@@ -466,62 +540,45 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
           onReorderMissions={handleReorderMissions}
           onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
         />
+      </div>
 
+      {actionError && <ErrorMessage message={actionError} className="quest-action-error" />}
+
+      <StickyFooter bgColor="var(--color-bg-white)" className="quest-detail-footer">
         {!isCompleted && (
           <button
-            className="add-mission-to-quest-btn"
+            type="button"
+            className="quest-add-mission-btn"
             onClick={() => setShowAddMission(true)}
           >
             + Add Mission to Quest
           </button>
         )}
-      </div>
+        {isCompleted ? (
+          <button
+            type="button"
+            className="reopen-quest-btn"
+            onClick={handleUncompleteQuest}
+          >
+            Reopen Quest
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="complete-quest-btn"
+            onClick={handleCompleteQuest}
+          >
+            Complete Quest
+          </button>
+        )}
+      </StickyFooter>
 
-      {actionError && <ErrorMessage message={actionError} className="quest-action-error" />}
-
-      {/* Bottom Actions */}
-      <div className={`quest-actions ${isCompleted ? 'completed' : ''}`}>
-        <div className="quest-actions-primary">
-          {isCompleted ? (
-            <button
-              className="reopen-quest-btn"
-              onClick={handleUncompleteQuest}
-            >
-              Reopen Quest
-            </button>
-          ) : (
-            <button
-              className="complete-quest-btn"
-              onClick={handleCompleteQuest}
-            >
-              Complete Quest
-            </button>
-          )}
-        </div>
-        <div className="quest-actions-secondary">
-          {quest.status !== QUEST_STATUS.ARCHIVED && (
-            <button
-              className="archive-quest-btn"
-              onClick={handleArchiveQuest}
-            >
-              Archive Quest
-            </button>
-          )}
-          {!isModal && (
-            <button
-              className="delete-quest-btn"
-              onClick={handleDeleteQuest}
-            >
-              Delete Quest
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Confirmation Modals */}
-      {showCompleteConfirm && (
-        <div className="confirmation-modal">
-          <div className="modal-content">
+      {showCompleteConfirm && createPortal(
+        <div
+          className="confirmation-modal"
+          onClick={() => setShowCompleteConfirm(false)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Complete Quest?</h3>
             <p>You still have uncompleted missions. Are you sure you want to complete this quest?</p>
             <div className="modal-actions">
@@ -529,33 +586,8 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
               <button onClick={completeQuestConfirmed} className="confirm-btn">Complete</button>
             </div>
           </div>
-        </div>
-      )}
-
-      {showDeleteConfirm && (
-        <div className="confirmation-modal">
-          <div className="modal-content">
-            <h3>Delete Quest?</h3>
-            <p>This will remove the quest but keep all missions. Are you sure?</p>
-            <div className="modal-actions">
-              <button onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-              <button onClick={deleteQuestConfirmed} className="confirm-btn delete">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showArchiveConfirm && (
-        <div className="confirmation-modal">
-          <div className="modal-content">
-            <h3>Archive Quest?</h3>
-            <p>This quest will move to your archive. You can restore it any time.</p>
-            <div className="modal-actions">
-              <button onClick={() => setShowArchiveConfirm(false)}>Cancel</button>
-              <button onClick={archiveQuestConfirmed} className="confirm-btn">Archive</button>
-            </div>
-          </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Add Mission Modal */}
