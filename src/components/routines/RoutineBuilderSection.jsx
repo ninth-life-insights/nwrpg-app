@@ -285,6 +285,14 @@ const RoutineBuilderSection = ({
           <span className="material-icons">view_week</span>
           Week view
         </button>
+        <button
+          type="button"
+          className="routine-builder-cta"
+          onClick={() => navigate('/routine-builder/month-view')}
+        >
+          <span className="material-icons">calendar_month</span>
+          Month view
+        </button>
       </div>
 
       {actionError && <ErrorMessage message={actionError} />}

@@ -1,0 +1,268 @@
+/* src/components/routines/RoutineMonthGrid.css
+   Mobile-first calendar view of the user's monthly-pattern routine
+   tasks. 7-column weekday grid, ~5-6 rows, each cell carries the day
+   number, a heatmap tint, and a stack of compact difficulty-colored
+   bars (one per task). Bars are draggable to any cell in the displayed
+   month; mode-preserving drag semantics live in the component. */
+
+/* Edge-to-edge layout for the month view — calendar cells need every
+   pixel of horizontal real estate on mobile. Page strips its left/right
+   padding; chrome elements (header, toolbar) carry their own inset so
+   they don't crash against the screen edge. */
+.routines-page.routine-month-view-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: var(--space-lg) 0 var(--space-md);
+  box-sizing: border-box;
+  background: var(--color-bg-white);
+}
+
+.routine-month-view-page .page-header {
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  box-sizing: border-box;
+  margin-bottom: var(--space-md);
+}
+
+.routine-month-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Toolbar — month name, prev/next nav, "Today" link when off-month.
+   Sticky-ish layout: nav arrows at the edges, label centered, "Today"
+   floats right when relevant. */
+.routine-month-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
+}
+
+.routine-month-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.routine-month-nav:hover {
+  background: #f8f9fa;
+}
+
+.routine-month-nav,
+.routine-month-nav .material-icons {
+  color: var(--color-text-medium) !important;
+}
+
+.routine-month-nav .material-icons {
+  font-size: 22px;
+}
+
+.routine-month-label {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.routine-month-today {
+  padding: 6px var(--space-md);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.routine-month-today:hover {
+  background: #f8f9fa;
+}
+
+.routine-month-error {
+  flex-shrink: 0;
+}
+
+/* Weekday header row — same column track as the cells below so labels
+   line up exactly with their columns. */
+.routine-month-weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  padding: 0;
+}
+
+.routine-month-weekday {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 2px;
+}
+
+/* Cells grid — 7 columns equal width. Rows auto-size to content with a
+   floor; cells with bars naturally grow a touch taller than empty ones. */
+.routine-month-cells {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Edge-shared grid cells, g-cal style — no per-cell radius, no gap;
+   borders are right + bottom only so adjacent cells share a single
+   hairline. Top edge of the grid sits on the cells container's
+   border-top. */
+.routine-month-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 80px;
+  padding: 4px 4px 5px;
+  background: var(--color-bg-white);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+/* Remove the right edge on the last column of each row so the rightmost
+   border isn't doubled with whatever sits beyond. */
+.routine-month-cell:nth-child(7n) {
+  border-right: none;
+}
+
+/* Heatmap tiers — same color language as the week view: tinted background
+   that scales with relative load. Cell border picks up the tint at heavier
+   tiers for the perimeter cue. */
+.routine-month-cell.tier-light {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg-white));
+}
+.routine-month-cell.tier-medium {
+  background: color-mix(in srgb, var(--color-primary) 22%, var(--color-bg-white));
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+.routine-month-cell.tier-heavy {
+  background: color-mix(in srgb, var(--color-primary) 38%, var(--color-bg-white));
+  border-color: var(--color-primary);
+}
+
+/* Out-of-month padding cells — visible (so the date rhythm stays
+   coherent) but quiet and non-interactive. */
+.routine-month-cell.is-out-of-month {
+  background: transparent;
+  border-color: transparent;
+}
+.routine-month-cell.is-out-of-month .routine-month-cell-date {
+  color: var(--color-text-placeholder);
+}
+
+/* Today's cell — subtle primary-colored ring inside the cell so it
+   stands out without competing with the heatmap. */
+.routine-month-cell.is-today {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+/* Drop-target — temporary intense fill during drag-over so the user
+   knows exactly where they're dropping. */
+.routine-month-cell.is-drop-target {
+  background: color-mix(in srgb, var(--color-primary) 45%, var(--color-bg-white));
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.routine-month-cell-date {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-medium);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.routine-month-cell.tier-heavy .routine-month-cell-date,
+.routine-month-cell.tier-medium .routine-month-cell-date {
+  color: var(--color-text-dark);
+}
+
+/* Bars area — vertical stack of compact bars, one per mission. Wraps
+   to additional column if many tasks land on the same day. */
+.routine-month-cell-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Mission chip — g-cal style. Truncated title gives ~6-8 chars of
+   preview at mobile cell widths; full title on hover (title attr) and
+   on tap (MissionCardFull). Difficulty drives the whole chip's
+   background — at this density a left-edge stripe disappears, but a
+   full pastel fill carries clean. */
+.routine-month-bar {
+  min-height: 15px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--color-text-light);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.routine-month-bar:active {
+  cursor: grabbing;
+}
+
+.routine-month-bar.is-dragging-source {
+  opacity: 0.3;
+}
+
+.routine-month-bar.is-drag-overlay {
+  min-height: 18px;
+  padding: 2px 6px;
+  font-size: 11px;
+  width: auto;
+  max-width: 140px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: rotate(-1deg);
+}
+
+/* Difficulty colors — same pastel palette as the week view's stripes
+   so the visual language stays consistent across views. */
+.routine-month-bar[data-difficulty="easy"] {
+  background: #86efac;
+}
+.routine-month-bar[data-difficulty="medium"] {
+  background: #fcd34d;
+}
+.routine-month-bar[data-difficulty="hard"] {
+  background: #fca5a5;
+}

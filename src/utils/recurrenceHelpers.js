@@ -31,6 +31,19 @@ const ordinal = (n) => {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 };
 
+// Inverse of getNthWeekdayOfMonth — "March 17 is the 3rd Tuesday."
+// Returns 1-4 for the 1st-4th occurrence of the date's weekday in its
+// month, or -1 ("last") for the 5th-and-final occurrence. The recurrence
+// schema only stores 1|2|3|4|-1 (no 5), so day 29+ always maps to -1
+// to keep behavior stable across month lengths. Used by the month
+// view's drag handler when a dayOfWeek-mode task is dropped on a new
+// cell — target.date() → new weekOfMonth via this helper.
+export const getWeekdayOccurrenceInMonth = (date) => {
+  const d = dayjs(date);
+  const occurrence = Math.ceil(d.date() / 7);
+  return occurrence >= 5 ? -1 : occurrence;
+};
+
 // Find the nth occurrence of a weekday in a given month.
 // ordinal: 1, 2, 3, 4, or -1 (last). weekday: 0 (Sun) - 6 (Sat).
 // monthDayjs: any dayjs date inside the target month.
