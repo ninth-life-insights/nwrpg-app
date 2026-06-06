@@ -39,7 +39,7 @@ const QuestCard = ({
   };
 
   return (
-    <div className="quest-card">
+    <div className="quest-card" onClick={handleViewFullQuest}>
       {/* Quest Header */}
       <div className="quest-card-header">
         <div className="quest-card-title-row">
@@ -80,7 +80,10 @@ const QuestCard = ({
 
       {/* Next Mission Section */}
       {nextMission && quest.status !== 'completed' && (
-        <div className="quest-next-mission-section">
+        <div
+          className="quest-next-mission-section"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="quest-next-mission-label">Next up:</div>
           <MissionCard
             mission={nextMission}
@@ -107,7 +110,10 @@ const QuestCard = ({
         {onRestore && (
           <button
             className="restore-quest-button"
-            onClick={() => onRestore(quest.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRestore(quest.id);
+            }}
           >
             Restore
           </button>
