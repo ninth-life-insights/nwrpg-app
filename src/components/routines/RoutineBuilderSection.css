@@ -148,15 +148,16 @@
   text-align: center;
 }
 
-/* Inline + Add button in the header. Small chip-style so it doesn't overpower
-   the title row. Material icon color pinned per CLAUDE.md gotcha. */
+/* Inline + Add button in the header. Same outline strength as the View
+   button so the two read as sibling actions; shape (rounded square vs.
+   pill) carries the category distinction. */
 .routine-builder-group-add {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   padding: var(--space-xs) var(--space-sm);
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-text-medium);
   border-radius: var(--radius-md);
   color: var(--color-text-medium);
   font-size: var(--font-size-sm);
@@ -198,13 +199,17 @@
   flex-shrink: 0;
 }
 
+/* Outlined pill in the same neutral color as the Add button's text —
+   different shape (pill) and shape-only difference from Add carries
+   the category distinction, while the shared text color keeps the
+   pair visually anchored. */
 .routine-builder-group-view {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: var(--space-xs) var(--space-sm);
-  background: var(--color-primary);
-  border: 1px solid var(--color-primary);
+  background: transparent;
+  border: none;
   border-radius: 999px;
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -214,17 +219,20 @@
 }
 
 .routine-builder-group-view:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
+  background: color-mix(in srgb, var(--color-text-medium) 8%, transparent);
 }
 
 .routine-builder-group-view,
 .routine-builder-group-view .material-icons {
-  color: var(--color-bg-white) !important;
+  color: var(--color-text-medium) !important;
 }
 
 .routine-builder-group-view .material-icons {
   font-size: 16px;
+  line-height: 1;
+  display: inline-block;
+  position: relative;
+
 }
 
 /* Empty buckets — dim the view button too so the whole header reads as
