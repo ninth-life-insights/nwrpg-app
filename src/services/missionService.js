@@ -715,14 +715,39 @@ export const getRecurringMissionInstances = async (userId, parentMissionId) => {
   }
 };
 
-// Mark mission as expired (could be run by a scheduled function)
+// Mark mission as expired (could be run by a scheduled function).
+// In this codebase, expired === archived (see archiveMission below).
 export const expireMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
+
+    // Read mission first so we can sync the quest's cached progress counts
+    // if this mission belongs to a quest. Mirrors deleteMission's pattern.
+    const missionSnap = await getDoc(missionRef);
+    const missionData = missionSnap.exists() ? missionSnap.data() : null;
+
     await updateDoc(missionRef, {
       status: MISSION_STATUS.EXPIRED,
       expiredAt: serverTimestamp()
     });
+
+    // Keep quest progress math consistent with display: QuestDetailView hides
+    // archived missions, so they should also drop out of completedMissionIds
+    // and the active count, otherwise numerator and denominator diverge
+    // (e.g., a completed-then-archived mission would leave progress at 3/2).
+    // Going through updateQuestProgress(false) — rather than touching the
+    // cache directly — also lets it re-evaluate auto-complete: archiving
+    // the last incomplete mission of an otherwise-done quest correctly
+    // auto-completes the quest.
+    if (missionData?.questId) {
+      try {
+        const { updateQuestProgress } = await import('./questService');
+        await updateQuestProgress(userId, missionData.questId, missionId, false);
+      } catch (error) {
+        console.error('Error syncing quest progress on archive:', error);
+        // Don't throw — mission is still archived even if quest sync fails.
+      }
+    }
   } catch (error) {
     console.error('Error expiring mission:', error);
     throw error;
