@@ -145,7 +145,8 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       const batch = writeBatch(db);
 
       // Missions — same shape createMission would have produced, but already
-      // carrying questId / questOrder so no follow-up updates are needed.
+      // carrying questId so no follow-up updates are needed. Ordering within
+      // the quest is owned by quest.missionOrder on the quest doc.
       missions.forEach((mission, i) => {
         const tpl = createMissionTemplate({
           title: mission.title,
@@ -153,7 +154,6 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           skill: mission.skill,
           baseLocation: mission.baseLocation,
           questId: questRef.id,
-          questOrder: i,
         });
         const { id: _omitMissionId, ...missionData } = tpl;
         batch.set(missionRefs[i], {

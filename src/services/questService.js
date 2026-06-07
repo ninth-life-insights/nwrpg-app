@@ -277,10 +277,9 @@ export const addMissionToQuest = async (userId, questId, missionId) => {
   // Update the mission to link it to the quest
   const { updateMission } = await import('./missionService');
   await updateMission(userId, missionId, {
-    questId: questId,
-    questOrder: updatedMissionOrder.length - 1
+    questId: questId
   });
-  
+
   return getQuest(userId, questId);
 };
 
@@ -306,10 +305,9 @@ export const removeMissionFromQuest = async (userId, questId, missionId) => {
   // Update the mission to unlink it from the quest
   const { updateMission } = await import('./missionService');
   await updateMission(userId, missionId, {
-    questId: null,
-    questOrder: null
+    questId: null
   });
-  
+
   return getQuest(userId, questId);
 };
 
