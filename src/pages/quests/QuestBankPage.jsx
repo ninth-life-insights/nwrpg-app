@@ -14,7 +14,7 @@ import {
 } from '../../services/questService';
 import { getAllMissions } from '../../services/missionService';
 import { getNextMission } from '../../types/Quests';
-import { completeMissionWithRecurrence } from '../../services/missionService';
+import { completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import './QuestBankPage.css';
@@ -118,12 +118,11 @@ const QuestBank = () => {
   const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     try {
       if (isCurrentlyCompleted) {
-        // Handle uncompletion
-        // TODO: Import and use uncompleteMission
+        await uncompleteMission(currentUser.uid, missionId);
       } else {
         await completeMissionWithRecurrence(currentUser.uid, missionId);
       }
-      
+
       // Reload quests and missions to update progress
       await loadQuests();
       await loadMissions();
