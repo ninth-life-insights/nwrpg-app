@@ -2,15 +2,14 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { writeBatch, doc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import { useRooms } from '../../contexts/RoomsContext';
 import Badge from '../ui/Badge';
-import { createQuest, updateQuest } from '../../services/questService';
-import { createMission } from '../../services/missionService';
-import { createCustomAchievement } from '../../services/achievementService';
-import { QUEST_DIFFICULTY } from '../../types/Quests';
-import { DIFFICULTY_LEVELS, createMissionTemplate } from '../../types/Mission';
+import { QUEST_DIFFICULTY, createQuestTemplate } from '../../types/Quests';
+import { DIFFICULTY_LEVELS, MISSION_STATUS, createMissionTemplate } from '../../types/Mission';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import AchievementBadge from '../achievements/AchievementBadge';
 import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
@@ -125,63 +124,94 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
     }
     
     setIsSubmitting(true);
-    
+
     try {
-      // Create all missions first
-      const missionIds = [];
-      for (const mission of missions) {
-        const missionData = createMissionTemplate({
+      // Atomic create: quest + missions (+ achievement, if present) all commit
+      // together or none of them do. Replaces what used to be sequential
+      // createMission calls followed by createQuest followed by updateMission
+      // calls — a chain that orphaned missions in the bank on mid-loop failure.
+      const userId = currentUser.uid;
+      const missionsCol = collection(db, 'users', userId, 'missions');
+      const questsCol = collection(db, 'users', userId, 'quests');
+      const achievementsCol = collection(db, 'users', userId, 'achievements');
+
+      // Pre-generate refs so quest and missions can cross-reference IDs
+      // before either is actually written.
+      const missionRefs = missions.map(() => doc(missionsCol));
+      const questRef = doc(questsCol);
+      const achRef = pendingAchievement ? doc(achievementsCol) : null;
+      const missionIds = missionRefs.map(r => r.id);
+
+      const batch = writeBatch(db);
+
+      // Missions — same shape createMission would have produced, but already
+      // carrying questId / questOrder so no follow-up updates are needed.
+      missions.forEach((mission, i) => {
+        const tpl = createMissionTemplate({
           title: mission.title,
           difficulty: mission.difficulty,
           skill: mission.skill,
           baseLocation: mission.baseLocation,
-          status: 'active'
+          questId: questRef.id,
+          questOrder: i,
         });
+        const { id: _omitMissionId, ...missionData } = tpl;
+        batch.set(missionRefs[i], {
+          ...missionData,
+          status: MISSION_STATUS.ACTIVE,
+          createdAt: serverTimestamp(),
+          completedAt: null,
+        });
+      });
 
-        const missionId = await createMission(currentUser.uid, missionData);
-        missionIds.push(missionId);
+      // Achievement — pending until quest completes. Replicates the shape
+      // createCustomAchievement writes; isPending is true because a questId
+      // is always set in this flow.
+      if (achRef) {
+        batch.set(achRef, {
+          name: pendingAchievement.name,
+          description: pendingAchievement.description || '',
+          badgeColor: pendingAchievement.badgeColor,
+          badgeSymbol: pendingAchievement.badgeSymbol,
+          isCustom: true,
+          isPending: true,
+          questId: questRef.id,
+          awardedDate: null,
+          awardedAt: null,
+        });
       }
-      
-      // Create the quest with mission IDs
-      const questData = {
+
+      // Quest — same shape createQuest would have produced, with mission IDs
+      // and the linked achievement ID already populated.
+      const questTpl = createQuestTemplate({
         title: formData.title.trim(),
         description: formData.description.trim(),
         difficulty: formData.difficulty,
         status: 'active',
-        missionIds: missionIds,
+        missionIds,
         missionOrder: missionIds,
         completedMissionIds: [],
         totalMissions: missions.length,
         completedMissions: 0,
-      };
-      
-      const newQuest = await createQuest(currentUser.uid, questData);
+        achievement: achRef ? achRef.id : null,
+      });
+      const { id: _omitQuestId, ...questData } = questTpl;
+      batch.set(questRef, {
+        ...questData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
 
-      // Update each mission to link it to the quest
-      const { updateMission } = await import('../../services/missionService');
-      for (let i = 0; i < missionIds.length; i++) {
-        await updateMission(currentUser.uid, missionIds[i], {
-          questId: newQuest.id,
-          questOrder: i
-        });
-      }
-
-      // Create pending achievement and link to quest
-      if (pendingAchievement) {
-        const achDoc = await createCustomAchievement(currentUser.uid, {
-          ...pendingAchievement,
-          questId: newQuest.id,
-        });
-        await updateQuest(currentUser.uid, newQuest.id, { achievement: achDoc.id });
-      }
+      await batch.commit();
 
       await refreshQuests();
 
       if (onQuestCreated) {
         onQuestCreated({
-          ...newQuest,
+          ...questTpl,
+          id: questRef.id,
           missionIds,
-          missionOrder: missionIds
+          missionOrder: missionIds,
         });
       }
 
