@@ -255,14 +255,22 @@ export const getDeletedQuestsCount = async (userId) => {
   }
 };
 
-// Restore a quest (from archived OR deleted) back to active.
+// Restore a quest (from archived OR deleted) back to its prior live state.
+// Uses completedAt as the signal for which state to restore to: reopenQuest
+// clears completedAt, so a populated value reliably means "this quest was
+// in a completed state at archive/delete time." Without this, restoring a
+// completed-then-archived quest landed it as ACTIVE at 100% progress with
+// a "Complete Quest" CTA dangling — re-tapping would re-fire the linked
+// achievement award.
+//
 // If the quest had a linked achievement that was soft-deleted on delete,
 // the achievement is also restored to pending.
 export const restoreQuest = async (userId, questId) => {
   const quest = await getQuest(userId, questId);
+  const wasCompleted = quest.completedAt != null;
   const questRef = doc(db, 'users', userId, 'quests', questId);
   await updateDoc(questRef, {
-    status: QUEST_STATUS.ACTIVE,
+    status: wasCompleted ? QUEST_STATUS.COMPLETED : QUEST_STATUS.ACTIVE,
     archivedAt: null,
     deletedAt: null,
     updatedAt: serverTimestamp(),
@@ -271,6 +279,10 @@ export const restoreQuest = async (userId, questId) => {
     const achRef = doc(db, 'users', userId, 'achievements', quest.achievement);
     const achSnap = await getDoc(achRef);
     if (achSnap.exists() && achSnap.data().status === 'deleted') {
+      // Clearing the soft-delete sentinel is enough — isPending / awardedDate /
+      // awardedAt were never overwritten by deleteQuest (it's a partial update
+      // touching only status + deletedAt), so the achievement's live state
+      // (awarded vs pending) is already correctly preserved underneath.
       await updateDoc(achRef, {
         status: 'pending',
         deletedAt: null,
