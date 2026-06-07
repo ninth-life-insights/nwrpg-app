@@ -1,0 +1,213 @@
+.deleted-quests-page {
+  min-height: 100vh;
+  background: var(--color-bg-main);
+  padding: var(--space-lg);
+  padding-bottom: 120px;
+  max-width: var(--max-width-card);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.deleted-quests-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.deleted-quests-back {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.deleted-quests-back:hover {
+  background: #f9fafb;
+  box-shadow: var(--shadow-hover);
+}
+
+.deleted-quests-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.deleted-quests-intro {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-medium);
+  margin: 0;
+  text-align: left;
+}
+
+.deleted-quests-empty {
+  text-align: center;
+  color: var(--color-text-light);
+  padding: var(--space-xl) 0;
+  margin: 0;
+}
+
+/* Bulk action bar */
+.dq-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0 var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.dq-select-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: var(--space-xs) 0;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.dq-select-all-btn:hover {
+  color: var(--color-text-dark);
+}
+
+.dq-restore-selected-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  margin-left: auto;
+}
+
+.dq-restore-selected-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: var(--color-primary);
+}
+
+.dq-restore-selected-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dq-restore-selected-btn .material-icons {
+  font-size: 16px;
+}
+
+/* Checkbox */
+.dq-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.dq-checkbox--checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.dq-checkbox--checked .material-icons {
+  font-size: 14px;
+  color: white;
+}
+
+.dq-checkbox-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Quest list */
+.deleted-quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.dq-quest-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Compact quest row inside the deleted list */
+.dq-quest-card {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  box-sizing: border-box;
+}
+
+.dq-quest-title {
+  flex: 1;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Per-row restore icon button */
+.dq-restore-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+}
+
+.dq-restore-btn:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.dq-restore-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dq-restore-btn .material-icons {
+  font-size: 20px;
+}

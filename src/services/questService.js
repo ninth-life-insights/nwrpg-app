@@ -1,12 +1,13 @@
 // src/services/questService.js
 
-import { 
-  collection, 
-  doc, 
+import {
+  collection,
+  doc,
   getDoc,
   getDocs,
-  addDoc, 
-  updateDoc, 
+  getCountFromServer,
+  addDoc,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -190,12 +191,59 @@ export const getArchivedQuests = async (userId) => {
   return getQuestsByStatus(userId, QUEST_STATUS.ARCHIVED);
 };
 
-// Restore an archived quest back to active
+// Get deleted (soft-deleted) quests, most recently deleted first
+export const getDeletedQuests = async (userId) => {
+  try {
+    const questsRef = getQuestsCollection(userId);
+    const q = query(
+      questsRef,
+      where('status', '==', QUEST_STATUS.DELETED),
+      orderBy('deletedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error getting deleted quests:', error);
+    throw error;
+  }
+};
+
+// Cheap aggregate count of deleted quests — used by the settings entry point.
+// Avoids the composite index that getDeletedQuests needs (where + orderBy).
+export const getDeletedQuestsCount = async (userId) => {
+  try {
+    const questsRef = getQuestsCollection(userId);
+    const q = query(questsRef, where('status', '==', QUEST_STATUS.DELETED));
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error('Error getting deleted quests count:', error);
+    throw error;
+  }
+};
+
+// Restore a quest (from archived OR deleted) back to active.
+// If the quest had a linked achievement that was soft-deleted on delete,
+// the achievement is also restored to pending.
 export const restoreQuest = async (userId, questId) => {
-  return updateQuest(userId, questId, {
+  const quest = await getQuest(userId, questId);
+  const questRef = doc(db, 'users', userId, 'quests', questId);
+  await updateDoc(questRef, {
     status: QUEST_STATUS.ACTIVE,
-    archivedAt: null
+    archivedAt: null,
+    deletedAt: null,
+    updatedAt: serverTimestamp(),
   });
+  if (quest.achievement) {
+    const achRef = doc(db, 'users', userId, 'achievements', quest.achievement);
+    const achSnap = await getDoc(achRef);
+    if (achSnap.exists() && achSnap.data().status === 'deleted') {
+      await updateDoc(achRef, {
+        status: 'pending',
+        deletedAt: null,
+      });
+    }
+  }
 };
 
 // Delete a quest (soft-delete — mirrors deleteMission pattern)

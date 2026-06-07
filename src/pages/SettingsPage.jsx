@@ -9,6 +9,7 @@ import { getNotificationPrefs, saveNotificationPrefs } from '../services/notific
 import { requestPermission } from '../services/notificationService';
 import { getUserProfile, updateUserProfile } from '../services/userService';
 import { getDeletedMissionsCount } from '../services/missionService';
+import { getDeletedQuestsCount } from '../services/questService';
 import { DAY_NAMES } from '../utils/weeklyReviewHelpers';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
@@ -43,12 +44,16 @@ const SettingsPage = () => {
   const [saveError, setSaveError] = useState(null);
 
   const [deletedCount, setDeletedCount] = useState(0);
+  const [deletedQuestCount, setDeletedQuestCount] = useState(0);
 
   useEffect(() => {
     if (!currentUser) return;
     getDeletedMissionsCount(currentUser.uid)
       .then(setDeletedCount)
       .catch(() => setDeletedCount(0));
+    getDeletedQuestsCount(currentUser.uid)
+      .then(setDeletedQuestCount)
+      .catch(() => setDeletedQuestCount(0));
     getNotificationPrefs(currentUser.uid).then(setPrefs);
     getUserProfile(currentUser.uid).then(profile => {
       if (profile?.weekStartDay != null) {
@@ -386,6 +391,20 @@ const SettingsPage = () => {
               {deletedCount === 0
                 ? 'Nothing to restore'
                 : `${deletedCount} ${deletedCount === 1 ? 'mission' : 'missions'} ready to restore`}
+            </span>
+          </div>
+          <span className="material-icons-outlined settings-nav-row-chevron">chevron_right</span>
+        </button>
+        <button
+          className="settings-nav-row"
+          onClick={() => navigate('/deleted-quests')}
+        >
+          <div className="settings-row-label-group">
+            <span className="settings-label">Deleted quests</span>
+            <span className="settings-hint">
+              {deletedQuestCount === 0
+                ? 'Nothing to restore'
+                : `${deletedQuestCount} ${deletedQuestCount === 1 ? 'quest' : 'quests'} ready to restore`}
             </span>
           </div>
           <span className="material-icons-outlined settings-nav-row-chevron">chevron_right</span>

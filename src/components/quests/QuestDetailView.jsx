@@ -205,25 +205,13 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     setActionError(null);
     setShowActionsMenu(false);
     const questTitle = quest.title;
-    const linkedAchievementId = quest.achievement;
     try {
       await deleteQuest(currentUser.uid, questId);
       await refreshQuests();
       notifyQuestDeleted({
         questTitle,
         onUndo: async () => {
-          const questRef = doc(db, 'users', currentUser.uid, 'quests', questId);
-          await updateDoc(questRef, {
-            status: QUEST_STATUS.ACTIVE,
-            deletedAt: null,
-          });
-          if (linkedAchievementId) {
-            const achRef = doc(db, 'users', currentUser.uid, 'achievements', linkedAchievementId);
-            await updateDoc(achRef, {
-              status: 'pending',
-              deletedAt: null,
-            });
-          }
+          await restoreQuest(currentUser.uid, questId);
           await refreshQuests();
         },
       });
