@@ -25,8 +25,6 @@ const QuestCard = ({
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'planning':
-        return 'Planning';
       case 'active':
         return 'Active';
       case 'completed':

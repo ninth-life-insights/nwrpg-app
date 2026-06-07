@@ -106,11 +106,6 @@ export const getActiveQuests = async (userId) => {
   return getQuestsByStatus(userId, QUEST_STATUS.ACTIVE);
 };
 
-// Get planning quests
-export const getPlanningQuests = async (userId) => {
-  return getQuestsByStatus(userId, QUEST_STATUS.PLANNING);
-};
-
 // Get completed quests
 export const getCompletedQuests = async (userId) => {
   return getQuestsByStatus(userId, QUEST_STATUS.COMPLETED);
@@ -144,17 +139,6 @@ export const updateQuestStatus = async (userId, questId, newStatus) => {
   }
 
   return updateQuest(userId, questId, updates);
-};
-
-// Activate a quest (move from planning to active)
-export const activateQuest = async (userId, questId) => {
-  const quest = await getQuest(userId, questId);
-  
-  if (quest.totalMissions === 0) {
-    throw new Error('Cannot activate quest with no missions');
-  }
-  
-  return updateQuestStatus(userId, questId, QUEST_STATUS.ACTIVE);
 };
 
 // Complete a quest

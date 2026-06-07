@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 
 // Quest status
 export const QUEST_STATUS = {
-  PLANNING: 'planning',    // Building out the quest
   ACTIVE: 'active',        // Quest is in progress
   COMPLETED: 'completed',  // Quest is complete
   ARCHIVED: 'archived',    // Quest is archived
@@ -33,7 +32,7 @@ export const QUEST_SCHEMA = {
   // Basic info
   title: '',                          // string - required
   description: '',                    // string - optional
-  status: QUEST_STATUS.PLANNING,      // string - quest status
+  status: QUEST_STATUS.ACTIVE,        // string - quest status
   
   // Difficulty and rewards
   difficulty: QUEST_DIFFICULTY.EASY,  // string - quest difficulty
@@ -101,12 +100,6 @@ export const getNextMission = (quest, missions) => {
 export const isQuestComplete = (quest) => {
   return quest.totalMissions > 0 && 
          quest.completedMissions === quest.totalMissions;
-};
-
-// Check if quest can be activated (has at least one mission)
-export const canActivateQuest = (quest) => {
-  return quest.status === QUEST_STATUS.PLANNING && 
-         quest.totalMissions > 0;
 };
 
 // Validate quest data
