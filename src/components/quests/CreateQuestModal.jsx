@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuests } from '../../contexts/QuestsContext';
+import { useRooms } from '../../contexts/RoomsContext';
 import Badge from '../ui/Badge';
 import { createQuest, updateQuest } from '../../services/questService';
 import { createMission } from '../../services/missionService';
 import { createCustomAchievement } from '../../services/achievementService';
 import { QUEST_DIFFICULTY } from '../../types/Quests';
 import { DIFFICULTY_LEVELS, createMissionTemplate } from '../../types/Mission';
+import { AVAILABLE_SKILLS } from '../../data/Skills';
 import AchievementBadge from '../achievements/AchievementBadge';
 import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -19,16 +21,23 @@ import './CreateQuestModal.css';
 const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
   const { currentUser } = useAuth();
   const { refreshQuests } = useQuests();
-  
+  const { rooms } = useRooms();
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     difficulty: QUEST_DIFFICULTY.EASY,
   });
-  
+
   const [missions, setMissions] = useState([]);
   const [currentMission, setCurrentMission] = useState('');
-  const [currentMissionDifficulty, setCurrentMissionDifficulty] = useState(DIFFICULTY_LEVELS.EASY);
+
+  // Session-sticky defaults applied to every mission added until changed.
+  // Mirrors QuickAddRoutineSheet — pick once, brain-dump titles. To "edit"
+  // an added row, delete it and re-add with new session values.
+  const [sessionDifficulty, setSessionDifficulty] = useState(DIFFICULTY_LEVELS.EASY);
+  const [sessionSkill, setSessionSkill] = useState('');
+  const [sessionRoomId, setSessionRoomId] = useState('');
   
   const [pendingAchievement, setPendingAchievement] = useState(null);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
@@ -62,15 +71,22 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
 
   const handleAddMission = () => {
     if (!currentMission.trim()) return;
-    
+
+    const roomName = sessionRoomId
+      ? rooms.find(r => r.id === sessionRoomId)?.name ?? null
+      : null;
+
     setMissions(prev => [...prev, {
       title: currentMission.trim(),
-      difficulty: currentMissionDifficulty,
-      tempId: Date.now() // Temporary ID for UI
+      difficulty: sessionDifficulty,
+      skill: sessionSkill || null,
+      baseLocation: sessionRoomId || null,
+      baseLocationName: roomName, // cached for row display
+      tempId: Date.now()
     }]);
-    
+
     setCurrentMission('');
-    setCurrentMissionDifficulty(DIFFICULTY_LEVELS.EASY);
+    // Session controls intentionally not reset — they persist across adds.
   };
 
   const handleRemoveMission = (tempId) => {
@@ -117,9 +133,11 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
         const missionData = createMissionTemplate({
           title: mission.title,
           difficulty: mission.difficulty,
+          skill: mission.skill,
+          baseLocation: mission.baseLocation,
           status: 'active'
         });
-        
+
         const missionId = await createMission(currentUser.uid, missionData);
         missionIds.push(missionId);
       }
@@ -175,7 +193,9 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       });
       setMissions([]);
       setCurrentMission('');
-      setCurrentMissionDifficulty(DIFFICULTY_LEVELS.EASY);
+      setSessionDifficulty(DIFFICULTY_LEVELS.EASY);
+      setSessionSkill('');
+      setSessionRoomId('');
       setPendingAchievement(null);
       
       onClose();
@@ -273,63 +293,113 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           {/* Missions Section */}
           <div className="quest-missions-section">
             <div className="missions-header">Missions ({missions.length})</div>
-            
+
             {/* Mission List - Scrollable */}
             {missions.length > 0 && (
               <div className="missions-list">
-                {missions.map((mission) => (
-                  <div key={mission.tempId} className="mission-item">
-                    <Badge variant="difficulty" difficulty={mission.difficulty}>
-                      {mission.difficulty}
-                    </Badge>
-                    <span className="mission-title">{mission.title}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveMission(mission.tempId)}
-                      className="remove-mission-btn-small"
-                      disabled={isSubmitting}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                {missions.map((mission) => {
+                  const hasMeta = mission.skill || mission.baseLocationName;
+                  return (
+                    <div key={mission.tempId} className="mission-item">
+                      <Badge variant="difficulty" difficulty={mission.difficulty}>
+                        {mission.difficulty}
+                      </Badge>
+                      <div className="mission-item-body">
+                        <span className="mission-title">{mission.title}</span>
+                        {hasMeta && (
+                          <span className="mission-meta">
+                            {mission.skill}
+                            {mission.skill && mission.baseLocationName ? ' · ' : ''}
+                            {mission.baseLocationName}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMission(mission.tempId)}
+                        className="remove-mission-btn-small"
+                        disabled={isSubmitting}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {/* Add Mission Input */}
+            {/* Add Mission — session controls apply to whatever's typed next */}
             <div className="add-mission-input-section">
-              <input
-                type="text"
-                value={currentMission}
-                onChange={(e) => setCurrentMission(e.target.value)}
-                onKeyPress={handleMissionKeyPress}
-                className="mission-input"
-                placeholder="Add a mission..."
-                disabled={isSubmitting}
-              />
-              <div className="mission-difficulty-selector">
-                {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
-                  <button
-                    key={difficulty}
-                    type="button"
-                    onClick={() => setCurrentMissionDifficulty(difficulty)}
-                    className={`mini-difficulty-btn ${currentMissionDifficulty === difficulty ? 'selected' : ''}`}
+              <div className="mission-session-controls">
+                <label className="session-control">
+                  <span className="session-control-label">Skill</span>
+                  <select
+                    className="session-control-select"
+                    value={sessionSkill}
+                    onChange={(e) => setSessionSkill(e.target.value)}
                     disabled={isSubmitting}
                   >
-                    <Badge variant="difficulty" difficulty={difficulty}>
-                      {difficulty}
-                    </Badge>
-                  </button>
-                ))}
+                    <option value="">None</option>
+                    {AVAILABLE_SKILLS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="session-control">
+                  <span className="session-control-label">Room</span>
+                  <select
+                    className="session-control-select"
+                    value={sessionRoomId}
+                    onChange={(e) => setSessionRoomId(e.target.value)}
+                    disabled={isSubmitting}
+                  >
+                    <option value="">Personal</option>
+                    {rooms.map((room) => (
+                      <option key={room.id} value={room.id}>{room.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="session-control session-control--difficulty">
+                  <span className="session-control-label">Difficulty</span>
+                  <div className="mission-difficulty-selector">
+                    {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
+                      <button
+                        key={difficulty}
+                        type="button"
+                        onClick={() => setSessionDifficulty(difficulty)}
+                        className={`mini-difficulty-btn ${sessionDifficulty === difficulty ? 'selected' : ''}`}
+                        disabled={isSubmitting}
+                      >
+                        <Badge variant="difficulty" difficulty={difficulty}>
+                          {difficulty}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleAddMission}
-                className="add-mission-btn-small"
-                disabled={isSubmitting || !currentMission.trim()}
-              >
-                Add
-              </button>
+
+              <div className="add-mission-input-row">
+                <input
+                  type="text"
+                  value={currentMission}
+                  onChange={(e) => setCurrentMission(e.target.value)}
+                  onKeyPress={handleMissionKeyPress}
+                  className="mission-input"
+                  placeholder="Add a mission..."
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddMission}
+                  className="add-mission-btn-small"
+                  disabled={isSubmitting || !currentMission.trim()}
+                >
+                  Add
+                </button>
+              </div>
             </div>
           </div>
 

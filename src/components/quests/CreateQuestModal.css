@@ -236,6 +236,79 @@
   letter-spacing: 0.5px;
 }
 
+/* Session-level controls (skill, room, difficulty) — visually attached to the
+   mission input below; whatever's set here applies to whatever's typed next.
+   Modeled on QuickAddRoutineSheet but unboxed — proximity to the input is what
+   communicates "applies to next add," not a card framing. */
+.mission-session-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.session-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.session-control-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.session-control-select {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-dark);
+  background: white;
+  box-sizing: border-box;
+}
+
+.session-control-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.session-control-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.session-control--difficulty {
+  flex: 1 1 100%;
+}
+
+.session-control--difficulty .mission-difficulty-selector {
+  padding-top: 2px;
+}
+
+/* Input + Add button row. Sits directly under the session controls so the
+   relationship reads as "set defaults → type → add." */
+.add-mission-input-row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: stretch;
+}
+
+.add-mission-input-row .mission-input {
+  flex: 1;
+}
+
+.add-mission-input-row .add-mission-btn-small {
+  align-self: stretch;
+}
+
 .missions-list {
   max-height: 200px;
   overflow-y: auto;
@@ -272,10 +345,22 @@
   margin-bottom: var(--space-sm);
 }
 
-.mission-title {
+.mission-item-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mission-title {
   font-size: var(--font-size-base);
   color: var(--color-text-dark);
+}
+
+.mission-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
 }
 
 .remove-mission-btn-small {
