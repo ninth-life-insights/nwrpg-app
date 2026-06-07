@@ -83,7 +83,13 @@ export const calculateQuestProgress = (quest, activeMissionCount) => {
   return Math.round((quest.completedMissions / total) * 100);
 };
 
-// Get the next uncompleted mission in a quest
+// Get the next uncompleted mission in a quest.
+// Primary pass walks quest.missionOrder so display follows the user's chosen
+// order. Fallback pass scans the missions array directly for any uncompleted,
+// non-expired, non-deleted mission belonging to this quest — guards against
+// missionOrder drift (e.g., a mission that ended up in missionIds without
+// landing in missionOrder), so a valid mission never silently vanishes from
+// "Next up."
 export const getNextMission = (quest, missions) => {
   for (const missionId of quest.missionOrder) {
     if (!quest.completedMissionIds.includes(missionId)) {
@@ -93,7 +99,12 @@ export const getNextMission = (quest, missions) => {
       if (mission) return mission;
     }
   }
-  return null;
+  return missions.find(
+    m => m.questId === quest.id
+      && !quest.completedMissionIds.includes(m.id)
+      && m.status !== 'expired'
+      && m.status !== 'deleted'
+  ) ?? null;
 };
 
 // Check if quest is complete (all missions done)
