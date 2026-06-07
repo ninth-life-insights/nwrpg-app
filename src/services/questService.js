@@ -19,8 +19,7 @@ import { checkAndAwardAchievements, awardPendingAchievement, unawardPendingAchie
 import {
   QUEST_STATUS,
   createQuestTemplate,
-  validateQuest,
-  isQuestComplete
+  validateQuest
 } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
 
