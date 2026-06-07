@@ -328,9 +328,21 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
               </div>
             )}
 
-            {/* Add Mission — session controls apply to whatever's typed next */}
+            {/* Add Mission — title is the primary action. Session controls below
+                apply to whatever's typed next; muted until the user begins typing
+                so they don't visually outweigh the empty title input. */}
             <div className="add-mission-input-section">
-              <div className="mission-session-controls">
+              <input
+                type="text"
+                value={currentMission}
+                onChange={(e) => setCurrentMission(e.target.value)}
+                onKeyPress={handleMissionKeyPress}
+                className="mission-input"
+                placeholder="Add a mission..."
+                disabled={isSubmitting}
+              />
+
+              <div className={`mission-session-controls ${currentMission.trim() ? 'is-active' : 'is-muted'}`}>
                 <label className="session-control">
                   <span className="session-control-label">Skill</span>
                   <select
@@ -354,7 +366,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
                     onChange={(e) => setSessionRoomId(e.target.value)}
                     disabled={isSubmitting}
                   >
-                    <option value="">Personal</option>
+                    <option value="">None</option>
                     {rooms.map((room) => (
                       <option key={room.id} value={room.id}>{room.name}</option>
                     ))}
@@ -381,25 +393,14 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
                 </div>
               </div>
 
-              <div className="add-mission-input-row">
-                <input
-                  type="text"
-                  value={currentMission}
-                  onChange={(e) => setCurrentMission(e.target.value)}
-                  onKeyPress={handleMissionKeyPress}
-                  className="mission-input"
-                  placeholder="Add a mission..."
-                  disabled={isSubmitting}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddMission}
-                  className="add-mission-btn-small"
-                  disabled={isSubmitting || !currentMission.trim()}
-                >
-                  Add
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleAddMission}
+                className="add-mission-btn-small"
+                disabled={isSubmitting || !currentMission.trim()}
+              >
+                Add
+              </button>
             </div>
           </div>
 

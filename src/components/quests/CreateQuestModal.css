@@ -236,15 +236,24 @@
   letter-spacing: 0.5px;
 }
 
-/* Session-level controls (skill, room, difficulty) — visually attached to the
-   mission input below; whatever's set here applies to whatever's typed next.
-   Modeled on QuickAddRoutineSheet but unboxed — proximity to the input is what
-   communicates "applies to next add," not a card framing. */
+/* Session-level controls (skill, room, difficulty) — sit directly under the
+   mission title input; whatever's set here applies to whatever's typed next.
+   Modeled on QuickAddRoutineSheet but unboxed. Muted (low opacity) until the
+   user starts typing a title, so an empty placeholder input doesn't read as
+   secondary to fully-styled dropdowns above it. */
 .mission-session-controls {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm) var(--space-md);
-  margin-bottom: var(--space-sm);
+  transition: opacity var(--transition);
+}
+
+.mission-session-controls.is-muted {
+  opacity: 0.5;
+}
+
+.mission-session-controls.is-active {
+  opacity: 1;
 }
 
 .session-control {
@@ -291,22 +300,6 @@
 
 .session-control--difficulty .mission-difficulty-selector {
   padding-top: 2px;
-}
-
-/* Input + Add button row. Sits directly under the session controls so the
-   relationship reads as "set defaults → type → add." */
-.add-mission-input-row {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: stretch;
-}
-
-.add-mission-input-row .mission-input {
-  flex: 1;
-}
-
-.add-mission-input-row .add-mission-btn-small {
-  align-self: stretch;
 }
 
 .missions-list {
