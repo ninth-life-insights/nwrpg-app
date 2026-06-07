@@ -184,6 +184,36 @@ export const completeQuest = async (userId, questId) => {
   return getQuest(userId, questId);
 };
 
+// Reopen a completed quest. Inverse of completeQuest:
+// - refunds the bonus XP (subtractXP floors at zero)
+// - clears xpAwarded so a future re-complete awards again
+// - clears completedAt so the quest doesn't show as "completed this week"
+//   in the weekly review after reopen
+// - unawards the linked achievement
+// Idempotent: a no-op for quests that aren't currently completed.
+export const reopenQuest = async (userId, questId) => {
+  const quest = await getQuest(userId, questId);
+
+  if (quest.status !== QUEST_STATUS.COMPLETED) {
+    return quest;
+  }
+
+  if (quest.xpAwarded) {
+    const { subtractXP } = await import('./userService');
+    await subtractXP(userId, quest.xpAwarded);
+  }
+
+  if (quest.achievement) {
+    await unawardPendingAchievement(userId, quest.achievement);
+  }
+
+  return updateQuest(userId, questId, {
+    status: QUEST_STATUS.ACTIVE,
+    completedAt: null,
+    xpAwarded: null,
+  });
+};
+
 // Archive a quest
 export const archiveQuest = async (userId, questId) => {
   return updateQuestStatus(userId, questId, QUEST_STATUS.ARCHIVED);
@@ -401,15 +431,20 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
     }
   }
 
-  // Reopen quest if it was auto-completed but now has incomplete active missions
+  // Reopen quest if it was auto-completed but now has incomplete active missions.
+  // Mirrors reopenQuest's contract: refund XP, clear xpAwarded so a future
+  // re-complete awards again, clear completedAt, unaward the achievement.
   if (quest.status === QUEST_STATUS.COMPLETED &&
       updatedCompletedIds.length < activeMissionCount) {
     updates.status = QUEST_STATUS.ACTIVE;
     updates.completedAt = null;
 
-    // TODO: XP should also be unawarded here — flagged for separate fix
+    if (quest.xpAwarded) {
+      const { subtractXP } = await import('./userService');
+      await subtractXP(userId, quest.xpAwarded);
+      updates.xpAwarded = null;
+    }
 
-    // Unaward linked quest achievement
     if (quest.achievement) {
       unawardPendingAchievement(userId, quest.achievement).catch(e =>
         console.error('Achievement unaward failed:', e)

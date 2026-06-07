@@ -19,11 +19,11 @@ import {
   completeQuest,
   archiveQuest,
   restoreQuest,
-  updateQuestStatus,
+  reopenQuest,
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
-import { createCustomAchievement, unawardPendingAchievement } from '../../services/achievementService';
+import { createCustomAchievement } from '../../services/achievementService';
 import { getAllMissions } from '../../services/missionService';
 import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
@@ -294,10 +294,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const handleUncompleteQuest = async () => {
     setActionError(null);
     try {
-      if (quest.achievement) {
-        await unawardPendingAchievement(currentUser.uid, quest.achievement);
-      }
-      await updateQuestStatus(currentUser.uid, questId, QUEST_STATUS.ACTIVE);
+      await reopenQuest(currentUser.uid, questId);
       await Promise.all([loadQuestData(), refreshQuests()]);
     } catch (err) {
       console.error('Error reopening quest:', err);
