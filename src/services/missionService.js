@@ -773,16 +773,44 @@ export const archiveMission = async (userId, missionId) => {
   return expireMission(userId, missionId);
 };
 
-// Restore a mission (from archived/expired OR deleted) back to active
+// Restore a mission (from archived/expired OR deleted) back to its prior
+// live state. Uses completedAt as the signal for whether the mission was
+// completed before archive/delete — neither expireMission nor deleteMission
+// clears completedAt, so a populated value reliably means "this mission was
+// in a completed state." Without this, restoring an archived-completed
+// mission left it as ACTIVE with a stale completedAt timestamp.
+//
+// Also re-syncs the quest's cached progress so completedMissionIds and the
+// active count reflect the restored mission. updateQuestProgress handles
+// side effects too — e.g., reopens a quest if restoring an incomplete
+// mission brings completed count below active count again.
+//
+// Note: a previously-deleted mission has its questId cleared by
+// removeMissionFromQuest, so the quest-sync block is a no-op in the delete
+// case. Only archive→restore flows go through it.
 export const restoreMission = async (userId, missionId) => {
   try {
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
+    const missionSnap = await getDoc(missionRef);
+    const missionData = missionSnap.exists() ? missionSnap.data() : null;
+    const wasCompleted = missionData?.completedAt != null;
+
     await updateDoc(missionRef, {
-      status: MISSION_STATUS.ACTIVE,
+      status: wasCompleted ? MISSION_STATUS.COMPLETED : MISSION_STATUS.ACTIVE,
       expiredAt: null,
       deletedAt: null,
       updatedAt: serverTimestamp()
     });
+
+    if (missionData?.questId) {
+      try {
+        const { updateQuestProgress } = await import('./questService');
+        await updateQuestProgress(userId, missionData.questId, missionId, wasCompleted);
+      } catch (error) {
+        console.error('Error syncing quest progress on restore:', error);
+        // Don't throw — mission is still restored even if quest sync fails.
+      }
+    }
   } catch (error) {
     console.error('Error restoring mission:', error);
     throw error;
