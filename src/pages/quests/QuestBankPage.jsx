@@ -221,6 +221,15 @@ const QuestBank = () => {
         {displayedQuests.length === 0 ? (
           <div className="empty-state">
             <p>{emptyStateMessage}</p>
+            {filters.showArchive && (
+              <button
+                type="button"
+                className="empty-state-link"
+                onClick={() => setFilters({ ...filters, showArchive: false })}
+              >
+                Back to quests →
+              </button>
+            )}
           </div>
         ) : (
           displayedQuests.map(quest => {
