@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import QuestCard from '../../components/quests/QuestCard';
 import CreateQuestModal from '../../components/quests/CreateQuestModal';
+import QuestFilterModal, { QUEST_FILTER_DEFAULTS } from '../../components/quests/QuestFilterModal';
 import {
   getActiveQuests,
   getCompletedQuests,
@@ -29,15 +30,16 @@ const QuestBank = () => {
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [showAddQuest, setShowAddQuest] = useState(false);
-  const [includeCompleted, setIncludeCompleted] = useState(false);
-  const [includeArchived, setIncludeArchived] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState(QUEST_FILTER_DEFAULTS);
 
   useEffect(() => {
     if (currentUser) {
       loadQuests();
       loadMissions();
     }
-  }, [currentUser, includeCompleted, includeArchived, reloadTrigger]);
+  }, [currentUser, filters.includeCompleted, filters.showArchive, reloadTrigger]);
 
   const loadQuests = async () => {
     if (isDefinitelyOffline()) {
@@ -51,9 +53,9 @@ const QuestBank = () => {
     const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       let questData = [];
-      if (includeArchived) {
+      if (filters.showArchive) {
         questData = await withTimeout(getArchivedQuests(currentUser.uid));
-      } else if (includeCompleted) {
+      } else if (filters.includeCompleted) {
         const [active, completed] = await withTimeout(
           Promise.all([
             getActiveQuests(currentUser.uid),
@@ -100,15 +102,9 @@ const QuestBank = () => {
     await Promise.all([loadQuests(), loadMissions()]);
   };
 
-  const handleToggleCompleted = () => {
-    setIncludeCompleted(!includeCompleted);
-    if (!includeCompleted) setIncludeArchived(false);
-  };
-
-  const handleToggleArchived = () => {
-    setIncludeArchived(!includeArchived);
-    if (!includeArchived) setIncludeCompleted(false);
-  };
+  const handleShowFilters = () => setShowFilterModal(true);
+  const handleHideFilters = () => setShowFilterModal(false);
+  const handleApplyFilters = (newFilters) => setFilters(newFilters);
 
   const handleRestoreQuest = async (questId) => {
     try {
@@ -147,6 +143,25 @@ const QuestBank = () => {
     );
   }
 
+  const displayedQuests = quests.filter((q) => {
+    if (filters.difficulty && q.difficulty !== filters.difficulty) return false;
+    if (searchQuery && !q.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const hasActiveFilters =
+    filters.difficulty !== '' ||
+    filters.includeCompleted ||
+    filters.showArchive ||
+    searchQuery !== '';
+
+  const emptyStateMessage = (() => {
+    if (searchQuery) return 'No quests match your search.';
+    if (filters.difficulty) return 'No quests match your current filters.';
+    if (filters.showArchive) return 'No archived quests.';
+    return 'No active quests. Create your first quest to get started!';
+  })();
+
   return (
     <div className="quest-bank-page">
       {loadError && (
@@ -164,49 +179,51 @@ const QuestBank = () => {
           </button>
           <h1>Quest Bank</h1>
         </div>
-        
-        <div className="header-actions">
-          {/* Toggle Archive Filter */}
-          <button
-            onClick={handleToggleArchived}
-            className={`filter-btn-header ${includeArchived ? 'active' : ''}`}
-            title={includeArchived ? "Hide Archive" : "View Archive"}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="21 8 21 21 3 21 3 8"></polyline>
-              <rect x="1" y="3" width="22" height="5"></rect>
-              <line x1="10" y1="12" x2="14" y2="12"></line>
-            </svg>
-          </button>
+      </div>
 
-          {/* Toggle Completed Filter */}
-          {!includeArchived && (
+      {/* Search + filter row */}
+      <div className="quest-bank-search-row">
+        <div className="quest-bank-search">
+          <span className="material-icons search-icon">search</span>
+          <input
+            type="text"
+            className="quest-bank-search-input"
+            placeholder="Search quests..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
             <button
-              onClick={handleToggleCompleted}
-              className="filter-btn-header"
-              title={includeCompleted ? "Hide Completed" : "Show Completed"}
+              className="search-clear-btn"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
-              </svg>
+              <span className="material-icons">close</span>
             </button>
           )}
-
         </div>
+
+        <button
+          onClick={handleShowFilters}
+          className={`filter-btn-header${hasActiveFilters ? ' filter-btn-active' : ''}`}
+          title="Filter Quests"
+          aria-label="Filter Quests"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
+          </svg>
+          {hasActiveFilters && <span className="filter-active-dot" />}
+        </button>
       </div>
 
       {/* Quest List */}
       <div className="quest-list">
-        {quests.length === 0 ? (
+        {displayedQuests.length === 0 ? (
           <div className="empty-state">
-            <p>
-              {includeArchived
-                ? 'No archived quests.'
-                : 'No active quests. Create your first quest to get started!'}
-            </p>
+            <p>{emptyStateMessage}</p>
           </div>
         ) : (
-          quests.map(quest => {
+          displayedQuests.map(quest => {
             const nextMission = getNextMission(quest, missions);
             const activeMissionCount = missions.filter(
               m => m.questId === quest.id && m.status !== 'expired' && m.status !== 'deleted'
@@ -219,14 +236,14 @@ const QuestBank = () => {
                 nextMission={nextMission}
                 activeMissionCount={activeMissionCount}
                 onMissionToggleComplete={handleMissionToggleComplete}
-                onRestore={includeArchived ? handleRestoreQuest : undefined}
+                onRestore={filters.showArchive ? handleRestoreQuest : undefined}
               />
             );
           })
         )}
       </div>
 
-      {!includeArchived && (
+      {!filters.showArchive && (
         <button
           className="add-quest-fab"
           onClick={handleShowAddQuest}
@@ -242,6 +259,14 @@ const QuestBank = () => {
         isOpen={showAddQuest}
         onClose={handleCloseAddQuest}
         onQuestCreated={handleQuestCreated}
+      />
+
+      {/* Filter Modal */}
+      <QuestFilterModal
+        isOpen={showFilterModal}
+        onClose={handleHideFilters}
+        currentFilters={filters}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );
