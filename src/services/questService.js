@@ -6,7 +6,6 @@ import {
   getDoc,
   getDocs,
   getCountFromServer,
-  addDoc,
   updateDoc,
   query,
   where,
@@ -16,41 +15,12 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { checkAndAwardAchievements, awardPendingAchievement, unawardPendingAchievement } from './achievementService';
-import {
-  QUEST_STATUS,
-  createQuestTemplate,
-  validateQuest
-} from '../types/Quests';
+import { QUEST_STATUS } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
 
 // Collection reference
 const getQuestsCollection = (userId) => {
   return collection(db, 'users', userId, 'quests');
-};
-
-// Create a new quest
-export const createQuest = async (userId, questData) => {
-  const validation = validateQuest(questData);
-  if (!validation.isValid) {
-    throw new Error(`Invalid quest data: ${validation.errors.join(', ')}`);
-  }
-
-  const questTemplate = createQuestTemplate({
-    ...questData,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
-
-  // IMPORTANT: Remove id field before saving to Firestore
-  const { id, ...dataWithoutId } = questTemplate;
-
-  const questsRef = getQuestsCollection(userId);
-  const docRef = await addDoc(questsRef, dataWithoutId); // Save without id field
-  
-  return {
-    ...dataWithoutId, // Spread the data without id first
-    id: docRef.id     // Then add the real Firestore ID
-  };
 };
 
 // Get a single quest by ID

@@ -23,19 +23,6 @@ const QuestCard = ({
     navigate(`/quests/${quest.id}`);
   };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'active':
-        return 'Active';
-      case 'completed':
-        return 'Completed';
-      case 'archived':
-        return 'Archived';
-      default:
-        return status;
-    }
-  };
-
   return (
     <div className="quest-card" onClick={handleViewFullQuest}>
       {/* Quest Header */}
