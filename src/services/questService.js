@@ -69,12 +69,15 @@ export const getQuest = async (userId, questId) => {
   };
 };
 
-// Get all quests for a user
+// Get all quests for a user.
+// Sorted by updatedAt desc so the bank surfaces what the user most recently
+// touched — newly created, last mission ticked off, last edited — at the top.
+// For a fresh quest, updatedAt === createdAt so it lands first as expected.
 export const getAllQuests = async (userId) => {
   const questsRef = getQuestsCollection(userId);
-  const q = query(questsRef, orderBy('createdAt', 'desc'));
+  const q = query(questsRef, orderBy('updatedAt', 'desc'));
   const snapshot = await getDocs(q);
-  
+
   return snapshot.docs
     .map(doc => ({
       id: doc.id,
@@ -87,9 +90,9 @@ export const getAllQuests = async (userId) => {
 export const getQuestsByStatus = async (userId, status) => {
   const questsRef = getQuestsCollection(userId);
   const q = query(
-    questsRef, 
+    questsRef,
     where('status', '==', status),
-    orderBy('createdAt', 'desc')
+    orderBy('updatedAt', 'desc')
   );
   const snapshot = await getDocs(q);
   
