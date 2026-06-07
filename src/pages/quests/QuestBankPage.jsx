@@ -28,6 +28,7 @@ const QuestBank = () => {
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [missionsError, setMissionsError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [showAddQuest, setShowAddQuest] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -78,11 +79,16 @@ const QuestBank = () => {
   };
 
   const loadMissions = async () => {
+    setMissionsError(null);
     try {
       const missionData = await getAllMissions(currentUser.uid);
       setMissions(missionData);
     } catch (err) {
       console.error('Error loading missions:', err);
+      // Quest list can still render without missions, but "next up" cards
+      // and live progress counts depend on this fetch — surface the failure
+      // so the user knows something on the page is incomplete.
+      setMissionsError("Your missions didn't load. Quest progress may be off.");
     }
   };
 
@@ -167,6 +173,13 @@ const QuestBank = () => {
         <ErrorMessage
           message={loadError}
           onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }}
+        />
+      )}
+
+      {missionsError && !loadError && (
+        <ErrorMessage
+          message={missionsError}
+          onRetry={loadMissions}
         />
       )}
 
