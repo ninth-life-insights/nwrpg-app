@@ -29,6 +29,7 @@ const QuestBank = () => {
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [missionsError, setMissionsError] = useState(null);
+  const [actionError, setActionError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [showAddQuest, setShowAddQuest] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -113,11 +114,13 @@ const QuestBank = () => {
   const handleApplyFilters = (newFilters) => setFilters(newFilters);
 
   const handleRestoreQuest = async (questId) => {
+    setActionError(null);
     try {
       await restoreQuest(currentUser.uid, questId);
       setQuests(prev => prev.filter(q => q.id !== questId));
     } catch (err) {
       console.error('Error restoring quest:', err);
+      setActionError("That quest didn't restore. Try again.");
     }
   };
 
@@ -227,6 +230,8 @@ const QuestBank = () => {
           {hasActiveFilters && <span className="filter-active-dot" />}
         </button>
       </div>
+
+      {actionError && <ErrorMessage message={actionError} />}
 
       {/* Quest List */}
       <div className="quest-list">
