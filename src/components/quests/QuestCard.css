@@ -72,7 +72,13 @@
   box-shadow: 0 0 0 2px var(--color-success);
 }
 
-/* Completed quest visual state — title struck through, body de-emphasized */
+/* Completed quest visual state — desaturated blue (matches QuestDetailView's
+   completed background #253552), title struck through and dimmed. */
+.quest-card.completed {
+  background: #253552;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
 .quest-card.completed .quest-card-title.completed {
   text-decoration: line-through;
   opacity: 0.7;
@@ -80,12 +86,15 @@
 
 /* XP awarded badge — mirrors MissionCard's .xp-completion-badge */
 .quest-xp-completion-badge {
-  background: var(--color-success);
-  color: white;
-  padding: 2px var(--space-sm);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-xs);
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
   font-weight: 600;
+  background-color: #10b981;
+  color: white;
+  white-space: nowrap;
 }
 
 .quest-card-title-section {
