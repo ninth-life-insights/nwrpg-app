@@ -122,6 +122,19 @@
   color: var(--color-primary) !important;
 }
 
+/* Clear states ("Routine clear today", "Today's routine is on your priority
+   list") — override the default primary color, which can collide with the
+   dusty-purple wrapper depending on the user's themed --color-primary. Dark
+   text reads cleanly on the lavender background across all themes. */
+.routine-up-next-link--clear .routine-up-next-link-label {
+  color: var(--color-text-dark);
+}
+
+.routine-up-next-link--clear .routine-up-next-link-arrow,
+.routine-up-next-link--clear .routine-up-next-link-arrow.material-icons {
+  color: var(--color-text-dark) !important;
+}
+
 /* Paused state — keeps the same dusty-purple wrapper as the other link
    variants but with a muted label color so it reads as "the routine is
    quietly out of the picture" rather than active. */
