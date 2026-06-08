@@ -1,8 +1,8 @@
 /* src/components/review/QuestReviewCard.css */
 
 .qrc-card {
-  background: #1e3a8a;
-  border: 2px solid #3b82f6;
+  background: var(--color-quest-bg);
+  border: 2px solid var(--color-quest-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -167,7 +167,7 @@
   justify-content: center;
   gap: var(--space-xs);
   background: #4ade80;
-  color: #1e3a8a;
+  color: var(--color-quest-bg);
   border: none;
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
@@ -190,7 +190,7 @@
 
 .qrc-card--completed {
   border-color: #4ade80;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1a4a2e 100%);
+  background: linear-gradient(135deg, var(--color-quest-bg) 0%, #1a4a2e 100%);
 }
 
 .qrc-completed-banner {
@@ -250,6 +250,6 @@
 
 .qrc-card .qg-confirm-btn--no {
   background: #4ade80;
-  color: #1e3a8a;
+  color: var(--color-quest-bg);
   border: none;
 }

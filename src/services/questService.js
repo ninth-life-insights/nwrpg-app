@@ -1,12 +1,12 @@
 // src/services/questService.js
 
-import { 
-  collection, 
-  doc, 
+import {
+  collection,
+  doc,
   getDoc,
   getDocs,
-  addDoc, 
-  updateDoc, 
+  getCountFromServer,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -15,42 +15,12 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { checkAndAwardAchievements, awardPendingAchievement, unawardPendingAchievement } from './achievementService';
-import {
-  QUEST_STATUS,
-  createQuestTemplate,
-  validateQuest,
-  isQuestComplete
-} from '../types/Quests';
+import { QUEST_STATUS } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
 
 // Collection reference
 const getQuestsCollection = (userId) => {
   return collection(db, 'users', userId, 'quests');
-};
-
-// Create a new quest
-export const createQuest = async (userId, questData) => {
-  const validation = validateQuest(questData);
-  if (!validation.isValid) {
-    throw new Error(`Invalid quest data: ${validation.errors.join(', ')}`);
-  }
-
-  const questTemplate = createQuestTemplate({
-    ...questData,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
-
-  // IMPORTANT: Remove id field before saving to Firestore
-  const { id, ...dataWithoutId } = questTemplate;
-
-  const questsRef = getQuestsCollection(userId);
-  const docRef = await addDoc(questsRef, dataWithoutId); // Save without id field
-  
-  return {
-    ...dataWithoutId, // Spread the data without id first
-    id: docRef.id     // Then add the real Firestore ID
-  };
 };
 
 // Get a single quest by ID
@@ -68,12 +38,15 @@ export const getQuest = async (userId, questId) => {
   };
 };
 
-// Get all quests for a user
+// Get all quests for a user.
+// Sorted by updatedAt desc so the bank surfaces what the user most recently
+// touched — newly created, last mission ticked off, last edited — at the top.
+// For a fresh quest, updatedAt === createdAt so it lands first as expected.
 export const getAllQuests = async (userId) => {
   const questsRef = getQuestsCollection(userId);
-  const q = query(questsRef, orderBy('createdAt', 'desc'));
+  const q = query(questsRef, orderBy('updatedAt', 'desc'));
   const snapshot = await getDocs(q);
-  
+
   return snapshot.docs
     .map(doc => ({
       id: doc.id,
@@ -86,9 +59,9 @@ export const getAllQuests = async (userId) => {
 export const getQuestsByStatus = async (userId, status) => {
   const questsRef = getQuestsCollection(userId);
   const q = query(
-    questsRef, 
+    questsRef,
     where('status', '==', status),
-    orderBy('createdAt', 'desc')
+    orderBy('updatedAt', 'desc')
   );
   const snapshot = await getDocs(q);
   
@@ -101,11 +74,6 @@ export const getQuestsByStatus = async (userId, status) => {
 // Get active quests
 export const getActiveQuests = async (userId) => {
   return getQuestsByStatus(userId, QUEST_STATUS.ACTIVE);
-};
-
-// Get planning quests
-export const getPlanningQuests = async (userId) => {
-  return getQuestsByStatus(userId, QUEST_STATUS.PLANNING);
 };
 
 // Get completed quests
@@ -143,17 +111,6 @@ export const updateQuestStatus = async (userId, questId, newStatus) => {
   return updateQuest(userId, questId, updates);
 };
 
-// Activate a quest (move from planning to active)
-export const activateQuest = async (userId, questId) => {
-  const quest = await getQuest(userId, questId);
-  
-  if (quest.totalMissions === 0) {
-    throw new Error('Cannot activate quest with no missions');
-  }
-  
-  return updateQuestStatus(userId, questId, QUEST_STATUS.ACTIVE);
-};
-
 // Complete a quest
 export const completeQuest = async (userId, questId) => {
   const quest = await getQuest(userId, questId);
@@ -180,6 +137,36 @@ export const completeQuest = async (userId, questId) => {
   return getQuest(userId, questId);
 };
 
+// Reopen a completed quest. Inverse of completeQuest:
+// - refunds the bonus XP (subtractXP floors at zero)
+// - clears xpAwarded so a future re-complete awards again
+// - clears completedAt so the quest doesn't show as "completed this week"
+//   in the weekly review after reopen
+// - unawards the linked achievement
+// Idempotent: a no-op for quests that aren't currently completed.
+export const reopenQuest = async (userId, questId) => {
+  const quest = await getQuest(userId, questId);
+
+  if (quest.status !== QUEST_STATUS.COMPLETED) {
+    return quest;
+  }
+
+  if (quest.xpAwarded) {
+    const { subtractXP } = await import('./userService');
+    await subtractXP(userId, quest.xpAwarded);
+  }
+
+  if (quest.achievement) {
+    await unawardPendingAchievement(userId, quest.achievement);
+  }
+
+  return updateQuest(userId, questId, {
+    status: QUEST_STATUS.ACTIVE,
+    completedAt: null,
+    xpAwarded: null,
+  });
+};
+
 // Archive a quest
 export const archiveQuest = async (userId, questId) => {
   return updateQuestStatus(userId, questId, QUEST_STATUS.ARCHIVED);
@@ -190,12 +177,71 @@ export const getArchivedQuests = async (userId) => {
   return getQuestsByStatus(userId, QUEST_STATUS.ARCHIVED);
 };
 
-// Restore an archived quest back to active
+// Get deleted (soft-deleted) quests, most recently deleted first
+export const getDeletedQuests = async (userId) => {
+  try {
+    const questsRef = getQuestsCollection(userId);
+    const q = query(
+      questsRef,
+      where('status', '==', QUEST_STATUS.DELETED),
+      orderBy('deletedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error getting deleted quests:', error);
+    throw error;
+  }
+};
+
+// Cheap aggregate count of deleted quests — used by the settings entry point.
+// Avoids the composite index that getDeletedQuests needs (where + orderBy).
+export const getDeletedQuestsCount = async (userId) => {
+  try {
+    const questsRef = getQuestsCollection(userId);
+    const q = query(questsRef, where('status', '==', QUEST_STATUS.DELETED));
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error('Error getting deleted quests count:', error);
+    throw error;
+  }
+};
+
+// Restore a quest (from archived OR deleted) back to its prior live state.
+// Uses completedAt as the signal for which state to restore to: reopenQuest
+// clears completedAt, so a populated value reliably means "this quest was
+// in a completed state at archive/delete time." Without this, restoring a
+// completed-then-archived quest landed it as ACTIVE at 100% progress with
+// a "Complete Quest" CTA dangling — re-tapping would re-fire the linked
+// achievement award.
+//
+// If the quest had a linked achievement that was soft-deleted on delete,
+// the achievement is also restored to pending.
 export const restoreQuest = async (userId, questId) => {
-  return updateQuest(userId, questId, {
-    status: QUEST_STATUS.ACTIVE,
-    archivedAt: null
+  const quest = await getQuest(userId, questId);
+  const wasCompleted = quest.completedAt != null;
+  const questRef = doc(db, 'users', userId, 'quests', questId);
+  await updateDoc(questRef, {
+    status: wasCompleted ? QUEST_STATUS.COMPLETED : QUEST_STATUS.ACTIVE,
+    archivedAt: null,
+    deletedAt: null,
+    updatedAt: serverTimestamp(),
   });
+  if (quest.achievement) {
+    const achRef = doc(db, 'users', userId, 'achievements', quest.achievement);
+    const achSnap = await getDoc(achRef);
+    if (achSnap.exists() && achSnap.data().status === 'deleted') {
+      // Clearing the soft-delete sentinel is enough — isPending / awardedDate /
+      // awardedAt were never overwritten by deleteQuest (it's a partial update
+      // touching only status + deletedAt), so the achievement's live state
+      // (awarded vs pending) is already correctly preserved underneath.
+      await updateDoc(achRef, {
+        status: 'pending',
+        deletedAt: null,
+      });
+    }
+  }
 };
 
 // Delete a quest (soft-delete — mirrors deleteMission pattern)
@@ -231,10 +277,9 @@ export const addMissionToQuest = async (userId, questId, missionId) => {
   // Update the mission to link it to the quest
   const { updateMission } = await import('./missionService');
   await updateMission(userId, missionId, {
-    questId: questId,
-    questOrder: updatedMissionOrder.length - 1
+    questId: questId
   });
-  
+
   return getQuest(userId, questId);
 };
 
@@ -260,10 +305,9 @@ export const removeMissionFromQuest = async (userId, questId, missionId) => {
   // Update the mission to unlink it from the quest
   const { updateMission } = await import('./missionService');
   await updateMission(userId, missionId, {
-    questId: null,
-    questOrder: null
+    questId: null
   });
-  
+
   return getQuest(userId, questId);
 };
 
@@ -350,15 +394,20 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
     }
   }
 
-  // Reopen quest if it was auto-completed but now has incomplete active missions
+  // Reopen quest if it was auto-completed but now has incomplete active missions.
+  // Mirrors reopenQuest's contract: refund XP, clear xpAwarded so a future
+  // re-complete awards again, clear completedAt, unaward the achievement.
   if (quest.status === QUEST_STATUS.COMPLETED &&
       updatedCompletedIds.length < activeMissionCount) {
     updates.status = QUEST_STATUS.ACTIVE;
     updates.completedAt = null;
 
-    // TODO: XP should also be unawarded here — flagged for separate fix
+    if (quest.xpAwarded) {
+      const { subtractXP } = await import('./userService');
+      await subtractXP(userId, quest.xpAwarded);
+      updates.xpAwarded = null;
+    }
 
-    // Unaward linked quest achievement
     if (quest.achievement) {
       unawardPendingAchievement(userId, quest.achievement).catch(e =>
         console.error('Achievement unaward failed:', e)

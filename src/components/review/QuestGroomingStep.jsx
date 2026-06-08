@@ -48,14 +48,32 @@ const QuestGroomingStep = ({
         Promise.all(fetches)
       );
 
-      // Group missions by questId, sort by customSortOrder
+      // Group missions by questId, then sort each group by its quest's own
+      // missionOrder. quest.missionOrder is the authoritative within-quest
+      // ordering (set by reorderQuestMissions and the create-quest flow);
+      // customSortOrder is a different signal (manual ordering in the
+      // Mission Bank surface), so using it here would show missions in
+      // bank-order rather than quest-order.
       const byQuest = {};
-      activeQuests.forEach(q => { byQuest[q.id] = []; });
+      const orderByQuestId = {};
+      activeQuests.forEach(q => {
+        byQuest[q.id] = [];
+        orderByQuestId[q.id] = q.missionOrder || [];
+      });
       allMissions.forEach(m => {
         if (m.questId && byQuest[m.questId]) byQuest[m.questId].push(m);
       });
       Object.keys(byQuest).forEach(qId => {
-        byQuest[qId].sort((a, b) => (a.customSortOrder ?? 0) - (b.customSortOrder ?? 0));
+        const order = orderByQuestId[qId];
+        byQuest[qId].sort((a, b) => {
+          const aIdx = order.indexOf(a.id);
+          const bIdx = order.indexOf(b.id);
+          // Missions not in the order array (drift edge case) sort to the end.
+          if (aIdx === -1 && bIdx === -1) return 0;
+          if (aIdx === -1) return 1;
+          if (bIdx === -1) return -1;
+          return aIdx - bIdx;
+        });
       });
 
       // Sort quests by weekly activity: volume desc, then recency desc, then alphabetically

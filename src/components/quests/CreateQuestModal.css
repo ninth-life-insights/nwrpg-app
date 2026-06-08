@@ -236,6 +236,72 @@
   letter-spacing: 0.5px;
 }
 
+/* Session-level controls (skill, room, difficulty) — sit directly under the
+   mission title input; whatever's set here applies to whatever's typed next.
+   Modeled on QuickAddRoutineSheet but unboxed. Muted (low opacity) until the
+   user starts typing a title, so an empty placeholder input doesn't read as
+   secondary to fully-styled dropdowns above it. */
+.mission-session-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  transition: opacity var(--transition);
+}
+
+.mission-session-controls.is-muted {
+  opacity: 0.5;
+}
+
+.mission-session-controls.is-active {
+  opacity: 1;
+}
+
+.session-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.session-control-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.session-control-select {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-dark);
+  background: white;
+  box-sizing: border-box;
+}
+
+.session-control-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.session-control-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.session-control--difficulty {
+  flex: 1 1 100%;
+}
+
+.session-control--difficulty .mission-difficulty-selector {
+  padding-top: 2px;
+}
+
 .missions-list {
   max-height: 200px;
   overflow-y: auto;
@@ -272,10 +338,22 @@
   margin-bottom: var(--space-sm);
 }
 
-.mission-title {
+.mission-item-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mission-title {
   font-size: var(--font-size-base);
   color: var(--color-text-dark);
+}
+
+.mission-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
 }
 
 .remove-mission-btn-small {
@@ -369,12 +447,6 @@
   cursor: not-allowed;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 480px) {
-  .add-quest-actions {
-    flex-direction: column;
-  }
-}
 /* Quest Reward Section */
 .quest-reward-section {
   padding: var(--space-md) 0;
@@ -388,11 +460,6 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-medium);
-}
-
-.quest-reward-optional {
-  font-weight: 400;
-  color: var(--color-text-light);
 }
 
 .quest-reward-add-btn {

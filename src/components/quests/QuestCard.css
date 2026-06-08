@@ -1,8 +1,8 @@
 /* src/components/quests/QuestCard.css */
 
 .quest-card {
-  background: #1e3a8a;
-  border: 2px solid #3b82f6;
+  background: var(--color-quest-bg);
+  border: 2px solid var(--color-quest-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--space-xl);
@@ -28,6 +28,60 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-lg);
+}
+
+/* Quest completion toggle — mirrors MissionCard's .mission-toggle. Sits to
+   the left of the title so it doesn't compete with the progress circle on
+   the right edge of the card. */
+.quest-toggle {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  padding: 0;
+}
+
+.quest-toggle:hover {
+  border-color: var(--color-success);
+  transform: scale(1.05);
+}
+
+.quest-toggle.completed {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.quest-toggle .check-icon {
+  fill: rgba(255, 255, 255, 0.6);
+  transition: all var(--transition);
+}
+
+.quest-toggle .check-icon.completed {
+  fill: white;
+}
+
+.quest-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-success);
+}
+
+/* Completed quest visual state — desaturated blue, title struck through
+   and dimmed. */
+.quest-card.completed {
+  background: var(--color-quest-bg-completed);
+  border-color: var(--color-quest-border-soft);
+}
+
+.quest-card.completed .quest-card-title.completed {
+  text-decoration: line-through;
+  opacity: 0.7;
 }
 
 .quest-card-title-section {

@@ -24,6 +24,7 @@ import AdventureLogDetailPage from './pages/reviews/AdventureLogDetailPage';
 import MissionBankPage from './pages/missions/MissionBankPage';
 import DeletedMissionsPage from './pages/missions/DeletedMissionsPage';
 import QuestBank from './pages/quests/QuestBankPage';
+import DeletedQuestsPage from './pages/quests/DeletedQuestsPage';
 import QuestDetailView from './components/quests/QuestDetailView';
 import SkillsPage from './pages/skills/SkillsPage';
 import SkillDetailPage from './pages/skills/SkillDetailPage';
@@ -84,6 +85,7 @@ function AppContent() {
         <Route path="/base" element={<ProtectedRoute><BasePage /></ProtectedRoute>} />
         <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
         <Route path="/quest-bank" element={<ProtectedRoute><QuestBank /></ProtectedRoute>} />
+        <Route path="/deleted-quests" element={<ProtectedRoute><DeletedQuestsPage /></ProtectedRoute>} />
         <Route path="/quests/:questId" element={<ProtectedRoute><QuestDetailView /></ProtectedRoute>} />
         <Route path="/skills" element={<ProtectedRoute><SkillsPage /></ProtectedRoute>} />
         <Route path="/skills/:skillName" element={<ProtectedRoute><SkillDetailPage /></ProtectedRoute>} />

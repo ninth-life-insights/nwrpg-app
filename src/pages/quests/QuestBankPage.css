@@ -58,10 +58,76 @@
   color: var(--color-text-dark);
 }
 
-.header-actions {
+/* Search + filter row */
+.quest-bank-search-row {
   display: flex;
-  gap: var(--space-sm);
   align-items: center;
+  gap: 8px;
+  padding: var(--space-lg) var(--space-lg) 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.quest-bank-search-row .filter-btn-header {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.quest-bank-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-white, #fff);
+  border: 1.5px solid var(--color-border, #dee2e6);
+  border-radius: 10px;
+  padding: 8px 12px;
+  transition: border-color 0.2s ease;
+  min-width: 0;
+}
+
+.quest-bank-search:focus-within {
+  border-color: var(--color-primary, #6c63ff);
+}
+
+.quest-bank-page .search-icon {
+  color: var(--color-text-light, #9ca3af);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.quest-bank-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--color-text-main, #2c3e50);
+  min-width: 0;
+}
+
+.quest-bank-search-input::placeholder {
+  color: var(--color-text-light, #9ca3af);
+}
+
+.quest-bank-page .search-clear-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-light, #9ca3af);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.quest-bank-page .search-clear-btn:hover {
+  color: var(--color-text-main, #2c3e50);
+}
+
+.quest-bank-page .search-clear-btn .material-icons {
+  font-size: 18px;
 }
 
 .filter-btn-header {
@@ -85,27 +151,57 @@
   color: var(--color-text-dark);
 }
 
-.add-quest-btn {
+.quest-bank-page .filter-active-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  background: var(--color-primary, #6c63ff);
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+}
+
+/* Floating Add Quest button (mirrors .add-mission-fab pattern) */
+.add-quest-fab {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
   background: var(--color-primary);
-  color: white;
   border: none;
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-md);
+  border-radius: 99px;
+  padding: var(--space-md) var(--space-xl);
   font-size: var(--font-size-base);
   font-weight: 600;
+  font-family: var(--font-family);
   cursor: pointer;
-  transition: all var(--transition);
-  flex: 1;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.45);
+  z-index: 20;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+  white-space: nowrap;
 }
 
-.add-quest-btn:hover {
+.add-quest-fab,
+.add-quest-fab .material-icons {
+  color: white !important;
+}
+
+.add-quest-fab .material-icons {
+  font-size: 20px;
+}
+
+.add-quest-fab:hover {
   background: var(--color-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.55);
+  transform: translateX(-50%) translateY(-1px);
 }
 
-.add-quest-btn:active {
-  transform: translateY(0);
+.add-quest-fab:active {
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Quest List */
@@ -125,6 +221,24 @@
 .empty-state p {
   margin: 0;
   font-size: var(--font-size-lg);
+}
+
+.quest-bank-page .empty-state-link {
+  display: inline-block;
+  margin-top: var(--space-md);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+
+.quest-bank-page .empty-state-link:hover {
+  opacity: 0.75;
+  text-decoration: underline;
 }
 
 /* Loading State */
@@ -172,11 +286,6 @@
 
   .quest-list {
     padding: var(--space-md);
-  }
-
-  .add-quest-btn {
-    padding: var(--space-sm) var(--space-md);
-    font-size: var(--font-size-sm);
   }
 }
 

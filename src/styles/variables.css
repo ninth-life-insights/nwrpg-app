@@ -34,6 +34,13 @@
   --color-hard: #ffebe7;
   --color-skill: #e9d5ff;
   --color-daily: #fed7aa;
+
+  /* Quest surface — dark blue, used by QuestCard, QuestDetailView,
+     QuestReviewCard, and any other quest-themed surfaces. */
+  --color-quest-bg: #1e3a8a;
+  --color-quest-bg-completed: #253552;  /* desaturated for completed state */
+  --color-quest-border: #3b82f6;
+  --color-quest-border-soft: rgba(59, 130, 246, 0.4); /* completed-state border */
   
   /* === SPACING === */
   --space-xs: 4px;

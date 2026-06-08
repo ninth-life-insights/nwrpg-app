@@ -19,11 +19,11 @@ import {
   completeQuest,
   archiveQuest,
   restoreQuest,
-  updateQuestStatus,
+  reopenQuest,
   removeMissionFromQuest,
   reorderQuestMissions
 } from '../../services/questService';
-import { createCustomAchievement, unawardPendingAchievement } from '../../services/achievementService';
+import { createCustomAchievement } from '../../services/achievementService';
 import { getAllMissions } from '../../services/missionService';
 import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
@@ -205,25 +205,13 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     setActionError(null);
     setShowActionsMenu(false);
     const questTitle = quest.title;
-    const linkedAchievementId = quest.achievement;
     try {
       await deleteQuest(currentUser.uid, questId);
       await refreshQuests();
       notifyQuestDeleted({
         questTitle,
         onUndo: async () => {
-          const questRef = doc(db, 'users', currentUser.uid, 'quests', questId);
-          await updateDoc(questRef, {
-            status: QUEST_STATUS.ACTIVE,
-            deletedAt: null,
-          });
-          if (linkedAchievementId) {
-            const achRef = doc(db, 'users', currentUser.uid, 'achievements', linkedAchievementId);
-            await updateDoc(achRef, {
-              status: 'pending',
-              deletedAt: null,
-            });
-          }
+          await restoreQuest(currentUser.uid, questId);
           await refreshQuests();
         },
       });
@@ -306,10 +294,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const handleUncompleteQuest = async () => {
     setActionError(null);
     try {
-      if (quest.achievement) {
-        await unawardPendingAchievement(currentUser.uid, quest.achievement);
-      }
-      await updateQuestStatus(currentUser.uid, questId, QUEST_STATUS.ACTIVE);
+      await reopenQuest(currentUser.uid, questId);
       await Promise.all([loadQuestData(), refreshQuests()]);
     } catch (err) {
       console.error('Error reopening quest:', err);
@@ -350,9 +335,12 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
       {/* Quest Header */}
       <div className={`quest-detail-header ${isCompleted ? 'completed' : ''}`}>
         <div className="header-top">
-          <button className="back-button" onClick={handleBack}>
+          <button
+            className="back-button"
+            onClick={handleBack}
+            aria-label={isModal ? 'Close' : 'Back'}
+          >
             <span className="material-icons">{isModal ? 'close' : 'arrow_back'}</span>
-            {!isModal && 'Back'}
           </button>
           <div className="header-top-right">
             <button
@@ -523,7 +511,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
               className="quest-reward-add-btn"
               onClick={() => setShowRewardModal(true)}
             >
-              + Add Achievement Reward
+              + Add Custom Achievement
             </button>
           )}
         </div>
@@ -544,7 +532,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
 
       {actionError && <ErrorMessage message={actionError} className="quest-action-error" />}
 
-      <StickyFooter bgColor="var(--color-bg-white)" className="quest-detail-footer">
+      <StickyFooter bgColor="var(--color-quest-bg)" className="quest-detail-footer">
         {!isCompleted && (
           <button
             type="button"

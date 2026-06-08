@@ -11,44 +11,59 @@ const QuestCard = ({
   quest,
   nextMission,
   onMissionToggleComplete,
+  onToggleComplete,
   onRestore,
   activeMissionCount,
 }) => {
   const navigate = useNavigate();
   const displayTotal = activeMissionCount ?? quest.totalMissions;
   const progress = calculateQuestProgress(quest, activeMissionCount);
+  const isCompleted = quest.status === 'completed';
 
   const handleViewFullQuest = (e) => {
     e.stopPropagation();
     navigate(`/quests/${quest.id}`);
   };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'planning':
-        return 'Planning';
-      case 'active':
-        return 'Active';
-      case 'completed':
-        return 'Completed';
-      case 'archived':
-        return 'Archived';
-      default:
-        return status;
+  const handleToggleComplete = (e) => {
+    e.stopPropagation();
+    if (onToggleComplete) {
+      onToggleComplete(quest.id, isCompleted);
     }
   };
 
   return (
-    <div className="quest-card" onClick={handleViewFullQuest}>
+    <div className={`quest-card ${isCompleted ? 'completed' : ''}`} onClick={handleViewFullQuest}>
       {/* Quest Header */}
       <div className="quest-card-header">
         <div className="quest-card-title-row">
+          {onToggleComplete && (
+            <button
+              type="button"
+              onClick={handleToggleComplete}
+              className={`quest-toggle ${isCompleted ? 'completed' : ''}`}
+              aria-label={isCompleted ? 'Reopen quest' : 'Complete quest'}
+            >
+              <svg
+                className={`check-icon ${isCompleted ? 'completed' : ''}`}
+                xmlns="http://www.w3.org/2000/svg"
+                height="20px"
+                viewBox="0 -960 960 960"
+                width="20px"
+              >
+                <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
+              </svg>
+            </button>
+          )}
           <div className="quest-card-title-section">
-            <h3 className="quest-card-title">{quest.title}</h3>
+            <h3 className={`quest-card-title ${isCompleted ? 'completed' : ''}`}>{quest.title}</h3>
             <div className="quest-card-meta">
               <Badge variant="difficulty" difficulty={quest.difficulty}>
                 {quest.difficulty}
               </Badge>
+              {isCompleted && quest.xpAwarded && (
+                <Badge variant="xp-completion">+{quest.xpAwarded} XP</Badge>
+              )}
             </div>
           </div>
           <div className="quest-card-progress">
@@ -79,7 +94,7 @@ const QuestCard = ({
       </div>
 
       {/* Next Mission Section */}
-      {nextMission && quest.status !== 'completed' && (
+      {nextMission && !isCompleted && (
         <div
           className="quest-next-mission-section"
           onClick={(e) => e.stopPropagation()}
@@ -89,13 +104,6 @@ const QuestCard = ({
             mission={nextMission}
             onToggleComplete={onMissionToggleComplete}
           />
-        </div>
-      )}
-
-      {quest.status === 'completed' && (
-        <div className="quest-completed-message">
-          <span className="quest-completed-icon">✓</span>
-          <span>Quest Complete!</span>
         </div>
       )}
 

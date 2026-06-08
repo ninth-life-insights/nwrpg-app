@@ -11,6 +11,10 @@ export const createUserProfile = async (userId, email) => {
       email: email,
       displayName: email.split('@')[0], // Use email prefix as default name
       level: 1,
+      // Tracks the highest level ever reached. Used by addXP to decide whether
+      // to fire the level-up modal — only fires when reaching a NEW peak, so
+      // uncomplete/re-complete dances at a level threshold don't replay it.
+      highestLevelEver: 1,
       currentXP: 0,
       totalXP: 0,
       streak: 0,
@@ -52,14 +56,32 @@ export const getUserProfile = async (userId) => {
         }
       }
 
-      // Recompute skill levels from totalSP using current formula
+      // Heal highestLevelEver for users predating the field, or correct it if
+      // it's drifted below the current level. Initializes to the user's current
+      // level so the first legitimate level-up still fires the modal.
+      const effectiveLevel = correctedData.level ?? 1;
+      const storedHighest = data.highestLevelEver;
+      if (storedHighest == null || storedHighest < effectiveLevel) {
+        updates.highestLevelEver = effectiveLevel;
+        correctedData.highestLevelEver = effectiveLevel;
+      }
+
+      // Recompute skill levels from totalSP using current formula.
+      // Also heals highestLevel for skills predating that field, or if it's
+      // drifted below the current level — same contract as highestLevelEver
+      // on the character profile.
       if (data.skills) {
         const correctedSkills = { ...data.skills };
         for (const [skillName, skill] of Object.entries(data.skills)) {
           const correctLevel = getSkillLevelFromTotalSP(skill.totalSP);
-          if (skill.level !== correctLevel) {
-            updates[`skills.${skillName}`] = { ...skill, level: correctLevel };
-            correctedSkills[skillName] = { ...skill, level: correctLevel };
+          const storedHighest = skill.highestLevel;
+          const correctHighest = (storedHighest == null || storedHighest < correctLevel)
+            ? correctLevel
+            : storedHighest;
+          if (skill.level !== correctLevel || skill.highestLevel !== correctHighest) {
+            const healed = { ...skill, level: correctLevel, highestLevel: correctHighest };
+            updates[`skills.${skillName}`] = healed;
+            correctedSkills[skillName] = healed;
           }
         }
         correctedData.skills = correctedSkills;
@@ -138,23 +160,32 @@ export const addXP = async (userId, xpAmount) => {
   try {
     const userRef = doc(db, 'users', userId, 'profile', 'data');
     const profile = await getUserProfile(userId);
-    
+
     if (profile) {
       const newTotalXP = profile.totalXP + xpAmount;
       const newLevel = calculateLevelFromXP(newTotalXP);
       const progress = getXPProgressInLevel(newTotalXP, newLevel);
-      
+
+      // Only fire the level-up modal when reaching a level the user has never
+      // hit before. Prevents replay after uncomplete/re-complete or quest
+      // reopen → re-complete cycles that cross the same threshold twice.
+      // getUserProfile heals highestLevelEver, so it's safe to read directly.
+      const prevHighest = profile.highestLevelEver ?? profile.level;
+      const newHighest = Math.max(prevHighest, newLevel);
+      const leveledUp = newLevel > prevHighest;
+
       await updateDoc(userRef, {
         currentXP: progress.current,
         totalXP: newTotalXP,
         level: newLevel,
+        highestLevelEver: newHighest,
         lastActiveDate: serverTimestamp()
       });
-      
-      return { 
-        newLevel, 
-        newTotalXP, 
-        leveledUp: newLevel > profile.level,
+
+      return {
+        newLevel,
+        newTotalXP,
+        leveledUp,
         progress
       };
     }
@@ -273,13 +304,18 @@ export const addSP = async (userId, skillName, spAmount) => {
 
     if (profile) {
       const skills = profile.skills || {};
-      const existing = skills[skillName] || { totalSP: 0, level: 1 };
+      const existing = skills[skillName] || { totalSP: 0, level: 1, highestLevel: 1 };
       const newTotalSP = existing.totalSP + spAmount;
       const newLevel = getSkillLevelFromTotalSP(newTotalSP);
-      const leveledUp = newLevel > existing.level;
+
+      // Only fire the skill-up modal when reaching a level this skill has
+      // never hit before — mirrors the highestLevelEver gate on character XP.
+      const prevHighest = existing.highestLevel ?? existing.level;
+      const newHighest = Math.max(prevHighest, newLevel);
+      const leveledUp = newLevel > prevHighest;
 
       await updateDoc(userRef, {
-        [`skills.${skillName}`]: { totalSP: newTotalSP, level: newLevel },
+        [`skills.${skillName}`]: { totalSP: newTotalSP, level: newLevel, highestLevel: newHighest },
         lastActiveDate: serverTimestamp()
       });
 
@@ -299,12 +335,16 @@ export const subtractSP = async (userId, skillName, spAmount) => {
 
     if (profile) {
       const skills = profile.skills || {};
-      const existing = skills[skillName] || { totalSP: 0, level: 1 };
+      const existing = skills[skillName] || { totalSP: 0, level: 1, highestLevel: 1 };
       const newTotalSP = Math.max(0, existing.totalSP - spAmount);
       const newLevel = getSkillLevelFromTotalSP(newTotalSP);
 
+      // Preserve highestLevel — subtracting must never lower the peak,
+      // otherwise re-leveling past the same threshold would re-fire the modal.
+      const preservedHighest = existing.highestLevel ?? existing.level;
+
       await updateDoc(userRef, {
-        [`skills.${skillName}`]: { totalSP: newTotalSP, level: newLevel },
+        [`skills.${skillName}`]: { totalSP: newTotalSP, level: newLevel, highestLevel: preservedHighest },
         lastActiveDate: serverTimestamp()
       });
 

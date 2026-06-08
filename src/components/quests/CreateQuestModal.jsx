@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { writeBatch, doc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuests } from '../../contexts/QuestsContext';
+import { useRooms } from '../../contexts/RoomsContext';
 import Badge from '../ui/Badge';
-import { createQuest, updateQuest } from '../../services/questService';
-import { createMission } from '../../services/missionService';
-import { createCustomAchievement } from '../../services/achievementService';
-import { QUEST_DIFFICULTY } from '../../types/Quests';
-import { DIFFICULTY_LEVELS, createMissionTemplate } from '../../types/Mission';
+import { QUEST_DIFFICULTY, createQuestTemplate } from '../../types/Quests';
+import { DIFFICULTY_LEVELS, MISSION_STATUS, createMissionTemplate } from '../../types/Mission';
+import { AVAILABLE_SKILLS } from '../../data/Skills';
 import AchievementBadge from '../achievements/AchievementBadge';
 import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -19,16 +20,23 @@ import './CreateQuestModal.css';
 const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
   const { currentUser } = useAuth();
   const { refreshQuests } = useQuests();
-  
+  const { rooms } = useRooms();
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     difficulty: QUEST_DIFFICULTY.EASY,
   });
-  
+
   const [missions, setMissions] = useState([]);
   const [currentMission, setCurrentMission] = useState('');
-  const [currentMissionDifficulty, setCurrentMissionDifficulty] = useState(DIFFICULTY_LEVELS.EASY);
+
+  // Session-sticky defaults applied to every mission added until changed.
+  // Mirrors QuickAddRoutineSheet — pick once, brain-dump titles. To "edit"
+  // an added row, delete it and re-add with new session values.
+  const [sessionDifficulty, setSessionDifficulty] = useState(DIFFICULTY_LEVELS.EASY);
+  const [sessionSkill, setSessionSkill] = useState('');
+  const [sessionRoomId, setSessionRoomId] = useState('');
   
   const [pendingAchievement, setPendingAchievement] = useState(null);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
@@ -62,15 +70,22 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
 
   const handleAddMission = () => {
     if (!currentMission.trim()) return;
-    
+
+    const roomName = sessionRoomId
+      ? rooms.find(r => r.id === sessionRoomId)?.name ?? null
+      : null;
+
     setMissions(prev => [...prev, {
       title: currentMission.trim(),
-      difficulty: currentMissionDifficulty,
-      tempId: Date.now() // Temporary ID for UI
+      difficulty: sessionDifficulty,
+      skill: sessionSkill || null,
+      baseLocation: sessionRoomId || null,
+      baseLocationName: roomName, // cached for row display
+      tempId: Date.now()
     }]);
-    
+
     setCurrentMission('');
-    setCurrentMissionDifficulty(DIFFICULTY_LEVELS.EASY);
+    // Session controls intentionally not reset — they persist across adds.
   };
 
   const handleRemoveMission = (tempId) => {
@@ -109,61 +124,94 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
     }
     
     setIsSubmitting(true);
-    
+
     try {
-      // Create all missions first
-      const missionIds = [];
-      for (const mission of missions) {
-        const missionData = createMissionTemplate({
+      // Atomic create: quest + missions (+ achievement, if present) all commit
+      // together or none of them do. Replaces what used to be sequential
+      // createMission calls followed by createQuest followed by updateMission
+      // calls — a chain that orphaned missions in the bank on mid-loop failure.
+      const userId = currentUser.uid;
+      const missionsCol = collection(db, 'users', userId, 'missions');
+      const questsCol = collection(db, 'users', userId, 'quests');
+      const achievementsCol = collection(db, 'users', userId, 'achievements');
+
+      // Pre-generate refs so quest and missions can cross-reference IDs
+      // before either is actually written.
+      const missionRefs = missions.map(() => doc(missionsCol));
+      const questRef = doc(questsCol);
+      const achRef = pendingAchievement ? doc(achievementsCol) : null;
+      const missionIds = missionRefs.map(r => r.id);
+
+      const batch = writeBatch(db);
+
+      // Missions — same shape createMission would have produced, but already
+      // carrying questId so no follow-up updates are needed. Ordering within
+      // the quest is owned by quest.missionOrder on the quest doc.
+      missions.forEach((mission, i) => {
+        const tpl = createMissionTemplate({
           title: mission.title,
           difficulty: mission.difficulty,
-          status: 'active'
+          skill: mission.skill,
+          baseLocation: mission.baseLocation,
+          questId: questRef.id,
         });
-        
-        const missionId = await createMission(currentUser.uid, missionData);
-        missionIds.push(missionId);
+        const { id: _omitMissionId, ...missionData } = tpl;
+        batch.set(missionRefs[i], {
+          ...missionData,
+          status: MISSION_STATUS.ACTIVE,
+          createdAt: serverTimestamp(),
+          completedAt: null,
+        });
+      });
+
+      // Achievement — pending until quest completes. Replicates the shape
+      // createCustomAchievement writes; isPending is true because a questId
+      // is always set in this flow.
+      if (achRef) {
+        batch.set(achRef, {
+          name: pendingAchievement.name,
+          description: pendingAchievement.description || '',
+          badgeColor: pendingAchievement.badgeColor,
+          badgeSymbol: pendingAchievement.badgeSymbol,
+          isCustom: true,
+          isPending: true,
+          questId: questRef.id,
+          awardedDate: null,
+          awardedAt: null,
+        });
       }
-      
-      // Create the quest with mission IDs
-      const questData = {
+
+      // Quest — same shape createQuest would have produced, with mission IDs
+      // and the linked achievement ID already populated.
+      const questTpl = createQuestTemplate({
         title: formData.title.trim(),
         description: formData.description.trim(),
         difficulty: formData.difficulty,
         status: 'active',
-        missionIds: missionIds,
+        missionIds,
         missionOrder: missionIds,
         completedMissionIds: [],
         totalMissions: missions.length,
         completedMissions: 0,
-      };
-      
-      const newQuest = await createQuest(currentUser.uid, questData);
+        achievement: achRef ? achRef.id : null,
+      });
+      const { id: _omitQuestId, ...questData } = questTpl;
+      batch.set(questRef, {
+        ...questData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
 
-      // Update each mission to link it to the quest
-      const { updateMission } = await import('../../services/missionService');
-      for (let i = 0; i < missionIds.length; i++) {
-        await updateMission(currentUser.uid, missionIds[i], {
-          questId: newQuest.id,
-          questOrder: i
-        });
-      }
-
-      // Create pending achievement and link to quest
-      if (pendingAchievement) {
-        const achDoc = await createCustomAchievement(currentUser.uid, {
-          ...pendingAchievement,
-          questId: newQuest.id,
-        });
-        await updateQuest(currentUser.uid, newQuest.id, { achievement: achDoc.id });
-      }
+      await batch.commit();
 
       await refreshQuests();
 
       if (onQuestCreated) {
         onQuestCreated({
-          ...newQuest,
+          ...questTpl,
+          id: questRef.id,
           missionIds,
-          missionOrder: missionIds
+          missionOrder: missionIds,
         });
       }
 
@@ -175,7 +223,9 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
       });
       setMissions([]);
       setCurrentMission('');
-      setCurrentMissionDifficulty(DIFFICULTY_LEVELS.EASY);
+      setSessionDifficulty(DIFFICULTY_LEVELS.EASY);
+      setSessionSkill('');
+      setSessionRoomId('');
       setPendingAchievement(null);
       
       onClose();
@@ -246,7 +296,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
 
           {/* Quest Reward */}
           <div className="quest-reward-section">
-            <div className="quest-reward-label">Quest Reward <span className="quest-reward-optional">(optional)</span></div>
+            <div className="quest-reward-label">Quest Reward</div>
             {pendingAchievement ? (
               <div className="quest-reward-preview">
                 <AchievementBadge color={pendingAchievement.badgeColor} badgeSymbol={pendingAchievement.badgeSymbol} size="sm" />
@@ -265,7 +315,7 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
                 onClick={() => setShowAchievementModal(true)}
                 disabled={isSubmitting}
               >
-                + Add Achievement Reward
+                + Add Custom Achievement
               </button>
             )}
           </div>
@@ -273,30 +323,44 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
           {/* Missions Section */}
           <div className="quest-missions-section">
             <div className="missions-header">Missions ({missions.length})</div>
-            
+
             {/* Mission List - Scrollable */}
             {missions.length > 0 && (
               <div className="missions-list">
-                {missions.map((mission) => (
-                  <div key={mission.tempId} className="mission-item">
-                    <Badge variant="difficulty" difficulty={mission.difficulty}>
-                      {mission.difficulty}
-                    </Badge>
-                    <span className="mission-title">{mission.title}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveMission(mission.tempId)}
-                      className="remove-mission-btn-small"
-                      disabled={isSubmitting}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                {missions.map((mission) => {
+                  const hasMeta = mission.skill || mission.baseLocationName;
+                  return (
+                    <div key={mission.tempId} className="mission-item">
+                      <Badge variant="difficulty" difficulty={mission.difficulty}>
+                        {mission.difficulty}
+                      </Badge>
+                      <div className="mission-item-body">
+                        <span className="mission-title">{mission.title}</span>
+                        {hasMeta && (
+                          <span className="mission-meta">
+                            {mission.skill}
+                            {mission.skill && mission.baseLocationName ? ' · ' : ''}
+                            {mission.baseLocationName}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMission(mission.tempId)}
+                        className="remove-mission-btn-small"
+                        disabled={isSubmitting}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {/* Add Mission Input */}
+            {/* Add Mission — title is the primary action. Session controls below
+                apply to whatever's typed next; muted until the user begins typing
+                so they don't visually outweigh the empty title input. */}
             <div className="add-mission-input-section">
               <input
                 type="text"
@@ -307,21 +371,58 @@ const CreateQuestModal = ({ isOpen, onClose, onQuestCreated }) => {
                 placeholder="Add a mission..."
                 disabled={isSubmitting}
               />
-              <div className="mission-difficulty-selector">
-                {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
-                  <button
-                    key={difficulty}
-                    type="button"
-                    onClick={() => setCurrentMissionDifficulty(difficulty)}
-                    className={`mini-difficulty-btn ${currentMissionDifficulty === difficulty ? 'selected' : ''}`}
+
+              <div className={`mission-session-controls ${currentMission.trim() ? 'is-active' : 'is-muted'}`}>
+                <label className="session-control">
+                  <span className="session-control-label">Skill</span>
+                  <select
+                    className="session-control-select"
+                    value={sessionSkill}
+                    onChange={(e) => setSessionSkill(e.target.value)}
                     disabled={isSubmitting}
                   >
-                    <Badge variant="difficulty" difficulty={difficulty}>
-                      {difficulty}
-                    </Badge>
-                  </button>
-                ))}
+                    <option value="">None</option>
+                    {AVAILABLE_SKILLS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="session-control">
+                  <span className="session-control-label">Room</span>
+                  <select
+                    className="session-control-select"
+                    value={sessionRoomId}
+                    onChange={(e) => setSessionRoomId(e.target.value)}
+                    disabled={isSubmitting}
+                  >
+                    <option value="">None</option>
+                    {rooms.map((room) => (
+                      <option key={room.id} value={room.id}>{room.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="session-control session-control--difficulty">
+                  <span className="session-control-label">Difficulty</span>
+                  <div className="mission-difficulty-selector">
+                    {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
+                      <button
+                        key={difficulty}
+                        type="button"
+                        onClick={() => setSessionDifficulty(difficulty)}
+                        className={`mini-difficulty-btn ${sessionDifficulty === difficulty ? 'selected' : ''}`}
+                        disabled={isSubmitting}
+                      >
+                        <Badge variant="difficulty" difficulty={difficulty}>
+                          {difficulty}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
+
               <button
                 type="button"
                 onClick={handleAddMission}

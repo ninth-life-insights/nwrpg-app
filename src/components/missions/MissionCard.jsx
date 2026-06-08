@@ -227,9 +227,9 @@ const MissionCard = ({
         <div className="mission-header">
           <div className="title-row">
             {showXpBadge && mission.xpAwarded && (
-              <span className="xp-completion-badge">
+              <Badge variant="xp-completion">
                 +{mission.xpAwarded} XP
-              </span>
+              </Badge>
             )}
             <h3 className={`mission-title ${isCompleted ? 'completed' : ''}`}>
               {mission.title}
