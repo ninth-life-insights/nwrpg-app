@@ -145,11 +145,13 @@
   flex-shrink: 0;
 }
 
-/* Routine strip — warm yellow palette consistent with the routine
-   feature elsewhere (count pills in builder, mission card bg). */
+/* Routine strip — dusty lavender background + deep violet text. Ties
+   to the routine feature's secondary-background palette (the routines
+   page background, the section in the builder) so the strip reads as
+   "this is routine territory" without needing a label icon. */
 .room-card-strip--routine {
-  background: var(--color-border-yellow);
-  color: #92400e;
+  background: var(--color-bg-secondary);
+  color: #4c1d95;
 }
 
 /* Overdue strip — soft coral, dark red text. The pale background reads
