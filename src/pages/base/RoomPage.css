@@ -436,6 +436,67 @@
   background: rgba(var(--color-primary-rgb, 59, 130, 246), 0.06);
 }
 
+/* Routine variant of the Add button — warm-yellow filled treatment ties
+   to the routine palette (count badges, mission cards) and makes it
+   visually obvious that "Add to routine" is a different action than the
+   neutral "Add" mission CTA. */
+.room-page-add-btn--routine {
+  background: var(--color-border-yellow);
+  border-color: #fbbf24;
+  color: #92400e;
+}
+
+.room-page-add-btn--routine:hover {
+  background: #fbbf24;
+  border-color: #d97706;
+  color: #78350f;
+}
+
+/* Routine view buckets — group the routine tasks by cadence (Daily /
+   Weekly / Monthly / Yearly) so the user reads the routine's shape, not
+   just a flat list. Mirrors the builder's bucket model. */
+.room-page-routine-buckets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  margin-top: var(--space-sm);
+}
+
+.room-page-routine-bucket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.room-page-routine-bucket-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.room-page-routine-bucket-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-border-yellow);
+  color: #92400e;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 1px var(--space-sm);
+  border-radius: var(--radius-sm);
+  min-width: 18px;
+}
+
+.room-page-routine-bucket-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
 .room-page-empty {
   font-size: var(--font-size-base);
   color: var(--color-text-light);

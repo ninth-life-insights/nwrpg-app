@@ -10,10 +10,20 @@ import MissionCard from '../../components/missions/MissionCard';
 import AddMissionCard from '../../components/missions/AddMissionCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
 import QuickAddRoutineSheet from '../../components/routines/QuickAddRoutineSheet';
+import MissionCardCondensed from '../../components/missions/MissionCardCondensed';
 import { useRoutines } from '../../contexts/RoutineContext';
-import { isMissionInRoutineSet } from '../../utils/routineHelpers';
+import { isMissionInRoutineSet, groupRoutineMissionsByFrequency } from '../../utils/routineHelpers';
 import { DEFAULT_ROUTINE_ID } from '../../types/Routine';
 import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
+
+// Bucket labels for the room-scoped routine view. Mirrors the builder's
+// frequency model so the cadence shape reads consistently across surfaces.
+const ROUTINE_BUCKETS = [
+  { key: 'daily', label: 'Daily' },
+  { key: 'weekly', label: 'Weekly' },
+  { key: 'monthly', label: 'Monthly' },
+  { key: 'yearly', label: 'Yearly' },
+];
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
@@ -254,6 +264,13 @@ const RoomPage = () => {
   const activeMissions = visibleMissions.filter(m => m.status === 'active');
   const completedMissions = visibleMissions.filter(m => m.status === 'completed');
 
+  // Routine view buckets the active routine tasks by frequency, mirroring
+  // the builder. Completed routine tasks aren't shown here — for "did I
+  // do my routine today" the user has the today view at /routines.
+  const routineBuckets = isRoutineView
+    ? groupRoutineMissionsByFrequency(activeMissions)
+    : null;
+
   // Refresh routine context + parent missions after an add-to-routine so
   // both the routineRootSet and the room's mission list pick up the new task.
   const handleRoutineAdded = async () => {
@@ -475,13 +492,13 @@ const RoomPage = () => {
             </button>
           </div>
           <button
-            className="room-page-add-btn"
+            className={`room-page-add-btn${isRoutineView ? ' room-page-add-btn--routine' : ''}`}
             onClick={() => {
               if (isRoutineView) setShowAddRoutine(true);
               else setShowAddMission(true);
             }}
           >
-            + Add
+            {isRoutineView ? '+ Add to routine' : '+ Add'}
           </button>
         </div>
 
@@ -497,29 +514,59 @@ const RoomPage = () => {
           </p>
         )}
 
-        {activeMissions.map(mission => (
-          <MissionCard
-            key={mission.id}
-            mission={mission}
-            onToggleComplete={handleToggleComplete}
-            onMissionChanged={fetchData}
-            hideRoomBadge={!isEntireBase || selectedRoomChip !== 'all'}
-          />
-        ))}
-
-        {completedMissions.length > 0 && (
+        {isRoutineView ? (
+          <div className="room-page-routine-buckets">
+            {ROUTINE_BUCKETS.map(({ key, label }) => {
+              const items = routineBuckets?.[key] || [];
+              if (items.length === 0) return null;
+              return (
+                <div key={key} className="room-page-routine-bucket">
+                  <h3 className="room-page-routine-bucket-label">
+                    {label}
+                    <span className="room-page-routine-bucket-count">{items.length}</span>
+                  </h3>
+                  <div className="room-page-routine-bucket-list">
+                    {items.map((mission) => (
+                      <MissionCardCondensed
+                        key={mission.id}
+                        mission={mission}
+                        onToggleComplete={handleToggleComplete}
+                        onMissionChanged={fetchData}
+                        hideRoutineBadge
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
           <>
-            <div className="room-page-completed-divider">
-              <span>Completed</span>
-            </div>
-            {completedMissions.map(mission => (
+            {activeMissions.map(mission => (
               <MissionCard
                 key={mission.id}
                 mission={mission}
                 onToggleComplete={handleToggleComplete}
                 onMissionChanged={fetchData}
-                  />
+                hideRoomBadge={!isEntireBase || selectedRoomChip !== 'all'}
+              />
             ))}
+
+            {completedMissions.length > 0 && (
+              <>
+                <div className="room-page-completed-divider">
+                  <span>Completed</span>
+                </div>
+                {completedMissions.map(mission => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    onToggleComplete={handleToggleComplete}
+                    onMissionChanged={fetchData}
+                      />
+                ))}
+              </>
+            )}
           </>
         )}
       </div>
