@@ -1,8 +1,8 @@
 /* src/components/quests/QuestCard.css */
 
 .quest-card {
-  background: #1e3a8a;
-  border: 2px solid #3b82f6;
+  background: var(--color-quest-bg);
+  border: 2px solid var(--color-quest-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--space-xl);
@@ -72,11 +72,11 @@
   box-shadow: 0 0 0 2px var(--color-success);
 }
 
-/* Completed quest visual state — desaturated blue (matches QuestDetailView's
-   completed background #253552), title struck through and dimmed. */
+/* Completed quest visual state — desaturated blue, title struck through
+   and dimmed. */
 .quest-card.completed {
-  background: #253552;
-  border-color: rgba(59, 130, 246, 0.4);
+  background: var(--color-quest-bg-completed);
+  border-color: var(--color-quest-border-soft);
 }
 
 .quest-card.completed .quest-card-title.completed {

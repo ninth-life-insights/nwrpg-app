@@ -2,17 +2,17 @@
 
 .quest-detail-view {
   min-height: 100vh;
-  background: #1e3a8a;
+  background: var(--color-quest-bg);
   padding-bottom: 120px;
 }
 
 .quest-detail-view.completed {
-  background: #253552;
+  background: var(--color-quest-bg-completed);
 }
 
 /* Quest Header - Dark Blue */
 .quest-detail-header {
-  background: #1e3a8a;
+  background: var(--color-quest-bg);
   color: white;
   padding: var(--space-xl);
   position: sticky;
@@ -22,7 +22,7 @@
 }
 
 .quest-detail-header.completed {
-  background: #253552;
+  background: var(--color-quest-bg-completed);
 }
 
 .header-top {
