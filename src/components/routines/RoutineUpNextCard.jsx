@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useRoutines } from '../../contexts/RoutineContext';
+import { useDailyMissions } from '../../contexts/DailyMissionsContext';
 import {
   uncompleteMission,
   completeMissionWithRecurrence,
@@ -22,15 +23,14 @@ import './RoutineUpNextCard.css';
 // toggle completes the routine task with normal recurrence + notification
 // behavior. The label is also a tap target → /routines for the full view.
 //
-// Three render states:
-//   loading           — quiet placeholder
-//   no routine yet    — "Set up your routine →" inline link
-//   clear today       — "Routine clear today" small confirmation row
-//   active            — label + card + "+N more today" + chevron
+// Routine items already on the daily-priority list are filtered out so the
+// home page doesn't show the same task twice — the routine card surfaces
+// the next routine thing she hasn't already planned.
 const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
   const { routines, routineRootSet, routineOrderMap, pausedRootSet } = useRoutines();
+  const { dailyMissionIds } = useDailyMissions();
   const navigate = useNavigate();
 
   const loading = missions === null;
@@ -54,6 +54,13 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
     );
     return items.filter((m) => m.status === MISSION_STATUS.ACTIVE);
   }, [missions, routineRootSet, routineOrderMap, pausedRootSet]);
+
+  // Items not already promoted to today's daily priorities — those would
+  // otherwise render as duplicates of the cards above.
+  const todayActiveNotInDaily = useMemo(
+    () => todayActive.filter((m) => !dailyMissionIds.has(m.id)),
+    [todayActive, dailyMissionIds]
+  );
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     try {
@@ -130,8 +137,28 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
     );
   }
 
-  const nextUp = todayActive[0];
-  const remainingCount = todayActive.length - 1;
+  // Routine items exist today, but she's already promoted all of them to her
+  // daily priorities — they render in the list above, so this slot collapses
+  // to a quieter confirmation instead of duplicating a card.
+  if (todayActiveNotInDaily.length === 0) {
+    return (
+      <button
+        type="button"
+        className="routine-up-next-link routine-up-next-link--clear"
+        onClick={() => navigate('/routines')}
+      >
+        <span className="routine-up-next-link-label">
+          Today's routine is on your priority list ✓
+        </span>
+        <span className="material-icons routine-up-next-link-arrow" aria-hidden="true">
+          chevron_right
+        </span>
+      </button>
+    );
+  }
+
+  const nextUp = todayActiveNotInDaily[0];
+  const remainingCount = todayActiveNotInDaily.length - 1;
 
   return (
     <div className="routine-up-next">
