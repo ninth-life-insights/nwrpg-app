@@ -309,10 +309,20 @@ const RoomPage = () => {
     ? missions.filter(m => m.baseLocation === ENTIRE_BASE_ROOM_ID && m.status === 'active').length
     : 0;
 
+  // Routine count for this room — extends the header stat line with a
+  // "X in routine" clause when there's at least one routine member here.
+  // Silent when zero so rooms without a routine don't get noise; the
+  // Routine tab still does the discovery work for those.
+  const routineCount = missions.filter(
+    m => m.baseLocation === roomId &&
+         m.status === 'active' &&
+         isMissionInRoutineSet(m, routineRootSet)
+  ).length;
+
   const scope = isEntireBase ? ' across all rooms' : '';
   const statLine = stats.total === 0
     ? `No missions${scope} yet`
-    : `${stats.total} mission${stats.total !== 1 ? 's' : ''}${scope}${stats.overdue > 0 ? ` · ${stats.overdue} late` : ''}`;
+    : `${stats.total} mission${stats.total !== 1 ? 's' : ''}${scope}${stats.overdue > 0 ? ` · ${stats.overdue} late` : ''}${routineCount > 0 ? ` · ${routineCount} in routine` : ''}`;
 
   return (
     <div className="room-page">
