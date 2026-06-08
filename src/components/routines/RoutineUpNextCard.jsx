@@ -158,7 +158,10 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
   }
 
   const nextUp = todayActiveNotInDaily[0];
-  const remainingCount = todayActiveNotInDaily.length - 1;
+  // Count reflects the full routine workload today, not just the non-daily
+  // subset — so the number reads as "how much routine is on your plate today"
+  // regardless of how much she's already promoted to daily priorities.
+  const remainingCount = todayActive.length - 1;
 
   return (
     <div className="routine-up-next">

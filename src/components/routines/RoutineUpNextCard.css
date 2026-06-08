@@ -122,15 +122,6 @@
   color: var(--color-primary) !important;
 }
 
-.routine-up-next-link--clear .routine-up-next-link-label {
-  color: var(--color-success);
-}
-
-.routine-up-next-link--clear .routine-up-next-link-arrow,
-.routine-up-next-link--clear .routine-up-next-link-arrow.material-icons {
-  color: var(--color-success) !important;
-}
-
 /* Paused state — keeps the same dusty-purple wrapper as the other link
    variants but with a muted label color so it reads as "the routine is
    quietly out of the picture" rather than active. */
