@@ -532,7 +532,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
 
       {actionError && <ErrorMessage message={actionError} className="quest-action-error" />}
 
-      <StickyFooter bgColor="#1e3a8a" className="quest-detail-footer">
+      <StickyFooter bgColor="var(--color-quest-bg)" className="quest-detail-footer">
         {!isCompleted && (
           <button
             type="button"
