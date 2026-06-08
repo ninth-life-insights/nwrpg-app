@@ -9,7 +9,11 @@ import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from
 import MissionCard from '../../components/missions/MissionCard';
 import AddMissionCard from '../../components/missions/AddMissionCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
-import RoomRoutineSection from '../../components/base/RoomRoutineSection';
+import QuickAddRoutineSheet from '../../components/routines/QuickAddRoutineSheet';
+import { useRoutines } from '../../contexts/RoutineContext';
+import { isMissionInRoutineSet } from '../../utils/routineHelpers';
+import { DEFAULT_ROUTINE_ID } from '../../types/Routine';
+import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
@@ -55,9 +59,17 @@ const RoomPage = () => {
 
   // Modals
   const [showAddMission, setShowAddMission] = useState(false);
+  const [showAddRoutine, setShowAddRoutine] = useState(false);
   const [showEditRoom, setShowEditRoom] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [newAchievements, setNewAchievements] = useState([]);
+
+  // Tab between "All" missions (default, the room's full task list) and
+  // "Routine" (just routine-member missions whose baseLocation is this
+  // room). The Routine tab makes the routine surface discoverable from
+  // the top of the page rather than buried below the missions list.
+  const [taskView, setTaskView] = useState('all');
+  const { routineRootSet, refreshRoutines } = useRoutines();
 
   // Click-outside to close three-dot menu
   useEffect(() => {
@@ -231,8 +243,23 @@ const RoomPage = () => {
     ? missions.filter(m => m.baseLocation === selectedRoomChip)
     : missions;
 
-  const activeMissions = chipFiltered.filter(m => m.status === 'active');
-  const completedMissions = chipFiltered.filter(m => m.status === 'completed');
+  // Routine view: ignore chip filters and narrow to routine members whose
+  // baseLocation matches this room (i.e., "of this room" — Entire-Base
+  // routines that touch the room aren't shown here).
+  const isRoutineView = taskView === 'routine';
+  const visibleMissions = isRoutineView
+    ? missions.filter(m => m.baseLocation === roomId && isMissionInRoutineSet(m, routineRootSet))
+    : chipFiltered;
+
+  const activeMissions = visibleMissions.filter(m => m.status === 'active');
+  const completedMissions = visibleMissions.filter(m => m.status === 'completed');
+
+  // Refresh routine context + parent missions after an add-to-routine so
+  // both the routineRootSet and the room's mission list pick up the new task.
+  const handleRoutineAdded = async () => {
+    await refreshRoutines();
+    await fetchData();
+  };
 
   // Entire Base shows a segmented bar (one slice per non-base room) instead
   // of a single fill, since aggregating cleanliness into one value is misleading.
@@ -392,8 +419,10 @@ const RoomPage = () => {
         {actionError && <ErrorMessage message={actionError} />}
       </div>
 
-      {/* Per-room chip filter (Entire Base only) */}
-      {isEntireBase && chipRooms.length > 0 && (
+      {/* Per-room chip filter (Entire Base only) — only shown on the
+          "All" view; Routine view is already room-scoped so chips would
+          double-filter confusingly. */}
+      {!isRoutineView && isEntireBase && chipRooms.length > 0 && (
         <div className="room-page-chips">
           <button
             className={`room-page-chip${selectedRoomChip === 'all' ? ' room-page-chip--active' : ''}`}
@@ -419,13 +448,38 @@ const RoomPage = () => {
         </div>
       )}
 
-      {/* Missions section */}
+      {/* Missions section — tabs at the top swap between the room's full
+          mission list ("All") and its routine subset ("Routine"). The add
+          button adapts to the active tab so + Add creates whichever kind
+          of task you're currently looking at. */}
       <div className="room-page-missions">
         <div className="room-page-missions-header">
-          <h2 className="room-page-missions-title">Missions</h2>
+          <div className="room-page-task-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={taskView === 'all'}
+              className={`room-page-task-tab${taskView === 'all' ? ' room-page-task-tab--active' : ''}`}
+              onClick={() => setTaskView('all')}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={taskView === 'routine'}
+              className={`room-page-task-tab${taskView === 'routine' ? ' room-page-task-tab--active' : ''}`}
+              onClick={() => setTaskView('routine')}
+            >
+              Routine
+            </button>
+          </div>
           <button
             className="room-page-add-btn"
-            onClick={() => setShowAddMission(true)}
+            onClick={() => {
+              if (isRoutineView) setShowAddRoutine(true);
+              else setShowAddMission(true);
+            }}
           >
             + Add
           </button>
@@ -433,7 +487,9 @@ const RoomPage = () => {
 
         {activeMissions.length === 0 && completedMissions.length === 0 && (
           <p className="room-page-empty">
-            {isEntireBase
+            {isRoutineView
+              ? 'No routine tasks here yet. Add one to make it part of your regular rhythm.'
+              : isEntireBase
               ? (selectedRoomChip === 'all'
                   ? 'No missions across the home yet.'
                   : 'No missions for that room yet.')
@@ -468,15 +524,17 @@ const RoomPage = () => {
         )}
       </div>
 
-      {/* Room-scoped routine — secondary to the room's main mission list,
-          but visible enough to be discoverable. Lets the user maintain
-          the room's routine without leaving the page. */}
-      <RoomRoutineSection
-        roomId={roomId}
-        missions={missions}
-        onToggleComplete={handleToggleComplete}
-        onMissionChanged={fetchData}
-      />
+      {showAddRoutine && (
+        <QuickAddRoutineSheet
+          frequency={RECURRENCE_PATTERNS.DAILY}
+          routineId={DEFAULT_ROUTINE_ID}
+          defaultRoomId={roomId}
+          showFrequencyPicker
+          lockRoom
+          onClose={() => setShowAddRoutine(false)}
+          onAdded={handleRoutineAdded}
+        />
+      )}
 
       {/* Add Mission modal */}
       {showAddMission && (

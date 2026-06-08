@@ -381,6 +381,45 @@
   margin: 0;
 }
 
+/* Task view tabs — segmented control toggling between the room's full
+   mission list ("All") and its routine subset ("Routine"). Replaces the
+   single "Missions" title so the routine view is discoverable at the
+   top of the section, not buried below the fold. */
+.room-page-task-tabs {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.room-page-task-tab {
+  background: none;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.room-page-task-tab:hover {
+  color: var(--color-text-dark);
+}
+
+.room-page-task-tab--active {
+  background: var(--color-primary);
+  color: var(--color-bg-white);
+}
+
+.room-page-task-tab--active:hover {
+  color: var(--color-bg-white);
+}
+
 .room-page-add-btn {
   background: none;
   border: 1px solid var(--color-primary);
