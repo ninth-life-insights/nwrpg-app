@@ -62,7 +62,7 @@ const QuestCard = ({
                 {quest.difficulty}
               </Badge>
               {isCompleted && quest.xpAwarded && (
-                <span className="quest-xp-completion-badge">+{quest.xpAwarded} XP</span>
+                <Badge variant="xp-completion">+{quest.xpAwarded} XP</Badge>
               )}
             </div>
           </div>

@@ -84,19 +84,6 @@
   opacity: 0.7;
 }
 
-/* XP awarded badge — mirrors MissionCard's .xp-completion-badge */
-.quest-xp-completion-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 600;
-  background-color: #10b981;
-  color: white;
-  white-space: nowrap;
-}
-
 .quest-card-title-section {
   flex: 1;
   display: flex;
