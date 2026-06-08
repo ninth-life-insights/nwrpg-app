@@ -30,6 +30,64 @@
   gap: var(--space-lg);
 }
 
+/* Quest completion toggle — mirrors MissionCard's .mission-toggle. Sits to
+   the left of the title so it doesn't compete with the progress circle on
+   the right edge of the card. */
+.quest-toggle {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  padding: 0;
+}
+
+.quest-toggle:hover {
+  border-color: var(--color-success);
+  transform: scale(1.05);
+}
+
+.quest-toggle.completed {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.quest-toggle .check-icon {
+  fill: rgba(255, 255, 255, 0.6);
+  transition: all var(--transition);
+}
+
+.quest-toggle .check-icon.completed {
+  fill: white;
+}
+
+.quest-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-success);
+}
+
+/* Completed quest visual state — title struck through, body de-emphasized */
+.quest-card.completed .quest-card-title.completed {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* XP awarded badge — mirrors MissionCard's .xp-completion-badge */
+.quest-xp-completion-badge {
+  background: var(--color-success);
+  color: white;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
 .quest-card-title-section {
   flex: 1;
   display: flex;

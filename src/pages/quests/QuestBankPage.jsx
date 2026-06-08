@@ -10,6 +10,9 @@ import {
   getActiveQuests,
   getCompletedQuests,
   getArchivedQuests,
+  getQuest,
+  completeQuest,
+  reopenQuest,
   restoreQuest
 } from '../../services/questService';
 import { getAllMissions } from '../../services/missionService';
@@ -25,6 +28,12 @@ const QuestBank = () => {
   
   const [quests, setQuests] = useState([]);
   const [missions, setMissions] = useState([]);
+  // Quests that transitioned to COMPLETED during this page session — kept
+  // around so the user sees the completion land (with XP badge, struck-through
+  // title) rather than the quest silently disappearing from the active list.
+  // Cleared on filter change and on explicit reload, mirroring MissionBank's
+  // recentlyCompletedMissions pattern.
+  const [recentlyCompletedQuests, setRecentlyCompletedQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -111,7 +120,12 @@ const QuestBank = () => {
 
   const handleShowFilters = () => setShowFilterModal(true);
   const handleHideFilters = () => setShowFilterModal(false);
-  const handleApplyFilters = (newFilters) => setFilters(newFilters);
+  const handleApplyFilters = (newFilters) => {
+    // Clear recently-completed-in-this-session when filters change — fresh
+    // filter context, fresh slate.
+    setRecentlyCompletedQuests([]);
+    setFilters(newFilters);
+  };
 
   const handleRestoreQuest = async (questId) => {
     setActionError(null);
@@ -124,12 +138,42 @@ const QuestBank = () => {
     }
   };
 
+  // Look up the questId of a mission from local state — used to detect when
+  // a mission toggle causes its parent quest to transition states.
+  const getQuestIdForMission = (missionId) => {
+    const m = missions.find(x => x.id === missionId);
+    return m?.questId ?? null;
+  };
+
   const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     try {
+      const questId = getQuestIdForMission(missionId);
+
       if (isCurrentlyCompleted) {
         await uncompleteMission(currentUser.uid, missionId);
       } else {
         await completeMissionWithRecurrence(currentUser.uid, missionId);
+      }
+
+      // If this mission belongs to a quest, check whether the toggle pushed
+      // the quest across the auto-complete / auto-reopen boundary. If it
+      // just completed, hold it in the recently-completed list so it stays
+      // visible. If it reopened, drop it from that list.
+      if (questId) {
+        try {
+          const updatedQuest = await getQuest(currentUser.uid, questId);
+          if (updatedQuest.status === 'completed') {
+            setRecentlyCompletedQuests(prev =>
+              prev.find(q => q.id === updatedQuest.id)
+                ? prev.map(q => q.id === updatedQuest.id ? updatedQuest : q)
+                : [updatedQuest, ...prev]
+            );
+          } else {
+            setRecentlyCompletedQuests(prev => prev.filter(q => q.id !== updatedQuest.id));
+          }
+        } catch (err) {
+          console.error('Error checking quest state after mission toggle:', err);
+        }
       }
 
       // Reload quests and missions to update progress
@@ -137,6 +181,32 @@ const QuestBank = () => {
       await loadMissions();
     } catch (err) {
       console.error('Error toggling mission completion:', err);
+    }
+  };
+
+  const handleQuestToggleComplete = async (questId, isCurrentlyCompleted) => {
+    setActionError(null);
+    try {
+      if (isCurrentlyCompleted) {
+        await reopenQuest(currentUser.uid, questId);
+        setRecentlyCompletedQuests(prev => prev.filter(q => q.id !== questId));
+      } else {
+        const completed = await completeQuest(currentUser.uid, questId);
+        setRecentlyCompletedQuests(prev =>
+          prev.find(q => q.id === completed.id)
+            ? prev.map(q => q.id === completed.id ? completed : q)
+            : [completed, ...prev]
+        );
+      }
+      await loadQuests();
+      await loadMissions();
+    } catch (err) {
+      console.error('Error toggling quest completion:', err);
+      setActionError(
+        isCurrentlyCompleted
+          ? "That quest didn't reopen. Try again."
+          : "That quest didn't complete. Try again."
+      );
     }
   };
 
@@ -151,7 +221,20 @@ const QuestBank = () => {
     );
   }
 
-  const displayedQuests = quests.filter((q) => {
+  // Merge the active fetch with this session's just-completed quests.
+  // Hide archive view from the merge — recently-completed quests don't make
+  // sense in the archive context. Also dedupe in case loadQuests already
+  // surfaced a quest the session list also tracks (e.g. when includeCompleted
+  // is on).
+  const mergedQuests = filters.showArchive
+    ? quests
+    : (() => {
+        const seen = new Set(quests.map(q => q.id));
+        const extras = recentlyCompletedQuests.filter(q => !seen.has(q.id));
+        return [...quests, ...extras];
+      })();
+
+  const displayedQuests = mergedQuests.filter((q) => {
     if (filters.difficulty && q.difficulty !== filters.difficulty) return false;
     if (searchQuery && !q.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -262,6 +345,7 @@ const QuestBank = () => {
                 nextMission={nextMission}
                 activeMissionCount={activeMissionCount}
                 onMissionToggleComplete={handleMissionToggleComplete}
+                onToggleComplete={filters.showArchive ? undefined : handleQuestToggleComplete}
                 onRestore={filters.showArchive ? handleRestoreQuest : undefined}
               />
             );
