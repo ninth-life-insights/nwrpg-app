@@ -12,7 +12,14 @@ import './RoomCard.css';
 
 const isImageIcon = (icon) => icon && icon.includes('.');
 
-const RoomCard = ({ room, stats, onClick, isCustomOrderMode = false }) => {
+const RoomCard = ({
+  room,
+  stats,
+  todayRoutineCount = 0,
+  totalRoutineCount = 0,
+  onClick,
+  isCustomOrderMode = false,
+}) => {
   const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
 
   const {
@@ -94,20 +101,28 @@ const RoomCard = ({ room, stats, onClick, isCustomOrderMode = false }) => {
         )}
       </div>
 
-      <div className="room-stats-grid">
-        <div className={`stat-item${stats.total === 0 ? ' stat-zero' : ''}`}>
-          <div className="stat-number">{stats.total}</div>
-          <div className="stat-label">Tasks</div>
+      {/* Action strips — the two signals that drive decisions on this
+          card: today's routine (rhythm) and overdue (urgency). Always
+          rendered (dimmed at zero) so grid row heights stay stable
+          regardless of room state. */}
+      <div className="room-card-strips">
+        <div className={`room-card-strip room-card-strip--routine${todayRoutineCount === 0 ? ' is-zero' : ''}`}>
+          <span className="room-card-strip-label">Today's routine</span>
+          <span className="room-card-strip-count">{todayRoutineCount}</span>
         </div>
-        <div className={`stat-item${stats.dueThisWeek === 0 ? ' stat-zero' : ''}`}>
-          <div className="stat-number">{stats.dueThisWeek}</div>
-          <div className="stat-label">This Week</div>
-        </div>
-        <div className={`stat-item${stats.overdue > 0 ? ' stat-late' : ' stat-zero'}`}>
-          <div className="stat-number">{stats.overdue}</div>
-          <div className="stat-label">Late</div>
+        <div className={`room-card-strip room-card-strip--overdue${stats.overdue === 0 ? ' is-zero' : ''}`}>
+          <span className="room-card-strip-label">Overdue</span>
+          <span className="room-card-strip-count">{stats.overdue}</span>
         </div>
       </div>
+
+      {/* Broader overview — volume + routine breakdown, same lean text-
+          line treatment as the room page header. Clauses silent when zero. */}
+      <p className="room-card-stat-line">
+        {stats.total === 0
+          ? 'No tasks here yet'
+          : `${stats.total} task${stats.total !== 1 ? 's' : ''}${totalRoutineCount > 0 ? ` · ${totalRoutineCount} in routine` : ''}`}
+      </p>
     </div>
   );
 };

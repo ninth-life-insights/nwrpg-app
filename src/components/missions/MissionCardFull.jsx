@@ -355,7 +355,7 @@ const MissionCardFull = ({
                       </button>
                       <button
                         className="dropdown-item delete-item"
-                        onClick={() => { setShowActionsMenu(false); handleDelete(); }}
+                          onClick={() => { setShowActionsMenu(false); handleDelete(); }}
                       >
                         <span className="material-icons">delete</span>
                         Delete

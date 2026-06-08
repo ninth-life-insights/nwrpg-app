@@ -17,6 +17,10 @@ import RoomSortModal from '../../components/base/RoomSortModal';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { applyRoomSort, ROOM_SORT_DEFAULT } from '../../utils/roomListHelpers';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useRoutines } from '../../contexts/RoutineContext';
+import { isMissionInRoutineSet } from '../../utils/routineHelpers';
+import { isEvergreenMission } from '../../utils/recurrenceHelpers';
+import dayjs from 'dayjs';
 
 import {
   DndContext,
@@ -42,6 +46,8 @@ const BasePage = () => {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [roomStats, setRoomStats] = useState([]);
+  const [allMissions, setAllMissions] = useState([]);
+  const { routineRootSet } = useRoutines();
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -85,6 +91,7 @@ const BasePage = () => {
       const roomsWithStats = await withTimeout(getAllRoomStats(currentUser.uid, missions));
       setRoomStats(roomsWithStats);
       setRooms(roomsWithStats);
+      setAllMissions(missions);
       setBaseName(profile?.baseName || '');
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -120,6 +127,33 @@ const BasePage = () => {
     () => applyRoomSort(roomStats, sortBy),
     [roomStats, sortBy]
   );
+
+  // Per-room routine breakdown: how many routine tasks here are on
+  // today's roster (evergreens always + recurring with dueDate <= today),
+  // and how many total are anchored to this room. Computed once across
+  // all missions + the routine root set; each card just reads its entry.
+  const routineCountsByRoomId = useMemo(() => {
+    const map = new Map();
+    if (!Array.isArray(allMissions) || !routineRootSet) return map;
+    const today = dayjs().startOf('day');
+    for (const m of allMissions) {
+      if (!m || m.status !== 'active') continue;
+      if (!isMissionInRoutineSet(m, routineRootSet)) continue;
+      const roomId = m.baseLocation;
+      if (!roomId) continue;
+      let entry = map.get(roomId);
+      if (!entry) {
+        entry = { today: 0, total: 0 };
+        map.set(roomId, entry);
+      }
+      entry.total += 1;
+      const dueToday =
+        isEvergreenMission(m) ||
+        (m.dueDate && !dayjs(m.dueDate).isAfter(today, 'day'));
+      if (dueToday) entry.today += 1;
+    }
+    return map;
+  }, [allMissions, routineRootSet]);
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
@@ -227,11 +261,15 @@ const BasePage = () => {
                 ? { ...room, name: baseName || room.name }
                 : room;
 
+              const routineCounts =
+                routineCountsByRoomId.get(room.roomId || room.id) || { today: 0, total: 0 };
               return (
                 <div key={room.roomId || room.id} className="room-card-slot">
                   <RoomCard
                     room={displayRoom}
                     stats={room.stats}
+                    todayRoutineCount={routineCounts.today}
+                    totalRoutineCount={routineCounts.total}
                     onClick={() => handleRoomClick(room.roomId || room.id)}
                     isCustomOrderMode={isCustomOrderMode}
                   />
