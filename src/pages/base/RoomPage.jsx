@@ -15,6 +15,10 @@ import { useRoutines } from '../../contexts/RoutineContext';
 import { isMissionInRoutineSet, groupRoutineMissionsByFrequency } from '../../utils/routineHelpers';
 import { DEFAULT_ROUTINE_ID } from '../../types/Routine';
 import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
+// Borrow the builder's bucket styling so the routine view here reads as
+// a sibling of the main builder — same label weight, same count pill,
+// same vertical rhythm.
+import '../../components/routines/RoutineBuilderSection.css';
 
 // Bucket labels for the room-scoped routine view. Mirrors the builder's
 // frequency model so the cadence shape reads consistently across surfaces.
@@ -492,7 +496,7 @@ const RoomPage = () => {
             </button>
           </div>
           <button
-            className={`room-page-add-btn${isRoutineView ? ' room-page-add-btn--routine' : ''}`}
+            className="room-page-add-btn"
             onClick={() => {
               if (isRoutineView) setShowAddRoutine(true);
               else setShowAddMission(true);
@@ -515,17 +519,19 @@ const RoomPage = () => {
         )}
 
         {isRoutineView ? (
-          <div className="room-page-routine-buckets">
+          <section className="routine-builder">
             {ROUTINE_BUCKETS.map(({ key, label }) => {
               const items = routineBuckets?.[key] || [];
               if (items.length === 0) return null;
               return (
-                <div key={key} className="room-page-routine-bucket">
-                  <h3 className="room-page-routine-bucket-label">
-                    {label}
-                    <span className="room-page-routine-bucket-count">{items.length}</span>
-                  </h3>
-                  <div className="room-page-routine-bucket-list">
+                <div key={key} className="routine-builder-group">
+                  <div className="routine-builder-group-header">
+                    <div className="routine-builder-group-titlewrap">
+                      <h3 className="routine-builder-group-label">{label}</h3>
+                      <span className="routine-builder-group-count">{items.length}</span>
+                    </div>
+                  </div>
+                  <div className="routine-builder-group-list">
                     {items.map((mission) => (
                       <MissionCardCondensed
                         key={mission.id}
@@ -539,7 +545,7 @@ const RoomPage = () => {
                 </div>
               );
             })}
-          </div>
+          </section>
         ) : (
           <>
             {activeMissions.map(mission => (
