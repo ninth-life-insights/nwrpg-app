@@ -94,7 +94,7 @@ const INTERVAL_UNITS = {
 // these rows are fresh-out-of-the-oven, so removing means "undo add," not
 // "remove from routine but keep mission."
 const QuickAddRoutineSheet = ({
-  frequency,
+  frequency: initialFrequency,
   routineId,
   defaultRoomId = '',
   defaultSkill = '',
@@ -102,10 +102,22 @@ const QuickAddRoutineSheet = ({
   onRoomChange,
   onClose,
   onAdded,
+  // When true, render a frequency chip selector at the top of the sheet
+  // so the user can switch cadence mid-session. Default false because the
+  // builder opens this sheet per-bucket (frequency is locked by which "+
+  // Add" was clicked).
+  showFrequencyPicker = false,
+  // When true, hide the Room session control — the room is fixed by the
+  // calling context (e.g., opened from a RoomPage where the routine task
+  // logically lives in that room).
+  lockRoom = false,
 }) => {
   const { currentUser } = useAuth();
   const { rooms } = useRooms();
 
+  // Frequency lives in state when the picker is enabled so switching
+  // chips can re-derive offset options and interval units.
+  const [frequency, setFrequency] = useState(initialFrequency);
   const [skill, setSkill] = useState(defaultSkill || '');
   const [roomId, setRoomId] = useState(defaultRoomId || '');
   const [startOffset, setStartOffset] = useState('today');
@@ -119,6 +131,16 @@ const QuickAddRoutineSheet = ({
 
   const offsetOptions = START_OFFSETS[frequency] || null;
   const intervalUnit = INTERVAL_UNITS[frequency] || null;
+
+  // Reset offset + interval when frequency changes via the picker — keeping
+  // a previous cadence's offset (e.g., "+3 days" from weekly) would be
+  // nonsensical when the new cadence is monthly.
+  const handleFrequencyChange = (next) => {
+    if (next === frequency) return;
+    setFrequency(next);
+    setStartOffset('today');
+    setInterval(1);
+  };
 
   useModalBackButton(true, onClose);
 
@@ -216,6 +238,23 @@ const QuickAddRoutineSheet = ({
         </div>
 
         <div className="quick-add-routine-body">
+          {showFrequencyPicker && (
+            <div className="quick-add-frequency-row" role="radiogroup" aria-label="Cadence">
+              {Object.entries(FREQUENCY_LABELS).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={frequency === value}
+                  className={`quick-add-frequency-chip ${frequency === value ? 'is-active' : ''}`}
+                  onClick={() => handleFrequencyChange(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="quick-add-session-controls">
             <label className="quick-add-control">
               <span className="quick-add-control-label">Skill</span>
@@ -234,22 +273,24 @@ const QuickAddRoutineSheet = ({
               </select>
             </label>
 
-            <label className="quick-add-control">
-              <span className="quick-add-control-label">Room</span>
-              <select
-                className="quick-add-select"
-                value={roomId}
-                onChange={(e) => {
-                  setRoomId(e.target.value);
-                  onRoomChange?.(e.target.value);
-                }}
-              >
-                <option value="">Personal</option>
-                {rooms.map((room) => (
-                  <option key={room.id} value={room.id}>{room.name}</option>
-                ))}
-              </select>
-            </label>
+            {!lockRoom && (
+              <label className="quick-add-control">
+                <span className="quick-add-control-label">Room</span>
+                <select
+                  className="quick-add-select"
+                  value={roomId}
+                  onChange={(e) => {
+                    setRoomId(e.target.value);
+                    onRoomChange?.(e.target.value);
+                  }}
+                >
+                  <option value="">Personal</option>
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>{room.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
           {addedMissions.length > 0 && (

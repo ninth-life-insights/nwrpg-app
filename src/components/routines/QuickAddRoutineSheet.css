@@ -93,6 +93,40 @@
   box-sizing: border-box;
 }
 
+/* Frequency chip row — only rendered when the sheet is opened from a
+   context where cadence isn't pre-determined (e.g. RoomPage routine
+   section, which needs to let users pick daily/weekly/monthly/yearly
+   inline rather than per-bucket like the builder does). */
+.quick-add-frequency-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.quick-add-frequency-chip {
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-medium);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+
+.quick-add-frequency-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.quick-add-frequency-chip.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
 .quick-add-session-controls {
   display: flex;
   gap: var(--space-md);

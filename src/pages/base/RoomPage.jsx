@@ -9,6 +9,7 @@ import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from
 import MissionCard from '../../components/missions/MissionCard';
 import AddMissionCard from '../../components/missions/AddMissionCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
+import RoomRoutineSection from '../../components/base/RoomRoutineSection';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
@@ -466,6 +467,16 @@ const RoomPage = () => {
           </>
         )}
       </div>
+
+      {/* Room-scoped routine — secondary to the room's main mission list,
+          but visible enough to be discoverable. Lets the user maintain
+          the room's routine without leaving the page. */}
+      <RoomRoutineSection
+        roomId={roomId}
+        missions={missions}
+        onToggleComplete={handleToggleComplete}
+        onMissionChanged={fetchData}
+      />
 
       {/* Add Mission modal */}
       {showAddMission && (
