@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import dayjs from 'dayjs';
 import { db } from './firebase/config';
-import { MISSION_STATUS, calculateXPReward, calculateSPReward } from '../types/Mission';
+import { MISSION_STATUS, DUE_TYPES, calculateXPReward, calculateSPReward } from '../types/Mission';
 import {
   calculateNextDueDate,
   calculateNextDueDateFromCompletion,
@@ -286,6 +286,64 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
     console.error('Error completing mission:', error);
     throw error;
   }
+};
+
+// Convert a mission between cadence modes (evergreen ↔ daily / weekly /
+// monthly / yearly). Used by the routine surfaces' "change cadence"
+// affordance so a user can promote an evergreen aspiration into a
+// weekly cadence, or downgrade a scheduled task back to standing.
+//
+// Sets dueType, dueDate, and recurrence in one write — Firestore
+// overwrites the nested recurrence object, so we build the full object
+// each time rather than try to merge.
+//
+// Defaults when entering a scheduled pattern:
+//   daily   — dueDate = today, interval 1
+//   weekly  — dueDate = today, weekdays empty (loose; drag in week view to formalize)
+//   monthly — dueDate = today, dayOfMonth = today's date, dayOfMonth mode
+//   yearly  — dueDate = today, anchored to today's date
+//
+// Evergreen mode clears recurrence and dueDate entirely.
+export const changeMissionCadence = async (userId, missionId, newCadence) => {
+  const today = dayjs();
+  const todayStr = today.format('YYYY-MM-DD');
+  const baseRecurrence = {
+    pattern: null,
+    interval: 1,
+    weekdays: [],
+    monthlyMode: 'dayOfMonth',
+    dayOfMonth: null,
+    weekOfMonth: null,
+    weekdayOfMonth: null,
+    endDate: null,
+    maxOccurrences: null,
+    parentMissionId: null,
+    nextDueDate: null,
+  };
+
+  let updates;
+  if (newCadence === 'evergreen') {
+    updates = {
+      dueType: DUE_TYPES.EVERGREEN,
+      dueDate: '',
+      recurrence: baseRecurrence,
+    };
+  } else if (['daily', 'weekly', 'monthly', 'yearly'].includes(newCadence)) {
+    const recurrence = { ...baseRecurrence, pattern: newCadence, interval: 1 };
+    if (newCadence === 'monthly') {
+      recurrence.dayOfMonth = today.date();
+      recurrence.monthlyMode = 'dayOfMonth';
+    }
+    updates = {
+      dueType: DUE_TYPES.RECURRING,
+      dueDate: todayStr,
+      recurrence,
+    };
+  } else {
+    throw new Error(`Unknown cadence: ${newCadence}`);
+  }
+
+  await updateMission(userId, missionId, updates);
 };
 
 // Update mission

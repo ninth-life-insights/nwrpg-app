@@ -1,0 +1,35 @@
+/* src/components/routines/ChangeCadenceButton.css
+   Small icon button that lives in a routine card's actionSlot. Styled
+   to sit alongside the remove + drag-handle buttons without competing. */
+
+.change-cadence-trigger {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+
+.change-cadence-trigger:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.change-cadence-trigger,
+.change-cadence-trigger .material-icons {
+  color: var(--color-text-light) !important;
+}
+
+.change-cadence-trigger:hover,
+.change-cadence-trigger:hover .material-icons {
+  color: var(--color-primary) !important;
+}
+
+.change-cadence-trigger .material-icons {
+  font-size: 18px;
+}

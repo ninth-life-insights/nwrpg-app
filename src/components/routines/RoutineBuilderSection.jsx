@@ -19,6 +19,7 @@ import {
 import QuickAddRoutineSheet from './QuickAddRoutineSheet';
 import AddExistingRecurringModal from './AddExistingRecurringModal';
 import SortableRoutineCard from './SortableRoutineCard';
+import ChangeCadenceButton from './ChangeCadenceButton';
 // MissionCardCondensed is now wrapped by SortableRoutineCard; no direct import needed.
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
@@ -299,6 +300,7 @@ const RoutineBuilderSection = ({
           onView={bucket.viewPath ? () => navigate(bucket.viewPath) : undefined}
           viewLabel={bucket.viewLabel}
           onRemove={handleRemove}
+          onCadenceChanged={onSaved}
           removingRootIds={removingRootIds}
           sensors={sensors}
           onDragEnd={handleBucketDragEnd}
@@ -343,6 +345,7 @@ const FrequencyGroup = ({
   onView,
   viewLabel,
   onRemove,
+  onCadenceChanged,
   removingRootIds,
   sensors,
   onDragEnd,
@@ -432,19 +435,25 @@ const FrequencyGroup = ({
                     hideRecurrenceBadge
                     hideRoutineBadge
                     actionSlot={
-                      <button
-                        type="button"
-                        className="routine-builder-remove"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemove(mission);
-                        }}
-                        disabled={isRemoving}
-                        title="Remove from routine"
-                        aria-label="Remove from routine"
-                      >
-                        <span className="material-icons">remove_circle_outline</span>
-                      </button>
+                      <>
+                        <ChangeCadenceButton
+                          mission={mission}
+                          onChanged={onCadenceChanged}
+                        />
+                        <button
+                          type="button"
+                          className="routine-builder-remove"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemove(mission);
+                          }}
+                          disabled={isRemoving}
+                          title="Remove from routine"
+                          aria-label="Remove from routine"
+                        >
+                          <span className="material-icons">remove_circle_outline</span>
+                        </button>
+                      </>
                     }
                   />
                 );

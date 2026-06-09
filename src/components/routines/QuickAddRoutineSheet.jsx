@@ -13,7 +13,13 @@ import { useModalBackButton } from '../../hooks/useModalBackButton';
 import ErrorMessage from '../ui/ErrorMessage';
 import './QuickAddRoutineSheet.css';
 
+// Frequency includes 'evergreen' alongside the four recurring patterns.
+// Evergreen here means "no schedule, always available" — when picked,
+// the sheet hides the start-offset and interval controls (irrelevant
+// for unscheduled tasks) and the resulting mission is created with
+// dueType: 'evergreen' instead of 'recurring'.
 const FREQUENCY_LABELS = {
+  evergreen:                     'Evergreen',
   [RECURRENCE_PATTERNS.DAILY]:   'Daily',
   [RECURRENCE_PATTERNS.WEEKLY]:  'Weekly',
   [RECURRENCE_PATTERNS.MONTHLY]: 'Monthly',
@@ -159,16 +165,24 @@ const QuickAddRoutineSheet = ({
     setSaving(true);
     setSaveError(null);
 
-    const startDate = resolveStartDate(frequency, startOffset);
-    const startString = startDate.format('YYYY-MM-DD');
+    // Evergreen: no schedule, no recurrence, no dueDate. The mission is
+    // "always available" and lands in the routine's Daily bucket by
+    // default (see groupRoutineMissionsByFrequency).
+    const isEvergreen = frequency === 'evergreen';
+
+    const startDate = isEvergreen ? null : resolveStartDate(frequency, startOffset);
+    const startString = startDate ? startDate.format('YYYY-MM-DD') : '';
 
     const missionData = createMissionTemplate({
       title,
-      dueType: DUE_TYPES.RECURRING,
+      dueType: isEvergreen ? DUE_TYPES.EVERGREEN : DUE_TYPES.RECURRING,
       dueDate: startString,
       baseLocation: roomId || null,
       skill: skill || null,
-      recurrence: buildRecurrence(frequency, startDate, interval),
+      // For evergreen we omit recurrence entirely so the template's
+      // default empty object is used (pattern: null, etc.) rather than
+      // passing undefined into Firestore.
+      ...(isEvergreen ? {} : { recurrence: buildRecurrence(frequency, startDate, interval) }),
     });
 
     const offsetMatch = offsetOptions?.find((o) => o.value === startOffset);

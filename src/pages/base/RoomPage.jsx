@@ -10,6 +10,7 @@ import MissionCard from '../../components/missions/MissionCard';
 import AddMissionCard from '../../components/missions/AddMissionCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
 import QuickAddRoutineSheet from '../../components/routines/QuickAddRoutineSheet';
+import ChangeCadenceButton from '../../components/routines/ChangeCadenceButton';
 import MissionCardCondensed from '../../components/missions/MissionCardCondensed';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { isMissionInRoutineSet, groupRoutineMissionsByFrequency } from '../../utils/routineHelpers';
@@ -549,6 +550,12 @@ const RoomPage = () => {
                         onToggleComplete={handleToggleComplete}
                         onMissionChanged={fetchData}
                         hideRoutineBadge
+                        actionSlot={
+                          <ChangeCadenceButton
+                            mission={mission}
+                            onChanged={fetchData}
+                          />
+                        }
                       />
                     ))}
                   </div>
