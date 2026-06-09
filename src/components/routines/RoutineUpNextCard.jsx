@@ -185,6 +185,7 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
         mission={nextUp}
         hideRecurrenceBadge
         hideRoutineBadge
+        hideEvergreenBadge={false}
         onToggleComplete={handleToggleComplete}
         onMissionChanged={onMissionChanged}
       />

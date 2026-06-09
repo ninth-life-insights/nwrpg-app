@@ -110,21 +110,64 @@ const RoutineBuilderSection = ({
   // Latest-drag-wins via cadenceSeqRef, mirroring pendingOrderMap.
   const [pendingCadenceMap, setPendingCadenceMap] = useState(null);
   const cadenceSeqRef = useRef(0);
-  const effectiveCadence = useMemo(() => {
-    if (!pendingCadenceMap) return cadenceByChainRoot;
-    const merged = { ...cadenceByChainRoot };
-    for (const [rootId, cadence] of Object.entries(pendingCadenceMap)) {
-      if (cadence == null) delete merged[rootId];
-      else merged[rootId] = cadence;
-    }
-    return merged;
-  }, [cadenceByChainRoot, pendingCadenceMap]);
 
   // Track which card is currently being dragged so DragOverlay can render a
   // continuous floating preview as the card moves across SortableContexts.
   // (Without an overlay, dnd-kit's default visual hides on cross-container
   // drag.)
   const [activeDragId, setActiveDragId] = useState(null);
+
+  // Live cross-bucket preview: while a drag is in flight, the dragged card
+  // visually relocates to whichever bucket the cursor is currently over. This
+  // gives cross-bucket drag the same "slot opens up" feedback as within-bucket
+  // reorder, instead of just a bucket tint. Set in onDragOver, cleared on
+  // drag end/cancel.
+  const [dragOverBucket, setDragOverBucket] = useState(null);
+
+  // Captured at drag start. Needed because the live preview reassigns the
+  // card to the target bucket during drag — by the time the drop fires, the
+  // card's `data.bucketKey` reflects the target, not the original. Held in a
+  // ref so reads in the drop handler are guaranteed-fresh (no React state
+  // batching to worry about) and updates don't trigger re-renders.
+  const dragSourceBucketRef = useRef(null);
+
+  // Look up the active mission directly from the raw missions prop so the
+  // memo doesn't depend on `grouped` (which would create a cycle: grouped
+  // depends on effectiveCadence, which would depend on activeMission).
+  const activeMission = useMemo(() => {
+    if (!activeDragId) return null;
+    return (missions || []).find((m) => m.id === activeDragId) || null;
+  }, [activeDragId, missions]);
+
+  const activeIsCadenceLocked = activeMission
+    ? isRecurringMission(activeMission)
+    : false;
+
+  const effectiveCadence = useMemo(() => {
+    const merged = { ...cadenceByChainRoot };
+    if (pendingCadenceMap) {
+      for (const [rootId, cadence] of Object.entries(pendingCadenceMap)) {
+        if (cadence == null) delete merged[rootId];
+        else merged[rootId] = cadence;
+      }
+    }
+    // Live drag override — only for cadence-editable (evergreen) cards.
+    // Recurring cards stay in their natural bucket during drag so the user
+    // sees they can't actually be moved.
+    if (activeMission && dragOverBucket && !activeIsCadenceLocked) {
+      const chainRoot = getMissionChainRoot(activeMission);
+      const liveCadence = bucketKeyToCadence(dragOverBucket);
+      if (liveCadence == null) delete merged[chainRoot];
+      else merged[chainRoot] = liveCadence;
+    }
+    return merged;
+  }, [
+    cadenceByChainRoot,
+    pendingCadenceMap,
+    activeMission,
+    dragOverBucket,
+    activeIsCadenceLocked,
+  ]);
 
   // "Last used" session controls — persist across QuickAddRoutineSheet opens
   // during this page visit so batch-setup (e.g. "I'm adding 6 cleaning tasks
@@ -151,17 +194,6 @@ const RoutineBuilderSection = ({
     );
     return groupRoutineMissionsByFrequency(sorted, effectiveCadence);
   }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap, effectiveCadence]);
-
-  // Flat lookup for the active drag — used by DragOverlay to render the card
-  // preview without re-walking the grouped buckets.
-  const activeMission = useMemo(() => {
-    if (!activeDragId) return null;
-    for (const key of Object.keys(grouped)) {
-      const found = grouped[key].find((m) => m.id === activeDragId);
-      if (found) return found;
-    }
-    return null;
-  }, [activeDragId, grouped]);
 
   // Drag sensors — TouchSensor delays activation 150ms so a tap to open the
   // mission still works. PointerSensor needs 8px movement so a click on the
@@ -279,27 +311,42 @@ const RoutineBuilderSection = ({
 
   const handleDragStart = (event) => {
     setActiveDragId(event.active?.id ?? null);
+    dragSourceBucketRef.current = event.active?.data?.current?.bucketKey ?? null;
+    setDragOverBucket(null);
   };
 
   const handleDragCancel = () => {
     setActiveDragId(null);
+    setDragOverBucket(null);
+    dragSourceBucketRef.current = null;
   };
 
-  // Unified drop handler. Reads bucketKey from active/over data attached by
-  // SortableRoutineCard / BucketDroppable. Same bucket → reorder; different
-  // bucket → cadence change.
+  // Live container tracking — fires continuously during drag. We only commit
+  // a state update when the bucket under the cursor actually changes, to
+  // avoid churning React on every pointer move.
+  const handleDragOver = (event) => {
+    const overBucket = event.over?.data?.current?.bucketKey ?? null;
+    setDragOverBucket((prev) => (prev === overBucket ? prev : overBucket));
+  };
+
+  // Unified drop handler. Compares the ORIGINAL source bucket (captured at
+  // drag start, before the live preview reassignment) against the drop
+  // target's bucket to decide reorder vs. cross-bucket cadence change.
   const handleDragEnd = (event) => {
     setActiveDragId(null);
+    setDragOverBucket(null);
+    const sourceBucket = dragSourceBucketRef.current;
+    dragSourceBucketRef.current = null;
+
     const { active, over } = event;
-    if (!over) return;
+    if (!over || !sourceBucket) return;
 
     const activeData = active.data?.current;
     const overData = over.data?.current;
     if (!activeData || !overData) return;
 
-    const sourceBucket = activeData.bucketKey;
     const targetBucket = overData.bucketKey;
-    if (!sourceBucket || !targetBucket) return;
+    if (!targetBucket) return;
 
     if (sourceBucket === targetBucket) {
       // Reorder within bucket. Skip if dropped on the bucket-itself droppable
@@ -413,6 +460,7 @@ const RoutineBuilderSection = ({
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
