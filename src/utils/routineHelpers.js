@@ -39,41 +39,95 @@ export const isMissionInRoutineSet = (mission, rootSet) => {
   return root != null && rootSet.has(root);
 };
 
+// Period-in-days for a cadence-or-recurrence-shaped {pattern, interval}.
+// Monthly uses 30 and yearly 365 as approximations — cadence here is rhythm,
+// not deadline math, so calendar-accurate month length doesn't change which
+// bucket the rhythm belongs to.
+export const cadencePeriodDays = (cadence) => {
+  if (!cadence || !cadence.pattern) return null;
+  const n = Math.max(1, cadence.interval || 1);
+  switch (cadence.pattern) {
+    case RECURRENCE_PATTERNS.DAILY:
+    case 'daily':
+      return n;
+    case RECURRENCE_PATTERNS.WEEKLY:
+    case 'weekly':
+      return n * 7;
+    case RECURRENCE_PATTERNS.MONTHLY:
+    case 'monthly':
+      return n * 30;
+    case RECURRENCE_PATTERNS.YEARLY:
+    case 'yearly':
+      return n * 365;
+    default:
+      return null;
+  }
+};
+
+// Map a cadence period (in days) to the builder's 4-bucket model. Null/unknown
+// → Daily so missions without a cadence config still land somewhere sensible.
+export const bucketForPeriodDays = (days) => {
+  if (days == null) return 'daily';
+  if (days <= 1) return 'daily';
+  if (days <= 7) return 'weekly';
+  if (days <= 31) return 'monthly';
+  return 'yearly';
+};
+
+// Rolling-window predicate: is this evergreen mission "owed" on viewDate given
+// its routine cadence and its lastCompletedAt? Cadence comes from the routine
+// doc's cadenceByChainRoot map (sparse — absence = no cadence, always owed).
+//
+//   no cadence            → always owed (legacy/default behavior)
+//   never completed       → owed
+//   completed N days ago  → owed when N >= cadencePeriodDays
+//
+// Uses startOf('day') diff so "completed Monday, weekly cadence" reappears
+// next Monday (day 7), matching the everyday "once a week" intuition.
+export const isEvergreenOwedOnDate = (mission, cadence, viewDate) => {
+  if (!cadence) return true;
+  const days = cadencePeriodDays(cadence);
+  if (days == null) return true;
+  if (!mission?.lastCompletedAt) return true;
+  const last = mission.lastCompletedAt.toDate
+    ? mission.lastCompletedAt.toDate()
+    : new Date(mission.lastCompletedAt);
+  const elapsed = dayjs(viewDate).startOf('day').diff(dayjs(last).startOf('day'), 'day');
+  return elapsed >= days;
+};
+
+// Pick the effective cadence source for bucketing. Evergreens read from the
+// routine's per-membership map (sparse — missing = default daily). Recurring
+// missions use their intrinsic recurrence config (interval-aware).
+const getEffectiveCadence = (mission, cadenceByChainRoot) => {
+  if (isEvergreenMission(mission)) {
+    if (!cadenceByChainRoot) return null;
+    const root = getMissionChainRoot(mission);
+    return root != null ? (cadenceByChainRoot[root] || null) : null;
+  }
+  if (isRecurringMission(mission)) return mission.recurrence || null;
+  return null;
+};
+
 // Group routine missions by frequency bucket for the Builder's bird's-eye
-// view. Recurring missions bucket by their recurrence pattern. Evergreen
-// missions default to the Daily bucket — they have no schedule but "always
-// available" reads as a daily standing task in the routine model. (User-
-// facing affordance to promote evergreens into other buckets is a v2 idea.)
+// view. Bucketing is by EFFECTIVE PERIOD IN DAYS, not raw pattern — so an
+// "every 3 days" recurring mission lands in Weekly (period 3 ≤ 7), and an
+// evergreen with a weekly cadence lands in Weekly. Evergreens with no
+// cadence entry default to Daily, matching pre-feature behavior.
+//
+// cadenceByChainRoot: the active routine's cadenceByChainRoot map. Optional —
+// missing argument falls back to the legacy "evergreen → daily" path.
+//
 // Non-recurring + non-evergreen missions are filtered out defensively.
-export const groupRoutineMissionsByFrequency = (missions) => {
+export const groupRoutineMissionsByFrequency = (missions, cadenceByChainRoot = null) => {
   const buckets = { daily: [], weekly: [], monthly: [], yearly: [] };
   if (!Array.isArray(missions)) return buckets;
 
   for (const mission of missions) {
-    if (isEvergreenMission(mission)) {
-      buckets.daily.push(mission);
-      continue;
-    }
-    if (!isRecurringMission(mission)) continue;
-    const pattern = mission.recurrence?.pattern;
-    switch (pattern) {
-      case RECURRENCE_PATTERNS.DAILY:
-        buckets.daily.push(mission);
-        break;
-      case RECURRENCE_PATTERNS.WEEKLY:
-        buckets.weekly.push(mission);
-        break;
-      case RECURRENCE_PATTERNS.MONTHLY:
-        buckets.monthly.push(mission);
-        break;
-      case RECURRENCE_PATTERNS.YEARLY:
-        buckets.yearly.push(mission);
-        break;
-      default:
-        // Unknown / 'custom' / 'none' patterns: skip silently. Custom can be
-        // surfaced in v2 once the UX for it is decided.
-        break;
-    }
+    if (!isEvergreenMission(mission) && !isRecurringMission(mission)) continue;
+    const cadence = getEffectiveCadence(mission, cadenceByChainRoot);
+    const days = cadencePeriodDays(cadence);
+    buckets[bucketForPeriodDays(days)].push(mission);
   }
 
   return buckets;
@@ -115,14 +169,15 @@ export const makeRoutineSortComparator = (orderMap) => (a, b) => {
 //                        page reads like a to-do list with progress, not
 //                        a vanishing checklist). Active sorted first by
 //                        dueDate asc; completed below.
+//                        Evergreens with a routine cadence are filtered by
+//                        the rolling-window predicate (isEvergreenOwedOnDate).
+//                        Evergreens with no cadence stay always-on.
 //
-//   viewDate > today:    routine missions projected to have an occurrence
-//                        on viewDate. We iterate calculateNextDueDate forward
-//                        from each active instance's current dueDate until
-//                        either an occurrence lands on viewDate (include) or
-//                        the iteration overshoots (skip). Completed items
-//                        are NOT shown for future views — they belong to
-//                        their actual day.
+//   viewDate > today:    recurring-only — projected forward via calculateNextDueDate.
+//                        Evergreens are SKIPPED on future dates: they have
+//                        no schedule to project from, and surfacing "still
+//                        owed since today" on every future day undoes the
+//                        rolling-window's point.
 //
 // Defensive type filter: missions that are no longer `recurring` (e.g. user
 // flipped dueType post-membership) are silently dropped via isRecurringMission.
@@ -131,7 +186,8 @@ export const getRoutineMissionsForDate = (
   rootSet,
   viewDateInput,
   orderMap = null,
-  pausedRootSet = null
+  pausedRootSet = null,
+  cadenceByChainRoot = null
 ) => {
   if (!Array.isArray(missions) || !rootSet) return [];
 
@@ -160,9 +216,16 @@ export const getRoutineMissionsForDate = (
         if (isPausedMember(m)) return false;
 
         if (m.status === MISSION_STATUS.ACTIVE) {
-          // Evergreens have no schedule — they're always "today" for
-          // routine purposes.
-          if (isEvergreen) return true;
+          if (isEvergreen) {
+            // Rolling-window: cadenceless evergreens stay always-on; cadenced
+            // ones surface only once their period has elapsed since the last
+            // completion in the chain (tracked via mission.lastCompletedAt).
+            const root = getMissionChainRoot(m);
+            const cadence = cadenceByChainRoot && root != null
+              ? (cadenceByChainRoot[root] || null)
+              : null;
+            return isEvergreenOwedOnDate(m, cadence, viewDate);
+          }
           if (!m.dueDate || m.dueDate === '') return false;
           return !dayjs(m.dueDate).isAfter(viewDate, 'day');
         }
@@ -178,7 +241,9 @@ export const getRoutineMissionsForDate = (
       .sort(makeRoutineSortComparator(orderMap));
   }
 
-  // Future view — project each active instance forward.
+  // Future view — project each active recurring instance forward. Evergreens
+  // are intentionally absent: no schedule to project, and a rolling-window
+  // evergreen "owed today" shouldn't carpet every future day with itself.
   return missions
     .filter((m) => {
       if (!m || m.status !== MISSION_STATUS.ACTIVE) return false;
@@ -212,8 +277,8 @@ export const getRoutineMissionsForDate = (
 
 // Backward-compatible alias. Callers that just want "today" can keep using
 // this; the date-aware version is preferred for new code.
-export const getTodaysRoutineMissions = (missions, rootSet) =>
-  getRoutineMissionsForDate(missions, rootSet, dayjs());
+export const getTodaysRoutineMissions = (missions, rootSet, cadenceByChainRoot = null) =>
+  getRoutineMissionsForDate(missions, rootSet, dayjs(), null, null, cadenceByChainRoot);
 
 // Given a starting date and a recurrence config, find the first valid
 // occurrence on or after that date. Used by routine resume to "wake up"

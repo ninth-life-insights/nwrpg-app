@@ -29,7 +29,7 @@ import './RoutineUpNextCard.css';
 const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
-  const { routines, routineRootSet, routineOrderMap, pausedRootSet } = useRoutines();
+  const { routines, routineRootSet, routineOrderMap, pausedRootSet, cadenceByChainRoot } = useRoutines();
   const { dailyMissionIds } = useDailyMissions();
   const navigate = useNavigate();
 
@@ -50,10 +50,11 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
       routineRootSet,
       undefined,
       routineOrderMap,
-      pausedRootSet
+      pausedRootSet,
+      cadenceByChainRoot
     );
     return items.filter((m) => m.status === MISSION_STATUS.ACTIVE);
-  }, [missions, routineRootSet, routineOrderMap, pausedRootSet]);
+  }, [missions, routineRootSet, routineOrderMap, pausedRootSet, cadenceByChainRoot]);
 
   // Items not already promoted to today's daily priorities — those would
   // otherwise render as duplicates of the cards above.

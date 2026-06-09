@@ -13,7 +13,8 @@ import {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
-  writeBatch
+  writeBatch,
+  deleteField
 } from 'firebase/firestore';
 import dayjs from 'dayjs';
 import { db } from './firebase/config';
@@ -47,6 +48,7 @@ export const getOrCreateDefaultRoutine = async (userId) => {
       color: null,
       description: null,
       missionChainIds: [],
+      cadenceByChainRoot: {},
       order: 0,
       isDefault: true,
       canDelete: false,
@@ -96,6 +98,7 @@ export const createRoutine = async (userId, routineData) => {
     color: routineData.color || null,
     description: routineData.description || null,
     missionChainIds: [],
+    cadenceByChainRoot: {},
     order: maxOrder + 1,
     isDefault: false,
     canDelete: true,
@@ -183,6 +186,8 @@ export const addMissionToRoutine = async (userId, routineId, chainRootId) => {
 };
 
 // Remove a chain root from a routine. arrayRemove is concurrency-safe.
+// Also clears any cadence entry for the removed chain root so the map stays
+// sparse (no orphan keys pointing at missions no longer in this routine).
 export const removeMissionFromRoutine = async (userId, routineId, chainRootId) => {
   if (!chainRootId) throw new Error('chainRootId is required');
 
@@ -192,6 +197,35 @@ export const removeMissionFromRoutine = async (userId, routineId, chainRootId) =
 
   await updateDoc(routineRef, {
     missionChainIds: arrayRemove(chainRootId),
+    [`cadenceByChainRoot.${chainRootId}`]: deleteField(),
+    updatedAt: serverTimestamp()
+  });
+
+  return { success: true };
+};
+
+// Set (or clear) the routine-level cadence for one chain root. Used by the
+// builder's drag-between-buckets flow. Pass `cadence = null` (or daily/1) to
+// clear — the entry is removed via deleteField so the default "daily" behavior
+// is the absence of a key, keeping the map sparse.
+//
+// Cadence shape: { pattern: 'daily'|'weekly'|'monthly'|'yearly', interval: 1+ }
+// Only evergreen missions consume this; recurring missions ignore the map.
+export const setRoutineMissionCadence = async (userId, routineId, chainRootId, cadence) => {
+  if (!chainRootId) throw new Error('chainRootId is required');
+
+  const routineRef = getRoutineRef(userId, routineId);
+  const snap = await getDoc(routineRef);
+  if (!snap.exists()) throw new Error('Routine not found');
+
+  const isDefaultDaily =
+    !cadence ||
+    (cadence.pattern === 'daily' && (cadence.interval ?? 1) === 1);
+
+  await updateDoc(routineRef, {
+    [`cadenceByChainRoot.${chainRootId}`]: isDefaultDaily
+      ? deleteField()
+      : { pattern: cadence.pattern, interval: cadence.interval ?? 1 },
     updatedAt: serverTimestamp()
   });
 

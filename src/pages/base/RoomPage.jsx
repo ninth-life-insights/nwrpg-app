@@ -83,7 +83,7 @@ const RoomPage = () => {
   // room). The Routine tab makes the routine surface discoverable from
   // the top of the page rather than buried below the missions list.
   const [taskView, setTaskView] = useState('all');
-  const { routineRootSet, refreshRoutines } = useRoutines();
+  const { routineRootSet, cadenceByChainRoot, refreshRoutines } = useRoutines();
 
   // Click-outside to close three-dot menu
   useEffect(() => {
@@ -272,7 +272,7 @@ const RoomPage = () => {
   // the builder. Completed routine tasks aren't shown here — for "did I
   // do my routine today" the user has the today view at /routines.
   const routineBuckets = isRoutineView
-    ? groupRoutineMissionsByFrequency(activeMissions)
+    ? groupRoutineMissionsByFrequency(activeMissions, cadenceByChainRoot)
     : null;
 
   // Refresh routine context + parent missions after an add-to-routine so

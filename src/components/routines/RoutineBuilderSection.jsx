@@ -71,7 +71,7 @@ const RoutineBuilderSection = ({
 }) => {
   const { currentUser } = useAuth();
   const { rooms } = useRooms();
-  const { routines, routineOrderMap, refreshRoutines } = useRoutines();
+  const { routines, routineOrderMap, cadenceByChainRoot, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
 
   const [roomFilter, setRoomFilter] = useState('');
@@ -113,8 +113,8 @@ const RoutineBuilderSection = ({
     const sorted = [...routineMissions].sort(
       makeRoutineSortComparator(effectiveOrderMap)
     );
-    return groupRoutineMissionsByFrequency(sorted);
-  }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap]);
+    return groupRoutineMissionsByFrequency(sorted, cadenceByChainRoot);
+  }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap, cadenceByChainRoot]);
 
   // Drag sensors — TouchSensor delays activation 150ms so a tap to open the
   // mission still works. PointerSensor needs 8px movement so a click on the

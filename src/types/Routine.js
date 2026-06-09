@@ -29,6 +29,12 @@ export const ROUTINE_SCHEMA = {
                                    // recurring mission, not child instances). Child
                                    // instances inherit membership via parentMissionId.
 
+  // Per-membership cadence for evergreen missions. Sparse map: missing entries
+  // mean "default daily" (current behavior pre-feature). Recurring missions
+  // ignore this — they bucket and surface by their own recurrence config.
+  // Shape: { [chainRootId]: { pattern, interval } }
+  cadenceByChainRoot: {},          // object - evergreen rhythm per chain root
+
   // Ordering / lifecycle
   order: 0,                        // number - sort order among routines
   isDefault: false,                // boolean - true only for DEFAULT_ROUTINE_ID

@@ -48,7 +48,7 @@ const RoutineTodaySection = ({
 }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
-  const { routines, pausedRootSet, refreshRoutines } = useRoutines();
+  const { routines, pausedRootSet, cadenceByChainRoot, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
   const [actionError, setActionError] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
@@ -65,13 +65,13 @@ const RoutineTodaySection = ({
   const paused = !!routine && isRoutinePaused(routine);
 
   const viewMissions = useMemo(
-    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet),
-    [missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet]
+    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet, cadenceByChainRoot),
+    [missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet, cadenceByChainRoot]
   );
 
   const groupedView = useMemo(
-    () => groupRoutineMissionsByFrequency(viewMissions),
-    [viewMissions]
+    () => groupRoutineMissionsByFrequency(viewMissions, cadenceByChainRoot),
+    [viewMissions, cadenceByChainRoot]
   );
 
   const { activeCount, completedCount } = useMemo(() => {

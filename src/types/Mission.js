@@ -66,6 +66,10 @@ export const MISSION_SCHEMA = {
   dueDate: '',                      // dayjs string
   expiryDate: '',                   // should be dayjs string
   completedAt: null,                  // Timestamp | null - when completed
+  lastCompletedAt: null,              // Timestamp | null - on evergreen chains, stamped on
+                                      // each newly-spawned active instance with the
+                                      // completedAt of the prior instance. Powers the
+                                      // routine rolling-window predicate without chain walks.
 
   // Repetition data
   dueType: DUE_TYPES.UNIQUE,              // string - completion/due date type

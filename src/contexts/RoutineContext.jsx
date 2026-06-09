@@ -114,6 +114,23 @@ export const RoutineProvider = ({ children }) => {
     return set;
   }, [routines]);
 
+  // Per-membership cadence merged across all routines (first non-empty entry
+  // wins for chain roots that live in multiple routines — same precedence
+  // model as routineOrderMap). Consumers (routine builder, today view, home
+  // next-up card) read this to decide bucket and rolling-window owed status.
+  // Sparse: an absent entry means "default daily" (current pre-feature behavior).
+  const cadenceByChainRoot = useMemo(() => {
+    const merged = {};
+    for (const r of routines) {
+      const map = r?.cadenceByChainRoot;
+      if (!map || typeof map !== 'object') continue;
+      for (const [rootId, cadence] of Object.entries(map)) {
+        if (rootId && cadence && !merged[rootId]) merged[rootId] = cadence;
+      }
+    }
+    return merged;
+  }, [routines]);
+
   return (
     <RoutineContext.Provider
       value={{
@@ -121,6 +138,7 @@ export const RoutineProvider = ({ children }) => {
         routineRootSet,
         routineOrderMap,
         pausedRootSet,
+        cadenceByChainRoot,
         refreshRoutines: fetchRoutines,
       }}
     >

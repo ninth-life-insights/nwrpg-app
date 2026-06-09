@@ -638,7 +638,11 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       const newMissionRef = await addDoc(missionsRef, {
         ...nextMissionData,
         dueDate: null,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        // Stamp the fresh instance with the chain's most recent completion
+        // timestamp so the routine rolling-window predicate
+        // (isEvergreenOwedOnDate) can answer "owed?" without walking the chain.
+        lastCompletedAt: serverTimestamp()
       });
 
       completionResult = {
