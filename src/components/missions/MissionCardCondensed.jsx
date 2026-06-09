@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { updateMissionCompletedDate } from '../../services/missionService';
-import { isRecurringMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
+import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
 import dayjs from 'dayjs';
 import './MissionCardCondensed.css';
@@ -30,6 +30,7 @@ const MissionCardCondensed = ({
   actionSlot = null,
   hideRecurrenceBadge = false,
   hideRoutineBadge = false,
+  hideEvergreenBadge = true,
   onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
@@ -38,6 +39,7 @@ const MissionCardCondensed = ({
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
+  const isEvergreen = isEvergreenMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
   const isRoutineMember = isMissionInRoutineSet(mission, routineRootSet);
   const isRoutinePausedMember =
@@ -156,6 +158,9 @@ const MissionCardCondensed = ({
               <>
                 {isRecurring && !hideRecurrenceBadge && (
                   <Badge variant="recurrence">{recurrenceText}</Badge>
+                )}
+                {isEvergreen && !hideEvergreenBadge && (
+                  <Badge variant="evergreen">Evergreen</Badge>
                 )}
                 {dueDateInfo && (
                   <Badge variant={`due-${dueDateInfo.status}`}>{dueDateInfo.display}</Badge>

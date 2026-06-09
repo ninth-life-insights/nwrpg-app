@@ -441,6 +441,7 @@ const RoutineBuilderSection = ({
                 mission={activeMission}
                 hideRecurrenceBadge
                 hideRoutineBadge
+                hideEvergreenBadge={false}
                 readOnly
               />
             </div>
@@ -596,6 +597,7 @@ const FrequencyGroup = ({
                     isCadenceLocked={isLocked}
                     hideRecurrenceBadge
                     hideRoutineBadge
+                    hideEvergreenBadge={false}
                     actionSlot={
                       <button
                         type="button"
