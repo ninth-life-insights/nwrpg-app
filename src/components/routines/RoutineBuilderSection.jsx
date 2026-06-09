@@ -3,10 +3,12 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   TouchSensor,
   KeyboardSensor,
   closestCenter,
+  useDroppable,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -19,7 +21,7 @@ import {
 import QuickAddRoutineSheet from './QuickAddRoutineSheet';
 import AddExistingRecurringModal from './AddExistingRecurringModal';
 import SortableRoutineCard from './SortableRoutineCard';
-// MissionCardCondensed is now wrapped by SortableRoutineCard; no direct import needed.
+import MissionCardCondensed from '../missions/MissionCardCondensed';
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRooms } from '../../contexts/RoomsContext';
@@ -27,6 +29,7 @@ import { useRoutines } from '../../contexts/RoutineContext';
 import {
   removeMissionFromRoutine,
   reorderRoutineMissions,
+  setRoutineMissionCadence,
 } from '../../services/routineService';
 import { ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import {
@@ -35,7 +38,10 @@ import {
   getMissionChainRoot,
   makeRoutineSortComparator,
 } from '../../utils/routineHelpers';
-import { RECURRENCE_PATTERNS } from '../../utils/recurrenceHelpers';
+import {
+  RECURRENCE_PATTERNS,
+  isRecurringMission,
+} from '../../utils/recurrenceHelpers';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './RoutineBuilderSection.css';
 
@@ -57,6 +63,14 @@ const BUCKETS = [
 // the data field literally means personal. Don't confuse the two if you're
 // adding more filter options.
 export const NO_ROOM_FILTER = '__no_room__';
+
+// Translate bucket key → cadence object stored on the routine. Daily is the
+// default state (absence from the cadence map), so we return null to signal
+// "clear the entry" to setRoutineMissionCadence.
+const bucketKeyToCadence = (bucketKey) => {
+  if (bucketKey === 'daily') return null;
+  return { pattern: bucketKey, interval: 1 };
+};
 
 // The Builder is a noticing surface, not a planning form. Each frequency
 // bucket is always visible (even empty) — the layout teaches the cadence model.
@@ -90,6 +104,28 @@ const RoutineBuilderSection = ({
   const reorderSeqRef = useRef(0);
   const effectiveOrderMap = pendingOrderMap || routineOrderMap;
 
+  // Optimistic cadence overlay. Same shape as the routine doc's
+  // cadenceByChainRoot, but explicit `null` values mean "explicitly back to
+  // daily" (so the merge below knows to remove a context entry, not keep it).
+  // Latest-drag-wins via cadenceSeqRef, mirroring pendingOrderMap.
+  const [pendingCadenceMap, setPendingCadenceMap] = useState(null);
+  const cadenceSeqRef = useRef(0);
+  const effectiveCadence = useMemo(() => {
+    if (!pendingCadenceMap) return cadenceByChainRoot;
+    const merged = { ...cadenceByChainRoot };
+    for (const [rootId, cadence] of Object.entries(pendingCadenceMap)) {
+      if (cadence == null) delete merged[rootId];
+      else merged[rootId] = cadence;
+    }
+    return merged;
+  }, [cadenceByChainRoot, pendingCadenceMap]);
+
+  // Track which card is currently being dragged so DragOverlay can render a
+  // continuous floating preview as the card moves across SortableContexts.
+  // (Without an overlay, dnd-kit's default visual hides on cross-container
+  // drag.)
+  const [activeDragId, setActiveDragId] = useState(null);
+
   // "Last used" session controls — persist across QuickAddRoutineSheet opens
   // during this page visit so batch-setup (e.g. "I'm adding 6 cleaning tasks
   // across 3 rooms") doesn't require re-picking Skill on every sheet open.
@@ -113,8 +149,19 @@ const RoutineBuilderSection = ({
     const sorted = [...routineMissions].sort(
       makeRoutineSortComparator(effectiveOrderMap)
     );
-    return groupRoutineMissionsByFrequency(sorted, cadenceByChainRoot);
-  }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap, cadenceByChainRoot]);
+    return groupRoutineMissionsByFrequency(sorted, effectiveCadence);
+  }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap, effectiveCadence]);
+
+  // Flat lookup for the active drag — used by DragOverlay to render the card
+  // preview without re-walking the grouped buckets.
+  const activeMission = useMemo(() => {
+    if (!activeDragId) return null;
+    for (const key of Object.keys(grouped)) {
+      const found = grouped[key].find((m) => m.id === activeDragId);
+      if (found) return found;
+    }
+    return null;
+  }, [activeDragId, grouped]);
 
   // Drag sensors — TouchSensor delays activation 150ms so a tap to open the
   // mission still works. PointerSensor needs 8px movement so a click on the
@@ -131,16 +178,13 @@ const RoutineBuilderSection = ({
     })
   );
 
-  // Move items within a bucket. Translates the visible drag into a write to
-  // the routine doc's missionChainIds (replacing only the global indexes the
+  // Same-bucket reorder. Translates the visible drag into a write to the
+  // routine doc's missionChainIds (replacing only the global indexes the
   // bucket's items occupy, so other buckets keep their relative order).
-  const handleBucketDragEnd = async (event, bucketKey) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
+  const reorderWithinBucket = async (bucketKey, activeId, overId) => {
     const bucketMissions = grouped[bucketKey] || [];
-    const oldIndex = bucketMissions.findIndex((m) => m.id === active.id);
-    const newIndex = bucketMissions.findIndex((m) => m.id === over.id);
+    const oldIndex = bucketMissions.findIndex((m) => m.id === activeId);
+    const newIndex = bucketMissions.findIndex((m) => m.id === overId);
     if (oldIndex === -1 || newIndex === -1) return;
 
     const newBucketMissions = arrayMove(bucketMissions, oldIndex, newIndex);
@@ -195,6 +239,81 @@ const RoutineBuilderSection = ({
     }
   };
 
+  // Cross-bucket move = change the routine cadence for this chain root.
+  // Recurring missions are silently no-op'd here (their cadence is intrinsic
+  // and surfaced via their own recurrence config — see SortableRoutineCard's
+  // isCadenceLocked).
+  const moveToBucket = async (chainRootId, targetBucketKey, isCadenceLocked) => {
+    if (!chainRootId || !targetBucketKey) return;
+    if (isCadenceLocked) return;
+
+    const newCadence = bucketKeyToCadence(targetBucketKey);
+
+    const mySeq = ++cadenceSeqRef.current;
+    setPendingCadenceMap((prev) => ({
+      ...(prev || {}),
+      [chainRootId]: newCadence, // null is a meaningful "back to daily" value
+    }));
+
+    setActionError(null);
+    try {
+      await setRoutineMissionCadence(
+        currentUser.uid,
+        routineId,
+        chainRootId,
+        newCadence
+      );
+      await refreshRoutines();
+      onSaved?.();
+      if (cadenceSeqRef.current === mySeq) {
+        setPendingCadenceMap(null);
+      }
+    } catch (err) {
+      console.error('Routine cadence change failed:', err);
+      if (cadenceSeqRef.current === mySeq) {
+        setPendingCadenceMap(null);
+      }
+      setActionError("That cadence change didn't save. Try again.");
+    }
+  };
+
+  const handleDragStart = (event) => {
+    setActiveDragId(event.active?.id ?? null);
+  };
+
+  const handleDragCancel = () => {
+    setActiveDragId(null);
+  };
+
+  // Unified drop handler. Reads bucketKey from active/over data attached by
+  // SortableRoutineCard / BucketDroppable. Same bucket → reorder; different
+  // bucket → cadence change.
+  const handleDragEnd = (event) => {
+    setActiveDragId(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeData = active.data?.current;
+    const overData = over.data?.current;
+    if (!activeData || !overData) return;
+
+    const sourceBucket = activeData.bucketKey;
+    const targetBucket = overData.bucketKey;
+    if (!sourceBucket || !targetBucket) return;
+
+    if (sourceBucket === targetBucket) {
+      // Reorder within bucket. Skip if dropped on the bucket-itself droppable
+      // (no anchor card to slot against) — that's a no-op.
+      if (overData.type !== 'card') return;
+      if (active.id === over.id) return;
+      reorderWithinBucket(sourceBucket, active.id, over.id);
+      return;
+    }
+
+    // Cross-bucket move. Honor the cadence lock on the dragged card.
+    moveToBucket(activeData.chainRootId, targetBucket, activeData.isCadenceLocked);
+  };
+
   const handleRemove = async (mission) => {
     const root = getMissionChainRoot(mission);
     if (!root) return;
@@ -235,6 +354,8 @@ const RoutineBuilderSection = ({
   const sheetDefaultRoom = lastRoom !== null
     ? lastRoom
     : (roomFilter && roomFilter !== NO_ROOM_FILTER ? roomFilter : '');
+
+  const isDragActive = activeDragId != null;
 
   return (
     <section className="routine-builder">
@@ -286,24 +407,46 @@ const RoutineBuilderSection = ({
 
       {actionError && <ErrorMessage message={actionError} />}
 
-      {BUCKETS.map((bucket) => (
-        <FrequencyGroup
-          key={bucket.key}
-          bucketKey={bucket.key}
-          label={bucket.label}
-          icon={bucket.icon}
-          missions={grouped[bucket.key]}
-          collapsed={collapsedBuckets.has(bucket.key)}
-          onToggleCollapsed={() => toggleCollapsed(bucket.key)}
-          onAdd={() => setAddBucketFrequency(bucket.frequency)}
-          onView={bucket.viewPath ? () => navigate(bucket.viewPath) : undefined}
-          viewLabel={bucket.viewLabel}
-          onRemove={handleRemove}
-          removingRootIds={removingRootIds}
-          sensors={sensors}
-          onDragEnd={handleBucketDragEnd}
-        />
-      ))}
+      {/* Single DndContext at the section level lets drag move across the
+          per-bucket SortableContexts without losing pointer tracking. */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        {BUCKETS.map((bucket) => (
+          <FrequencyGroup
+            key={bucket.key}
+            bucketKey={bucket.key}
+            label={bucket.label}
+            icon={bucket.icon}
+            missions={grouped[bucket.key]}
+            collapsed={collapsedBuckets.has(bucket.key)}
+            onToggleCollapsed={() => toggleCollapsed(bucket.key)}
+            onAdd={() => setAddBucketFrequency(bucket.frequency)}
+            onView={bucket.viewPath ? () => navigate(bucket.viewPath) : undefined}
+            viewLabel={bucket.viewLabel}
+            onRemove={handleRemove}
+            removingRootIds={removingRootIds}
+            isDragActive={isDragActive}
+          />
+        ))}
+
+        <DragOverlay>
+          {activeMission ? (
+            <div className="routine-builder-drag-preview">
+              <MissionCardCondensed
+                mission={activeMission}
+                hideRecurrenceBadge
+                hideRoutineBadge
+                readOnly
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {addBucketFrequency && (
         <QuickAddRoutineSheet
@@ -332,6 +475,25 @@ const RoutineBuilderSection = ({
   );
 };
 
+// Bucket-level droppable wrapper. Registers the bucket itself as a drop
+// target (separate from the cards inside it) so an empty bucket can still
+// receive a cross-bucket drag, and so cards dropped on the bucket's open
+// space (not on another card) still route through the cadence handler.
+const BucketDroppable = ({ bucketKey, children, className }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `bucket:${bucketKey}`,
+    data: { type: 'bucket', bucketKey },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${className || ''} ${isOver ? 'is-drop-target' : ''}`.trim()}
+    >
+      {children}
+    </div>
+  );
+};
+
 const FrequencyGroup = ({
   bucketKey,
   label,
@@ -344,8 +506,7 @@ const FrequencyGroup = ({
   viewLabel,
   onRemove,
   removingRootIds,
-  sensors,
-  onDragEnd,
+  isDragActive,
 }) => {
   const list = missions || [];
   const isEmpty = list.length === 0;
@@ -411,12 +572,12 @@ const FrequencyGroup = ({
         </div>
       </div>
 
-      {showList && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(event) => onDragEnd(event, bucketKey)}
-        >
+      {/* Bucket body is always droppable so cross-bucket drag can land here.
+          When the bucket has cards, the SortableContext also enables
+          within-bucket reorder. Empty buckets show a hint only while a drag
+          is in flight so the resting state stays uncluttered. */}
+      <BucketDroppable bucketKey={bucketKey} className="routine-builder-bucket-dropzone">
+        {showList ? (
           <SortableContext
             items={list.map((m) => m.id)}
             strategy={verticalListSortingStrategy}
@@ -425,10 +586,14 @@ const FrequencyGroup = ({
               {list.map((mission) => {
                 const root = getMissionChainRoot(mission);
                 const isRemoving = removingRootIds.has(root);
+                const isLocked = isRecurringMission(mission);
                 return (
                   <SortableRoutineCard
                     key={mission.id}
                     mission={mission}
+                    bucketKey={bucketKey}
+                    chainRootId={root}
+                    isCadenceLocked={isLocked}
                     hideRecurrenceBadge
                     hideRoutineBadge
                     actionSlot={
@@ -451,8 +616,12 @@ const FrequencyGroup = ({
               })}
             </div>
           </SortableContext>
-        </DndContext>
-      )}
+        ) : isEmpty && isDragActive ? (
+          <div className="routine-builder-bucket-empty-hint">
+            Drop here to move to {label}
+          </div>
+        ) : null}
+      </BucketDroppable>
     </div>
   );
 };

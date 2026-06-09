@@ -5,10 +5,30 @@ import MissionCardCondensed from '../missions/MissionCardCondensed';
 import './SortableRoutineCard.css';
 
 // Wraps MissionCardCondensed with a drag handle so the builder can reorder
-// items within a frequency bucket. Handle is on the right side of the row;
-// the existing actionSlot (remove-from-routine icon) sits beside it.
-// Card body behavior (click → MissionCardFull, etc.) is unaffected.
-const SortableRoutineCard = ({ mission, actionSlot, ...rest }) => {
+// items within a frequency bucket AND drag them across buckets to change
+// the routine cadence. Handle is on the right side of the row; the existing
+// actionSlot (remove-from-routine icon) sits beside it. Card body behavior
+// (click → MissionCardFull, etc.) is unaffected.
+//
+// Props:
+//   bucketKey         — current bucket ('daily'|'weekly'|'monthly'|'yearly').
+//                       Surfaced via useSortable's `data` so the parent
+//                       DndContext's onDragEnd can detect cross-bucket drops.
+//   chainRootId       — the mission chain's root ID. Also passed through data
+//                       so the drop handler doesn't have to re-derive it.
+//   isCadenceLocked   — true for recurring missions (cadence is intrinsic
+//                       to the mission's recurrence config, not editable per
+//                       routine). Locked cards still reorder within their
+//                       bucket but the parent handler ignores cross-bucket
+//                       moves for them.
+const SortableRoutineCard = ({
+  mission,
+  actionSlot,
+  bucketKey,
+  chainRootId,
+  isCadenceLocked = false,
+  ...rest
+}) => {
   const {
     attributes,
     listeners,
@@ -16,7 +36,15 @@ const SortableRoutineCard = ({ mission, actionSlot, ...rest }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: mission.id });
+  } = useSortable({
+    id: mission.id,
+    data: {
+      type: 'card',
+      bucketKey,
+      chainRootId,
+      isCadenceLocked,
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -38,8 +66,8 @@ const SortableRoutineCard = ({ mission, actionSlot, ...rest }) => {
         {...attributes}
         {...listeners}
         style={{ touchAction: 'none' }}
-        aria-label="Drag to reorder"
-        title="Drag to reorder"
+        aria-label={isCadenceLocked ? 'Drag to reorder' : 'Drag to reorder or move bucket'}
+        title={isCadenceLocked ? 'Drag to reorder' : 'Drag to reorder or change cadence'}
         onClick={(e) => e.stopPropagation()}
       >
         <span className="material-icons">drag_indicator</span>
