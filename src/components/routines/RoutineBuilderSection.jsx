@@ -14,7 +14,6 @@ import {
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -240,10 +239,14 @@ const RoutineBuilderSection = ({
   // position. Returns null if the drag should produce no order change (e.g.
   // recurring card crossing into a different bucket — refused).
   //
-  // Uses arrayMove semantics when over a specific card (matching dnd-kit's
-  // standard sortable behavior, so drags read as "drop into this slot"). When
-  // over a bucket droppable with no anchor card, inserts after the last chain
-  // root currently in that bucket.
+  // Insertion semantics use filter+splice with a cursor-position adjustment:
+  // when over a card, inserting BEFORE the over card if the dragged
+  // element's top is above the over card's vertical midpoint, AFTER if
+  // below. Matches dnd-kit's multi-container example and produces a final
+  // position that exactly matches the live preview. (Plain arrayMove on the
+  // global array would drop one slot below the preview whenever the user
+  // hovers on the bottom half of a card, which is most "drag below this"
+  // intents.)
   const computeOrderForDrag = useCallback(
     (active, over, sourceBucket) => {
       const activeData = active?.data?.current;
@@ -260,21 +263,36 @@ const RoutineBuilderSection = ({
       const baseChainIds = Array.isArray(routine.missionChainIds)
         ? routine.missionChainIds
         : [];
-      const activeIdx = baseChainIds.indexOf(activeChainRoot);
-      if (activeIdx === -1) return null;
+      if (baseChainIds.indexOf(activeChainRoot) === -1) return null;
+
+      const filtered = baseChainIds.filter((id) => id !== activeChainRoot);
 
       if (overData.type === 'card' && overData.chainRootId) {
-        const overIdx = baseChainIds.indexOf(overData.chainRootId);
+        const overIdx = filtered.indexOf(overData.chainRootId);
         if (overIdx === -1) return null;
-        if (activeIdx === overIdx) return null;
-        return arrayMove(baseChainIds, activeIdx, overIdx);
+
+        // Cursor-position check: if the dragged element's translated top is
+        // past the over card's vertical midpoint, the user is reaching for
+        // the slot BELOW the over card. Otherwise they're reaching for ABOVE.
+        const activeRect = active?.rect?.current?.translated;
+        const overRect = over?.rect;
+        const insertAfter =
+          activeRect &&
+          overRect &&
+          activeRect.top > overRect.top + overRect.height / 2;
+
+        const insertIdx = insertAfter ? overIdx + 1 : overIdx;
+        return [
+          ...filtered.slice(0, insertIdx),
+          activeChainRoot,
+          ...filtered.slice(insertIdx),
+        ];
       }
 
       if (overData.type === 'bucket') {
         // Insert after the last chain root currently in the target bucket.
         // If the bucket is empty (no other chain root maps to it), tack onto
         // the end of the global list.
-        const filtered = baseChainIds.filter((id) => id !== activeChainRoot);
         let lastIdx = -1;
         filtered.forEach((id, i) => {
           if (bucketOfChainRoot(id) === overBucket) lastIdx = i;
