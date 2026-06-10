@@ -1,5 +1,5 @@
 // src/components/routines/RoutineBuilderSection.jsx
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
@@ -37,10 +37,13 @@ import {
   groupRoutineMissionsByFrequency,
   getMissionChainRoot,
   makeRoutineSortComparator,
+  cadencePeriodDays,
+  bucketForPeriodDays,
 } from '../../utils/routineHelpers';
 import {
   RECURRENCE_PATTERNS,
   isRecurringMission,
+  isEvergreenMission,
 } from '../../utils/recurrenceHelpers';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './RoutineBuilderSection.css';
@@ -210,103 +213,92 @@ const RoutineBuilderSection = ({
     })
   );
 
-  // Same-bucket reorder. Translates the visible drag into a write to the
-  // routine doc's missionChainIds (replacing only the global indexes the
-  // bucket's items occupy, so other buckets keep their relative order).
-  const reorderWithinBucket = async (bucketKey, activeId, overId) => {
-    const bucketMissions = grouped[bucketKey] || [];
-    const oldIndex = bucketMissions.findIndex((m) => m.id === activeId);
-    const newIndex = bucketMissions.findIndex((m) => m.id === overId);
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const newBucketMissions = arrayMove(bucketMissions, oldIndex, newIndex);
-    const newBucketRoots = newBucketMissions.map((m) => getMissionChainRoot(m));
-
-    const routine = routines.find((r) => r.id === routineId);
-    if (!routine) return;
-    const currentChainIds = Array.isArray(routine.missionChainIds)
-      ? routine.missionChainIds
-      : [];
-
-    // Find the global indexes the bucket's items currently occupy.
-    const bucketRootSet = new Set(
-      bucketMissions.map((m) => getMissionChainRoot(m))
-    );
-    const occupiedIndexes = [];
-    currentChainIds.forEach((id, i) => {
-      if (bucketRootSet.has(id)) occupiedIndexes.push(i);
-    });
-
-    // Write the new bucket order into those slots.
-    const newChainIds = [...currentChainIds];
-    newBucketRoots.forEach((rootId, i) => {
-      if (i < occupiedIndexes.length) {
-        newChainIds[occupiedIndexes[i]] = rootId;
-      }
-    });
-
-    // Optimistically reflect the new order in the UI before the round trip
-    // completes — otherwise the dragged card snaps back to its original
-    // slot until the refresh lands. The seq counter lets a newer drag's
-    // pending state survive an older drag's completion.
-    const optimisticMap = new Map();
-    newChainIds.forEach((id, i) => optimisticMap.set(id, i));
-    const mySeq = ++reorderSeqRef.current;
-    setPendingOrderMap(optimisticMap);
-
-    setActionError(null);
-    try {
-      await reorderRoutineMissions(currentUser.uid, routineId, newChainIds);
-      await refreshRoutines();
-      onSaved?.();
-      if (reorderSeqRef.current === mySeq) {
-        setPendingOrderMap(null);
-      }
-    } catch (err) {
-      console.error('Routine reorder failed:', err);
-      if (reorderSeqRef.current === mySeq) {
-        setPendingOrderMap(null);
-      }
-      setActionError("That reorder didn't save. Try again.");
-    }
-  };
-
-  // Cross-bucket move = change the routine cadence for this chain root.
-  // Recurring missions are silently no-op'd here (their cadence is intrinsic
-  // and surfaced via their own recurrence config — see SortableRoutineCard's
-  // isCadenceLocked).
-  const moveToBucket = async (chainRootId, targetBucketKey, isCadenceLocked) => {
-    if (!chainRootId || !targetBucketKey) return;
-    if (isCadenceLocked) return;
-
-    const newCadence = bucketKeyToCadence(targetBucketKey);
-
-    const mySeq = ++cadenceSeqRef.current;
-    setPendingCadenceMap((prev) => ({
-      ...(prev || {}),
-      [chainRootId]: newCadence, // null is a meaningful "back to daily" value
-    }));
-
-    setActionError(null);
-    try {
-      await setRoutineMissionCadence(
-        currentUser.uid,
-        routineId,
-        chainRootId,
-        newCadence
+  // Persisted-state bucket lookup for a chain root. Used by computeOrderForDrag
+  // to find the insertion point when dropping on a bucket droppable (no
+  // anchor card). Uses cadenceByChainRoot (not effectiveCadence) so the
+  // live drag override doesn't affect where OTHER cards are considered to
+  // live — the active card is filtered out before this is called.
+  const bucketOfChainRoot = useCallback(
+    (chainRoot) => {
+      const m = (missions || []).find(
+        (mm) => getMissionChainRoot(mm) === chainRoot
       );
-      await refreshRoutines();
-      onSaved?.();
-      if (cadenceSeqRef.current === mySeq) {
-        setPendingCadenceMap(null);
+      if (!m) return null;
+      if (isEvergreenMission(m)) {
+        const c = cadenceByChainRoot[chainRoot] || null;
+        return bucketForPeriodDays(cadencePeriodDays(c));
       }
-    } catch (err) {
-      console.error('Routine cadence change failed:', err);
-      if (cadenceSeqRef.current === mySeq) {
-        setPendingCadenceMap(null);
+      if (isRecurringMission(m)) {
+        return bucketForPeriodDays(cadencePeriodDays(m.recurrence));
       }
-      setActionError("That cadence change didn't save. Try again.");
+      return null;
+    },
+    [missions, cadenceByChainRoot]
+  );
+
+  // Compute the new global missionChainIds order for the drag's current
+  // position. Returns null if the drag should produce no order change (e.g.
+  // recurring card crossing into a different bucket — refused).
+  //
+  // Uses arrayMove semantics when over a specific card (matching dnd-kit's
+  // standard sortable behavior, so drags read as "drop into this slot"). When
+  // over a bucket droppable with no anchor card, inserts after the last chain
+  // root currently in that bucket.
+  const computeOrderForDrag = useCallback(
+    (active, over, sourceBucket) => {
+      const activeData = active?.data?.current;
+      const overData = over?.data?.current;
+      if (!activeData || !overData) return null;
+
+      const overBucket = overData.bucketKey;
+      if (!overBucket) return null;
+      if (activeData.isCadenceLocked && overBucket !== sourceBucket) return null;
+
+      const activeChainRoot = activeData.chainRootId;
+      const routine = routines.find((r) => r.id === routineId);
+      if (!routine) return null;
+      const baseChainIds = Array.isArray(routine.missionChainIds)
+        ? routine.missionChainIds
+        : [];
+      const activeIdx = baseChainIds.indexOf(activeChainRoot);
+      if (activeIdx === -1) return null;
+
+      if (overData.type === 'card' && overData.chainRootId) {
+        const overIdx = baseChainIds.indexOf(overData.chainRootId);
+        if (overIdx === -1) return null;
+        if (activeIdx === overIdx) return null;
+        return arrayMove(baseChainIds, activeIdx, overIdx);
+      }
+
+      if (overData.type === 'bucket') {
+        // Insert after the last chain root currently in the target bucket.
+        // If the bucket is empty (no other chain root maps to it), tack onto
+        // the end of the global list.
+        const filtered = baseChainIds.filter((id) => id !== activeChainRoot);
+        let lastIdx = -1;
+        filtered.forEach((id, i) => {
+          if (bucketOfChainRoot(id) === overBucket) lastIdx = i;
+        });
+        const insertIdx = lastIdx >= 0 ? lastIdx + 1 : filtered.length;
+        return [
+          ...filtered.slice(0, insertIdx),
+          activeChainRoot,
+          ...filtered.slice(insertIdx),
+        ];
+      }
+
+      return null;
+    },
+    [routines, routineId, bucketOfChainRoot]
+  );
+
+  const orderMapsEqual = (a, b) => {
+    if (!a || !b) return false;
+    if (a.size !== b.size) return false;
+    for (const [k, v] of a.entries()) {
+      if (b.get(k) !== v) return false;
     }
+    return true;
   };
 
   const handleDragStart = (event) => {
@@ -319,46 +311,138 @@ const RoutineBuilderSection = ({
     setActiveDragId(null);
     setDragOverBucket(null);
     dragSourceBucketRef.current = null;
+    // Roll back any optimistic order applied during the drag.
+    setPendingOrderMap(null);
   };
 
-  // Live container tracking — fires continuously during drag. We only commit
-  // a state update when the bucket under the cursor actually changes, to
-  // avoid churning React on every pointer move.
+  // Live drag tracking — fires continuously. Two updates per "over" change:
+  //   1. dragOverBucket → drives effectiveCadence's live override so the card
+  //      visually relocates to the target bucket.
+  //   2. pendingOrderMap → drives effectiveOrderMap so the card lands at the
+  //      cursor's exact position within the target bucket (matching the
+  //      within-bucket sortable feel).
+  // Both updates short-circuit when the value is unchanged to avoid React
+  // churn on every pointer move.
   const handleDragOver = (event) => {
     const overBucket = event.over?.data?.current?.bucketKey ?? null;
     setDragOverBucket((prev) => (prev === overBucket ? prev : overBucket));
+
+    const sourceBucket = dragSourceBucketRef.current;
+    if (!event.over || !event.active || !sourceBucket) return;
+
+    const newChainIds = computeOrderForDrag(event.active, event.over, sourceBucket);
+    if (!newChainIds) return;
+
+    const newMap = new Map();
+    newChainIds.forEach((id, i) => newMap.set(id, i));
+    setPendingOrderMap((prev) => (orderMapsEqual(prev, newMap) ? prev : newMap));
   };
 
-  // Unified drop handler. Compares the ORIGINAL source bucket (captured at
-  // drag start, before the live preview reassignment) against the drop
-  // target's bucket to decide reorder vs. cross-bucket cadence change.
-  const handleDragEnd = (event) => {
+  // Drop handler. Re-derives the final order from the drop target (same logic
+  // as onDragOver) and persists it. For cross-bucket drops, also fires the
+  // cadence change.
+  const handleDragEnd = async (event) => {
     setActiveDragId(null);
     setDragOverBucket(null);
     const sourceBucket = dragSourceBucketRef.current;
     dragSourceBucketRef.current = null;
 
     const { active, over } = event;
-    if (!over || !sourceBucket) return;
-
-    const activeData = active.data?.current;
-    const overData = over.data?.current;
-    if (!activeData || !overData) return;
-
-    const targetBucket = overData.bucketKey;
-    if (!targetBucket) return;
-
-    if (sourceBucket === targetBucket) {
-      // Reorder within bucket. Skip if dropped on the bucket-itself droppable
-      // (no anchor card to slot against) — that's a no-op.
-      if (overData.type !== 'card') return;
-      if (active.id === over.id) return;
-      reorderWithinBucket(sourceBucket, active.id, over.id);
+    if (!over || !sourceBucket) {
+      setPendingOrderMap(null);
       return;
     }
 
-    // Cross-bucket move. Honor the cadence lock on the dragged card.
-    moveToBucket(activeData.chainRootId, targetBucket, activeData.isCadenceLocked);
+    const activeData = active.data?.current;
+    const overData = over.data?.current;
+    if (!activeData || !overData) {
+      setPendingOrderMap(null);
+      return;
+    }
+
+    const targetBucket = overData.bucketKey;
+    if (!targetBucket) {
+      setPendingOrderMap(null);
+      return;
+    }
+
+    // Recurring card crossing buckets — refuse the move silently. Drop is a
+    // no-op; pending state is cleared so the card snaps back to its real bucket.
+    if (sourceBucket !== targetBucket && activeData.isCadenceLocked) {
+      setPendingOrderMap(null);
+      return;
+    }
+
+    const newChainIds = computeOrderForDrag(active, over, sourceBucket);
+    if (!newChainIds) {
+      setPendingOrderMap(null);
+      return;
+    }
+
+    const routine = routines.find((r) => r.id === routineId);
+    const baseChainIds = Array.isArray(routine?.missionChainIds)
+      ? routine.missionChainIds
+      : [];
+    const orderChanged =
+      newChainIds.length !== baseChainIds.length ||
+      newChainIds.some((id, i) => id !== baseChainIds[i]);
+    const isCrossBucket = sourceBucket !== targetBucket;
+
+    if (!orderChanged && !isCrossBucket) {
+      setPendingOrderMap(null);
+      return;
+    }
+
+    // Optimistically commit both the order and (for cross-bucket) the cadence.
+    // The same seq guards used elsewhere keep stale completions from clobbering
+    // a newer drag's pending state.
+    const newMap = new Map();
+    newChainIds.forEach((id, i) => newMap.set(id, i));
+    const reorderSeq = ++reorderSeqRef.current;
+    setPendingOrderMap(newMap);
+
+    let cadenceSeq = null;
+    let newCadence = null;
+    if (isCrossBucket) {
+      newCadence = bucketKeyToCadence(targetBucket);
+      cadenceSeq = ++cadenceSeqRef.current;
+      setPendingCadenceMap((prev) => ({
+        ...(prev || {}),
+        [activeData.chainRootId]: newCadence,
+      }));
+    }
+
+    setActionError(null);
+    try {
+      if (isCrossBucket) {
+        await setRoutineMissionCadence(
+          currentUser.uid,
+          routineId,
+          activeData.chainRootId,
+          newCadence
+        );
+      }
+      if (orderChanged) {
+        await reorderRoutineMissions(currentUser.uid, routineId, newChainIds);
+      }
+      await refreshRoutines();
+      onSaved?.();
+      if (reorderSeqRef.current === reorderSeq) setPendingOrderMap(null);
+      if (cadenceSeq != null && cadenceSeqRef.current === cadenceSeq) {
+        setPendingCadenceMap(null);
+      }
+    } catch (err) {
+      console.error('Routine drag persist failed:', err);
+      if (reorderSeqRef.current === reorderSeq) setPendingOrderMap(null);
+      if (cadenceSeq != null && cadenceSeqRef.current === cadenceSeq) {
+        setPendingCadenceMap(null);
+      }
+      setActionError(
+        isCrossBucket
+          ? "That move didn't save. Try again."
+          : "That reorder didn't save. Try again."
+      );
+    }
   };
 
   const handleRemove = async (mission) => {
