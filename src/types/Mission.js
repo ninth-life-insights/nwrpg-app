@@ -110,7 +110,14 @@ export const MISSION_SCHEMA = {
   baseLocation: null,
 
   isPriority: false,                  // boolean - marks mission for visual emphasis + filtering
-  
+
+  // Snapshotted at completion time: was this mission's chain root in any
+  // active routine when it was marked completed? Lets the routine today view
+  // keep showing morning completions even if the user later removes the
+  // mission from the routine mid-day — mid-day rearranges shouldn't erase
+  // the morning's progress.
+  routineMemberAtCompletion: false,    // boolean
+
   // Metadata
   version: 1,                          // number - for future schema migrations
   customSortOrder: null,               // number | null - for manual drag-and-drop ordering

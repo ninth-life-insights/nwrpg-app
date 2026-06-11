@@ -215,10 +215,14 @@ export const getRoutineMissionsForDate = (
         if (!m) return false;
         const isEvergreen = isEvergreenMission(m);
         if (!isRecurringMission(m) && !isEvergreen) return false;
-        if (!isMissionInRoutineSet(m, rootSet)) return false;
+
+        const isCurrentMember = isMissionInRoutineSet(m, rootSet);
         if (isPausedMember(m)) return false;
 
         if (m.status === MISSION_STATUS.ACTIVE) {
+          // Active items must currently be in the routine — once removed,
+          // they're no longer "owed" by this surface.
+          if (!isCurrentMember) return false;
           if (isEvergreen) {
             // Rolling-window: cadenceless evergreens stay always-on; cadenced
             // ones surface only once their period has elapsed since the last
@@ -237,7 +241,12 @@ export const getRoutineMissionsForDate = (
           const cAt = m.completedAt.toDate
             ? m.completedAt.toDate()
             : new Date(m.completedAt);
-          return dayjs(cAt).isSame(viewDate, 'day');
+          if (!dayjs(cAt).isSame(viewDate, 'day')) return false;
+          // Completed-today items survive routine removal: if the chain root
+          // is no longer in the routine but was at completion time (snapshot
+          // written by completeMission), still surface the win. Otherwise a
+          // mid-day routine edit would erase morning progress.
+          return isCurrentMember || m.routineMemberAtCompletion === true;
         }
         return false;
       })

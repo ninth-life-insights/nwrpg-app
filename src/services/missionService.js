@@ -242,11 +242,32 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
     // calculateSPReward returns null when there's no skill; otherwise a number.
     const spAwarded = calculateSPReward(missionData.difficulty, missionData.skill);
 
+    // Snapshot routine membership at completion time so the routine today view
+    // keeps showing this completion even if the user later removes the mission
+    // from the routine mid-day. Best-effort — a failed routine fetch must not
+    // block completion, so the flag falls back to false.
+    let routineMemberAtCompletion = false;
+    try {
+      const { getRoutines } = await import('./routineService');
+      const { getMissionChainRoot } = await import('../utils/routineHelpers');
+      const routines = await getRoutines(userId);
+      const chainRoot = getMissionChainRoot(missionData);
+      if (chainRoot) {
+        routineMemberAtCompletion = routines.some((r) =>
+          Array.isArray(r.missionChainIds) && r.missionChainIds.includes(chainRoot)
+        );
+      }
+    } catch (e) {
+      // Best-effort. Leaving routineMemberAtCompletion=false is safe — the
+      // today filter will fall back to current routine membership.
+    }
+
     await updateDoc(missionRef, {
       status: MISSION_STATUS.COMPLETED,
       xpAwarded,
       spAwarded,
-      completedAt: Timestamp.fromDate(new Date())
+      completedAt: Timestamp.fromDate(new Date()),
+      routineMemberAtCompletion
     });
 
     const xpResult = await addXP(userId, xpAwarded);
