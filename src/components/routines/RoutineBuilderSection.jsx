@@ -8,6 +8,7 @@ import {
   TouchSensor,
   KeyboardSensor,
   closestCenter,
+  useDndContext,
   useDroppable,
   useSensor,
   useSensors,
@@ -115,61 +116,30 @@ const RoutineBuilderSection = ({
 
   // Track which card is currently being dragged so DragOverlay can render a
   // continuous floating preview as the card moves across SortableContexts.
-  // (Without an overlay, dnd-kit's default visual hides on cross-container
-  // drag.)
   const [activeDragId, setActiveDragId] = useState(null);
 
-  // Live cross-bucket preview: while a drag is in flight, the dragged card
-  // visually relocates to whichever bucket the cursor is currently over. This
-  // gives cross-bucket drag the same "slot opens up" feedback as within-bucket
-  // reorder, instead of just a bucket tint. Set in onDragOver, cleared on
-  // drag end/cancel.
-  const [dragOverBucket, setDragOverBucket] = useState(null);
-
-  // Captured at drag start. Needed because the live preview reassigns the
-  // card to the target bucket during drag — by the time the drop fires, the
-  // card's `data.bucketKey` reflects the target, not the original. Held in a
-  // ref so reads in the drop handler are guaranteed-fresh (no React state
-  // batching to worry about) and updates don't trigger re-renders.
+  // Source bucket captured at drag start. Read by the drop handler to
+  // decide reorder vs. cross-bucket cadence change. In a ref so reads are
+  // guaranteed-fresh and updates don't trigger re-renders.
   const dragSourceBucketRef = useRef(null);
 
-  // Look up the active mission directly from the raw missions prop so the
-  // memo doesn't depend on `grouped` (which would create a cycle: grouped
-  // depends on effectiveCadence, which would depend on activeMission).
+  // Look up the active mission for the DragOverlay preview. Derived from
+  // the raw missions prop (not from `grouped`) so this stays independent of
+  // bucket assignments.
   const activeMission = useMemo(() => {
     if (!activeDragId) return null;
     return (missions || []).find((m) => m.id === activeDragId) || null;
   }, [activeDragId, missions]);
 
-  const activeIsCadenceLocked = activeMission
-    ? isRecurringMission(activeMission)
-    : false;
-
   const effectiveCadence = useMemo(() => {
+    if (!pendingCadenceMap) return cadenceByChainRoot;
     const merged = { ...cadenceByChainRoot };
-    if (pendingCadenceMap) {
-      for (const [rootId, cadence] of Object.entries(pendingCadenceMap)) {
-        if (cadence == null) delete merged[rootId];
-        else merged[rootId] = cadence;
-      }
-    }
-    // Live drag override — only for cadence-editable (evergreen) cards.
-    // Recurring cards stay in their natural bucket during drag so the user
-    // sees they can't actually be moved.
-    if (activeMission && dragOverBucket && !activeIsCadenceLocked) {
-      const chainRoot = getMissionChainRoot(activeMission);
-      const liveCadence = bucketKeyToCadence(dragOverBucket);
-      if (liveCadence == null) delete merged[chainRoot];
-      else merged[chainRoot] = liveCadence;
+    for (const [rootId, cadence] of Object.entries(pendingCadenceMap)) {
+      if (cadence == null) delete merged[rootId];
+      else merged[rootId] = cadence;
     }
     return merged;
-  }, [
-    cadenceByChainRoot,
-    pendingCadenceMap,
-    activeMission,
-    dragOverBucket,
-    activeIsCadenceLocked,
-  ]);
+  }, [cadenceByChainRoot, pendingCadenceMap]);
 
   // "Last used" session controls — persist across QuickAddRoutineSheet opens
   // during this page visit so batch-setup (e.g. "I'm adding 6 cleaning tasks
@@ -196,6 +166,25 @@ const RoutineBuilderSection = ({
     );
     return groupRoutineMissionsByFrequency(sorted, effectiveCadence);
   }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap, effectiveCadence]);
+
+  // Collision strategy — closestCenter ranks ALL droppables (cards + bucket
+  // wrappers) by distance, then we filter to prefer cards. Bucket wrappers
+  // would otherwise win whenever the cursor is in bucket whitespace OR
+  // happens to be closer to the bucket's geometric center than to any one
+  // card, which makes drops "snap to end of bucket" instead of slotting at
+  // the cursor's actual card. Bucket fallback covers the empty-bucket case.
+  //
+  // closestCenter is permissive (always returns a collision), so this stays
+  // reliable across fast drags and stable bucket layouts — unlike the
+  // strict-pointer-within variant tried earlier.
+  const collisionDetectionStrategy = useCallback((args) => {
+    const collisions = closestCenter(args);
+    const cardCollisions = collisions.filter((c) => {
+      const container = args.droppableContainers.find((d) => d.id === c.id);
+      return container?.data?.current?.type === 'card';
+    });
+    return cardCollisions.length > 0 ? cardCollisions : collisions;
+  }, []);
 
   // Drag sensors — TouchSensor delays activation 150ms so a tap to open the
   // mission still works. PointerSensor needs 8px movement so a click on the
@@ -310,92 +299,43 @@ const RoutineBuilderSection = ({
     [routines, routineId, bucketOfChainRoot]
   );
 
-  const orderMapsEqual = (a, b) => {
-    if (!a || !b) return false;
-    if (a.size !== b.size) return false;
-    for (const [k, v] of a.entries()) {
-      if (b.get(k) !== v) return false;
-    }
-    return true;
-  };
-
   const handleDragStart = (event) => {
     setActiveDragId(event.active?.id ?? null);
     dragSourceBucketRef.current = event.active?.data?.current?.bucketKey ?? null;
-    setDragOverBucket(null);
   };
 
   const handleDragCancel = () => {
     setActiveDragId(null);
-    setDragOverBucket(null);
     dragSourceBucketRef.current = null;
-    // Roll back any optimistic order applied during the drag.
-    setPendingOrderMap(null);
   };
 
-  // Live drag tracking — fires continuously. Two updates per "over" change:
-  //   1. dragOverBucket → drives effectiveCadence's live override so the card
-  //      visually relocates to the target bucket.
-  //   2. pendingOrderMap → drives effectiveOrderMap so the card lands at the
-  //      cursor's exact position within the target bucket (matching the
-  //      within-bucket sortable feel).
-  // Both updates short-circuit when the value is unchanged to avoid React
-  // churn on every pointer move.
-  const handleDragOver = (event) => {
-    const overBucket = event.over?.data?.current?.bucketKey ?? null;
-    setDragOverBucket((prev) => (prev === overBucket ? prev : overBucket));
-
-    const sourceBucket = dragSourceBucketRef.current;
-    if (!event.over || !event.active || !sourceBucket) return;
-
-    const newChainIds = computeOrderForDrag(event.active, event.over, sourceBucket);
-    if (!newChainIds) return;
-
-    const newMap = new Map();
-    newChainIds.forEach((id, i) => newMap.set(id, i));
-    setPendingOrderMap((prev) => (orderMapsEqual(prev, newMap) ? prev : newMap));
-  };
-
-  // Drop handler. Re-derives the final order from the drop target (same logic
-  // as onDragOver) and persists it. For cross-bucket drops, also fires the
-  // cadence change.
+  // Drop handler. Decides reorder vs. cross-bucket using the source bucket
+  // captured at drag start, then derives the final order with computeOrderForDrag
+  // (cursor-position-aware) and persists. No live preview state to clean up —
+  // within-bucket slot preview is handled natively by dnd-kit's SortableContext;
+  // cross-bucket drag shows only the bucket tint + DragOverlay during drag and
+  // the precise final slot appears on release via the optimistic pendingOrderMap.
   const handleDragEnd = async (event) => {
     setActiveDragId(null);
-    setDragOverBucket(null);
     const sourceBucket = dragSourceBucketRef.current;
     dragSourceBucketRef.current = null;
 
     const { active, over } = event;
-    if (!over || !sourceBucket) {
-      setPendingOrderMap(null);
-      return;
-    }
+    if (!over || !sourceBucket) return;
 
     const activeData = active.data?.current;
     const overData = over.data?.current;
-    if (!activeData || !overData) {
-      setPendingOrderMap(null);
-      return;
-    }
+    if (!activeData || !overData) return;
 
     const targetBucket = overData.bucketKey;
-    if (!targetBucket) {
-      setPendingOrderMap(null);
-      return;
-    }
+    if (!targetBucket) return;
 
-    // Recurring card crossing buckets — refuse the move silently. Drop is a
-    // no-op; pending state is cleared so the card snaps back to its real bucket.
-    if (sourceBucket !== targetBucket && activeData.isCadenceLocked) {
-      setPendingOrderMap(null);
-      return;
-    }
+    // Recurring card crossing buckets — silently refuse. Their cadence is
+    // intrinsic to the recurrence config, not editable per routine.
+    if (sourceBucket !== targetBucket && activeData.isCadenceLocked) return;
 
     const newChainIds = computeOrderForDrag(active, over, sourceBucket);
-    if (!newChainIds) {
-      setPendingOrderMap(null);
-      return;
-    }
+    if (!newChainIds) return;
 
     const routine = routines.find((r) => r.id === routineId);
     const baseChainIds = Array.isArray(routine?.missionChainIds)
@@ -406,14 +346,12 @@ const RoutineBuilderSection = ({
       newChainIds.some((id, i) => id !== baseChainIds[i]);
     const isCrossBucket = sourceBucket !== targetBucket;
 
-    if (!orderChanged && !isCrossBucket) {
-      setPendingOrderMap(null);
-      return;
-    }
+    if (!orderChanged && !isCrossBucket) return;
 
-    // Optimistically commit both the order and (for cross-bucket) the cadence.
-    // The same seq guards used elsewhere keep stale completions from clobbering
-    // a newer drag's pending state.
+    // Optimistically commit both the order and (for cross-bucket) the cadence
+    // so the card visually lands in its new slot before the Firestore round
+    // trip completes. The seq guards keep stale completions from clobbering a
+    // newer drop's pending state.
     const newMap = new Map();
     newChainIds.forEach((id, i) => newMap.set(id, i));
     const reorderSeq = ++reorderSeqRef.current;
@@ -560,9 +498,8 @@ const RoutineBuilderSection = ({
           per-bucket SortableContexts without losing pointer tracking. */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
@@ -628,17 +565,30 @@ const RoutineBuilderSection = ({
 
 // Bucket-level droppable wrapper. Registers the bucket itself as a drop
 // target (separate from the cards inside it) so an empty bucket can still
-// receive a cross-bucket drag, and so cards dropped on the bucket's open
-// space (not on another card) still route through the cadence handler.
+// receive a cross-bucket drag.
+//
+// The active-tint state is derived from useDndContext rather than
+// useDroppable.isOver, because the collisionDetectionStrategy preferentially
+// routes the over target to a card whenever any card is in range — so
+// useDroppable.isOver on the bucket would only ever fire for the empty case.
+// To get the tint to follow the drag into populated buckets too, we check
+// "is the over target a card that belongs to my bucket?" in addition to the
+// raw isOver signal.
 const BucketDroppable = ({ bucketKey, children, className }) => {
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef, isOver: isOverSelf } = useDroppable({
     id: `bucket:${bucketKey}`,
     data: { type: 'bucket', bucketKey },
   });
+  const { active, over } = useDndContext();
+  const overData = over?.data?.current;
+  const overIsCardInThisBucket =
+    overData?.type === 'card' && overData.bucketKey === bucketKey;
+  const isActive = active != null && (isOverSelf || overIsCardInThisBucket);
+
   return (
     <div
       ref={setNodeRef}
-      className={`${className || ''} ${isOver ? 'is-drop-target' : ''}`.trim()}
+      className={`${className || ''} ${isActive ? 'is-drop-target' : ''}`.trim()}
     >
       {children}
     </div>
