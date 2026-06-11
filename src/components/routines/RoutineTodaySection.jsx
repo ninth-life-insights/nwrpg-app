@@ -21,7 +21,13 @@ import {
 import {
   getRoutineMissionsForDate,
   groupRoutineMissionsByFrequency,
+  cadencePeriodDays,
+  getMissionChainRoot,
 } from '../../utils/routineHelpers';
+import {
+  isEvergreenMission,
+  isRecurringMission,
+} from '../../utils/recurrenceHelpers';
 import { fromDateString } from '../../utils/dateHelpers';
 import { MISSION_STATUS } from '../../types/Mission';
 import './RoutineTodaySection.css';
@@ -126,21 +132,45 @@ const RoutineTodaySection = ({
     }
   };
 
-  // Push every still-active item in a bucket to tomorrow. Doesn't touch the
-  // recurrence pattern — just shifts the dueDate of the current instance. Next
-  // occurrence math runs from there as usual (and patterns that snap to
-  // specific weekdays / day-of-month self-correct on subsequent cycles).
+  // Push every still-active item in a bucket to tomorrow. Branches on mission
+  // type because "tomorrow" means different things for the two:
+  //   - Recurring: shift the current instance's dueDate forward by one day.
+  //     Subsequent occurrence math self-corrects on later cycles (weekday /
+  //     day-of-month patterns).
+  //   - Evergreen: backdate `lastCompletedAt` to today − (cadenceDays − 1) so
+  //     the rolling-window predicate (isEvergreenOwedOnDate) flips to "not
+  //     owed today, owed tomorrow." Works uniformly for daily/weekly/monthly
+  //     evergreens because daily's implicit period is 1.
+  //
+  // Evergreens explicitly DO NOT get a dueDate write — that would corrupt
+  // their type semantics (evergreens are defined by having no schedule).
   const handleSkipBucket = async (bucketKey) => {
     const list = groupedView[bucketKey] || [];
     const toPush = list.filter((m) => m.status === MISSION_STATUS.ACTIVE);
     if (toPush.length === 0) return;
     const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
+    const todayStart = dayjs().startOf('day');
     setActionError(null);
     try {
       await Promise.all(
-        toPush.map((m) =>
-          updateMission(currentUser.uid, m.id, { dueDate: tomorrow })
-        )
+        toPush.map((m) => {
+          if (isEvergreenMission(m)) {
+            const root = getMissionChainRoot(m);
+            const cadence = (cadenceByChainRoot && root)
+              ? (cadenceByChainRoot[root] || null)
+              : null;
+            const days = cadencePeriodDays(cadence) ?? 1;
+            const newLastCompletedAt = todayStart.subtract(days - 1, 'day').toDate();
+            return updateMission(currentUser.uid, m.id, {
+              lastCompletedAt: newLastCompletedAt,
+            });
+          }
+          if (isRecurringMission(m)) {
+            return updateMission(currentUser.uid, m.id, { dueDate: tomorrow });
+          }
+          // Defensive: anything else (shouldn't appear in routine view) — no-op
+          return Promise.resolve();
+        })
       );
       await onSaved?.();
     } catch (err) {

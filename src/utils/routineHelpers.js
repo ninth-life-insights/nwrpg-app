@@ -76,18 +76,21 @@ export const bucketForPeriodDays = (days) => {
 
 // Rolling-window predicate: is this evergreen mission "owed" on viewDate given
 // its routine cadence and its lastCompletedAt? Cadence comes from the routine
-// doc's cadenceByChainRoot map (sparse — absence = no cadence, always owed).
+// doc's cadenceByChainRoot map (sparse — absence = implicit `{daily, 1}`).
 //
-//   no cadence            → always owed (legacy/default behavior)
 //   never completed       → owed
 //   completed N days ago  → owed when N >= cadencePeriodDays
+//
+// One uniform rule across all buckets — Daily bucket evergreens follow the
+// same rolling-window math as Weekly/Monthly/Yearly, just with period = 1.
+// (Previously, missing cadence meant "always-on" which re-spawned an active
+// card immediately after completion. Routine items don't read that way — done
+// is done for the day.)
 //
 // Uses startOf('day') diff so "completed Monday, weekly cadence" reappears
 // next Monday (day 7), matching the everyday "once a week" intuition.
 export const isEvergreenOwedOnDate = (mission, cadence, viewDate) => {
-  if (!cadence) return true;
-  const days = cadencePeriodDays(cadence);
-  if (days == null) return true;
+  const days = cadencePeriodDays(cadence) ?? 1;
   if (!mission?.lastCompletedAt) return true;
   const last = mission.lastCompletedAt.toDate
     ? mission.lastCompletedAt.toDate()
