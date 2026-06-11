@@ -31,6 +31,7 @@ const MissionCardCondensed = ({
   hideRecurrenceBadge = false,
   hideRoutineBadge = false,
   hideEvergreenBadge = true,
+  tintEvergreen = false,
   onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
@@ -112,12 +113,16 @@ const MissionCardCondensed = ({
 
   // Precedence: completed > daily > priority. (Quest tint isn't applied on the
   // condensed card.) Matches MissionCard's full ordering: daily > priority > quest.
+  // Evergreen tint is additive (sits below other priority tints): it's a mission-
+  // type cue, opt-in via prop so it only applies on routine surfaces where the
+  // evergreen-vs-recurring distinction is meaningful.
   const priorityClass = isDailyMission
     ? 'daily'
     : mission.isPriority ? 'priority' : '';
+  const evergreenClass = tintEvergreen && isEvergreen ? 'evergreen' : '';
   const cardClass = readOnly
-    ? 'mission-card-condensed readonly'
-    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${priorityClass}`;
+    ? `mission-card-condensed readonly ${evergreenClass}`.trim()
+    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${priorityClass} ${evergreenClass}`.trim();
   const titleClass = readOnly
     ? 'mcc-title'
     : `mcc-title ${isCompleted ? 'completed' : ''}`;

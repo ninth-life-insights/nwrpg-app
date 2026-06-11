@@ -253,6 +253,7 @@ const RoutineTodaySection = ({
                     hideRecurrenceBadge
                     hideRoutineBadge
                     hideEvergreenBadge={false}
+                    tintEvergreen
                     onToggleComplete={handleToggleComplete}
                     onMissionChanged={onSaved}
                   />

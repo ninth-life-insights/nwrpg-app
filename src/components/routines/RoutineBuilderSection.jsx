@@ -529,6 +529,7 @@ const RoutineBuilderSection = ({
                 hideRecurrenceBadge
                 hideRoutineBadge
                 hideEvergreenBadge={false}
+                tintEvergreen
                 readOnly
               />
             </div>
@@ -698,6 +699,7 @@ const FrequencyGroup = ({
                     hideRecurrenceBadge
                     hideRoutineBadge
                     hideEvergreenBadge={false}
+                    tintEvergreen
                     actionSlot={
                       <button
                         type="button"

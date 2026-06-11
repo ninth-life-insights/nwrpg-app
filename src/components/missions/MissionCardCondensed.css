@@ -36,6 +36,30 @@
   border-color: #ec4899;
 }
 
+/* Evergreen tint — opt-in per surface via the `tintEvergreen` prop. Same
+   hue family as the evergreen Badge (#dcfce7) but lighter so the card tint
+   doesn't compete with the badge sitting on top of it. Listed BEFORE the
+   priority/daily/completed selectors in source order so those win the cascade
+   when both classes apply (a daily-priority evergreen still reads as the
+   priority cue — daily/priority/completed are state, evergreen is type). */
+.mission-card-condensed.evergreen {
+  background-color: #ecfdf4;
+  border-color: #bbf7d0;
+}
+
+.mission-card-condensed.evergreen.completed {
+  background-color: #e5e7eb;
+  border-color: var(--color-border);
+}
+.mission-card-condensed.evergreen.daily {
+  background-color: #fff0d4;
+  border-color: #f7b946;
+}
+.mission-card-condensed.evergreen.priority {
+  background-color: #fce7f3;
+  border-color: #ec4899;
+}
+
 .mission-card-condensed.readonly:hover {
   transform: none;
 }
