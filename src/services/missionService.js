@@ -369,23 +369,24 @@ export const deleteMission = async (userId, missionId) => {
 // Window during which an uncomplete is treated as "undo of a mistaken click" —
 // also cleans up the just-spawned child instance, so the user doesn't end up
 // with two active missions (today's restored + tomorrow's still spawned).
-const RECENT_COMPLETION_UNDO_WINDOW_MS = 60 * 1000;
-
-// Best-effort cleanup of a child instance spawned by a recent completion of
-// `parentMission`. Only runs if:
-//   - completion was within RECENT_COMPLETION_UNDO_WINDOW_MS
+// Best-effort cleanup of a child instance spawned by a completion of
+// `parentMission`. Runs whenever the parent is uncompleted — the time of
+// completion no longer matters. Gated only by:
 //   - the parent is recurring or evergreen (the only types that spawn)
 //   - a child exists with the expected parentMissionId + occurrenceNumber
-//   - the child shows no sign of user interaction (untouched safety net)
+//   - the child shows no sign of user interaction (untouched safety net below)
+//
+// The safety nets (status, currentCount, actualTimeSpentMinutes, scheduledDates,
+// updatedAt-after-createdAt) catch any case where the user has touched the
+// child since it was spawned. If the child is still pristine, uncompletion
+// semantically implies undoing the spawn — the previous time-window gate is
+// redundant with these checks and just produced "duplicate card in builder"
+// bugs when the undo happened later than 60s after the completion.
+//
 // Soft-deletes via deleteMission so the child still appears in the deleted bin
 // rather than vanishing — matches the global soft-delete convention.
 const cleanupRecentlySpawnedChild = async (userId, parentMission) => {
-  const { completedAt } = parentMission;
-  if (!completedAt) return;
-
-  const completedMs = completedAt.toDate ? completedAt.toDate().getTime() : new Date(completedAt).getTime();
-  if (Date.now() - completedMs > RECENT_COMPLETION_UNDO_WINDOW_MS) return;
-
+  if (!parentMission.completedAt) return;
   if (!isRecurringMission(parentMission) && !isEvergreenMission(parentMission)) return;
 
   const chainRoot = parentMission.parentMissionId || parentMission.id;
