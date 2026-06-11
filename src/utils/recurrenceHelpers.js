@@ -16,6 +16,43 @@ export const isRecurringMission = (mission) => {
   return mission.dueType === DUE_TYPES.RECURRING;
 };
 
+// Build a recurrence config sized for a Routine Builder bucket, anchored to
+// the mission's current dueDate (so weekly weekday + monthly day-of-month
+// reflect the existing schedule rather than today's calendar). Used when a
+// recurring mission is dragged across buckets in the Builder — the rebucket
+// actually rewrites the mission's recurrence rather than snapping back.
+//
+// Interval defaults to 1 in every bucket. Finer-grained controls (every 2
+// weeks, multiple weekdays, nth-weekday-of-month) stay editable via the
+// recurrence editor on the card. This helper is for the coarse "live in
+// this cadence rhythm" decision the drag expresses.
+export const buildRecurrenceForBucket = (bucketKey, currentDueDate) => {
+  const anchor = currentDueDate ? dayjs(currentDueDate) : dayjs();
+  const base = {
+    pattern: null,
+    interval: 1,
+    weekdays: [],
+    monthlyMode: 'dayOfMonth',
+    dayOfMonth: null,
+    weekOfMonth: null,
+    weekdayOfMonth: null,
+    endDate: null,
+    maxOccurrences: null,
+  };
+  switch (bucketKey) {
+    case 'daily':
+      return { ...base, pattern: RECURRENCE_PATTERNS.DAILY };
+    case 'weekly':
+      return { ...base, pattern: RECURRENCE_PATTERNS.WEEKLY, weekdays: [anchor.day()] };
+    case 'monthly':
+      return { ...base, pattern: RECURRENCE_PATTERNS.MONTHLY, dayOfMonth: anchor.date() };
+    case 'yearly':
+      return { ...base, pattern: RECURRENCE_PATTERNS.YEARLY };
+    default:
+      return null;
+  }
+};
+
 // Check if mission is evergreen
 export const isEvergreenMission = (mission) => {
   return mission.dueType === DUE_TYPES.EVERGREEN;

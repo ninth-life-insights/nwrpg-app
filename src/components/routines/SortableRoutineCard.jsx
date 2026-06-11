@@ -10,23 +10,22 @@ import './SortableRoutineCard.css';
 // actionSlot (remove-from-routine icon) sits beside it. Card body behavior
 // (click → MissionCardFull, etc.) is unaffected.
 //
+// Both evergreen and recurring missions support cross-bucket drag — the
+// parent handler branches on type when persisting (evergreens write to the
+// routine's cadence map; recurring missions get their recurrence config
+// rewritten to match the target bucket, anchored to the current dueDate).
+//
 // Props:
-//   bucketKey         — current bucket ('daily'|'weekly'|'monthly'|'yearly').
-//                       Surfaced via useSortable's `data` so the parent
-//                       DndContext's onDragEnd can detect cross-bucket drops.
-//   chainRootId       — the mission chain's root ID. Also passed through data
-//                       so the drop handler doesn't have to re-derive it.
-//   isCadenceLocked   — true for recurring missions (cadence is intrinsic
-//                       to the mission's recurrence config, not editable per
-//                       routine). Locked cards still reorder within their
-//                       bucket but the parent handler ignores cross-bucket
-//                       moves for them.
+//   bucketKey   — current bucket ('daily'|'weekly'|'monthly'|'yearly').
+//                 Surfaced via useSortable's `data` so the parent
+//                 DndContext's onDragEnd can detect cross-bucket drops.
+//   chainRootId — the mission chain's root ID. Also passed through data
+//                 so the drop handler doesn't have to re-derive it.
 const SortableRoutineCard = ({
   mission,
   actionSlot,
   bucketKey,
   chainRootId,
-  isCadenceLocked = false,
   ...rest
 }) => {
   const {
@@ -42,7 +41,6 @@ const SortableRoutineCard = ({
       type: 'card',
       bucketKey,
       chainRootId,
-      isCadenceLocked,
     },
   });
 
@@ -66,8 +64,8 @@ const SortableRoutineCard = ({
         {...attributes}
         {...listeners}
         style={{ touchAction: 'none' }}
-        aria-label={isCadenceLocked ? 'Drag to reorder' : 'Drag to reorder or move bucket'}
-        title={isCadenceLocked ? 'Drag to reorder' : 'Drag to reorder or change cadence'}
+        aria-label="Drag to reorder or move bucket"
+        title="Drag to reorder or change cadence"
         onClick={(e) => e.stopPropagation()}
       >
         <span className="material-icons">drag_indicator</span>

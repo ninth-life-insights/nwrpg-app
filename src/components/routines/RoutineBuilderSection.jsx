@@ -31,6 +31,7 @@ import {
   reorderRoutineMissions,
   setRoutineMissionCadence,
 } from '../../services/routineService';
+import { updateMission } from '../../services/missionService';
 import { ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import {
   isMissionInRoutineSet,
@@ -44,6 +45,7 @@ import {
   RECURRENCE_PATTERNS,
   isRecurringMission,
   isEvergreenMission,
+  buildRecurrenceForBucket,
 } from '../../utils/recurrenceHelpers';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import './RoutineBuilderSection.css';
@@ -114,6 +116,15 @@ const RoutineBuilderSection = ({
   const [pendingCadenceMap, setPendingCadenceMap] = useState(null);
   const cadenceSeqRef = useRef(0);
 
+  // Optimistic recurrence overlay for recurring missions rebucketed via drag.
+  // Keyed by mission ID (not chain root) because the recurrence config lives
+  // on the mission doc itself, not the routine. Bucketing for recurring
+  // missions reads mission.recurrence directly, so applying this overlay in
+  // the grouped useMemo is how the card visibly lands in its new bucket
+  // before the Firestore round-trip completes.
+  const [pendingRecurrenceMap, setPendingRecurrenceMap] = useState(null);
+  const recurrenceSeqRef = useRef(0);
+
   // Track which card is currently being dragged so DragOverlay can render a
   // continuous floating preview as the card moves across SortableContexts.
   const [activeDragId, setActiveDragId] = useState(null);
@@ -159,13 +170,23 @@ const RoutineBuilderSection = ({
       if (skillFilter && m.skill !== skillFilter) return false;
       return true;
     });
+    // Apply optimistic recurrence patches so a just-rebucketed recurring
+    // mission visibly lands in its new bucket before the Firestore write
+    // completes. Patch is keyed by mission ID and replaces only `recurrence`.
+    const patched = pendingRecurrenceMap
+      ? routineMissions.map((m) =>
+          pendingRecurrenceMap[m.id]
+            ? { ...m, recurrence: pendingRecurrenceMap[m.id] }
+            : m
+        )
+      : routineMissions;
     // Sort by routine doc order before grouping — within-bucket order then
     // reflects the user's drag-to-reorder choices.
-    const sorted = [...routineMissions].sort(
+    const sorted = [...patched].sort(
       makeRoutineSortComparator(effectiveOrderMap)
     );
     return groupRoutineMissionsByFrequency(sorted, effectiveCadence);
-  }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap, effectiveCadence]);
+  }, [missions, routineRootSet, roomFilter, skillFilter, effectiveOrderMap, effectiveCadence, pendingRecurrenceMap]);
 
   // Collision strategy — closestCenter ranks ALL droppables (cards + bucket
   // wrappers) by distance, then we filter to prefer cards. Bucket wrappers
@@ -225,8 +246,10 @@ const RoutineBuilderSection = ({
   );
 
   // Compute the new global missionChainIds order for the drag's current
-  // position. Returns null if the drag should produce no order change (e.g.
-  // recurring card crossing into a different bucket — refused).
+  // position. Returns null if there's no valid drop target (no over data,
+  // active card not currently in the routine, etc.). Cross-bucket drops are
+  // allowed for both evergreen and recurring missions — the parent handler
+  // branches on type when persisting the cadence change.
   //
   // Insertion semantics use filter+splice with a cursor-position adjustment:
   // when over a card, inserting BEFORE the over card if the dragged
@@ -244,7 +267,6 @@ const RoutineBuilderSection = ({
 
       const overBucket = overData.bucketKey;
       if (!overBucket) return null;
-      if (activeData.isCadenceLocked && overBucket !== sourceBucket) return null;
 
       const activeChainRoot = activeData.chainRootId;
       const routine = routines.find((r) => r.id === routineId);
@@ -330,10 +352,6 @@ const RoutineBuilderSection = ({
     const targetBucket = overData.bucketKey;
     if (!targetBucket) return;
 
-    // Recurring card crossing buckets — silently refuse. Their cadence is
-    // intrinsic to the recurrence config, not editable per routine.
-    if (sourceBucket !== targetBucket && activeData.isCadenceLocked) return;
-
     const newChainIds = computeOrderForDrag(active, over, sourceBucket);
     if (!newChainIds) return;
 
@@ -348,10 +366,21 @@ const RoutineBuilderSection = ({
 
     if (!orderChanged && !isCrossBucket) return;
 
-    // Optimistically commit both the order and (for cross-bucket) the cadence
-    // so the card visually lands in its new slot before the Firestore round
-    // trip completes. The seq guards keep stale completions from clobbering a
-    // newer drop's pending state.
+    // Resolve the active mission so cross-bucket persistence branches on type:
+    //   - Evergreen: routine-level cadence map controls bucketing → write to
+    //     cadenceByChainRoot.
+    //   - Recurring: mission.recurrence controls bucketing → rewrite the
+    //     mission's recurrence config (anchored to current dueDate) so the
+    //     rebucket actually sticks instead of snapping back.
+    const dragMission = (missions || []).find((m) => m.id === active.id) || null;
+    const isRecurringDrag = isCrossBucket && dragMission && isRecurringMission(dragMission);
+    const isEvergreenDrag = isCrossBucket && dragMission && isEvergreenMission(dragMission);
+
+    // Optimistically commit the order, and (for cross-bucket) either the
+    // cadence (evergreen) or the recurrence (recurring), so the card visually
+    // lands in its new slot before the Firestore round trip completes. Seq
+    // guards keep stale completions from clobbering a newer drop's pending
+    // state.
     const newMap = new Map();
     newChainIds.forEach((id, i) => newMap.set(id, i));
     const reorderSeq = ++reorderSeqRef.current;
@@ -359,24 +388,37 @@ const RoutineBuilderSection = ({
 
     let cadenceSeq = null;
     let newCadence = null;
-    if (isCrossBucket) {
+    let recurrenceSeq = null;
+    let newRecurrence = null;
+    if (isEvergreenDrag) {
       newCadence = bucketKeyToCadence(targetBucket);
       cadenceSeq = ++cadenceSeqRef.current;
       setPendingCadenceMap((prev) => ({
         ...(prev || {}),
         [activeData.chainRootId]: newCadence,
       }));
+    } else if (isRecurringDrag) {
+      newRecurrence = buildRecurrenceForBucket(targetBucket, dragMission.dueDate);
+      recurrenceSeq = ++recurrenceSeqRef.current;
+      setPendingRecurrenceMap((prev) => ({
+        ...(prev || {}),
+        [dragMission.id]: newRecurrence,
+      }));
     }
 
     setActionError(null);
     try {
-      if (isCrossBucket) {
+      if (isEvergreenDrag) {
         await setRoutineMissionCadence(
           currentUser.uid,
           routineId,
           activeData.chainRootId,
           newCadence
         );
+      } else if (isRecurringDrag && newRecurrence) {
+        await updateMission(currentUser.uid, dragMission.id, {
+          recurrence: newRecurrence,
+        });
       }
       if (orderChanged) {
         await reorderRoutineMissions(currentUser.uid, routineId, newChainIds);
@@ -387,11 +429,17 @@ const RoutineBuilderSection = ({
       if (cadenceSeq != null && cadenceSeqRef.current === cadenceSeq) {
         setPendingCadenceMap(null);
       }
+      if (recurrenceSeq != null && recurrenceSeqRef.current === recurrenceSeq) {
+        setPendingRecurrenceMap(null);
+      }
     } catch (err) {
       console.error('Routine drag persist failed:', err);
       if (reorderSeqRef.current === reorderSeq) setPendingOrderMap(null);
       if (cadenceSeq != null && cadenceSeqRef.current === cadenceSeq) {
         setPendingCadenceMap(null);
+      }
+      if (recurrenceSeq != null && recurrenceSeqRef.current === recurrenceSeq) {
+        setPendingRecurrenceMap(null);
       }
       setActionError(
         isCrossBucket
@@ -690,14 +738,12 @@ const FrequencyGroup = ({
               {list.map((mission) => {
                 const root = getMissionChainRoot(mission);
                 const isRemoving = removingRootIds.has(root);
-                const isLocked = isRecurringMission(mission);
                 return (
                   <SortableRoutineCard
                     key={mission.id}
                     mission={mission}
                     bucketKey={bucketKey}
                     chainRootId={root}
-                    isCadenceLocked={isLocked}
                     hideRecurrenceBadge
                     hideRoutineBadge
                     hideEvergreenBadge={false}
