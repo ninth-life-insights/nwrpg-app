@@ -518,6 +518,7 @@ const RoutineBuilderSection = ({
             onRemove={handleRemove}
             removingRootIds={removingRootIds}
             isDragActive={isDragActive}
+            onMissionChanged={onSaved}
           />
         ))}
 
@@ -609,6 +610,7 @@ const FrequencyGroup = ({
   onRemove,
   removingRootIds,
   isDragActive,
+  onMissionChanged,
 }) => {
   const list = missions || [];
   const isEmpty = list.length === 0;
@@ -700,6 +702,7 @@ const FrequencyGroup = ({
                     hideRoutineBadge
                     hideEvergreenBadge={false}
                     tintEvergreen
+                    onMissionChanged={onMissionChanged}
                     actionSlot={
                       <button
                         type="button"
