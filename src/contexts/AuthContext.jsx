@@ -1,10 +1,12 @@
 // AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
+import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from 'firebase/auth';
 import { doc, getDoc, terminate, clearIndexedDbPersistence } from 'firebase/firestore';
 import { auth, db } from '../services/firebase/config';
@@ -27,12 +29,29 @@ export function AuthProvider({ children }) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     // Create user profile in Firestore
     await createUserProfile(result.user.uid, email);
+    // Fire-and-forget the verification email — failure here (rate limit,
+    // transient network) shouldn't block account creation. User can resend
+    // from the banner on home.
+    sendEmailVerification(result.user).catch((err) => {
+      console.warn('Could not send verification email at signup:', err);
+    });
     return result;
   }
 
   // Login function
   function login(email, password) {
     return signInWithEmailAndPassword(auth, email, password);
+  }
+
+  // Password reset — Firebase sends the email and hosts the reset page.
+  function resetPassword(email) {
+    return sendPasswordResetEmail(auth, email);
+  }
+
+  // Resend the email-verification message to the currently signed-in user.
+  function resendVerificationEmail() {
+    if (!auth.currentUser) return Promise.reject(new Error('No signed-in user'));
+    return sendEmailVerification(auth.currentUser);
   }
 
   // Logout function
@@ -96,7 +115,9 @@ export function AuthProvider({ children }) {
     currentUser,
     signup,
     login,
-    logout
+    logout,
+    resetPassword,
+    resendVerificationEmail
   };
 
   if (authError) {

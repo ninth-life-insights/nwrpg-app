@@ -29,6 +29,7 @@ import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import EmailVerificationBanner from '../components/auth/EmailVerificationBanner';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import { isMissionOverdue, isMissionDueToday } from '../utils/dateHelpers';
 import { getWeeklyReviewInfo } from '../utils/weeklyReviewHelpers';
@@ -328,6 +329,8 @@ const HomePage = () => {
           <span className="material-icons-outlined">{"settings"}</span>
         </button>
       </header>
+
+      <EmailVerificationBanner />
 
       {/* Profile Section */}
       <section className="profile-section">

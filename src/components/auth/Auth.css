@@ -63,6 +63,23 @@
   text-align: center;
 }
 
+.success-message {
+  background: #f0fdf4;
+  color: #166534;
+  padding: var(--space-md);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.forgot-password-link {
+  display: block;
+  margin-top: var(--space-xs);
+  margin-left: auto;
+}
+
 .auth-form {
   margin-bottom: var(--space-xl);
 }

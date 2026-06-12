@@ -27,8 +27,8 @@ export function getAuthErrorMessage(error, mode = 'login') {
     case 'auth/user-disabled':
       return 'This account has been disabled. Contact support.';
     default:
-      return mode === 'signup'
-        ? "Your account didn't create. Try again."
-        : "Sign-in didn't go through. Try again.";
+      if (mode === 'signup') return "Your account didn't create. Try again.";
+      if (mode === 'reset') return "That reset email didn't send. Try again.";
+      return "Sign-in didn't go through. Try again.";
   }
 }
