@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
         '/api/anthropic': {
           target: 'https://api.anthropic.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/anthropic/, ''),
+          rewrite: (path) => path.replace(/^\/api\/anthropic/, '/v1/messages'),
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
               proxyReq.setHeader('x-api-key', env.ANTHROPIC_API_KEY);
