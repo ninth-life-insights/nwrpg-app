@@ -149,6 +149,14 @@ export const NotificationProvider = ({ children }) => {
     showUndoToast({ label: 'Quest archived', missionTitle: questTitle, onUndo });
   }, [showUndoToast]);
 
+  // Routine builder drag-across-buckets is reversible — surfaces an undo so
+  // an accidental drag (or a destructive rebucket that wiped fancy recurrence
+  // config) can be rolled back. Target bucket name is in the label so the
+  // user sees what changed at a glance.
+  const notifyRoutineRebucketed = useCallback(({ missionTitle, bucketLabel, onUndo }) => {
+    showUndoToast({ label: `Moved to ${bucketLabel}`, missionTitle, onUndo });
+  }, [showUndoToast]);
+
   return (
     <NotificationContext.Provider value={{
       notifyMissionCompletion,
@@ -158,6 +166,7 @@ export const NotificationProvider = ({ children }) => {
       notifyMissionArchived,
       notifyQuestDeleted,
       notifyQuestArchived,
+      notifyRoutineRebucketed,
       refreshSchedule,
     }}>
       {children}

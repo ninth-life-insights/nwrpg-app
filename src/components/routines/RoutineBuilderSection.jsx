@@ -26,6 +26,7 @@ import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import {
   removeMissionFromRoutine,
   reorderRoutineMissions,
@@ -91,6 +92,7 @@ const RoutineBuilderSection = ({
   const { currentUser } = useAuth();
   const { rooms } = useRooms();
   const { routines, routineOrderMap, cadenceByChainRoot, refreshRoutines } = useRoutines();
+  const { notifyRoutineRebucketed } = useNotifications();
   const navigate = useNavigate();
 
   const [roomFilter, setRoomFilter] = useState('');
@@ -376,6 +378,18 @@ const RoutineBuilderSection = ({
     const isRecurringDrag = isCrossBucket && dragMission && isRecurringMission(dragMission);
     const isEvergreenDrag = isCrossBucket && dragMission && isEvergreenMission(dragMission);
 
+    // Snapshot pre-drag state for the undo toast (cross-bucket only). Order is
+    // captured because cross-bucket drops also reshuffle the global chain-ids
+    // array; restoring just the cadence/recurrence without the order would
+    // leave the card in a weird position after undo.
+    const originalChainIds = isCrossBucket ? [...baseChainIds] : null;
+    const originalCadence = isEvergreenDrag
+      ? (cadenceByChainRoot?.[activeData.chainRootId] ?? null)
+      : null;
+    const originalRecurrence = isRecurringDrag && dragMission
+      ? dragMission.recurrence ?? null
+      : null;
+
     // Optimistically commit the order, and (for cross-bucket) either the
     // cadence (evergreen) or the recurrence (recurring), so the card visually
     // lands in its new slot before the Firestore round trip completes. Seq
@@ -431,6 +445,40 @@ const RoutineBuilderSection = ({
       }
       if (recurrenceSeq != null && recurrenceSeqRef.current === recurrenceSeq) {
         setPendingRecurrenceMap(null);
+      }
+
+      // Surface the undo affordance for cross-bucket drags only. Pure reorders
+      // within the same bucket are low-stakes and don't earn a toast.
+      if (isCrossBucket && dragMission) {
+        const bucketLabel = BUCKETS.find((b) => b.key === targetBucket)?.label || targetBucket;
+        notifyRoutineRebucketed({
+          missionTitle: dragMission.title,
+          bucketLabel,
+          onUndo: async () => {
+            try {
+              if (isEvergreenDrag) {
+                await setRoutineMissionCadence(
+                  currentUser.uid,
+                  routineId,
+                  activeData.chainRootId,
+                  originalCadence
+                );
+              } else if (isRecurringDrag) {
+                await updateMission(currentUser.uid, dragMission.id, {
+                  recurrence: originalRecurrence,
+                });
+              }
+              if (originalChainIds) {
+                await reorderRoutineMissions(currentUser.uid, routineId, originalChainIds);
+              }
+              await refreshRoutines();
+              onSaved?.();
+            } catch (undoErr) {
+              console.error('Routine rebucket undo failed:', undoErr);
+              setActionError("That undo didn't go through. Try again.");
+            }
+          },
+        });
       }
     } catch (err) {
       console.error('Routine drag persist failed:', err);
