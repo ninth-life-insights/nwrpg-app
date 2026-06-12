@@ -94,13 +94,16 @@ const RoutineTodaySection = ({
   const allDone = isViewToday && totalCount > 0 && activeCount === 0;
 
   // Subtitle adapts to context (today vs future, progress framing vs schedule).
+  // "Waiting" instead of "to do" — routine items aren't a checklist of
+  // obligations; they're rhythms that come around. Done/waiting framing keeps
+  // the progress visible without the deadline-driven productivity feel.
   const subtitleText = useMemo(() => {
     if (isViewToday) {
       if (totalCount === 0) return null;
       if (allDone) return `All ${totalCount} done — take the win 🎉`;
       if (completedCount === 0)
-        return activeCount === 1 ? '1 to do' : `${activeCount} to do`;
-      return `${completedCount} of ${totalCount} done`;
+        return activeCount === 1 ? '1 waiting' : `${activeCount} waiting`;
+      return `${completedCount} done · ${activeCount} waiting`;
     }
     if (totalCount === 0) return 'Nothing scheduled';
     return totalCount === 1 ? '1 scheduled' : `${totalCount} scheduled`;
