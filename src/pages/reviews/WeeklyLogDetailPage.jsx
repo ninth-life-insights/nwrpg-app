@@ -11,6 +11,7 @@ import WeeklyReviewSummary from '../../components/review/WeeklyReviewSummary';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { formatWeekLabel } from '../../utils/weeklyReviewHelpers';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import dayjs from 'dayjs';
 import './WeeklyLogDetailPage.css';
 
@@ -23,6 +24,9 @@ const WeeklyLogDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const handleBack = () => navigate('/adventure-log');
+  useAndroidBackButton(handleBack);
 
   const weekEnd = weekStart ? dayjs(weekStart).add(6, 'day').format('YYYY-MM-DD') : null;
   const headerTitle = weekStart && weekEnd
@@ -65,7 +69,7 @@ const WeeklyLogDetailPage = () => {
       <header className="adventure-log-detail-header">
         <button
           className="adventure-log-detail-back-btn"
-          onClick={() => navigate('/adventure-log')}
+          onClick={handleBack}
         >
           <span className="material-icons">arrow_back</span>
         </button>

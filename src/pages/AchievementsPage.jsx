@@ -7,6 +7,7 @@ import AchievementCard from '../components/achievements/AchievementCard';
 import CreateCustomAchievementModal from '../components/achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './AchievementsPage.css';
 
 const AchievementsPage = () => {
@@ -18,6 +19,9 @@ const AchievementsPage = () => {
   const [loadError, setLoadError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState(null);
+
+  const handleBack = () => navigate('/home');
+  useAndroidBackButton(handleBack);
 
   const fetchLibrary = useCallback(async () => {
     if (!currentUser) return;
@@ -82,7 +86,7 @@ const AchievementsPage = () => {
   return (
     <div className="achievements-page">
       <header className="achievements-header">
-        <button className="achievements-back-btn" onClick={() => navigate('/home')}>
+        <button className="achievements-back-btn" onClick={handleBack}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="achievements-title">Achievements</h1>

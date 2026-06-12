@@ -32,6 +32,7 @@ import AchievementBadge from '../achievements/AchievementBadge';
 import AchievementToast from '../achievements/AchievementToast';
 import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../ui/ErrorMessage';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './QuestDetailView.css';
 
 const QuestDetailView = ({ questId: questIdProp, onClose }) => {
@@ -133,6 +134,10 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     if (isModal) onClose();
     else navigate('/quest-bank');
   };
+  // Only intercept OS back when this is the page route — in modal mode the
+  // parent surface is responsible for routing back to onClose via
+  // useModalBackButton (so the page sentinel beneath doesn't fire first).
+  useAndroidBackButton(isModal ? null : handleBack);
 
   const handleToggleEditMode = async () => {
     if (isEditMode) {

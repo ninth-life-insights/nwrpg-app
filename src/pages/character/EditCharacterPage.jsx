@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import StickyFooter from '../../components/ui/StickyFooter';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import ClassCarousel from '../../components/character/ClassCarousel';
 import ColorPicker from '../../components/character/ColorPicker';
 import { CHARACTER_CLASSES, CHARACTER_COLORS, generateRandomTitle, generateRandomLook } from '../../data/characterData';
@@ -24,6 +25,9 @@ const EditCharacterPage = () => {
 
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+
+  const handleBack = () => navigate('/settings');
+  useAndroidBackButton(handleBack);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -84,7 +88,7 @@ const EditCharacterPage = () => {
   return (
     <div className="edit-character-container">
       <header className="edit-character-header">
-        <button className="edit-character-back-button" onClick={() => navigate('/settings')}>
+        <button className="edit-character-back-button" onClick={handleBack}>
           <span className="material-icons-outlined">arrow_back</span>
         </button>
         <h1 className="edit-character-title">Edit Character</h1>

@@ -14,6 +14,7 @@ import AdventureLogFilterModal, { DEFAULT_FILTERS } from '../../components/revie
 import { getAllWeeklySnapshots } from '../../services/weeklyReviewService';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './AdventureLogPage.css';
 
 // Format "2026-04" → "April 2026"
@@ -75,6 +76,9 @@ const AdventureLogPage = () => {
   const [generatingDate, setGeneratingDate] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+
+  const handleBack = () => navigate('/home');
+  useAndroidBackButton(handleBack);
 
   const loadData = async () => {
     if (!currentUser) return;
@@ -183,7 +187,7 @@ const AdventureLogPage = () => {
   return (
     <div className="adventure-log-page">
       <header className="adventure-log-header">
-        <button className="adventure-log-back-btn" onClick={() => navigate('/home')}>
+        <button className="adventure-log-back-btn" onClick={handleBack}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="adventure-log-title">Adventure Log</h1>

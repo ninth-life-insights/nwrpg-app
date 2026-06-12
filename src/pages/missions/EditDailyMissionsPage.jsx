@@ -58,6 +58,7 @@ import {
 
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useModalBackButton } from '../../hooks/useModalBackButton';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './EditDailyMissionsPage.css';
 
 const EditDailyMissionsPage = ({
@@ -82,6 +83,10 @@ const EditDailyMissionsPage = ({
     setShowMissionBank(false);
   }, []);
   useModalBackButton(showMissionBank, closeMissionBank);
+  // When rendered as a page (not a modal), route the OS back to the page's
+  // explicit "up" destination instead of last-URL.
+  const handleBack = () => navigate('/home');
+  useAndroidBackButton(isModal ? null : handleBack);
 
   const [allActiveMissions, setAllActiveMissions] = useState([]);
   const [bankSearchQuery, setBankSearchQuery] = useState('');
@@ -398,7 +403,7 @@ const handleAddNewMission = async (missionData) => {
     <div className={`daily-missions-container ${!isTargetToday ? 'future-date-mode' : ''} ${isModal ? 'modal-mode' : ''}`}>
       {!isModal && (
         <header className="dm-page-header">
-          <button className="dm-back-btn" onClick={() => navigate('/home')} aria-label="Back to home">
+          <button className="dm-back-btn" onClick={handleBack} aria-label="Back to home">
             <span className="material-icons">arrow_back</span>
           </button>
           <h1 className="dm-page-title">Daily Missions</h1>

@@ -8,6 +8,7 @@ import { getUserProfile } from '../services/userService';
 import RoutineMonthGrid from '../components/routines/RoutineMonthGrid';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import PageHeader from '../components/ui/PageHeader';
+import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
 
 // Date-bound calendar view of the user's monthly-pattern routine tasks.
@@ -22,6 +23,9 @@ const RoutineMonthViewPage = () => {
   const [weekStartDay, setWeekStartDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+
+  const handleBack = () => navigate('/routine-builder');
+  useAndroidBackButton(handleBack);
 
   const refreshMissions = useCallback(async () => {
     if (!currentUser) return;
@@ -62,7 +66,7 @@ const RoutineMonthViewPage = () => {
     <div className="routines-page routine-month-view-page">
       <PageHeader
         title="Month view"
-        onBack={() => navigate('/routine-builder')}
+        onBack={handleBack}
       />
 
       {loadError && (

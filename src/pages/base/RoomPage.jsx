@@ -38,6 +38,7 @@ import {
   CLEANLINESS_STALE_COLOR,
 } from '../../utils/cleanlinessHelpers';
 import CleanlinessSegmentedBar from '../../components/base/CleanlinessSegmentedBar';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './RoomPage.css';
 
 const CLEANLINESS_LABELS = { 1: 'Messy', 2: 'Needs Help', 3: 'Holding Steady', 4: 'Clean', 5: 'Spotless' };
@@ -84,6 +85,9 @@ const RoomPage = () => {
   // the top of the page rather than buried below the missions list.
   const [taskView, setTaskView] = useState('all');
   const { routineRootSet, cadenceByChainRoot, refreshRoutines } = useRoutines();
+
+  const handleBack = () => navigate('/base');
+  useAndroidBackButton(handleBack);
 
   // Click-outside to close three-dot menu
   useEffect(() => {
@@ -238,7 +242,7 @@ const RoomPage = () => {
     return (
       <div className="room-page">
         <header className="room-page-header">
-          <button className="room-page-back-btn" onClick={() => navigate('/base')}>
+          <button className="room-page-back-btn" onClick={handleBack}>
             <span className="material-icons">arrow_back</span>
           </button>
           <h1 className="room-page-title">Room</h1>
@@ -329,7 +333,7 @@ const RoomPage = () => {
 
       {/* Header */}
       <header className="room-page-header">
-        <button className="room-page-back-btn" onClick={() => navigate('/base')}>
+        <button className="room-page-back-btn" onClick={handleBack}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="room-page-title">{isEntireBase ? (baseName || room.name) : room.name}</h1>

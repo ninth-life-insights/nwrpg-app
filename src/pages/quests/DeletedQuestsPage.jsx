@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getDeletedQuests, restoreQuest } from '../../services/questService';
 import Badge from '../../components/ui/Badge';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './DeletedQuestsPage.css';
 
 const scrollPageToTop = () => {
@@ -20,6 +21,9 @@ const DeletedQuestsPage = () => {
   const [actionError, setActionError] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [restoringIds, setRestoringIds] = useState(new Set());
+
+  const handleBack = () => navigate('/settings');
+  useAndroidBackButton(handleBack);
 
   useEffect(() => {
     scrollPageToTop();
@@ -88,7 +92,7 @@ const DeletedQuestsPage = () => {
       <header className="deleted-quests-header">
         <button
           className="deleted-quests-back"
-          onClick={() => navigate('/settings')}
+          onClick={handleBack}
           aria-label="Back to settings"
         >
           <span className="material-icons-outlined">arrow_back</span>

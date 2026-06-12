@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getDeletedMissions, restoreMission } from '../../services/missionService';
 import MissionCardCondensed from '../../components/missions/MissionCardCondensed';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './DeletedMissionsPage.css';
 
 const scrollPageToTop = () => {
@@ -20,6 +21,9 @@ const DeletedMissionsPage = () => {
   const [actionError, setActionError] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [restoringIds, setRestoringIds] = useState(new Set());
+
+  const handleBack = () => navigate('/settings');
+  useAndroidBackButton(handleBack);
 
   useEffect(() => {
     scrollPageToTop();
@@ -88,7 +92,7 @@ const DeletedMissionsPage = () => {
       <header className="deleted-missions-header">
         <button
           className="deleted-missions-back"
-          onClick={() => navigate('/settings')}
+          onClick={handleBack}
           aria-label="Back to settings"
         >
           <span className="material-icons-outlined">arrow_back</span>

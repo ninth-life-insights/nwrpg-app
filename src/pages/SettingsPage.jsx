@@ -13,6 +13,7 @@ import { getDeletedQuestsCount } from '../services/questService';
 import { DAY_NAMES } from '../utils/weeklyReviewHelpers';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
+import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './SettingsPage.css';
 
 const formatTime = (hour, minute) =>
@@ -45,6 +46,9 @@ const SettingsPage = () => {
 
   const [deletedCount, setDeletedCount] = useState(0);
   const [deletedQuestCount, setDeletedQuestCount] = useState(0);
+
+  const handleBack = () => navigate('/home');
+  useAndroidBackButton(handleBack);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -140,7 +144,7 @@ const SettingsPage = () => {
   return (
     <div className="settings-container">
       <header className="settings-header">
-        <button className="settings-back-button" onClick={() => navigate('/home')}>
+        <button className="settings-back-button" onClick={handleBack}>
           <span className="material-icons-outlined">arrow_back</span>
         </button>
         <h1 className="settings-title">Settings</h1>

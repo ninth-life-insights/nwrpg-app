@@ -9,6 +9,7 @@ import { completeMissionWithRecurrence, uncompleteMission } from '../../services
 import AchievementToast from '../../components/achievements/AchievementToast';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './SkillDetailPage.css';
 
 const SKILL_HINTS = {
@@ -37,6 +38,9 @@ const SkillDetailPage = () => {
   const [newAchievements, setNewAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
+
+  const handleBack = () => navigate('/skills');
+  useAndroidBackButton(handleBack);
 
   const fetchData = async () => {
     if (!currentUser) return;
@@ -127,7 +131,7 @@ const SkillDetailPage = () => {
   return (
     <div className="skill-detail-page">
       <header className="skill-detail-header">
-        <button className="skill-detail-back-btn" onClick={() => navigate('/skills')}>
+        <button className="skill-detail-back-btn" onClick={handleBack}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="skill-detail-title">{decodedSkillName}</h1>

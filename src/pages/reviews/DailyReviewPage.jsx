@@ -26,6 +26,7 @@ import EncountersStep from '../../components/review/EncountersStep';
 import ReviewSummary from '../../components/review/ReviewSummary';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import { toDateString } from '../../utils/dateHelpers';
 import './DailyReviewPage.css';
 
@@ -149,6 +150,7 @@ const DailyReviewPage = () => {
       setStep(s => s - 1);
     }
   };
+  useAndroidBackButton(handleBack);
 
   const handleUpdateStory = async (text) => {
     await updateSnapshotStory(currentUser.uid, today, text);

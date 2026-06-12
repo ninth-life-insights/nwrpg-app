@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './MissionBankPage.css';
 
 const MissionBank = () => {
@@ -46,6 +47,7 @@ const MissionBank = () => {
   const HomeButtonClick = () => {
     navigate('/home');
   };
+  useAndroidBackButton(HomeButtonClick);
 
   // Load user profile, rooms, and quests when component mounts or user changes
   useEffect(() => {

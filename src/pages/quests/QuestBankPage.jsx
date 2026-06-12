@@ -20,6 +20,7 @@ import { getNextMission } from '../../types/Quests';
 import { completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './QuestBankPage.css';
 
 const QuestBank = () => {
@@ -105,6 +106,7 @@ const QuestBank = () => {
   const handleHomeButtonClick = () => {
     navigate('/home');
   };
+  useAndroidBackButton(handleHomeButtonClick);
 
   const handleShowAddQuest = () => {
     setShowAddQuest(true);

@@ -17,6 +17,7 @@ import RoomSortModal from '../../components/base/RoomSortModal';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { applyRoomSort, ROOM_SORT_DEFAULT } from '../../utils/roomListHelpers';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
 import { isEvergreenMission } from '../../utils/recurrenceHelpers';
@@ -57,6 +58,9 @@ const BasePage = () => {
   const [showSortModal, setShowSortModal] = useState(false);
   const [sortBy, setSortBy] = useState(ROOM_SORT_DEFAULT);
   const [baseName, setBaseName] = useState('');
+
+  const handleBack = () => navigate('/home');
+  useAndroidBackButton(handleBack);
 
   const sensors = useSensors(
     useSensor(TouchSensor, {
@@ -204,7 +208,7 @@ const BasePage = () => {
     <div className="base-page-container">
       {/* Header */}
       <header className="base-page-header">
-        <button className="base-page-back-btn" onClick={() => navigate('/home')}>
+        <button className="base-page-back-btn" onClick={handleBack}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="base-page-title">Your Base</h1>

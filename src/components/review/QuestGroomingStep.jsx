@@ -1,5 +1,5 @@
 // src/components/review/QuestGroomingStep.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getActiveQuests, getCompletedQuests, archiveQuest } from '../../services/questService';
@@ -10,6 +10,7 @@ import ErrorMessage from '../ui/ErrorMessage';
 import QuestReviewCard from './QuestReviewCard';
 import QuestDetailView from '../quests/QuestDetailView';
 import { withTimeout, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './QuestGroomingStep.css';
 
 const QuestGroomingStep = ({
@@ -124,11 +125,12 @@ const QuestGroomingStep = ({
     }
   };
 
-  const handleModalClose = () => {
+  const handleModalClose = useCallback(() => {
     setOpenQuestId(null);
     // Reload so progress bars reflect any completions made inside the modal
     loadData();
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useModalBackButton(!!openQuestId, handleModalClose);
 
   const handleArchiveQuest = async (questId) => {
     setQuestActionError(prev => ({ ...prev, [questId]: null }));

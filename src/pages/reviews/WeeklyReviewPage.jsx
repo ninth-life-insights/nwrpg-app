@@ -15,6 +15,7 @@ import TaskArchivingStep from '../../components/review/TaskArchivingStep';
 import WeeklyReviewSummary from '../../components/review/WeeklyReviewSummary';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './WeeklyReviewPage.css';
 
 const TOTAL_STEPS = 5;
@@ -101,6 +102,7 @@ const WeeklyReviewPage = () => {
       setStep(s => s - 1);
     }
   };
+  useAndroidBackButton(handleBack);
 
   const handleMissionComplete = (result) => {
     if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });

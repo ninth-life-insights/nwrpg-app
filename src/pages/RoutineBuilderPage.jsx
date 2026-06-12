@@ -9,6 +9,7 @@ import { DEFAULT_ROUTINE_ID } from '../types/Routine';
 import RoutineBuilderSection from '../components/routines/RoutineBuilderSection';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import PageHeader from '../components/ui/PageHeader';
+import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
 
 // Builder lives on its own page so the today view (/routines) stays a clean
@@ -21,6 +22,9 @@ const RoutineBuilderPage = () => {
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+
+  const handleBack = () => navigate('/routines');
+  useAndroidBackButton(handleBack);
 
   const refresh = useCallback(async () => {
     if (!currentUser) return;
@@ -56,7 +60,7 @@ const RoutineBuilderPage = () => {
     <div className="routines-page">
       <PageHeader
         title="Routine builder"
-        onBack={() => navigate('/routines')}
+        onBack={handleBack}
       />
 
       {loadError && (

@@ -6,6 +6,7 @@ import { getUserProfile, getSPProgressInLevel } from '../../services/userService
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './SkillsPage.css';
 
 const SkillsPage = () => {
@@ -16,6 +17,9 @@ const SkillsPage = () => {
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const handleBack = () => navigate('/home');
+  useAndroidBackButton(handleBack);
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -77,7 +81,7 @@ const SkillsPage = () => {
   return (
     <div className="skills-page">
       <header className="skills-header">
-        <button className="skills-back-btn" onClick={() => navigate('/home')}>
+        <button className="skills-back-btn" onClick={handleBack}>
           <span className="material-icons">arrow_back</span>
         </button>
         <h1 className="skills-title">Skills</h1>

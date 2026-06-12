@@ -8,6 +8,7 @@ import { getUserProfile } from '../services/userService';
 import RoutineWeekGrid from '../components/routines/RoutineWeekGrid';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import PageHeader from '../components/ui/PageHeader';
+import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
 
 // Pattern-bound workload view: 7 columns ordered by the user's preferred
@@ -24,6 +25,9 @@ const RoutineWeekViewPage = () => {
   const [weekStartDay, setWeekStartDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+
+  const handleBack = () => navigate('/routine-builder');
+  useAndroidBackButton(handleBack);
 
   // Lightweight refresh — re-pulls active missions after a drag mutation
   // without re-fetching the profile (weekStartDay doesn't change here).
@@ -66,7 +70,7 @@ const RoutineWeekViewPage = () => {
     <div className="routines-page routine-week-view-page">
       <PageHeader
         title="Week view"
-        onBack={() => navigate('/routine-builder')}
+        onBack={handleBack}
       />
 
       {loadError && (

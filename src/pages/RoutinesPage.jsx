@@ -18,6 +18,7 @@ import PauseRoutineDialog from '../components/routines/PauseRoutineDialog';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import PageHeader from '../components/ui/PageHeader';
 import StickyFooter from '../components/ui/StickyFooter';
+import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
 
 // /routines is the action surface — today's items only. Builder lives on its
@@ -34,6 +35,9 @@ const RoutinesPage = () => {
   const [loadError, setLoadError] = useState(null);
   const [showPauseDialog, setShowPauseDialog] = useState(false);
   const [pauseDialogInitial, setPauseDialogInitial] = useState(null);
+
+  const handleBack = () => navigate('/home');
+  useAndroidBackButton(handleBack);
 
   // Pause state for the default routine — drives header action visibility
   // and the today section's paused-state branch.
@@ -89,7 +93,7 @@ const RoutinesPage = () => {
     <div className="routines-page">
       <PageHeader
         title="Routines"
-        onBack={() => navigate('/home')}
+        onBack={handleBack}
         action={
           !paused && !loading && (
             <button

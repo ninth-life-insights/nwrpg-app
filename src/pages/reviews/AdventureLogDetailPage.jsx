@@ -10,6 +10,7 @@ import {
 import ReviewSummary from '../../components/review/ReviewSummary';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './AdventureLogDetailPage.css';
 
 // Format "2026-04-09" → "Wednesday, Apr 9, 2026"
@@ -29,6 +30,9 @@ const AdventureLogDetailPage = () => {
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const handleBack = () => navigate('/adventure-log');
+  useAndroidBackButton(handleBack);
 
   useEffect(() => {
     if (!currentUser || !date) return;
@@ -75,7 +79,7 @@ const AdventureLogDetailPage = () => {
       <header className="adventure-log-detail-header">
         <button
           className="adventure-log-detail-back-btn"
-          onClick={() => navigate('/adventure-log')}
+          onClick={handleBack}
         >
           <span className="material-icons">arrow_back</span>
         </button>
