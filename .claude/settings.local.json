@@ -18,7 +18,8 @@
       "Bash(xargs ls *)",
       "Bash(npm start *)",
       "Bash(npm install *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(git -C /c/Users/Lenovo/nwrpg-app log --oneline -20)"
     ]
   }
 }

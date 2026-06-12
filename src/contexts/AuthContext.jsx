@@ -6,7 +6,7 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, terminate, clearIndexedDbPersistence } from 'firebase/firestore';
 import { auth, db } from '../services/firebase/config';
 import { createUserProfile } from '../services/userService';
 import { updateThemeColor } from '../utils/themeUtils';
@@ -36,8 +36,16 @@ export function AuthProvider({ children }) {
   }
 
   // Logout function
-  function logout() {
-    return signOut(auth);
+  async function logout() {
+    await signOut(auth);
+    try {
+      await terminate(db);
+      await clearIndexedDbPersistence(db);
+    } catch (err) {
+      // Failures here (e.g. other tabs holding the cache open) shouldn't block sign-out.
+      console.warn('Could not clear Firestore cache on logout:', err);
+    }
+    window.location.reload();
   }
 
   // Listen for authentication state changes
