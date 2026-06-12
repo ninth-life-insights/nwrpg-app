@@ -119,8 +119,19 @@
   margin-bottom: 0;
 }
 
-/* Paused state — replaces the buckets entirely when the routine is paused.
-   Centered, calm, with explicit countdown and primary "Resume now" CTA. */
+/* Paused state — the buckets still render below the pause overlay in a
+   ghosted, read-only state so the user can peek at what's resting without
+   resuming + re-pausing. The overlay itself is unchanged. */
+.routine-today-ghost {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+  pointer-events: none;
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
 .routine-today-paused {
   background: var(--color-bg-white);
   border: 1px solid var(--color-border);

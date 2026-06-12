@@ -70,9 +70,15 @@ const RoutineTodaySection = ({
   );
   const paused = !!routine && isRoutinePaused(routine);
 
+  // When this routine is paused, drop the pause filter so we can render its
+  // items in a ghosted, non-interactive state below the pause overlay. The
+  // ghost gives the user a peek at what's resting without forcing them to
+  // resume + re-pause. Other paused routines (multi-routine future) stay
+  // filtered out via the still-aggregated pausedRootSet for non-paused
+  // contexts.
   const viewMissions = useMemo(
-    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet, cadenceByChainRoot),
-    [missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet, cadenceByChainRoot]
+    () => getRoutineMissionsForDate(missions, routineRootSet, viewDate, routineOrderMap, paused ? null : pausedRootSet, cadenceByChainRoot),
+    [missions, routineRootSet, viewDate, routineOrderMap, pausedRootSet, cadenceByChainRoot, paused]
   );
 
   const groupedView = useMemo(
@@ -215,7 +221,7 @@ const RoutineTodaySection = ({
 
       {actionError && <ErrorMessage message={actionError} />}
 
-      {paused ? (
+      {paused && (
         <div className="routine-today-paused">
           <span className="material-icons routine-today-paused-icon" aria-hidden="true">
             bedtime
@@ -243,7 +249,9 @@ const RoutineTodaySection = ({
             </button>
           </div>
         </div>
-      ) : hasNoRoutineYet ? (
+      )}
+
+      {!paused && hasNoRoutineYet && (
         <div className="routine-today-onboarding">
           <h3 className="routine-today-onboarding-title">No routine yet</h3>
           <p className="routine-today-onboarding-body">
@@ -257,53 +265,60 @@ const RoutineTodaySection = ({
             Start building
           </button>
         </div>
-      ) : totalCount === 0 ? (
+      )}
+
+      {!paused && !hasNoRoutineYet && totalCount === 0 && (
         <div className="routine-today-empty">
           {isViewToday
             ? 'Your routine is clear today. Take the win.'
             : 'Quiet day — nothing scheduled.'}
         </div>
-      ) : (
-        BUCKETS.map((bucket) => {
-          const list = groupedView[bucket.key];
-          if (!list || list.length === 0) return null;
-          const activeInBucket = list.filter(
-            (m) => m.status === MISSION_STATUS.ACTIVE
-          ).length;
-          return (
-            <div key={bucket.key} className="routine-today-group">
-              <h3 className="routine-today-group-label">
-                <span className="material-icons routine-today-group-icon">
-                  {bucket.icon}
-                </span>
-                {bucket.label}
-              </h3>
-              <div className="routine-today-list">
-                {list.map((mission) => (
-                  <MissionCardCondensed
-                    key={mission.id}
-                    mission={mission}
-                    hideRecurrenceBadge
-                    hideRoutineBadge
-                    hideEvergreenBadge={false}
-                    tintEvergreen
-                    onToggleComplete={handleToggleComplete}
-                    onMissionChanged={onSaved}
-                  />
-                ))}
+      )}
+
+      {!hasNoRoutineYet && totalCount > 0 && (
+        <div className={paused ? 'routine-today-ghost' : undefined}>
+          {BUCKETS.map((bucket) => {
+            const list = groupedView[bucket.key];
+            if (!list || list.length === 0) return null;
+            const activeInBucket = list.filter(
+              (m) => m.status === MISSION_STATUS.ACTIVE
+            ).length;
+            return (
+              <div key={bucket.key} className="routine-today-group">
+                <h3 className="routine-today-group-label">
+                  <span className="material-icons routine-today-group-icon">
+                    {bucket.icon}
+                  </span>
+                  {bucket.label}
+                </h3>
+                <div className="routine-today-list">
+                  {list.map((mission) => (
+                    <MissionCardCondensed
+                      key={mission.id}
+                      mission={mission}
+                      hideRecurrenceBadge
+                      hideRoutineBadge
+                      hideEvergreenBadge={false}
+                      tintEvergreen
+                      readOnly={paused}
+                      onToggleComplete={paused ? undefined : handleToggleComplete}
+                      onMissionChanged={paused ? undefined : onSaved}
+                    />
+                  ))}
+                </div>
+                {!paused && isViewToday && activeInBucket > 0 && (
+                  <button
+                    type="button"
+                    className="routine-today-skip-btn"
+                    onClick={() => handleSkipBucket(bucket.key)}
+                  >
+                    Move remaining to tomorrow →
+                  </button>
+                )}
               </div>
-              {isViewToday && activeInBucket > 0 && (
-                <button
-                  type="button"
-                  className="routine-today-skip-btn"
-                  onClick={() => handleSkipBucket(bucket.key)}
-                >
-                  Move remaining to tomorrow →
-                </button>
-              )}
-            </div>
-          );
-        })
+            );
+          })}
+        </div>
       )}
 
       <AchievementToast
