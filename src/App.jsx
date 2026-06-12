@@ -8,6 +8,7 @@ import { QuestsProvider } from './contexts/QuestsContext';
 import { DailyMissionsProvider } from './contexts/DailyMissionsContext';
 import { RoutineProvider } from './contexts/RoutineContext';
 import { Navigate } from 'react-router-dom';
+import OfflineIndicator from './components/OfflineIndicator';
 import './App.css';
 
 import LandingPage from './pages/auth/LandingPage';
@@ -67,6 +68,7 @@ function PublicRoute({ children }) {
 function AppContent() {
   return (
     <div className="App">
+      <OfflineIndicator />
       <Routes>
         <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/log-in" element={<PublicRoute><LoginPage /></PublicRoute>} />

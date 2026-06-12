@@ -16,7 +16,8 @@
       "Bash(git mv *)",
       "Bash(grep -E \"/\\\\*|^\\\\s*\\\\//\" src/pages/missions/MissionBankPage.jsx src/components/missions/MissionList.jsx)",
       "Bash(xargs ls *)",
-      "Bash(npm start *)"
+      "Bash(npm start *)",
+      "Bash(npm install *)"
     ]
   }
 }
