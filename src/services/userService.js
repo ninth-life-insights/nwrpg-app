@@ -17,7 +17,6 @@ export const createUserProfile = async (userId, email) => {
       highestLevelEver: 1,
       currentXP: 0,
       totalXP: 0,
-      streak: 0,
       weekStartDay: 1, // 0=Sun, 1=Mon, ..., 6=Sat — used for weekly review window
       recurrenceAnchorMode: 'smart', // 'smart' | 'dueDate' | 'completion'
       lastActiveDate: serverTimestamp(),

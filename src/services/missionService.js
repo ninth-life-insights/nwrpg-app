@@ -703,7 +703,6 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
       const profile = await getUserProfile(userId);
       const achievementResult = await checkAndAwardAchievements(userId, {
         difficulty: mission.difficulty,
-        streak: profile?.streak ?? 0,
         skills: profile?.skills || {},
       });
       newlyAwardedAchievements = achievementResult.newlyAwarded || [];
@@ -754,7 +753,12 @@ export const expireMission = async (userId, missionId) => {
 
     await updateDoc(missionRef, {
       status: MISSION_STATUS.EXPIRED,
-      expiredAt: serverTimestamp()
+      expiredAt: serverTimestamp(),
+      // Match deleteMission's cleanup: an archived mission shouldn't surface
+      // in tomorrow's "Plan for [date]" list or today's daily priorities. The
+      // scheduledDates clear on the doc + removeMissionFromPlannedDates on
+      // dailyHistory together prevent dangling ID references.
+      scheduledDates: []
     });
 
     // Keep quest progress math consistent with display: QuestDetailView hides
@@ -773,6 +777,21 @@ export const expireMission = async (userId, missionId) => {
         console.error('Error syncing quest progress on archive:', error);
         // Don't throw — mission is still archived even if quest sync fails.
       }
+    }
+
+    // Drop the mission from today's daily priorities and any future planned
+    // dates. Mirrors deleteMission — without this, archiving a mission that's
+    // currently a daily priority or pre-planned for tomorrow leaves a stale
+    // ID reference in dailyMissions/config or dailyHistory/{date}.
+    try {
+      const { removeMissionFromDailyMissions, removeMissionFromPlannedDates } = await import('./dailyMissionService');
+      await removeMissionFromDailyMissions(userId, missionId);
+      if (missionData?.scheduledDates) {
+        await removeMissionFromPlannedDates(userId, missionId, missionData.scheduledDates);
+      }
+    } catch (error) {
+      console.error('Error removing archived mission from daily plans:', error);
+      // Don't throw — mission is still archived even if daily plan cleanup fails.
     }
   } catch (error) {
     console.error('Error expiring mission:', error);

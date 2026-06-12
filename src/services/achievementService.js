@@ -225,7 +225,7 @@ const countSkillsAtLevel = (skills, minLevel) =>
  * Checks all built-in achievements and awards any that are newly earned.
  *
  * @param {string} userId
- * @param {object} context  — { date?: string, streak?: number, questCompleted?: boolean }
+ * @param {object} context  — { date?: string, difficulty?: string, skills?: object, questCompleted?: boolean }
  * @returns {{ newlyAwarded: object[] }}  — array of achievement definition objects
  */
 export const checkAndAwardAchievements = async (userId, context = {}) => {
@@ -292,11 +292,6 @@ export const checkAndAwardAchievements = async (userId, context = {}) => {
         case 'total_quests': {
           const count = await getQuestCount();
           passed = count >= def.threshold;
-          break;
-        }
-        case 'streak': {
-          const streak = context.streak ?? 0;
-          passed = streak >= def.threshold;
           break;
         }
         case 'midnight_missions': {

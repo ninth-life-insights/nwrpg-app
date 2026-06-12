@@ -7,7 +7,6 @@ export const ACHIEVEMENT_CATEGORIES = {
   HARD_MISSIONS: 'hard_missions',
   QUESTS: 'quests',
   DAILY: 'daily',
-  STREAKS: 'streaks',
   QUIRKY: 'quirky',
   SKILLS: 'skills',
 };
@@ -46,7 +45,6 @@ export const BUILDER_SYMBOLS = [
 //   missions_in_day   — count completed missions on a given date
 //   all_daily_complete — all isDailyMission entries for a date are present
 //   total_quests      — count completed quests
-//   streak            — profile.streak >= threshold
 //   midnight_missions — count missions completed between midnight and 4am
 //   early_missions    — count missions completed before 7am
 //   skill_level_5     — any skill has reached level >= 5
@@ -224,41 +222,6 @@ const ACHIEVEMENTS = [
     badgeImage: '/assets/Achievements/achievements_daily_full_sweep.png',
     checkType: 'all_daily_complete',
     threshold: null,
-  },
-
-  // --- Streaks ---
-  {
-    id: 'streak_3',
-    name: 'Starting Streak',
-    description: 'Log activity 3 days in a row.',
-    category: ACHIEVEMENT_CATEGORIES.STREAKS,
-    badgeColor: 'pink',
-    badgeIcon: 'local_fire_department',
-    badgeImage: '/assets/Achievements/achievements_streaks_starting_streak.png',
-    checkType: 'streak',
-    threshold: 3,
-  },
-  {
-    id: 'streak_7',
-    name: 'Weeklong Warrior',
-    description: 'Log activity 7 days in a row.',
-    category: ACHIEVEMENT_CATEGORIES.STREAKS,
-    badgeColor: 'pink',
-    badgeIcon: 'local_fire_department',
-    badgeImage: '/assets/Achievements/achievements_streaks_weeklong_warrior.png',
-    checkType: 'streak',
-    threshold: 7,
-  },
-  {
-    id: 'streak_30',
-    name: 'Iron Discipline',
-    description: 'Log activity 30 days in a row.',
-    category: ACHIEVEMENT_CATEGORIES.STREAKS,
-    badgeColor: 'pink',
-    badgeIcon: 'military_tech',
-    badgeImage: '/assets/Achievements/achievements_streaks_iron_discipline.png',
-    checkType: 'streak',
-    threshold: 30,
   },
 
   // --- Quirky / Fun ---
