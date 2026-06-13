@@ -11,8 +11,17 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
 } from 'firebase/firestore';
+
+// Read caps. Activity log and daily snapshots grow daily — without caps a
+// long-time user could read thousands of docs on every Adventure Log open.
+const MAX_DAILY_SNAPSHOTS = 365;       // ~1 year
+const MAX_RECENT_SNAPSHOTS = 60;       // 2x default 30-day baseline window
+const MAX_ACTIVITY_LOG_SCAN = 5000;    // Activity log full-scan ceiling
+const MAX_DAY_ACTIVITY_EVENTS = 500;   // Per-day events ceiling
+const MAX_ENCOUNTERS_PER_DAY = 100;
 import { db } from './firebase/config';
 import { getUserProfile } from './userService';
 import { toDateString } from '../utils/dateHelpers';
@@ -48,7 +57,7 @@ const getTaskAgeLabel = (createdAt) => {
 export const getEncountersForDate = async (userId, date) => {
   try {
     const ref = collection(db, 'users', userId, 'encounters');
-    const q = query(ref, where('date', '==', date), orderBy('createdAt', 'asc'));
+    const q = query(ref, where('date', '==', date), orderBy('createdAt', 'asc'), limit(MAX_ENCOUNTERS_PER_DAY));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (error) {
@@ -101,7 +110,7 @@ export const removeEncounter = async (userId, encounterId) => {
 export const getAllDailySnapshots = async (userId) => {
   try {
     const ref = collection(db, 'users', userId, 'dailySnapshots');
-    const q = query(ref, orderBy('date', 'desc'));
+    const q = query(ref, orderBy('date', 'desc'), limit(MAX_DAILY_SNAPSHOTS));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (error) {
@@ -122,7 +131,8 @@ export const getRecentSnapshots = async (userId, beforeDate, days = 30) => {
       ref,
       where('date', '>=', startDate),
       where('date', '<', beforeDate),
-      orderBy('date', 'desc')
+      orderBy('date', 'desc'),
+      limit(MAX_RECENT_SNAPSHOTS)
     );
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -177,7 +187,7 @@ const computeRollingAverages = (snapshots) => {
 export const getDatesWithActivity = async (userId) => {
   try {
     const logRef = collection(db, 'users', userId, 'activityLog');
-    const q = query(logRef, where('type', '==', 'mission_completed'));
+    const q = query(logRef, where('type', '==', 'mission_completed'), limit(MAX_ACTIVITY_LOG_SCAN));
     const snap = await getDocs(q);
 
     // Aggregate mission counts per date
@@ -189,7 +199,7 @@ export const getDatesWithActivity = async (userId) => {
 
     // Fetch existing snapshots to exclude those dates
     const snapshotRef = collection(db, 'users', userId, 'dailySnapshots');
-    const snapshotSnap = await getDocs(snapshotRef);
+    const snapshotSnap = await getDocs(query(snapshotRef, limit(MAX_DAILY_SNAPSHOTS)));
     const snapshotDates = new Set(snapshotSnap.docs.map(d => d.id));
 
     const today = new Date().toISOString().slice(0, 10);
@@ -340,7 +350,8 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
     logRef,
     where('date', '==', date),
     where('type', '==', 'mission_completed'),
-    orderBy('timestamp', 'asc')
+    orderBy('timestamp', 'asc'),
+    limit(MAX_DAY_ACTIVITY_EVENTS)
   );
   const snapshot = await getDocs(q);
   const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

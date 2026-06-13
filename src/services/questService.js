@@ -10,9 +10,14 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
+
+// Read caps — graceful degradation for power users.
+const MAX_QUESTS = 500;
+const MAX_DELETED_QUESTS = 200;
 import { db } from './firebase/config';
 import { checkAndAwardAchievements, awardPendingAchievement, unawardPendingAchievement } from './achievementService';
 import { QUEST_STATUS } from '../types/Quests';
@@ -44,7 +49,7 @@ export const getQuest = async (userId, questId) => {
 // For a fresh quest, updatedAt === createdAt so it lands first as expected.
 export const getAllQuests = async (userId) => {
   const questsRef = getQuestsCollection(userId);
-  const q = query(questsRef, orderBy('updatedAt', 'desc'));
+  const q = query(questsRef, orderBy('updatedAt', 'desc'), limit(MAX_QUESTS));
   const snapshot = await getDocs(q);
 
   return snapshot.docs
@@ -61,7 +66,8 @@ export const getQuestsByStatus = async (userId, status) => {
   const q = query(
     questsRef,
     where('status', '==', status),
-    orderBy('updatedAt', 'desc')
+    orderBy('updatedAt', 'desc'),
+    limit(MAX_QUESTS)
   );
   const snapshot = await getDocs(q);
   
@@ -184,7 +190,8 @@ export const getDeletedQuests = async (userId) => {
     const q = query(
       questsRef,
       where('status', '==', QUEST_STATUS.DELETED),
-      orderBy('deletedAt', 'desc')
+      orderBy('deletedAt', 'desc'),
+      limit(MAX_DELETED_QUESTS)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -333,7 +340,9 @@ export const reorderQuestMissions = async (userId, questId, newMissionOrder) => 
   return getQuest(userId, questId);
 };
 
-// Count missions in a quest that are still active or completed (i.e. not archived/expired/deleted)
+// Count missions in a quest that are still active or completed (i.e. not archived/expired/deleted).
+// Uses getCountFromServer so the count doesn't pull every doc — a quest with
+// hundreds of missions used to mean hundreds of reads here.
 const getActiveMissionCount = async (userId, questId) => {
   const missionsRef = collection(db, 'users', userId, 'missions');
   const q = query(
@@ -341,8 +350,8 @@ const getActiveMissionCount = async (userId, questId) => {
     where('questId', '==', questId),
     where('status', 'in', [MISSION_STATUS.ACTIVE, MISSION_STATUS.COMPLETED])
   );
-  const snapshot = await getDocs(q);
-  return snapshot.size;
+  const snapshot = await getCountFromServer(q);
+  return snapshot.data().count;
 };
 
 // Update quest progress when a mission is completed/uncompleted

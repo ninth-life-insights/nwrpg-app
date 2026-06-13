@@ -9,11 +9,15 @@ import {
   where,
   getDocs,
   orderBy,
+  limit,
   serverTimestamp,
   arrayUnion,
   arrayRemove,
   writeBatch
 } from 'firebase/firestore';
+
+// 1 history doc per day — 365 = a full year, generous cap.
+const MAX_DAILY_HISTORY = 365;
 import { db } from './firebase/config';
 import { toDateString } from '../utils/dateHelpers';
 import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from './missionService';
@@ -313,12 +317,13 @@ export const getDailyMissionHistory = async (userId, startDate, endDate) => {
         historyRef,
         where('date', '>=', toDateString(startDate)),
         where('date', '<=', toDateString(endDate)),
-        orderBy('date', 'desc')
+        orderBy('date', 'desc'),
+        limit(MAX_DAILY_HISTORY)
       );
     } else {
-      q = query(historyRef, orderBy('date', 'desc'));
+      q = query(historyRef, orderBy('date', 'desc'), limit(MAX_DAILY_HISTORY));
     }
-    
+
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
       id: doc.id,

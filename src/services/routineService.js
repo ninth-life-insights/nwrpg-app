@@ -10,6 +10,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   arrayUnion,
   arrayRemove,
@@ -331,7 +332,8 @@ export const resumeRoutine = async (userId, routineId) => {
   // cleanly OR across parentMissionId and id in a single query, so we do the
   // chain-root resolution client-side.
   const missionsRef = collection(db, 'users', userId, 'missions');
-  const activeQ = query(missionsRef, where('status', '==', 'active'));
+  // Matches MAX_ACTIVE_MISSIONS in missionService — guardrail, not a product cap.
+  const activeQ = query(missionsRef, where('status', '==', 'active'), limit(500));
   const missionsSnap = await getDocs(activeQ);
   const activeMissions = missionsSnap.docs.map((d) => ({
     id: d.id,

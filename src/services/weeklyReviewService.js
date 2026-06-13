@@ -9,8 +9,12 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
 } from 'firebase/firestore';
+
+// 1 weekly snapshot per week — 156 = 3 years of beta. Far beyond reasonable.
+const MAX_WEEKLY_SNAPSHOTS = 156;
 import { db } from './firebase/config';
 import { getUserProfile } from './userService';
 import { withTimeout, AI_TIMEOUT_MS } from '../utils/fetchWithTimeout';
@@ -41,7 +45,7 @@ export const getWeeklySnapshot = async (userId, weekStart) => {
 export const getAllWeeklySnapshots = async (userId) => {
   try {
     const ref = collection(db, 'users', userId, 'weeklySnapshots');
-    const q = query(ref, orderBy('weekStart', 'desc'));
+    const q = query(ref, orderBy('weekStart', 'desc'), limit(MAX_WEEKLY_SNAPSHOTS));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (error) {

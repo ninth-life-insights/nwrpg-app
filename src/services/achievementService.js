@@ -6,10 +6,18 @@ import {
   setDoc,
   updateDoc,
   getDocs,
+  getCountFromServer,
   query,
   where,
+  limit,
   serverTimestamp,
 } from 'firebase/firestore';
+
+// Read caps. The activityLog scan inflates with every mission completion, so
+// a long-time user can rack up thousands of entries. Achievement thresholds
+// top out well below this cap, so limiting to 5000 keeps the achievement
+// math correct for any realistic user.
+const MAX_ACTIVITY_DOCS = 5000;
 import { db } from './firebase/config';
 import ACHIEVEMENTS, { ACHIEVEMENT_MAP } from '../data/achievementDefinitions';
 import { toDateString } from '../utils/dateHelpers';
@@ -249,16 +257,21 @@ export const checkAndAwardAchievements = async (userId, context = {}) => {
     const getActivityDocs = async () => {
       if (activityDocs !== null) return activityDocs;
       const ref = collection(db, 'users', userId, 'activityLog');
-      const snap = await getDocs(query(ref, where('type', '==', 'mission_completed')));
+      const snap = await getDocs(query(
+        ref,
+        where('type', '==', 'mission_completed'),
+        limit(MAX_ACTIVITY_DOCS)
+      ));
       activityDocs = snap.docs.map(d => d.data());
       return activityDocs;
     };
 
     const getQuestCount = async () => {
       if (questCount !== null) return questCount;
+      // getCountFromServer doesn't pull the docs — single read instead of N.
       const ref = collection(db, 'users', userId, 'quests');
-      const snap = await getDocs(query(ref, where('status', '==', 'completed')));
-      questCount = snap.docs.length;
+      const snap = await getCountFromServer(query(ref, where('status', '==', 'completed')));
+      questCount = snap.data().count;
       return questCount;
     };
 

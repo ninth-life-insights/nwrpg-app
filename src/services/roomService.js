@@ -9,8 +9,12 @@ import {
   setDoc,
   query,
   orderBy,
+  limit,
   serverTimestamp
 } from 'firebase/firestore';
+
+// Generous cap — most users have <20 rooms. Guardrail only.
+const MAX_ROOMS = 100;
 import { db } from './firebase/config';
 import { buildCleanlinessSegments } from '../utils/cleanlinessHelpers';
 
@@ -82,7 +86,7 @@ export const createRoom = async (userId, roomData) => {
 export const getRooms = async (userId) => {
   try {
     const roomsRef = getUserRoomsRef(userId);
-    const q = query(roomsRef, orderBy('order', 'asc'));
+    const q = query(roomsRef, orderBy('order', 'asc'), limit(MAX_ROOMS));
     const snapshot = await getDocs(q);
 
     return snapshot.docs

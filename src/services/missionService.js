@@ -12,9 +12,19 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
+
+// Read caps — guardrails against runaway reads, not product decisions. Most
+// users stay well under these; a power user is gracefully capped to the most
+// recent N (orderBy + limit) instead of blowing through the Firestore quota.
+const MAX_ACTIVE_MISSIONS = 500;
+const MAX_COMPLETED_MISSIONS = 500;
+const MAX_EXPIRED_MISSIONS = 200;
+const MAX_DELETED_MISSIONS = 200;
+const MAX_ALL_MISSIONS = 1000;
 import dayjs from 'dayjs';
 import { db } from './firebase/config';
 import { MISSION_STATUS, calculateXPReward, calculateSPReward } from '../types/Mission';
@@ -93,9 +103,10 @@ export const getActiveMissions = async (userId) => {
   try {
     const missionsRef = getUserMissionsRef(userId);
     const q = query(
-      missionsRef, 
+      missionsRef,
       where('status', '==', 'active'),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(MAX_ACTIVE_MISSIONS)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
@@ -120,7 +131,8 @@ export const getCompletedMissionsSince = async (userId, sinceDate) => {
       missionsRef,
       where('status', '==', 'completed'),
       where('completedAt', '>=', sinceTs),
-      orderBy('completedAt', 'desc')
+      orderBy('completedAt', 'desc'),
+      limit(MAX_COMPLETED_MISSIONS)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
@@ -138,9 +150,10 @@ export const getCompletedMissions = async (userId) => {
   try {
     const missionsRef = getUserMissionsRef(userId);
     const q = query(
-      missionsRef, 
+      missionsRef,
       where('status', '==', 'completed'),
-      orderBy('completedAt', 'desc')
+      orderBy('completedAt', 'desc'),
+      limit(MAX_COMPLETED_MISSIONS)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
@@ -160,7 +173,8 @@ export const getExpiredMissions = async (userId) => {
     const q = query(
       missionsRef,
       where('status', '==', 'expired'),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(MAX_EXPIRED_MISSIONS)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
@@ -180,7 +194,8 @@ export const getDeletedMissions = async (userId) => {
     const q = query(
       missionsRef,
       where('status', '==', MISSION_STATUS.DELETED),
-      orderBy('deletedAt', 'desc')
+      orderBy('deletedAt', 'desc'),
+      limit(MAX_DELETED_MISSIONS)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
@@ -211,7 +226,7 @@ export const getDeletedMissionsCount = async (userId) => {
 export const getAllMissions = async (userId) => {
   try {
     const missionsRef = getUserMissionsRef(userId);
-    const q = query(missionsRef, orderBy('createdAt', 'desc'));
+    const q = query(missionsRef, orderBy('createdAt', 'desc'), limit(MAX_ALL_MISSIONS));
     const snapshot = await getDocs(q);
     return snapshot.docs
       .map(doc => ({
@@ -414,7 +429,14 @@ const cleanupRecentlySpawnedChild = async (userId, parentMission) => {
   const expectedOccurrence = (parentMission.occurrenceNumber || 1) + 1;
 
   const missionsRef = getUserMissionsRef(userId);
-  const q = query(missionsRef, where('parentMissionId', '==', chainRoot));
+  // orderBy + limit: a long-running recurrence chain may have thousands of
+  // occurrences, but the child we're cleaning up is always the most recent.
+  const q = query(
+    missionsRef,
+    where('parentMissionId', '==', chainRoot),
+    orderBy('occurrenceNumber', 'desc'),
+    limit(50)
+  );
   const snap = await getDocs(q);
 
   const childDoc = snap.docs.find(d => (d.data().occurrenceNumber || 0) === expectedOccurrence);
@@ -445,7 +467,8 @@ const cleanupRecentlySpawnedChild = async (userId, parentMission) => {
 // mission has at most a handful of entries.
 const findCompletionActivityLogEntry = async (userId, missionId) => {
   const logRef = collection(db, 'users', userId, 'activityLog');
-  const snap = await getDocs(query(logRef, where('missionId', '==', missionId)));
+  // A given mission has at most a handful of activity entries; cap defensively.
+  const snap = await getDocs(query(logRef, where('missionId', '==', missionId), limit(20)));
   if (snap.empty) return null;
   const completionDocs = snap.docs
     .filter(d => d.data().type === 'mission_completed')
@@ -724,7 +747,8 @@ export const getRecurringMissionInstances = async (userId, parentMissionId) => {
     const q = query(
       missionsRef,
       where('parentMissionId', '==', parentMissionId),
-      orderBy('occurrenceNumber', 'desc')
+      orderBy('occurrenceNumber', 'desc'),
+      limit(200)
     );
     
     const snapshot = await getDocs(q);
