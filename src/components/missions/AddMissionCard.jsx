@@ -419,6 +419,7 @@ const AddMissionCard = ({
               value={formData.title}
               onChange={handleInputChange}
               className={`add-mission-title-input ${errors.title ? 'error' : ''}`}
+              maxLength={120}
               placeholder="Mission Name *"
               disabled={isSubmitting}
             />
@@ -432,6 +433,7 @@ const AddMissionCard = ({
               value={formData.description}
               onChange={handleInputChange}
               className="add-mission-description-input"
+              maxLength={2000}
               placeholder="Description (optional)"
               rows="2"
               disabled={isSubmitting}

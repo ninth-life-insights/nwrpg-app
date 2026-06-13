@@ -105,6 +105,7 @@ const EditCharacterPage = () => {
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
+              maxLength={40}
               className="character-input"
               placeholder="Enter your name"
             />
@@ -116,6 +117,7 @@ const EditCharacterPage = () => {
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
+              maxLength={60}
               className="character-input"
               placeholder="Enter your RPG title"
             />

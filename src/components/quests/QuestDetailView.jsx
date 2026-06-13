@@ -404,13 +404,14 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
               className="quest-title-input"
+              maxLength={120}
               placeholder="Quest title"
             />
           ) : (
             quest.title
           )}
         </h1>
-        
+
         {(isEditMode || quest.description) && (
           <div className="quest-description-section">
             {isEditMode ? (
@@ -419,6 +420,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="quest-description-input"
+                maxLength={1000}
                 placeholder="Description (optional)"
                 rows="2"
               />

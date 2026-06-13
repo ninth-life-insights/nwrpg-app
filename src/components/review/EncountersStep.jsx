@@ -106,6 +106,7 @@ const EncountersStep = ({
                       value={editTitle}
                       onChange={ev => setEditTitle(ev.target.value)}
                       onKeyDown={ev => ev.key === 'Enter' && !ev.shiftKey && handleSaveEdit()}
+                      maxLength={120}
                       autoFocus
                     />
                     <textarea
@@ -113,6 +114,7 @@ const EncountersStep = ({
                       value={editNotes}
                       onChange={ev => setEditNotes(ev.target.value)}
                       placeholder="A bit more detail... (optional)"
+                      maxLength={3000}
                       rows={2}
                     />
                     <div className="review-add-mission-actions">
@@ -168,6 +170,7 @@ const EncountersStep = ({
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleAdd()}
+              maxLength={120}
               autoFocus
             />
             <textarea
@@ -175,6 +178,7 @@ const EncountersStep = ({
               placeholder="A bit more detail... (optional)"
               value={newNotes}
               onChange={e => setNewNotes(e.target.value)}
+              maxLength={3000}
               rows={3}
             />
             <div className="review-add-mission-actions">

@@ -156,6 +156,7 @@ const ReviewSummary = ({
                   className="daily-review-story-textarea"
                   value={storyDraft}
                   onChange={e => setStoryDraft(e.target.value)}
+                  maxLength={4000}
                   placeholder="Write your own notes or memory for today..."
                   rows={6}
                 />
