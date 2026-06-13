@@ -8,12 +8,13 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptedTos, setAcceptedTos] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
 
   const navigate = useNavigate();
-  
+
       const logInButtonClick = () => {
           navigate('/log-in');
       };
@@ -29,6 +30,10 @@ export default function Signup() {
       return setError("Passwords don't match.");
     }
 
+    if (!acceptedTos) {
+      return setError('Please agree to the Terms and Privacy Policy to continue.');
+    }
+
     try {
       setError('');
       setLoading(true);
@@ -38,7 +43,7 @@ export default function Signup() {
       setError(getAuthErrorMessage(error, 'signup'));
       console.error('Signup error:', error);
     }
-    
+
     setLoading(false);
   }
 
@@ -91,10 +96,25 @@ export default function Signup() {
               placeholder="Confirm your password"
             />
           </div>
-          
-          <button 
-            type="submit" 
-            disabled={loading}
+
+          <label className="tos-checkbox-row">
+            <input
+              type="checkbox"
+              checked={acceptedTos}
+              onChange={(e) => setAcceptedTos(e.target.checked)}
+              className="tos-checkbox"
+            />
+            <span className="tos-checkbox-label">
+              I agree to the{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+              {' '}and{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+            </span>
+          </label>
+
+          <button
+            type="submit"
+            disabled={loading || !acceptedTos}
             className="auth-button primary"
           >
             {loading ? 'Creating Account...' : 'Sign Up'}

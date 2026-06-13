@@ -15,6 +15,8 @@ import LandingPage from './pages/auth/LandingPage';
 import LoginPage from './pages/auth/LogInPage';
 import SignupPage from './pages/auth/SignupPage';
 import CharacterCreationPage from './pages/character/CharacterCreationPage';
+import TermsPage from './pages/legal/TermsPage';
+import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 
 import HomePage from './pages/HomePage';
 import HomePageSandbox from './pages/HomePageSandbox';
@@ -73,6 +75,8 @@ function AppContent() {
         <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/log-in" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/sign-up" element={<PublicRoute><SignupPage /></PublicRoute>} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/character-creation" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/home-sandbox" element={<ProtectedRoute><HomePageSandbox /></ProtectedRoute>} />

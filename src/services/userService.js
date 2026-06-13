@@ -3,7 +3,10 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { db } from './firebase/config';
 import { initializeEntireBaseRoom } from './roomService';
 
-// Create initial user profile (call this when user signs up)
+// Create initial user profile (call this when user signs up).
+// The signup UI blocks submission until the user accepts Terms + Privacy,
+// so reaching this function means acceptance has occurred — we record the
+// timestamp as the audit trail.
 export const createUserProfile = async (userId, email) => {
   try {
     const userRef = doc(db, 'users', userId, 'profile', 'data');
@@ -20,7 +23,8 @@ export const createUserProfile = async (userId, email) => {
       weekStartDay: 1, // 0=Sun, 1=Mon, ..., 6=Sat — used for weekly review window
       recurrenceAnchorMode: 'smart', // 'smart' | 'dueDate' | 'completion'
       lastActiveDate: serverTimestamp(),
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      acceptedToSAt: serverTimestamp()
     });
     
     // Initialize the Entire Base room

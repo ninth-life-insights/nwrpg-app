@@ -80,6 +80,33 @@
   margin-left: auto;
 }
 
+.tos-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  cursor: pointer;
+}
+
+.tos-checkbox {
+  flex-shrink: 0;
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.tos-checkbox-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dark);
+  line-height: 1.4;
+}
+
+.tos-checkbox-label a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 .auth-form {
   margin-bottom: var(--space-xl);
 }
