@@ -6,7 +6,11 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  sendEmailVerification
+  sendEmailVerification,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+  verifyBeforeUpdateEmail
 } from 'firebase/auth';
 import { doc, getDoc, terminate, clearIndexedDbPersistence } from 'firebase/firestore';
 import { auth, db } from '../services/firebase/config';
@@ -52,6 +56,26 @@ export function AuthProvider({ children }) {
   function resendVerificationEmail() {
     if (!auth.currentUser) return Promise.reject(new Error('No signed-in user'));
     return sendEmailVerification(auth.currentUser);
+  }
+
+  // Re-authenticate, then send a verification email to the new address.
+  // The actual email change happens only when the user clicks the link in
+  // the new inbox — until then, their current email keeps working.
+  async function changeEmail(currentPassword, newEmail) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No signed-in user');
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await verifyBeforeUpdateEmail(user, newEmail);
+  }
+
+  // Re-authenticate, then change the password. User stays signed in.
+  async function changePassword(currentPassword, newPassword) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No signed-in user');
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
   }
 
   // Logout function
@@ -117,7 +141,9 @@ export function AuthProvider({ children }) {
     login,
     logout,
     resetPassword,
-    resendVerificationEmail
+    resendVerificationEmail,
+    changeEmail,
+    changePassword
   };
 
   if (authError) {

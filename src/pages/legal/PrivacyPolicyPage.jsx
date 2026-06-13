@@ -6,7 +6,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LegalPage.css';
 
-const EFFECTIVE_DATE = 'TBD';
+const EFFECTIVE_DATE = '6/30/26';
 const CONTACT_EMAIL = 'catharinepace@gmail.com';
 
 export default function PrivacyPolicyPage() {
@@ -75,6 +75,17 @@ export default function PrivacyPolicyPage() {
             <li>To generate AI summary stories of your week and day (see below)</li>
             <li>To debug crashes and improve the app</li>
           </ul>
+
+          <h2>Research and product improvement</h2>
+          <p>
+            To make the app better, we may analyze patterns of how the app is
+            used — which features are popular, where people get stuck, what
+            kinds of missions or quests are common. When we do this, we work
+            with the data in aggregated and de-identified form: we look at
+            "what's typical across users," not "what did one specific person
+            do." We do not publish or share individual content, and we do not
+            use your content to train AI models.
+          </p>
 
           <h2>Third parties that process your data</h2>
           <p>

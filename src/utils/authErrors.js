@@ -26,9 +26,15 @@ export function getAuthErrorMessage(error, mode = 'login') {
       return 'Password must be at least 6 characters.';
     case 'auth/user-disabled':
       return 'This account has been disabled. Contact support.';
+    case 'auth/requires-recent-login':
+      return 'For your security, please log out and back in, then try again.';
+    case 'auth/operation-not-allowed':
+      return "That change didn't go through. Try again in a minute.";
     default:
       if (mode === 'signup') return "Your account didn't create. Try again.";
       if (mode === 'reset') return "That reset email didn't send. Try again.";
+      if (mode === 'change-email') return "Your email didn't update. Try again.";
+      if (mode === 'change-password') return "Your password didn't update. Try again.";
       return "Sign-in didn't go through. Try again.";
   }
 }

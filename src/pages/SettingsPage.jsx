@@ -13,6 +13,8 @@ import { getDeletedQuestsCount } from '../services/questService';
 import { DAY_NAMES } from '../utils/weeklyReviewHelpers';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import StickyFooter from '../components/ui/StickyFooter';
+import ChangeEmailModal from '../components/auth/ChangeEmailModal';
+import ChangePasswordModal from '../components/auth/ChangePasswordModal';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './SettingsPage.css';
 
@@ -25,9 +27,19 @@ const parseTime = (value) => {
 };
 
 const SettingsPage = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, resendVerificationEmail } = useAuth();
   const { refreshSchedule } = useNotifications();
   const navigate = useNavigate();
+
+  const [showChangeEmail, setShowChangeEmail] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  // Local mirror of emailVerified — currentUser.emailVerified reflects sign-in
+  // time, so we call reload() on mount to surface "just verified" status
+  // without a full page refresh.
+  const [emailVerified, setEmailVerified] = useState(
+    currentUser?.emailVerified ?? false
+  );
+  const [resendStatus, setResendStatus] = useState('idle'); // 'idle' | 'sending' | 'sent' | 'error'
 
   const [prefs, setPrefs] = useState(null);
   const [character, setCharacter] = useState(null);
@@ -49,6 +61,13 @@ const SettingsPage = () => {
 
   const handleBack = () => navigate('/home');
   useAndroidBackButton(handleBack);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    currentUser.reload()
+      .then(() => setEmailVerified(currentUser.emailVerified))
+      .catch(() => { /* offline / transient — keep last known state */ });
+  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -85,6 +104,17 @@ const SettingsPage = () => {
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleResendVerification = async () => {
+    setResendStatus('sending');
+    try {
+      await resendVerificationEmail();
+      setResendStatus('sent');
+    } catch (err) {
+      console.error('Resend verification error:', err);
+      setResendStatus('error');
+    }
   };
 
   const handleMasterToggle = async () => {
@@ -417,14 +447,72 @@ const SettingsPage = () => {
 
       <section className="settings-section">
         <h2 className="settings-section-title">Account</h2>
-        <div className="settings-row">
-          <span className="settings-label">Email</span>
-          <span className="settings-value">{currentUser?.email}</span>
+
+        <div className="settings-account-block">
+          <div className="settings-account-label-row">
+            <span className="settings-label">Email</span>
+            {emailVerified ? (
+              <span className="settings-verified-badge">
+                <span className="material-icons">check_circle</span>
+                Verified
+              </span>
+            ) : (
+              <span className="settings-unverified-badge">Not verified</span>
+            )}
+          </div>
+          <div className="settings-account-value-row">
+            <span className="settings-account-value">{currentUser?.email}</span>
+            <button
+              className="settings-account-action"
+              onClick={() => setShowChangeEmail(true)}
+            >
+              Change
+            </button>
+          </div>
+          {!emailVerified && (
+            <button
+              type="button"
+              className="settings-resend-link"
+              onClick={handleResendVerification}
+              disabled={resendStatus === 'sending' || resendStatus === 'sent'}
+            >
+              {resendStatus === 'sent'
+                ? 'Verification email sent. Tap the link, then refresh.'
+                : resendStatus === 'sending'
+                ? 'Sending...'
+                : resendStatus === 'error'
+                ? "That didn't send. Try again."
+                : 'Resend verification email'}
+            </button>
+          )}
         </div>
+
+        <div className="settings-account-block">
+          <div className="settings-account-label-row">
+            <span className="settings-label">Password</span>
+          </div>
+          <div className="settings-account-value-row">
+            <span className="settings-account-value">••••••••</span>
+            <button
+              className="settings-account-action"
+              onClick={() => setShowChangePassword(true)}
+            >
+              Change
+            </button>
+          </div>
+        </div>
+
         <button className="settings-logout-btn" onClick={handleLogout}>
           Log out
         </button>
       </section>
+
+      {showChangeEmail && (
+        <ChangeEmailModal onClose={() => setShowChangeEmail(false)} />
+      )}
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
     </div>
   );
 };
