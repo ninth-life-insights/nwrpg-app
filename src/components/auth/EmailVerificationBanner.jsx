@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import './EmailVerificationBanner.css';
 
 export default function EmailVerificationBanner() {
   const { currentUser, resendVerificationEmail } = useAuth();
   const [status, setStatus] = useState('idle'); // 'idle' | 'sending' | 'sent' | 'error'
+  // Local mirror of emailVerified — currentUser.emailVerified is set at
+  // sign-in. We reload() on mount IF unverified so a user who clicked the
+  // link in another tab sees the banner disappear when they come back.
+  const [verified, setVerified] = useState(currentUser?.emailVerified ?? true);
 
-  // currentUser.emailVerified reflects the value at sign-in. After the user
-  // clicks the link, they need to reload the page to refresh this flag.
-  if (!currentUser || currentUser.emailVerified) return null;
+  useEffect(() => {
+    if (!currentUser || currentUser.emailVerified) return;
+    currentUser.reload()
+      .then(() => setVerified(currentUser.emailVerified))
+      .catch(() => { /* offline / transient — keep showing banner */ });
+  }, [currentUser]);
+
+  if (!currentUser || verified) return null;
 
   const handleResend = async () => {
     setStatus('sending');
