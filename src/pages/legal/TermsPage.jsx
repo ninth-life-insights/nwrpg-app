@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import './LegalPage.css';
 
 const EFFECTIVE_DATE = 'TBD';
-const CONTACT_EMAIL = 'catharinepace@gmail.com';
+const CONTACT_EMAIL = 'cat@ninthlifeinsights.com';
 
 export default function TermsPage() {
   const navigate = useNavigate();

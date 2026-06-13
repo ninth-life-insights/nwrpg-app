@@ -461,6 +461,23 @@
   cursor: default;
 }
 
+.settings-delete-account-link {
+  align-self: center;
+  margin-top: var(--space-md);
+  color: #dc2626;
+  font-size: var(--font-size-sm);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.settings-delete-account-hint {
+  align-self: center;
+  text-align: center;
+  margin: 4px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-medium);
+}
+
 .settings-logout-btn {
   width: 100%;
   padding: var(--space-md);

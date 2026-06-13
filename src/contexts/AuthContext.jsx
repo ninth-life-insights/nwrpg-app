@@ -16,6 +16,7 @@ import { doc, getDoc, terminate, clearIndexedDbPersistence } from 'firebase/fire
 import { auth, db } from '../services/firebase/config';
 import { createUserProfile } from '../services/userService';
 import { updateThemeColor } from '../utils/themeUtils';
+import { setSentryUser } from '../utils/sentry';
 
 const AuthContext = createContext();
 
@@ -105,6 +106,7 @@ export function AuthProvider({ children }) {
       didFire = true;
       clearTimeout(timer);
       setCurrentUser(user);
+      setSentryUser(user);
       setLoading(false);
     });
 

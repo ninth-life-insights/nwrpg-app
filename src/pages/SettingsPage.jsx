@@ -505,6 +505,18 @@ const SettingsPage = () => {
         <button className="settings-logout-btn" onClick={handleLogout}>
           Log out
         </button>
+
+        <a
+          className="settings-delete-account-link"
+          href={`mailto:cat@ninthlifeinsights.com?subject=${encodeURIComponent('Delete my account')}&body=${encodeURIComponent(
+            `Please delete the account associated with:\n\nEmail: ${currentUser?.email}\nUID: ${currentUser?.uid}\n\n(You can add a reason below if you'd like — totally optional.)`
+          )}`}
+        >
+          Delete my account
+        </a>
+        <p className="settings-delete-account-hint">
+          Opens an email to me. I'll confirm and delete within 30 days.
+        </p>
       </section>
 
       {showChangeEmail && (

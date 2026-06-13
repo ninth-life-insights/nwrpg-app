@@ -1,5 +1,6 @@
 import React from 'react';
 import { logError } from '../utils/errorBuffer';
+import { captureError } from '../utils/sentry';
 
 async function softReset() {
   try {
@@ -26,6 +27,7 @@ export default class ErrorBoundary extends React.Component {
   componentDidCatch(error, info) {
     console.error('App ErrorBoundary caught:', error, info);
     logError('react', error, { componentStack: info?.componentStack || null });
+    captureError(error, { componentStack: info?.componentStack || null });
   }
 
   render() {

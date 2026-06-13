@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import './LegalPage.css';
 
 const EFFECTIVE_DATE = '6/30/26';
-const CONTACT_EMAIL = 'catharinepace@gmail.com';
+const CONTACT_EMAIL = 'cat@ninthlifeinsights.com';
 
 export default function PrivacyPolicyPage() {
   const navigate = useNavigate();
@@ -117,6 +117,16 @@ export default function PrivacyPolicyPage() {
               identity.{' '}
               <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener noreferrer">
                 Anthropic privacy
+              </a>
+            </li>
+            <li>
+              <strong>Sentry:</strong> receives crash reports when the app
+              errors out, so we can fix bugs. Reports include the error
+              message, stack trace, the page you were on, and your account ID
+              (not your email). They do not include the contents of your
+              missions, encounters, or other personal text.{' '}
+              <a href="https://sentry.io/privacy/" target="_blank" rel="noopener noreferrer">
+                Sentry privacy
               </a>
             </li>
           </ul>
