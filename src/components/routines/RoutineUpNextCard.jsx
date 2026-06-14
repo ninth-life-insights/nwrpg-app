@@ -2,13 +2,10 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { useDailyMissions } from '../../contexts/DailyMissionsContext';
-import {
-  uncompleteMission,
-  completeMissionWithRecurrence,
-} from '../../services/missionService';
+import { uncompleteMission } from '../../services/missionService';
 import { isRoutinePaused } from '../../services/routineService';
 import { getRoutineMissionsForDate } from '../../utils/routineHelpers';
 import { fromDateString } from '../../utils/dateHelpers';
@@ -28,7 +25,7 @@ import './RoutineUpNextCard.css';
 // the next routine thing she hasn't already planned.
 const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
   const { currentUser } = useAuth();
-  const { notifyMissionCompletion } = useNotifications();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const { routines, routineRootSet, routineOrderMap, pausedRootSet, cadenceByChainRoot } = useRoutines();
   const { dailyMissionIds } = useDailyMissions();
   const navigate = useNavigate();
@@ -64,20 +61,23 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
   );
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
-    try {
-      if (isCurrentlyCompleted) {
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        const result = await completeMissionWithRecurrence(
-          currentUser.uid,
-          missionId
-        );
-        notifyMissionCompletion(result);
+        onMissionChanged?.();
+      } catch (err) {
+        console.error('Routine up-next uncomplete failed:', err);
       }
-      onMissionChanged?.();
-    } catch (err) {
-      console.error('Routine up-next toggle failed:', err);
+      return;
     }
+
+    const mission = (missions || []).find((m) => m.id === missionId);
+    completeMissionOptimistic(missionId, mission, {
+      // No local missions state to flip — parent owns the list and refreshes
+      // via onMissionChanged. The card itself shows the optimistic check via
+      // the context selector in MissionCardCondensed.
+      onResolved: () => onMissionChanged?.(),
+    });
   };
 
   if (loading) {

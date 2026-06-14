@@ -17,7 +17,13 @@ import {
 } from '../../services/questService';
 import { getAllMissions } from '../../services/missionService';
 import { getNextMission } from '../../types/Quests';
-import { completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import { uncompleteMission } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import {
+  applyOptimisticCompletion,
+  applyServerResolved,
+  applyCompletionRollback,
+} from '../../utils/applyOptimisticCompletion';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
@@ -25,6 +31,7 @@ import './QuestBankPage.css';
 
 const QuestBank = () => {
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();
   
   const [quests, setQuests] = useState([]);
@@ -147,43 +154,62 @@ const QuestBank = () => {
     return m?.questId ?? null;
   };
 
-  const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+  // Quest-state reconciliation after a mission toggle: if the toggle pushed
+  // the parent quest across the auto-complete / auto-reopen boundary, mirror
+  // that into recentlyCompletedQuests so the user sees the transition land
+  // (or reopens cleanly).
+  const reconcileQuestStateAfterToggle = async (missionId) => {
+    const questId = getQuestIdForMission(missionId);
+    if (!questId) return;
     try {
-      const questId = getQuestIdForMission(missionId);
-
-      if (isCurrentlyCompleted) {
-        await uncompleteMission(currentUser.uid, missionId);
+      const updatedQuest = await getQuest(currentUser.uid, questId);
+      if (updatedQuest.status === 'completed') {
+        setRecentlyCompletedQuests(prev =>
+          prev.find(q => q.id === updatedQuest.id)
+            ? prev.map(q => q.id === updatedQuest.id ? updatedQuest : q)
+            : [updatedQuest, ...prev]
+        );
       } else {
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
+        setRecentlyCompletedQuests(prev => prev.filter(q => q.id !== updatedQuest.id));
       }
-
-      // If this mission belongs to a quest, check whether the toggle pushed
-      // the quest across the auto-complete / auto-reopen boundary. If it
-      // just completed, hold it in the recently-completed list so it stays
-      // visible. If it reopened, drop it from that list.
-      if (questId) {
-        try {
-          const updatedQuest = await getQuest(currentUser.uid, questId);
-          if (updatedQuest.status === 'completed') {
-            setRecentlyCompletedQuests(prev =>
-              prev.find(q => q.id === updatedQuest.id)
-                ? prev.map(q => q.id === updatedQuest.id ? updatedQuest : q)
-                : [updatedQuest, ...prev]
-            );
-          } else {
-            setRecentlyCompletedQuests(prev => prev.filter(q => q.id !== updatedQuest.id));
-          }
-        } catch (err) {
-          console.error('Error checking quest state after mission toggle:', err);
-        }
-      }
-
-      // Reload quests and missions to update progress
-      await loadQuests();
-      await loadMissions();
     } catch (err) {
-      console.error('Error toggling mission completion:', err);
+      console.error('Error checking quest state after mission toggle:', err);
     }
+  };
+
+  const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+    if (isCurrentlyCompleted) {
+      try {
+        await uncompleteMission(currentUser.uid, missionId);
+        await reconcileQuestStateAfterToggle(missionId);
+        await loadQuests();
+        await loadMissions();
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
+      }
+      return;
+    }
+
+    const mission = missions.find((m) => m.id === missionId);
+    completeMissionOptimistic(missionId, mission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setMissions((prev) => applyOptimisticCompletion(prev, missionId));
+        } else if (event.type === 'serverResolved') {
+          setMissions((prev) => applyServerResolved(prev, missionId, event.result));
+        } else if (event.type === 'rollback') {
+          setMissions((prev) => applyCompletionRollback(prev, missionId));
+        }
+      },
+      onResolved: async () => {
+        // After the server confirms, sync quest auto-complete state and
+        // reload quests so progress bars / sort order reflect the change.
+        // Skip loadMissions — local state is already up-to-date via the
+        // optimistic + serverResolved updates.
+        await reconcileQuestStateAfterToggle(missionId);
+        await loadQuests();
+      },
+    });
   };
 
   const handleQuestToggleComplete = async (questId, isCurrentlyCompleted) => {

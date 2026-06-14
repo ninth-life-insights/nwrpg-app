@@ -5,7 +5,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getUserProfile, getSPProgressInLevel } from '../../services/userService';
 import { getActiveMissions, getCompletedMissions } from '../../services/missionService';
 import MissionCard from '../../components/missions/MissionCard';
-import { completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import { uncompleteMission } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import {
+  applyOptimisticCompletion,
+  applyServerResolved,
+  applyCompletionRollback,
+} from '../../utils/applyOptimisticCompletion';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
@@ -29,6 +35,7 @@ const SkillDetailPage = () => {
   const { skillName } = useParams();
   const decodedSkillName = decodeURIComponent(skillName);
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();
 
   const [skillData, setSkillData] = useState(null);
@@ -91,26 +98,36 @@ const SkillDetailPage = () => {
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     setActionError(null);
-    try {
-      if (isCurrentlyCompleted) {
+
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        if (result?.leveledUp) {
-          setLevelUpInfo({ newLevel: result.newLevel });
-        }
-        if (result?.skillLeveledUp) {
-          setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-        }
-        if (result?.newlyAwardedAchievements?.length > 0) {
-          setNewAchievements(result.newlyAwardedAchievements);
-        }
+        await fetchData();
+      } catch (error) {
+        console.error('Error uncompleting mission:', error);
+        setActionError("That undo didn't go through. Try again.");
       }
-      await fetchData();
-    } catch (error) {
-      console.error('Error toggling mission completion:', error);
-      setActionError(isCurrentlyCompleted ? "That undo didn't go through. Try again." : "That mission didn't complete. Try again.");
+      return;
     }
+
+    const mission = missions.find((m) => m.id === missionId);
+    completeMissionOptimistic(missionId, mission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setMissions((prev) => applyOptimisticCompletion(prev, missionId));
+        } else if (event.type === 'serverResolved') {
+          setMissions((prev) => applyServerResolved(prev, missionId, event.result));
+        } else if (event.type === 'rollback') {
+          setMissions((prev) => applyCompletionRollback(prev, missionId));
+        }
+      },
+      onAchievementsResolved: (achievements) => {
+        setNewAchievements(achievements);
+      },
+      onError: () => {
+        setActionError("That mission didn't complete. Try again.");
+      },
+    });
   };
 
   if (loading) {
