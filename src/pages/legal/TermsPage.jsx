@@ -4,7 +4,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LegalPage.css';
 
-const EFFECTIVE_DATE = 'TBD';
+const EFFECTIVE_DATE = '6/30/26';
 const CONTACT_EMAIL = 'cat@ninthlifeinsights.com';
 
 export default function TermsPage() {
