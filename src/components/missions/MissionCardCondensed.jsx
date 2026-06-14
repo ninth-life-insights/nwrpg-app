@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
@@ -37,7 +38,10 @@ const MissionCardCondensed = ({
   const { currentUser } = useAuth();
   const { routineRootSet, pausedRootSet } = useRoutines();
   const isDailyMission = useIsDailyMission(mission.id);
+  const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const isCompletionPending = isPending(mission.id);
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
+  const isVisuallyComplete = isCompleted || isOptimisticallyComplete(mission.id);
   const missionHasSkill = hasSkill(mission);
   const isRecurring = isRecurringMission(mission);
   const isEvergreen = isEvergreenMission(mission);
@@ -190,12 +194,13 @@ const MissionCardCondensed = ({
       {actionSlot ? actionSlot : (
         !readOnly && (
           <button
-            className={`mcc-toggle ${isCompleted ? 'completed' : ''}`}
+            className={`mcc-toggle ${isVisuallyComplete ? 'completed' : ''}`}
             onClick={handleToggleComplete}
-            aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+            disabled={isCompletionPending}
+            aria-label={isVisuallyComplete ? 'Mark as incomplete' : 'Mark as complete'}
           >
             <svg
-              className={`mcc-check-icon ${isCompleted ? 'completed' : ''}`}
+              className={`mcc-check-icon ${isVisuallyComplete ? 'completed' : ''}`}
               xmlns="http://www.w3.org/2000/svg"
               height="18px"
               viewBox="0 -960 960 960"

@@ -1,7 +1,8 @@
 // src/components/review/OtherMissionsStep.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from '../../services/missionService';
+import { getActiveMissions, getCompletedMissions } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { getDailyMissionsConfig } from '../../services/dailyMissionService';
 import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
@@ -16,11 +17,10 @@ const OtherMissionsStep = ({
   onToggleComplete,
   onNext,
   onSkipToSummary,
-  setLevelUpInfo,
-  setSkillLevelUpInfo,
   onAchievementsUnlocked,
 }) => {
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
@@ -74,9 +74,12 @@ const OtherMissionsStep = ({
   const handleToggle = async (missionId, isCurrentlyCompleted, xpReward) => {
     try {
       const result = await onToggleComplete(missionId, isCurrentlyCompleted, xpReward);
-      if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
-      if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-      if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
+      // Level-up / skill-up modals now fire globally from NotificationContext
+      // (triggered inside MissionCompletionContext). Only achievements still
+      // need a local hook to surface the toast.
+      if (result?.newlyAwardedAchievements?.length > 0) {
+        onAchievementsUnlocked?.(result.newlyAwardedAchievements);
+      }
       setMissions(prev => prev.map(m =>
         m.id === missionId
           ? { ...m, status: isCurrentlyCompleted ? 'active' : 'completed', xpAwarded: isCurrentlyCompleted ? null : (result?.xpAwarded ?? m.xpAwarded) }
@@ -87,20 +90,34 @@ const OtherMissionsStep = ({
     }
   };
 
-  // Called by AddMissionCard after it creates the mission
+  // Called by AddMissionCard after it creates the mission. The mission is
+  // immediately auto-completed; route through the optimistic context so the
+  // double-tap guard, error rollback, and global level-up modal all apply.
   const handleMissionAdded = async (newMission) => {
     setShowAddMission(false);
-    // Immediately complete it and give credit
-    try {
-      const result = await completeMissionWithRecurrence(currentUser.uid, newMission.id);
-      if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
-      if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-      if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
-      setMissions(prev => [{ ...newMission, status: 'completed', xpAwarded: result?.xpAwarded }, ...prev]);
-    } catch (err) {
-      console.error('Error completing new mission:', err);
-      setMissions(prev => [...prev, newMission]);
-    }
+    await completeMissionOptimistic(newMission.id, newMission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setMissions(prev => [{ ...newMission, status: 'completed' }, ...prev]);
+        } else if (event.type === 'serverResolved') {
+          setMissions(prev => prev.map(m =>
+            m.id === newMission.id
+              ? { ...m, xpAwarded: event.result?.xpAwarded ?? null }
+              : m
+          ));
+        } else if (event.type === 'rollback') {
+          // The mission was created successfully; only the auto-complete failed.
+          // Leave it in the list as active so the user can retry the tap.
+          setMissions(prev => {
+            const exists = prev.some(m => m.id === newMission.id);
+            return exists
+              ? prev.map(m => m.id === newMission.id ? { ...m, status: 'active' } : m)
+              : [...prev, { ...newMission, status: 'active' }];
+          });
+        }
+      },
+      onAchievementsResolved: (achievements) => onAchievementsUnlocked?.(achievements),
+    });
   };
 
   const filteredMissions = missions.filter(m => {

@@ -12,13 +12,14 @@ import {
 import {
   getTodaysDailyMissions,
 } from '../../services/dailyMissionService';
+import { uncompleteMission } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
-  completeMissionWithRecurrence,
-  uncompleteMission,
-} from '../../services/missionService';
+  applyOptimisticCompletion,
+  applyServerResolved,
+  applyCompletionRollback,
+} from '../../utils/applyOptimisticCompletion';
 import { getAchievementsAwardedOnDate } from '../../services/achievementService';
-import LevelUpModal from '../../components/ui/LevelUpModal';
-import SkillLevelUpModal from '../../components/ui/SkillLevelUpModal';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import DailyMissionsStep from '../../components/review/DailyMissionsStep';
 import OtherMissionsStep from '../../components/review/OtherMissionsStep';
@@ -35,6 +36,7 @@ const TOTAL_STEPS = 4;
 const DailyReviewPage = () => {
   const { currentUser } = useAuth();
   const { refreshDailyMissions } = useDailyMissions();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -42,8 +44,6 @@ const DailyReviewPage = () => {
   const [encounters, setEncounters] = useState([]);
   const [snapshot, setSnapshot] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [levelUpInfo, setLevelUpInfo] = useState(null);
-  const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [sessionAchievements, setSessionAchievements] = useState([]);
   const [todayAchievements, setTodayAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
@@ -86,26 +86,41 @@ const DailyReviewPage = () => {
     setDailyMissions(missions);
   };
 
+  // Uncompletion keeps the original (non-optimistic) reload-then-resync path —
+  // it's a correction action and not part of the slow-tap problem.
+  // Completion is routed through MissionCompletionContext: the card flips
+  // instantly via optimistic state, and child steps get the resolved result
+  // back via the returned promise so existing level-up handling still works.
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
-    try {
-      let result;
-      if (isCurrentlyCompleted) {
-        result = await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
-        if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-        // Collect achievements unlocked during mission completions throughout the session
-        if (result?.newlyAwardedAchievements?.length > 0) {
-          setSessionAchievements(prev => [...prev, ...result.newlyAwardedAchievements]);
-        }
+    if (isCurrentlyCompleted) {
+      try {
+        const result = await uncompleteMission(currentUser.uid, missionId);
+        await reloadDailyMissionsList();
+        return result;
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
+        return undefined;
       }
-      // Refresh the daily mission list so status reflects in step 1
-      await reloadDailyMissionsList();
-      return result;
-    } catch (err) {
-      console.error('Error toggling mission:', err);
     }
+
+    const mission = dailyMissions.find((m) => m.id === missionId);
+
+    const result = await completeMissionOptimistic(missionId, mission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setDailyMissions((prev) => applyOptimisticCompletion(prev, missionId));
+        } else if (event.type === 'serverResolved') {
+          setDailyMissions((prev) => applyServerResolved(prev, missionId, event.result));
+        } else if (event.type === 'rollback') {
+          setDailyMissions((prev) => applyCompletionRollback(prev, missionId));
+        }
+      },
+      onAchievementsResolved: (achievements) => {
+        setSessionAchievements((prev) => [...prev, ...achievements]);
+      },
+    });
+
+    return result;
   };
 
   const goToSummary = async () => {
@@ -202,8 +217,6 @@ const DailyReviewPage = () => {
             onNext={handleNext}
             onBack={handleBack}
             onSkipToSummary={goToSummary}
-            setLevelUpInfo={setLevelUpInfo}
-            setSkillLevelUpInfo={setSkillLevelUpInfo}
             onAchievementsUnlocked={(achieved) => setSessionAchievements(prev => [...prev, ...achieved])}
           />
         )}
@@ -243,21 +256,8 @@ const DailyReviewPage = () => {
         )}
       </div>
 
-      {levelUpInfo && (
-        <LevelUpModal
-          newLevel={levelUpInfo.newLevel}
-          onClose={() => setLevelUpInfo(null)}
-        />
-      )}
-
-      {skillLevelUpInfo && (
-        <SkillLevelUpModal
-          skillName={skillLevelUpInfo.skillName}
-          newLevel={skillLevelUpInfo.newLevel}
-          onClose={() => setSkillLevelUpInfo(null)}
-        />
-      )}
-
+      {/* Level-up / skill-up modals render globally from NotificationContext
+          now that completions go through MissionCompletionContext. */}
       <AchievementToast
         achievements={sessionAchievements}
         onDismiss={() => setSessionAchievements([])}

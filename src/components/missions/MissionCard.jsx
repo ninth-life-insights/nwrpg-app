@@ -26,6 +26,7 @@ import { useRooms } from '../../contexts/RoomsContext';
 import { useQuests } from '../../contexts/QuestsContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
 import './MissionCard.css';
 
@@ -57,6 +58,9 @@ const MissionCard = ({
     isRoutineMember &&
     pausedRootSet &&
     pausedRootSet.has(mission.parentMissionId || mission.id);
+  const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const isCompletionPending = isPending(mission.id);
+  const isOptimisticComplete = isOptimisticallyComplete(mission.id);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
   const [yesterdayLoading, setYesterdayLoading] = useState(false);
@@ -81,8 +85,11 @@ const MissionCard = ({
     transform: CSS.Transform.toString(transform),
   };
   
-  // Use schema utility functions for consistency
+  // Use schema utility functions for consistency. `isVisuallyComplete` covers
+  // both true completions and optimistic ones (tap in flight) so the checkmark
+  // flips instantly on tap.
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
+  const isVisuallyComplete = isCompleted || isOptimisticComplete;
   const missionHasSkill = hasSkill(mission);
   const canComplete = canCompleteMission(mission);
   const isRecurring = isRecurringMission(mission);
@@ -342,12 +349,13 @@ const MissionCard = ({
       <div className="mission-actions">
         <button
           onClick={handleToggleComplete}
-          className={`mission-toggle ${isCompleted || isRecentlyCompleted ? 'completed' : ''}`}
-          aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+          disabled={isCompletionPending}
+          className={`mission-toggle ${isVisuallyComplete || isRecentlyCompleted ? 'completed' : ''}`}
+          aria-label={isVisuallyComplete ? 'Mark as incomplete' : 'Mark as complete'}
         >
           {/* Checkmark icon */}
-          <svg 
-            className={`check-icon ${isCompleted ? 'completed' : ''}`}
+          <svg
+            className={`check-icon ${isVisuallyComplete ? 'completed' : ''}`}
             xmlns="http://www.w3.org/2000/svg" 
             height="20px" 
             viewBox="0 -960 960 960" 

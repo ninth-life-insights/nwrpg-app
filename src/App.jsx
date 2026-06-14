@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { MissionCompletionProvider } from './contexts/MissionCompletionContext';
 import { RoomsProvider } from './contexts/RoomsContext';
 import { QuestsProvider } from './contexts/QuestsContext';
 import { DailyMissionsProvider } from './contexts/DailyMissionsContext';
@@ -112,15 +113,17 @@ function App() {
     <AuthProvider>
       <Router>
         <NotificationProvider>
-          <RoomsProvider>
-            <QuestsProvider>
-              <DailyMissionsProvider>
-                <RoutineProvider>
-                  <AppContent />
-                </RoutineProvider>
-              </DailyMissionsProvider>
-            </QuestsProvider>
-          </RoomsProvider>
+          <MissionCompletionProvider>
+            <RoomsProvider>
+              <QuestsProvider>
+                <DailyMissionsProvider>
+                  <RoutineProvider>
+                    <AppContent />
+                  </RoutineProvider>
+                </DailyMissionsProvider>
+              </QuestsProvider>
+            </RoomsProvider>
+          </MissionCompletionProvider>
         </NotificationProvider>
       </Router>
     </AuthProvider>

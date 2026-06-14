@@ -3,7 +3,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRoom, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
-import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import { getAllMissions, uncompleteMission } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import {
+  applyOptimisticCompletion,
+  applyServerResolved,
+  applyCompletionRollback,
+} from '../../utils/applyOptimisticCompletion';
 import { getUserProfile } from '../../services/userService';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
@@ -13,6 +19,7 @@ import './RoomDetailModal.css';
 
 const RoomDetailModal = ({ roomId, onClose }) => {
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const [room, setRoom] = useState(null);
   const [roomTitle, setRoomTitle] = useState('');
   const [missions, setMissions] = useState([]);
@@ -59,20 +66,33 @@ const RoomDetailModal = ({ roomId, onClose }) => {
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     setActionError(null);
-    try {
-      if (isCurrentlyCompleted) {
+
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
+        await fetchData();
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
+        setActionError("That undo didn't go through. Try again.");
       }
-      await fetchData();
-    } catch (err) {
-      console.error('Error toggling mission:', err);
-      setActionError(isCurrentlyCompleted
-        ? "That undo didn't go through. Try again."
-        : "That mission didn't complete. Try again."
-      );
+      return;
     }
+
+    const mission = missions.find((m) => m.id === missionId);
+    completeMissionOptimistic(missionId, mission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setMissions((prev) => applyOptimisticCompletion(prev, missionId));
+        } else if (event.type === 'serverResolved') {
+          setMissions((prev) => applyServerResolved(prev, missionId, event.result));
+        } else if (event.type === 'rollback') {
+          setMissions((prev) => applyCompletionRollback(prev, missionId));
+        }
+      },
+      onError: () => {
+        setActionError("That mission didn't complete. Try again.");
+      },
+    });
   };
 
   const handleMissionAdded = () => {

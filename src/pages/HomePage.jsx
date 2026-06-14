@@ -10,10 +10,15 @@ import {
   needsToSetDailyMissions,
 } from '../services/dailyMissionService';
 import {
-  completeMissionWithRecurrence,
   uncompleteMission,
   getAllMissions,
 } from '../services/missionService';
+import { useMissionCompletion } from '../contexts/MissionCompletionContext';
+import {
+  applyOptimisticCompletion,
+  applyServerResolved,
+  applyCompletionRollback,
+} from '../utils/applyOptimisticCompletion';
 import { addXP, 
   subtractXP, 
   getUserProfile,  
@@ -40,6 +45,7 @@ import './HomePage.css';
 const HomePage = () => {
   const { currentUser } = useAuth();
   const { refreshDailyMissions } = useDailyMissions();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const [character, setCharacter] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
@@ -265,42 +271,54 @@ const HomePage = () => {
     );
   }
 
-  // SIMPLIFIED: Function to toggle completion status with XP handling
+  // Toggle completion. Completion is routed through MissionCompletionContext
+  // for optimistic UI + double-tap guard; uncompletion stays on the original
+  // (non-optimistic) path since it isn't part of the slow-tap problem.
+  // Level-up + skill-up modals are now rendered globally by NotificationContext,
+  // so we no longer call setLevelUpInfo/setSkillLevelUpInfo here.
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     setActionError(null);
-    try {
-      if (isCurrentlyCompleted) {
-        // Uncomplete the mission
+
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        // UPDATED: Complete with recurrence support
-        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-
-        // Show level up notification if applicable
-        if (result?.leveledUp) {
-          setLevelUpInfo({ newLevel: result.newLevel });
-        }
-
-        if (result?.skillLeveledUp) {
-          setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-        }
-
-        if (result?.newlyAwardedAchievements?.length > 0) {
-          setNewAchievements(result.newlyAwardedAchievements);
-        }
+        const updatedProfile = await getUserProfile(currentUser.uid);
+        setUserProfile(updatedProfile);
+        await handleDailyMissionsUpdate();
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
+        setActionError("That undo didn't go through. Try again.");
       }
-      
-      // NEW: Refresh user profile to show updated XP/level
-      const updatedProfile = await getUserProfile(currentUser.uid);
-      setUserProfile(updatedProfile);
-      
-      // Reload missions to reflect changes
-      await handleDailyMissionsUpdate();
-      
-    } catch (err) {
-      console.error('Error toggling mission completion:', err);
-      setActionError(isCurrentlyCompleted ? "That undo didn't go through. Try again." : "That mission didn't complete. Try again.");
+      return;
     }
+
+    const mission = dailyMissions.find((m) => m.id === missionId);
+    if (!mission) return;
+
+    completeMissionOptimistic(missionId, mission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setDailyMissions((prev) => applyOptimisticCompletion(prev, missionId));
+        } else if (event.type === 'serverResolved') {
+          setDailyMissions((prev) => applyServerResolved(prev, missionId, event.result));
+        } else if (event.type === 'rollback') {
+          setDailyMissions((prev) => applyCompletionRollback(prev, missionId));
+        }
+      },
+      onResolved: () => {
+        // Background refresh of the user profile so the XP bar catches up.
+        // Not awaited — the checkmark already flipped optimistically.
+        getUserProfile(currentUser.uid)
+          .then(setUserProfile)
+          .catch((e) => console.error('Profile refresh after completion failed:', e));
+      },
+      onAchievementsResolved: (achievements) => {
+        setNewAchievements(achievements);
+      },
+      onError: () => {
+        setActionError("That mission didn't complete. Try again.");
+      },
+    });
   };
 
   return (

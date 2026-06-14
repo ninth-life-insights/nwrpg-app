@@ -3,13 +3,17 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from './MissionCard';
 import AddMissionCard from './AddMissionCard';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import {
+  applyOptimisticCompletion,
+  applyServerResolved,
+  applyCompletionRollback,
+} from '../../utils/applyOptimisticCompletion';
 import {
   getActiveMissions,
   getCompletedMissions,
   getExpiredMissions,
   uncompleteMission,
-  completeMissionWithRecurrence,
   updateMissionCustomOrder,
   batchUpdateMissionOrders
 } from '../../services/missionService';
@@ -104,7 +108,7 @@ const MissionList = ({
 
   const isCustomOrderMode = memoizedFilters.sortBy === 'custom';
 
-  const { notifyMissionCompletion } = useNotifications();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
 
   useEffect(() => {
     if (currentUser) {
@@ -170,48 +174,61 @@ const MissionList = ({
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     if (selectionMode) return;
 
-    try {
-      if (isCurrentlyCompleted) {
+    // Uncompletion remains non-optimistic — no double-tap problem here, and
+    // the surface still benefits from a list refresh afterward.
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-        
-        if (onMissionUncompletion) {
-          onMissionUncompletion(missionId);
+        if (onMissionUncompletion) onMissionUncompletion(missionId);
+        await loadMissions();
+        if (onMissionUpdate) onMissionUpdate();
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
+        setError('Failed to update mission');
+      }
+      return;
+    }
+
+    const completedMission = missions.find((m) => m.id === missionId);
+    if (!completedMission) return;
+
+    completeMissionOptimistic(missionId, completedMission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setMissions((prev) => applyOptimisticCompletion(prev, missionId));
+        } else if (event.type === 'serverResolved') {
+          setMissions((prev) => applyServerResolved(prev, missionId, event.result));
+        } else if (event.type === 'rollback') {
+          setMissions((prev) => applyCompletionRollback(prev, missionId));
         }
-      } else {
-        const completedMission = missions.find(mission => mission.id === missionId);
-        
-        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-
-        notifyMissionCompletion(result);
-
+      },
+      onResolved: (result) => {
         if (result.nextMissionCreated && onRecurringMissionCreated) {
           onRecurringMissionCreated({
             originalMissionId: missionId,
             nextMissionId: result.nextMissionId,
             nextDueDate: result.nextDueDate,
-            missionTitle: completedMission.title
+            missionTitle: completedMission.title,
           });
         }
-
-        if (completedMission && onMissionCompletion) {
-          const updatedMission = { ...completedMission, status: 'completed', xpAwarded: result.xpAwarded, completedAt: new Date() };
+        if (onMissionCompletion) {
+          const updatedMission = {
+            ...completedMission,
+            status: 'completed',
+            xpAwarded: result.xpAwarded,
+            completedAt: new Date(),
+          };
           onMissionCompletion(updatedMission);
         }
-
-        if (result?.newlyAwardedAchievements?.length > 0 && onAchievementsUnlocked) {
-          onAchievementsUnlocked(result.newlyAwardedAchievements);
-        }
-      }
-      
-      await loadMissions();
-      
-      if (onMissionUpdate) {
-        onMissionUpdate();
-      }
-    } catch (err) {
-      console.error('Error toggling mission completion:', err);
-      setError('Failed to update mission');
-    }
+        if (onMissionUpdate) onMissionUpdate();
+      },
+      onAchievementsResolved: (achievements) => {
+        if (onAchievementsUnlocked) onAchievementsUnlocked(achievements);
+      },
+      onError: () => {
+        setError("That mission didn't complete. Try again.");
+      },
+    });
   };
 
   // Lightweight in-place update for a single mission's priority flag.
