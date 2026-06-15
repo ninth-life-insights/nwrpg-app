@@ -1,0 +1,73 @@
+/* Page-level container styling is borrowed from .homepage-container via
+   class composition; only the inner section shapes need their own rules. */
+
+.homepage-skeleton-profile {
+  background: var(--color-bg-white);
+  border: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.homepage-skeleton-profile-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.homepage-skeleton-daily {
+  background: var(--color-bg-white);
+  border: 2px solid var(--color-border-yellow);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.homepage-skeleton-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.homepage-skeleton-up-next {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.homepage-skeleton-action-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.homepage-skeleton-action-buttons .skeleton {
+  flex: 1;
+}
+
+.homepage-skeleton-shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  align-items: stretch;
+}
+
+.homepage-skeleton-shortcut-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.homepage-skeleton-shortcut-col .skeleton {
+  flex: 1;
+}

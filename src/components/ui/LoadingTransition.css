@@ -1,0 +1,48 @@
+.loading-transition {
+  display: grid;
+  grid-template-areas: "stack";
+}
+
+.loading-transition-layer {
+  grid-area: stack;
+  min-width: 0;
+}
+
+.loading-transition-skeleton {
+  pointer-events: none;
+}
+
+.loading-transition-skeleton-in {
+  animation: lt-skeleton-fade-in 300ms ease-out forwards;
+}
+
+.loading-transition-skeleton-out {
+  animation: lt-skeleton-fade-out 300ms ease-out forwards;
+}
+
+.loading-transition-content {
+  animation: lt-content-fade-in 300ms ease-out;
+}
+
+@keyframes lt-skeleton-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lt-skeleton-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes lt-content-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-transition-skeleton-in,
+  .loading-transition-skeleton-out,
+  .loading-transition-content {
+    animation: none;
+  }
+}

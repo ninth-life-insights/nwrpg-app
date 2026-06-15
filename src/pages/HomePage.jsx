@@ -35,6 +35,8 @@ import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import AchievementToast from '../components/achievements/AchievementToast';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import EmailVerificationBanner from '../components/auth/EmailVerificationBanner';
+import LoadingTransition from '../components/ui/LoadingTransition';
+import HomePageSkeleton from './HomePageSkeleton';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import { isMissionOverdue, isMissionDueToday } from '../utils/dateHelpers';
 import { getWeeklyReviewInfo } from '../utils/weeklyReviewHelpers';
@@ -51,7 +53,6 @@ const HomePage = () => {
   const [dailyMissions, setDailyMissions] = useState([]);
   const [dailyMissionStatus, setDailyMissionStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [showEditDailyMissions, setShowEditDailyMissions] = useState(false);
   const navigate = useNavigate();
   const [levelUpInfo, setLevelUpInfo] = useState(null);
@@ -150,8 +151,6 @@ const HomePage = () => {
         return;
       }
       setLoading(true);
-      setIsLoadingSlow(false);
-      const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
         const [userDoc, profile, allMissions, entireBaseRoom] = await withTimeout(
           Promise.all([
@@ -206,9 +205,7 @@ const HomePage = () => {
         setDailyMissions([]);
         setLoadError(getLoadErrorMessage(error, 'missions'));
       } finally {
-        clearTimeout(slowTimer);
         setLoading(false);
-        setIsLoadingSlow(false);
       }
     };
 
@@ -259,17 +256,6 @@ const HomePage = () => {
   };
 
   const dailyStatus = getDailyMissionsDisplayInfo();
-
-  if (loading) {
-    return (
-      <div className="homepage-container">
-        <div className="loading">
-          Loading your adventure...
-          {isLoadingSlow && <p className="loading-slow-hint">Your messenger raven is taking the scenic route...</p>}
-        </div>
-      </div>
-    );
-  }
 
   // Toggle completion. Completion is routed through MissionCompletionContext
   // for optimistic UI + double-tap guard; uncompletion stays on the original
@@ -322,6 +308,7 @@ const HomePage = () => {
   };
 
   return (
+    <LoadingTransition loading={loading} skeleton={<HomePageSkeleton />}>
     <div className="homepage-container">
       {/* Header */}
       <header className="homepage-header">
@@ -566,6 +553,7 @@ const HomePage = () => {
         </div>
       )}
     </div>
+    </LoadingTransition>
   );
 };
 
