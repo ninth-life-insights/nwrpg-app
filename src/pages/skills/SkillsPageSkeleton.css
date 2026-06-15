@@ -1,0 +1,29 @@
+.sps-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.sps-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
+}
+
+.sps-row {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.sps-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

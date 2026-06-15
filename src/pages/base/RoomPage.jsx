@@ -7,6 +7,8 @@ import { getUserProfile } from '../../services/userService';
 import { useRooms } from '../../contexts/RoomsContext';
 import { getAllMissions, uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import RoomPageSkeleton from './RoomPageSkeleton';
 import {
   applyOptimisticCompletion,
   applyServerResolved,
@@ -64,7 +66,6 @@ const RoomPage = () => {
   const [missions, setMissions] = useState([]);
   const [stats, setStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [selectedRoomChip, setSelectedRoomChip] = useState('all');
@@ -121,8 +122,6 @@ const RoomPage = () => {
       return;
     }
     setLoading(true);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       const fetchList = [
         getRoom(currentUser.uid, roomId),
@@ -154,9 +153,7 @@ const RoomPage = () => {
       console.error('Error fetching room data:', error);
       setLoadError(getLoadErrorMessage(error, 'room'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   }, [currentUser, roomId]);
 
@@ -246,17 +243,6 @@ const RoomPage = () => {
       setShowDeleteConfirm(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="room-page">
-        <div className="loading">
-          Loading your room...
-          {isLoadingSlow && <p className="loading-slow-hint">The scouts are still searching...</p>}
-        </div>
-      </div>
-    );
-  }
 
   if (loadError || !room) {
     return (
@@ -349,6 +335,7 @@ const RoomPage = () => {
     : `${stats.total} mission${stats.total !== 1 ? 's' : ''}${scope}${stats.overdue > 0 ? ` · ${stats.overdue} late` : ''}${routineCount > 0 ? ` · ${routineCount} in routine` : ''}`;
 
   return (
+    <LoadingTransition loading={loading} skeleton={<RoomPageSkeleton />}>
     <div className="room-page">
 
       {/* Header */}
@@ -649,6 +636,7 @@ const RoomPage = () => {
         onDismiss={() => setNewAchievements([])}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

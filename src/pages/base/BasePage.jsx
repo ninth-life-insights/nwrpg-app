@@ -15,6 +15,8 @@ import RoomCard from '../../components/base/RoomCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
 import RoomSortModal from '../../components/base/RoomSortModal';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import BasePageSkeleton from './BasePageSkeleton';
 import { applyRoomSort, ROOM_SORT_DEFAULT } from '../../utils/roomListHelpers';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
@@ -50,7 +52,6 @@ const BasePage = () => {
   const [allMissions, setAllMissions] = useState([]);
   const { routineRootSet } = useRoutines();
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reorderError, setReorderError] = useState(null);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
@@ -82,8 +83,6 @@ const BasePage = () => {
       return;
     }
     setLoading(true);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       await initializeEntireBaseRoom(currentUser.uid);
       const [missions, profile] = await withTimeout(
@@ -101,9 +100,7 @@ const BasePage = () => {
       console.error('Error fetching rooms:', error);
       setLoadError(getLoadErrorMessage(error, 'rooms'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
@@ -188,23 +185,13 @@ const BasePage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="base-page-container">
-        <div className="loading">
-          Loading your base...
-          {isLoadingSlow && <p className="loading-slow-hint">Your messenger raven is taking the scenic route...</p>}
-        </div>
-      </div>
-    );
-  }
-
   const hasCustomRooms = rooms.length > 1; // More than just "Entire Base"
 
   const entireBaseRoom = rooms.find(r => r.id === ENTIRE_BASE_ROOM_ID);
   const baseIconUnset = !entireBaseRoom || entireBaseRoom.icon === 'home';
 
   return (
+    <LoadingTransition loading={loading} skeleton={<BasePageSkeleton />}>
     <div className="base-page-container">
       {/* Header */}
       <header className="base-page-header">
@@ -329,6 +316,7 @@ const BasePage = () => {
         onApply={setSortBy}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

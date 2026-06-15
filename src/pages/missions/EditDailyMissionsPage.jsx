@@ -59,6 +59,8 @@ import {
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useModalBackButton } from '../../hooks/useModalBackButton';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
+import { useDelayedLoadingState } from '../../hooks/useDelayedLoadingState';
+import EditDailyMissionsPageSkeleton from './EditDailyMissionsPageSkeleton';
 import './EditDailyMissionsPage.css';
 
 const EditDailyMissionsPage = ({
@@ -102,7 +104,6 @@ const EditDailyMissionsPage = ({
   const [bankQuests, setBankQuests] = useState([]);
   const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [currentConfig, setCurrentConfig] = useState(null);
@@ -139,8 +140,6 @@ const EditDailyMissionsPage = ({
     setDailyMissions([null, null, null]);
     setAllActiveMissions([]);
     setHasSavedPlan(false);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
 
     try {
       await withTimeout((async () => {
@@ -192,9 +191,7 @@ const EditDailyMissionsPage = ({
       console.error('Error loading existing daily missions:', err);
       setError(getLoadErrorMessage(err, 'daily plan'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
@@ -352,16 +349,11 @@ const handleAddNewMission = async (missionData) => {
   const allSlotsFilled = dailyMissions.every(mission => mission !== null);
   const canSave = dailyMissions.some(mission => mission !== null);
 
-  // Show loading state
+  // Show skeleton state — early-return because the JSX below depends on
+  // currentConfig / hasSavedPlan etc. that aren't safe to evaluate while loading.
+  const skeletonVisible = useDelayedLoadingState(loading, 250);
   if (loading) {
-    return (
-      <div className="daily-missions-container">
-        <div className="loading-message">
-          Loading daily missions...
-          {isLoadingSlow && <p className="loading-slow-hint">The dungeon is loading slowly. Try not to get eaten.</p>}
-        </div>
-      </div>
-    );
+    return skeletonVisible ? <EditDailyMissionsPageSkeleton isModal={isModal} /> : null;
   }
 
   const isTargetToday = targetDate === today;

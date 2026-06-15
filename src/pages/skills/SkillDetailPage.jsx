@@ -7,6 +7,8 @@ import { getActiveMissions, getCompletedMissions } from '../../services/missionS
 import MissionCard from '../../components/missions/MissionCard';
 import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import SkillDetailPageSkeleton from './SkillDetailPageSkeleton';
 import {
   applyOptimisticCompletion,
   applyServerResolved,
@@ -41,7 +43,6 @@ const SkillDetailPage = () => {
   const [skillData, setSkillData] = useState(null);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [newAchievements, setNewAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -57,8 +58,6 @@ const SkillDetailPage = () => {
       return;
     }
     setLoading(true);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       const [profile, activeMissions, completedMissions] = await withTimeout(
         Promise.all([
@@ -86,9 +85,7 @@ const SkillDetailPage = () => {
       console.error('Error fetching skill detail data:', error);
       setLoadError(getLoadErrorMessage(error, 'skill details'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
@@ -130,22 +127,12 @@ const SkillDetailPage = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="skill-detail-page">
-        <div className="loading">
-          Loading...
-          {isLoadingSlow && <p className="loading-slow-hint">Still searching the realm...</p>}
-        </div>
-      </div>
-    );
-  }
-
   const progress = skillData?.progress;
   const level = skillData?.level || 1;
   const totalSP = skillData?.totalSP || 0;
 
   return (
+    <LoadingTransition loading={loading} skeleton={<SkillDetailPageSkeleton />}>
     <div className="skill-detail-page">
       <header className="skill-detail-header">
         <button className="skill-detail-back-btn" onClick={handleBack}>
@@ -203,6 +190,7 @@ const SkillDetailPage = () => {
         onDismiss={() => setNewAchievements([])}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

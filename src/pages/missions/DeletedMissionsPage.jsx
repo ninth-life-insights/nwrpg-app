@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getDeletedMissions, restoreMission } from '../../services/missionService';
 import MissionCardCondensed from '../../components/missions/MissionCardCondensed';
+import MissionCardCondensedSkeleton from '../../components/missions/MissionCardCondensedSkeleton';
+import LoadingTransition from '../../components/ui/LoadingTransition';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './DeletedMissionsPage.css';
@@ -109,7 +111,18 @@ const DeletedMissionsPage = () => {
       )}
 
       {loading && !loadError && (
-        <p className="deleted-missions-empty">Loading...</p>
+        <LoadingTransition
+          loading={loading}
+          skeleton={
+            <div className="deleted-mission-list">
+              <MissionCardCondensedSkeleton titleWidth="60%" />
+              <MissionCardCondensedSkeleton titleWidth="55%" />
+              <MissionCardCondensedSkeleton titleWidth="65%" />
+            </div>
+          }
+        >
+          <div />
+        </LoadingTransition>
       )}
 
       {!loading && !loadError && missions.length === 0 && (

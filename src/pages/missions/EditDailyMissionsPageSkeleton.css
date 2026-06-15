@@ -1,0 +1,14 @@
+.edmps-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.edmps-section {
+  padding: 0 var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
