@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useDelayedLoadingState } from '../../hooks/useDelayedLoadingState';
 import './LoadingTransition.css';
 
-const SKELETON_DELAY_MS = 1000;
+// Short delay before the skeleton appears, just enough to suppress flash on
+// near-instant cache hits. Anything longer eats too much of the skeleton's
+// visible window on typical multi-second Firestore loads.
+const SKELETON_DELAY_MS = 250;
 const FADE_DURATION_MS = 300;
 
 // Wraps a section that has a loading state and a skeleton placeholder.

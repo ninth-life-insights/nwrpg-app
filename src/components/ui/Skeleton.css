@@ -1,7 +1,7 @@
 .skeleton {
   display: block;
   background-color: rgba(0, 0, 0, 0.07);
-  animation: skeleton-pulse 1.8s ease-in-out infinite;
+  animation: skeleton-pulse 2.2s ease-in-out infinite;
 }
 
 .skeleton-inline {

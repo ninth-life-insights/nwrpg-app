@@ -3,10 +3,8 @@
 
 .homepage-skeleton-profile {
   background: var(--color-bg-white);
-  border: 2px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   padding: var(--space-sm) var(--space-md);
-  box-shadow: var(--shadow-card);
   display: flex;
   align-items: center;
   gap: var(--space-md);
@@ -22,10 +20,8 @@
 
 .homepage-skeleton-daily {
   background: var(--color-bg-white);
-  border: 2px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   padding: var(--space-sm) var(--space-md) var(--space-md);
-  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);

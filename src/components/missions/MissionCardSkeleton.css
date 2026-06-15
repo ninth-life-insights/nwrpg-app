@@ -1,7 +1,6 @@
 /* Mirror MissionCard's outer shell so swap-in causes zero layout shift. */
 .mission-card-skeleton {
   background-color: var(--color-bg-main);
-  border: 1px solid var(--color-border-yellow);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   margin: var(--space-md) auto;
@@ -12,7 +11,6 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-md);
-  box-shadow: var(--shadow-card);
 }
 
 .mission-card-skeleton-content {
