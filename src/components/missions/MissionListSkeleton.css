@@ -1,0 +1,5 @@
+.mission-list-skeleton {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md) 0;
+}

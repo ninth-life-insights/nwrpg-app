@@ -25,6 +25,8 @@ import {
   applyCompletionRollback,
 } from '../../utils/applyOptimisticCompletion';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import QuestBankPageSkeleton from './QuestBankPageSkeleton';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './QuestBankPage.css';
@@ -43,7 +45,6 @@ const QuestBank = () => {
   // recentlyCompletedMissions pattern.
   const [recentlyCompletedQuests, setRecentlyCompletedQuests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [missionsError, setMissionsError] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -68,8 +69,6 @@ const QuestBank = () => {
     }
     setLoading(true);
     setLoadError(null);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       let questData = [];
       if (filters.showArchive) {
@@ -90,9 +89,7 @@ const QuestBank = () => {
       console.error('Error loading quests:', err);
       setLoadError(getLoadErrorMessage(err, 'quests'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
@@ -238,16 +235,6 @@ const QuestBank = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="quest-bank-page">
-        <div className="loading-state">
-          Loading quests...
-          {isLoadingSlow && <p className="loading-slow-hint">Still searching the realm...</p>}
-        </div>
-      </div>
-    );
-  }
 
   // Merge the active fetch with this session's just-completed quests.
   // Hide archive view from the merge — recently-completed quests don't make
@@ -282,6 +269,7 @@ const QuestBank = () => {
   })();
 
   return (
+    <LoadingTransition loading={loading} skeleton={<QuestBankPageSkeleton />}>
     <div className="quest-bank-page">
       {loadError && (
         <ErrorMessage
@@ -407,6 +395,7 @@ const QuestBank = () => {
         onApplyFilters={handleApplyFilters}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

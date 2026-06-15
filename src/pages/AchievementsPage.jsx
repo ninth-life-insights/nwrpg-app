@@ -6,6 +6,8 @@ import { getMergedAchievementLibrary, deleteCustomAchievement } from '../service
 import AchievementCard from '../components/achievements/AchievementCard';
 import CreateCustomAchievementModal from '../components/achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import LoadingTransition from '../components/ui/LoadingTransition';
+import AchievementsPageSkeleton from './AchievementsPageSkeleton';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './AchievementsPage.css';
@@ -15,7 +17,6 @@ const AchievementsPage = () => {
   const navigate = useNavigate();
   const [library, setLibrary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState(null);
@@ -32,8 +33,6 @@ const AchievementsPage = () => {
     }
     setLoading(true);
     setLoadError(null);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       const data = await withTimeout(getMergedAchievementLibrary(currentUser.uid));
       setLibrary(data);
@@ -41,9 +40,7 @@ const AchievementsPage = () => {
       console.error('Error fetching achievements:', error);
       setLoadError(getLoadErrorMessage(error, 'achievements'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   }, [currentUser]);
 
@@ -70,20 +67,10 @@ const AchievementsPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="achievements-page">
-        <div className="loading">
-          Loading achievements...
-          {isLoadingSlow && <p className="loading-slow-hint">The quest board is being restocked...</p>}
-        </div>
-      </div>
-    );
-  }
-
   const { builtIn = [], custom = [], totalBuiltIn = 0, awardedBuiltInCount = 0 } = library || {};
 
   return (
+    <LoadingTransition loading={loading} skeleton={<AchievementsPageSkeleton />}>
     <div className="achievements-page">
       <header className="achievements-header">
         <button className="achievements-back-btn" onClick={handleBack}>
@@ -159,6 +146,7 @@ const AchievementsPage = () => {
         />
       )}
     </div>
+    </LoadingTransition>
   );
 };
 

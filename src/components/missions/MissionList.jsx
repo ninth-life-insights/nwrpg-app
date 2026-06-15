@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from './MissionCard';
+import MissionListSkeleton from './MissionListSkeleton';
 import AddMissionCard from './AddMissionCard';
+import { useDelayedLoadingState } from '../../hooks/useDelayedLoadingState';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
   applyOptimisticCompletion,
@@ -75,6 +77,7 @@ const MissionList = ({
   const { questsMap } = useQuests();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const skeletonVisible = useDelayedLoadingState(loading, 250);
   const [error, setError] = useState(null);
   const [showDragPrompt, setShowDragPrompt] = useState(false);
   const [dragPromptPosition, setDragPromptPosition] = useState(null);
@@ -366,15 +369,7 @@ const MissionList = ({
   });
 
   if (loading) {
-    return (
-      <div style={{ 
-        textAlign: 'center', 
-        padding: '40px',
-        color: '#666'
-      }}>
-        Loading missions...
-      </div>
-    );
+    return skeletonVisible ? <MissionListSkeleton /> : null;
   }
 
   if (error) {
