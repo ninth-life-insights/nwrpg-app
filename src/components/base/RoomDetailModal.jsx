@@ -9,10 +9,12 @@ import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
 import { withTimeout } from '../../utils/fetchWithTimeout';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './RoomDetailModal.css';
 
 const RoomDetailModal = ({ roomId, onClose }) => {
   const { currentUser } = useAuth();
+  useModalBackButton(true, onClose);
   const [room, setRoom] = useState(null);
   const [roomTitle, setRoomTitle] = useState('');
   const [missions, setMissions] = useState([]);

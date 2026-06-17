@@ -30,6 +30,7 @@ import {
   toggleMissionPriority,
 } from '../../services/missionService';
 import dayjs from 'dayjs';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './MissionCardFull.css';
 
 const MissionCardFull = ({
@@ -48,6 +49,8 @@ const MissionCardFull = ({
   const isDailyMission = useIsDailyMission(mission.id);
   const [isEditing, setIsEditing] = useState(false);
   const [editFocusField, setEditFocusField] = useState(null);
+
+  useModalBackButton(true, onClose);
   const [showExpiryNote, setShowExpiryNote] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [actionError, setActionError] = useState(null);

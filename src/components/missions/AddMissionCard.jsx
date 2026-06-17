@@ -20,6 +20,7 @@ import {
   DUE_TYPES,
 } from '../../types/Mission';
 import ErrorMessage from '../ui/ErrorMessage';
+import { useModalBackButton } from '../../hooks/useModalBackButton';
 import './AddMissionCard.css';
 
 const AddMissionCard = ({
@@ -34,6 +35,7 @@ const AddMissionCard = ({
   autoOpenField = null,    // field to auto-expand on mount (e.g. 'dueDate', 'skill', 'room')
 }) => {
   const { currentUser } = useAuth();
+  useModalBackButton(true, onCancel);
 
   // User's preferred default follow-up window. 'none' means no auto follow-up;
   // a positive number is days. Defaults to 30; updated from profile on mount
