@@ -37,6 +37,11 @@ export function useAndroidBackButton(onBack) {
   // StrictMode's synchronous cleanup→remount cancel it before it fires,
   // so no phantom history entries accumulate.
   const cleanupTimer = useRef(null);
+  // Unique ID per sentinel so we can tell "my sentinel" apart from another
+  // page's sentinel. Without this, a forward navigation lets the next page's
+  // sentinel falsely pass the __pageSentinel check, and a modal closing pops
+  // back to our sentinel and looks like a hardware back press.
+  const sentinelId = useRef(null);
 
   useEffect(() => {
     if (!onBack) return;
@@ -51,12 +56,19 @@ export function useAndroidBackButton(onBack) {
     } else {
       // Fresh mount: push a sentinel at the same URL so the back button
       // has something to consume without navigating away.
-      history.pushState({ __pageSentinel: true }, '', location.href);
+      sentinelId.current = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      history.pushState({ __pageSentinel: true, __sentinelId: sentinelId.current }, '', location.href);
     }
 
     const handlePopState = (event) => {
       // A modal sentinel is on top — useModalBackButton handles it.
       if (event.state && event.state.__modalSentinel) {
+        return;
+      }
+      // We landed back on our own page sentinel — this means a modal beneath
+      // us popped its sentinel during UI close, not a hardware back press.
+      // Don't fire onBack.
+      if (event.state && event.state.__pageSentinel && event.state.__sentinelId === sentinelId.current) {
         return;
       }
       consumedViaBack.current = true;
@@ -67,13 +79,16 @@ export function useAndroidBackButton(onBack) {
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      // Only pop the sentinel if the current entry still IS our sentinel
-      // (i.e., the unmount wasn't caused by a forward navigation that
-      // pushed a new entry on top). Mirrors useModalBackButton's pattern.
+      // Only pop the sentinel if the current entry still IS our specific
+      // sentinel. A forward navigation may have already pushed the next page's
+      // sentinel on top — that one has a different ID, so we leave it alone.
       if (!consumedViaBack.current) {
+        const myId = sentinelId.current;
         cleanupTimer.current = setTimeout(() => {
           cleanupTimer.current = null;
-          if (history.state?.__pageSentinel) history.back();
+          if (history.state?.__pageSentinel && history.state.__sentinelId === myId) {
+            history.back();
+          }
         }, 0);
       }
     };
