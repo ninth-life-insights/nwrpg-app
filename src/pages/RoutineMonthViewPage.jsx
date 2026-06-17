@@ -6,7 +6,9 @@ import { useRoutines } from '../contexts/RoutineContext';
 import { getActiveMissions } from '../services/missionService';
 import { getUserProfile } from '../services/userService';
 import RoutineMonthGrid from '../components/routines/RoutineMonthGrid';
+import RoutineGridSkeleton from '../components/routines/RoutineGridSkeleton';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import LoadingTransition from '../components/ui/LoadingTransition';
 import PageHeader from '../components/ui/PageHeader';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
@@ -78,7 +80,9 @@ const RoutineMonthViewPage = () => {
       )}
 
       {loading && !loadError && (
-        <div className="routines-loading">Loading…</div>
+        <LoadingTransition loading={loading} skeleton={<RoutineGridSkeleton rows={5} />}>
+          <div />
+        </LoadingTransition>
       )}
 
       {!loading && !loadError && (

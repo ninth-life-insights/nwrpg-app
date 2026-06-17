@@ -7,7 +7,9 @@ import { getOrCreateDefaultRoutine } from '../services/routineService';
 import { getActiveMissions } from '../services/missionService';
 import { DEFAULT_ROUTINE_ID } from '../types/Routine';
 import RoutineBuilderSection from '../components/routines/RoutineBuilderSection';
+import RoutineBuilderSkeleton from '../components/routines/RoutineBuilderSkeleton';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import LoadingTransition from '../components/ui/LoadingTransition';
 import PageHeader from '../components/ui/PageHeader';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
@@ -72,7 +74,9 @@ const RoutineBuilderPage = () => {
       )}
 
       {loading && !loadError && (
-        <div className="routines-loading">Loading…</div>
+        <LoadingTransition loading={loading} skeleton={<RoutineBuilderSkeleton />}>
+          <div />
+        </LoadingTransition>
       )}
 
       {!loading && !loadError && (

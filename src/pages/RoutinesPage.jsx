@@ -14,8 +14,10 @@ import {
   getCompletedMissionsSince,
 } from '../services/missionService';
 import RoutineTodaySection from '../components/routines/RoutineTodaySection';
+import RoutineTodaySkeleton from '../components/routines/RoutineTodaySkeleton';
 import PauseRoutineDialog from '../components/routines/PauseRoutineDialog';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import LoadingTransition from '../components/ui/LoadingTransition';
 import PageHeader from '../components/ui/PageHeader';
 import StickyFooter from '../components/ui/StickyFooter';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
@@ -117,7 +119,9 @@ const RoutinesPage = () => {
       )}
 
       {loading && !loadError && (
-        <div className="routines-loading">Loading…</div>
+        <LoadingTransition loading={loading} skeleton={<RoutineTodaySkeleton />}>
+          <div />
+        </LoadingTransition>
       )}
 
       {!loading && !loadError && (

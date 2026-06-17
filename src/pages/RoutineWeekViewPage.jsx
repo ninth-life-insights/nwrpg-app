@@ -6,7 +6,9 @@ import { useRoutines } from '../contexts/RoutineContext';
 import { getActiveMissions } from '../services/missionService';
 import { getUserProfile } from '../services/userService';
 import RoutineWeekGrid from '../components/routines/RoutineWeekGrid';
+import RoutineGridSkeleton from '../components/routines/RoutineGridSkeleton';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import LoadingTransition from '../components/ui/LoadingTransition';
 import PageHeader from '../components/ui/PageHeader';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
@@ -82,7 +84,9 @@ const RoutineWeekViewPage = () => {
       )}
 
       {loading && !loadError && (
-        <div className="routines-loading">Loading…</div>
+        <LoadingTransition loading={loading} skeleton={<RoutineGridSkeleton rows={1} />}>
+          <div />
+        </LoadingTransition>
       )}
 
       {!loading && !loadError && (
