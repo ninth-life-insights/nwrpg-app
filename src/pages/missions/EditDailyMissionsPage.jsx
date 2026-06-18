@@ -1,5 +1,5 @@
 // src/pages/EditDailyMissionsPage.js - UPDATED FOR SIMPLIFIED SYSTEM
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,12 +13,11 @@ import DatePickerPill from '../../components/ui/DatePickerPill';
 
 // Service imports - UPDATED for simplified system
 import {
-  getActiveMissions,
-  getCompletedMissions,
   createMission,
   completeMissionWithRecurrence,
   uncompleteMission,
 } from '../../services/missionService';
+import { useMissions } from '../../contexts/MissionsContext';
 import { getRooms } from '../../services/roomService';
 import { getAllQuests } from '../../services/questService';
 
@@ -90,7 +89,17 @@ const EditDailyMissionsPage = ({
   const handleBack = () => navigate('/home');
   useAndroidBackButton(isModal ? null : handleBack);
 
-  const [allActiveMissions, setAllActiveMissions] = useState([]);
+  const {
+    missions: cachedMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
+  // Active mission list for the bank picker. Derived synchronously from the
+  // shared cache so it stays in sync with completions / edits elsewhere.
+  const allActiveMissions = useMemo(() => {
+    if (cachedMissions == null) return [];
+    return cachedMissions.filter(m => m.status === 'active');
+  }, [cachedMissions]);
   const [bankSearchQuery, setBankSearchQuery] = useState('');
   const [bankFilters, setBankFilters] = useState({
     sortBy: 'dueDate', sortOrder: 'asc', skillFilter: '',
@@ -111,10 +120,12 @@ const EditDailyMissionsPage = ({
   const [hasSavedPlan, setHasSavedPlan] = useState(false);
   const [selectedMission, setSelectedMission] = useState(null);
 
-  // Reload whenever the target date changes
+  // Reload whenever the target date or the shared cache changes. Including
+  // cachedMissions ensures the slot fill runs once the cache becomes available.
   useEffect(() => {
     loadExistingDailyMissions();
-  }, [currentUser, targetDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, targetDate, cachedMissions]);
 
   // Load filter data for the mission bank modal on mount
   useEffect(() => {
@@ -135,46 +146,34 @@ const EditDailyMissionsPage = ({
       setLoading(false);
       return;
     }
+    if (cachedMissions == null) return; // wait for the shared cache
     setLoading(true);
     setError('');
     setDailyMissions([null, null, null]);
-    setAllActiveMissions([]);
     setHasSavedPlan(false);
 
     try {
       await withTimeout((async () => {
-        // Fetch config/history and active missions in parallel
-        const [missionIds, activeMissions] = await Promise.all([
-          (async () => {
-            if (targetDate === today) {
-              const config = await getDailyMissionsConfig(currentUser.uid);
-              setCurrentConfig(config);
-              return (config && config.setForDate === today && config.missionIds?.length > 0)
-                ? config.missionIds : null;
-            } else {
-              setCurrentConfig(null);
-              const history = await getDailyMissionsForDate(currentUser.uid, targetDate);
-              return history?.selectedMissionIds?.length > 0 ? history.selectedMissionIds : null;
-            }
-          })(),
-          getActiveMissions(currentUser.uid),
-        ]);
+        // Resolve the saved-plan source for this date. Active/completed
+        // missions come from the shared cache — no separate fetch needed.
+        let missionIds;
+        if (targetDate === today) {
+          const config = await getDailyMissionsConfig(currentUser.uid);
+          setCurrentConfig(config);
+          missionIds = (config && config.setForDate === today && config.missionIds?.length > 0)
+            ? config.missionIds : null;
+        } else {
+          setCurrentConfig(null);
+          const history = await getDailyMissionsForDate(currentUser.uid, targetDate);
+          missionIds = history?.selectedMissionIds?.length > 0 ? history.selectedMissionIds : null;
+        }
 
-        setAllActiveMissions(activeMissions);
-
-        // Track whether a saved plan exists for this date (used for "Set" vs "Update" label)
         setHasSavedPlan(missionIds != null);
 
         if (missionIds) {
-          // Also fetch completed missions — slots may contain pre-completed missions
-          const completedMissions = getCompletedMissions
-            ? await getCompletedMissions(currentUser.uid) : [];
-
-          const allMissions = [...activeMissions, ...completedMissions];
-
           const selectedMissions = missionIds
             .map(missionId => {
-              const mission = allMissions.find(m => m.id === missionId);
+              const mission = cachedMissions.find(m => m.id === missionId);
               if (!mission) console.warn('Mission not found for ID:', missionId);
               return mission;
             })
@@ -235,15 +234,9 @@ const handleAddNewMission = async (missionData) => {
       } else {
         await completeMissionWithRecurrence(currentUser.uid, missionId);
       }
-      const [active, completed] = await Promise.all([
-        getActiveMissions(currentUser.uid),
-        getCompletedMissions(currentUser.uid),
-      ]);
-      const updated = [...active, ...completed].find(m => m.id === missionId);
-      if (updated) {
-        setDailyMissions(prev => prev.map(m => m?.id === missionId ? updated : m));
-        setSelectedMission(updated);
-      }
+      // Pull the shared cache so any other surface (and this page's daily
+      // slots) sees the new status.
+      await refreshMissionsCache();
     } catch (err) {
       console.error('Error toggling mission complete:', err);
     }
@@ -253,15 +246,9 @@ const handleAddNewMission = async (missionData) => {
     setSelectedMission(null);
     if (action === 'deleted' || action === 'archived') {
       setDailyMissions(prev => prev.map(m => m?.id === missionId ? null : m));
+      await refreshMissionsCache();
     } else if (action === 'updated') {
-      const [active, completed] = await Promise.all([
-        getActiveMissions(currentUser.uid),
-        getCompletedMissions(currentUser.uid),
-      ]);
-      const updated = [...active, ...completed].find(m => m.id === missionId);
-      if (updated) {
-        setDailyMissions(prev => prev.map(m => m?.id === missionId ? updated : m));
-      }
+      await refreshMissionsCache();
     }
   };
 
@@ -351,8 +338,11 @@ const handleAddNewMission = async (missionData) => {
 
   // Show skeleton state — early-return because the JSX below depends on
   // currentConfig / hasSavedPlan etc. that aren't safe to evaluate while loading.
-  const skeletonVisible = useDelayedLoadingState(loading, 250);
-  if (loading) {
+  // Cache-not-ready counts as still loading so the active-mission bank picker
+  // can't flash empty before the cache lands.
+  const isInitialLoad = loading || missionsCacheLoading;
+  const skeletonVisible = useDelayedLoadingState(isInitialLoad, 250);
+  if (isInitialLoad) {
     return skeletonVisible ? <EditDailyMissionsPageSkeleton isModal={isModal} /> : null;
   }
 

@@ -15,15 +15,10 @@ import {
   reopenQuest,
   restoreQuest
 } from '../../services/questService';
-import { getAllMissions } from '../../services/missionService';
+import { useMissions } from '../../contexts/MissionsContext';
 import { getNextMission } from '../../types/Quests';
 import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
-import {
-  applyOptimisticCompletion,
-  applyServerResolved,
-  applyCompletionRollback,
-} from '../../utils/applyOptimisticCompletion';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import LoadingTransition from '../../components/ui/LoadingTransition';
 import QuestBankPageSkeleton from './QuestBankPageSkeleton';
@@ -36,8 +31,12 @@ const QuestBank = () => {
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();
   
+  const {
+    missions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const [quests, setQuests] = useState([]);
-  const [missions, setMissions] = useState([]);
   // Quests that transitioned to COMPLETED during this page session — kept
   // around so the user sees the completion land (with XP badge, struck-through
   // title) rather than the quest silently disappearing from the active list.
@@ -93,16 +92,14 @@ const QuestBank = () => {
     }
   };
 
+  // Missions now come from the shared MissionsContext cache. This wrapper
+  // exists for legacy call sites; it just kicks the cache refresh.
   const loadMissions = async () => {
     setMissionsError(null);
     try {
-      const missionData = await getAllMissions(currentUser.uid);
-      setMissions(missionData);
+      await refreshMissionsCache();
     } catch (err) {
       console.error('Error loading missions:', err);
-      // Quest list can still render without missions, but "next up" cards
-      // and live progress counts depend on this fetch — surface the failure
-      // so the user knows something on the page is incomplete.
       setMissionsError("Your missions didn't load. Quest progress may be off.");
     }
   };
@@ -188,21 +185,11 @@ const QuestBank = () => {
     }
 
     const mission = missions.find((m) => m.id === missionId);
+    // MissionCompletionContext mutates the shared cache directly. The quest
+    // list still needs to reconcile (auto-complete / auto-reopen) so we
+    // keep onResolved.
     completeMissionOptimistic(missionId, mission, {
-      onLocalMutation: (event) => {
-        if (event.type === 'completed') {
-          setMissions((prev) => applyOptimisticCompletion(prev, missionId));
-        } else if (event.type === 'serverResolved') {
-          setMissions((prev) => applyServerResolved(prev, missionId, event.result));
-        } else if (event.type === 'rollback') {
-          setMissions((prev) => applyCompletionRollback(prev, missionId));
-        }
-      },
       onResolved: async () => {
-        // After the server confirms, sync quest auto-complete state and
-        // reload quests so progress bars / sort order reflect the change.
-        // Skip loadMissions — local state is already up-to-date via the
-        // optimistic + serverResolved updates.
         await reconcileQuestStateAfterToggle(missionId);
         await loadQuests();
       },
@@ -269,7 +256,7 @@ const QuestBank = () => {
   })();
 
   return (
-    <LoadingTransition loading={loading} skeleton={<QuestBankPageSkeleton />}>
+    <LoadingTransition loading={loading || missionsCacheLoading} skeleton={<QuestBankPageSkeleton />}>
     <div className="quest-bank-page">
       {loadError && (
         <ErrorMessage

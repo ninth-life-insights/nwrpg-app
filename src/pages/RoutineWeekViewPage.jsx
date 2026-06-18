@@ -1,9 +1,9 @@
 // src/pages/RoutineWeekViewPage.jsx
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoutines } from '../contexts/RoutineContext';
-import { getActiveMissions } from '../services/missionService';
+import { useMissions } from '../contexts/MissionsContext';
 import { getUserProfile } from '../services/userService';
 import RoutineWeekGrid from '../components/routines/RoutineWeekGrid';
 import RoutineGridSkeleton from '../components/routines/RoutineGridSkeleton';
@@ -19,9 +19,13 @@ import './RoutinesPage.css';
 const RoutineWeekViewPage = () => {
   const { currentUser } = useAuth();
   const { routineRootSet, pausedRootSet } = useRoutines();
+  const {
+    missions: cachedMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const navigate = useNavigate();
 
-  const [missions, setMissions] = useState([]);
   // Default to Monday until the profile loads — matches the seed value and
   // avoids a flash of misordered columns.
   const [weekStartDay, setWeekStartDay] = useState(1);
@@ -31,28 +35,18 @@ const RoutineWeekViewPage = () => {
   const handleBack = () => navigate('/routine-builder');
   useAndroidBackButton(handleBack);
 
-  // Lightweight refresh — re-pulls active missions after a drag mutation
-  // without re-fetching the profile (weekStartDay doesn't change here).
-  const refreshMissions = useCallback(async () => {
-    if (!currentUser) return;
-    try {
-      const activeMissions = await getActiveMissions(currentUser.uid);
-      setMissions(activeMissions);
-    } catch (err) {
-      console.error('Routine week view refresh failed:', err);
-    }
-  }, [currentUser]);
+  // Active missions, derived synchronously from the shared cache.
+  const missions = useMemo(() => {
+    if (cachedMissions == null) return [];
+    return cachedMissions.filter(m => m.status === 'active');
+  }, [cachedMissions]);
 
   const initialLoad = useCallback(async () => {
     if (!currentUser) return;
     setLoading(true);
     setLoadError(null);
     try {
-      const [activeMissions, profile] = await Promise.all([
-        getActiveMissions(currentUser.uid),
-        getUserProfile(currentUser.uid),
-      ]);
-      setMissions(activeMissions);
+      const profile = await getUserProfile(currentUser.uid);
       if (profile && typeof profile.weekStartDay === 'number') {
         setWeekStartDay(profile.weekStartDay);
       }
@@ -67,6 +61,8 @@ const RoutineWeekViewPage = () => {
   useEffect(() => {
     initialLoad();
   }, [initialLoad]);
+
+  const isInitialLoad = loading || missionsCacheLoading;
 
   return (
     <div className="routines-page routine-week-view-page">
@@ -83,19 +79,19 @@ const RoutineWeekViewPage = () => {
         />
       )}
 
-      {loading && !loadError && (
-        <LoadingTransition loading={loading} skeleton={<RoutineGridSkeleton rows={1} />}>
+      {isInitialLoad && !loadError && (
+        <LoadingTransition loading={isInitialLoad} skeleton={<RoutineGridSkeleton rows={1} />}>
           <div />
         </LoadingTransition>
       )}
 
-      {!loading && !loadError && (
+      {!isInitialLoad && !loadError && (
         <RoutineWeekGrid
           missions={missions}
           routineRootSet={routineRootSet}
           pausedRootSet={pausedRootSet}
           weekStartDay={weekStartDay}
-          onMutated={refreshMissions}
+          onMutated={refreshMissionsCache}
         />
       )}
     </div>

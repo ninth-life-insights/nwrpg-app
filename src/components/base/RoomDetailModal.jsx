@@ -1,15 +1,11 @@
 // src/components/base/RoomDetailModal.jsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRoom, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
-import { getAllMissions, uncompleteMission } from '../../services/missionService';
+import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
-import {
-  applyOptimisticCompletion,
-  applyServerResolved,
-  applyCompletionRollback,
-} from '../../utils/applyOptimisticCompletion';
+import { useMissions } from '../../contexts/MissionsContext';
 import { getUserProfile } from '../../services/userService';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
@@ -20,23 +16,34 @@ import './RoomDetailModal.css';
 const RoomDetailModal = ({ roomId, onClose }) => {
   const { currentUser } = useAuth();
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    missions: allMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const [room, setRoom] = useState(null);
   const [roomTitle, setRoomTitle] = useState('');
-  const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
+
+  // Room-scoped mission list derived synchronously from the cache.
+  const missions = useMemo(() => {
+    if (allMissions == null) return [];
+    return allMissions.filter(
+      m => m.baseLocation === roomId && m.status !== 'deleted'
+    );
+  }, [allMissions, roomId]);
 
   const fetchData = useCallback(async () => {
     if (!currentUser) return;
     setLoadError(null);
     setLoading(true);
     try {
-      const [roomData, allMissions, profile] = await withTimeout(
+      const [roomData, profile] = await withTimeout(
         Promise.all([
           getRoom(currentUser.uid, roomId),
-          getAllMissions(currentUser.uid),
           getUserProfile(currentUser.uid),
         ])
       );
@@ -44,16 +51,12 @@ const RoomDetailModal = ({ roomId, onClose }) => {
         setLoadError("This room couldn't be found.");
         return;
       }
-      const roomMissions = allMissions.filter(
-        m => m.baseLocation === roomId && m.status !== 'deleted'
-      );
       setRoom(roomData);
       setRoomTitle(
         roomId === ENTIRE_BASE_ROOM_ID
           ? (profile?.baseName || roomData.name)
           : roomData.name
       );
-      setMissions(roomMissions);
     } catch (err) {
       console.error('Error fetching room data:', err);
       setLoadError("Your room didn't load. Try again.");
@@ -70,7 +73,7 @@ const RoomDetailModal = ({ roomId, onClose }) => {
     if (isCurrentlyCompleted) {
       try {
         await uncompleteMission(currentUser.uid, missionId);
-        await fetchData();
+        await refreshMissionsCache();
       } catch (err) {
         console.error('Error uncompleting mission:', err);
         setActionError("That undo didn't go through. Try again.");
@@ -79,16 +82,9 @@ const RoomDetailModal = ({ roomId, onClose }) => {
     }
 
     const mission = missions.find((m) => m.id === missionId);
+    // MissionCompletionContext mutates the shared cache directly; the local
+    // memo above re-derives the room view on the same tick.
     completeMissionOptimistic(missionId, mission, {
-      onLocalMutation: (event) => {
-        if (event.type === 'completed') {
-          setMissions((prev) => applyOptimisticCompletion(prev, missionId));
-        } else if (event.type === 'serverResolved') {
-          setMissions((prev) => applyServerResolved(prev, missionId, event.result));
-        } else if (event.type === 'rollback') {
-          setMissions((prev) => applyCompletionRollback(prev, missionId));
-        }
-      },
       onError: () => {
         setActionError("That mission didn't complete. Try again.");
       },
@@ -97,10 +93,17 @@ const RoomDetailModal = ({ roomId, onClose }) => {
 
   const handleMissionAdded = () => {
     setShowAddMission(false);
-    fetchData();
+    refreshMissionsCache();
+  };
+
+  const handleMissionChanged = () => {
+    refreshMissionsCache();
   };
 
   const activeMissions = missions.filter(m => m.status === 'active');
+  // Combine room-metadata loading with cache-not-yet-ready so the empty
+  // state can't flash while either is still in flight.
+  const isInitialLoad = loading || missionsCacheLoading;
 
   const content = (
     <div className="rdm-overlay" onClick={onClose}>
@@ -116,7 +119,7 @@ const RoomDetailModal = ({ roomId, onClose }) => {
 
         {/* Scrollable body */}
         <div className="rdm-body">
-          {loading && !loadError && (
+          {isInitialLoad && !loadError && (
             <p className="rdm-loading">Loading...</p>
           )}
 
@@ -124,7 +127,7 @@ const RoomDetailModal = ({ roomId, onClose }) => {
             <ErrorMessage message={loadError} onRetry={fetchData} />
           )}
 
-          {!loading && !loadError && (
+          {!isInitialLoad && !loadError && (
             <>
               {actionError && (
                 <div className="rdm-action-error-wrap">
@@ -141,7 +144,7 @@ const RoomDetailModal = ({ roomId, onClose }) => {
                   key={mission.id}
                   mission={mission}
                   onToggleComplete={handleToggleComplete}
-                  onMissionChanged={fetchData}
+                  onMissionChanged={handleMissionChanged}
                   hideRoomBadge
                 />
               ))}

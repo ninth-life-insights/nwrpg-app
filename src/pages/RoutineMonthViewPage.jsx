@@ -1,9 +1,9 @@
 // src/pages/RoutineMonthViewPage.jsx
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoutines } from '../contexts/RoutineContext';
-import { getActiveMissions } from '../services/missionService';
+import { useMissions } from '../contexts/MissionsContext';
 import { getUserProfile } from '../services/userService';
 import RoutineMonthGrid from '../components/routines/RoutineMonthGrid';
 import RoutineGridSkeleton from '../components/routines/RoutineGridSkeleton';
@@ -19,9 +19,13 @@ import './RoutinesPage.css';
 const RoutineMonthViewPage = () => {
   const { currentUser } = useAuth();
   const { routineRootSet, pausedRootSet } = useRoutines();
+  const {
+    missions: cachedMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const navigate = useNavigate();
 
-  const [missions, setMissions] = useState([]);
   const [weekStartDay, setWeekStartDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -29,26 +33,18 @@ const RoutineMonthViewPage = () => {
   const handleBack = () => navigate('/routine-builder');
   useAndroidBackButton(handleBack);
 
-  const refreshMissions = useCallback(async () => {
-    if (!currentUser) return;
-    try {
-      const activeMissions = await getActiveMissions(currentUser.uid);
-      setMissions(activeMissions);
-    } catch (err) {
-      console.error('Routine month view refresh failed:', err);
-    }
-  }, [currentUser]);
+  // Active missions, derived synchronously from the shared cache.
+  const missions = useMemo(() => {
+    if (cachedMissions == null) return [];
+    return cachedMissions.filter(m => m.status === 'active');
+  }, [cachedMissions]);
 
   const initialLoad = useCallback(async () => {
     if (!currentUser) return;
     setLoading(true);
     setLoadError(null);
     try {
-      const [activeMissions, profile] = await Promise.all([
-        getActiveMissions(currentUser.uid),
-        getUserProfile(currentUser.uid),
-      ]);
-      setMissions(activeMissions);
+      const profile = await getUserProfile(currentUser.uid);
       if (profile && typeof profile.weekStartDay === 'number') {
         setWeekStartDay(profile.weekStartDay);
       }
@@ -63,6 +59,8 @@ const RoutineMonthViewPage = () => {
   useEffect(() => {
     initialLoad();
   }, [initialLoad]);
+
+  const isInitialLoad = loading || missionsCacheLoading;
 
   return (
     <div className="routines-page routine-month-view-page">
@@ -79,19 +77,19 @@ const RoutineMonthViewPage = () => {
         />
       )}
 
-      {loading && !loadError && (
-        <LoadingTransition loading={loading} skeleton={<RoutineGridSkeleton rows={5} />}>
+      {isInitialLoad && !loadError && (
+        <LoadingTransition loading={isInitialLoad} skeleton={<RoutineGridSkeleton rows={5} />}>
           <div />
         </LoadingTransition>
       )}
 
-      {!loading && !loadError && (
+      {!isInitialLoad && !loadError && (
         <RoutineMonthGrid
           missions={missions}
           routineRootSet={routineRootSet}
           pausedRootSet={pausedRootSet}
           weekStartDay={weekStartDay}
-          onMutated={refreshMissions}
+          onMutated={refreshMissionsCache}
         />
       )}
     </div>
