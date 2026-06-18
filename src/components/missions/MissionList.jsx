@@ -1,6 +1,7 @@
 // src/components/missions/MissionList.js - WITH DRAG AND DROP
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMissions } from '../../contexts/MissionsContext';
 import MissionCard from './MissionCard';
 import MissionListSkeleton from './MissionListSkeleton';
 import AddMissionCard from './AddMissionCard';
@@ -12,9 +13,6 @@ import {
   applyCompletionRollback,
 } from '../../utils/applyOptimisticCompletion';
 import {
-  getActiveMissions,
-  getCompletedMissions,
-  getExpiredMissions,
   uncompleteMission,
   updateMissionCustomOrder,
   batchUpdateMissionOrders
@@ -75,8 +73,16 @@ const MissionList = ({
   const { currentUser } = useAuth();
   const { roomsMap } = useRooms();
   const { questsMap } = useQuests();
+  const {
+    missions: cachedMissions,
+    isInitialLoading: cacheIsInitialLoading,
+    refresh: refreshMissionsCache,
+    mutate: mutateMissionsCache,
+  } = useMissions();
   const [missions, setMissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Skeleton flashes only on the very first load — revisits read from cache
+  // and skip the loading state entirely.
+  const loading = cacheIsInitialLoading;
   const skeletonVisible = useDelayedLoadingState(loading, 250);
   const [error, setError] = useState(null);
   const [showDragPrompt, setShowDragPrompt] = useState(false);
@@ -113,66 +119,51 @@ const MissionList = ({
 
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
 
+  // Derive the local filtered/sorted list from the shared cache. Re-runs
+  // whenever the cache, missionType, or filters change. Daily-status flag
+  // is added asynchronously (it reads a config doc) so we accept the brief
+  // tick of delay; race conditions on rapid filter changes are last-write-wins.
   useEffect(() => {
-    if (currentUser) {
-      loadMissions();
-    }
-  }, [currentUser, missionType, memoizedFilters]);
-
-  const loadMissions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      let missionData = [];
-      
-      if (missionType === 'all') {
-        const [activeData, completedData, expiredData] = await Promise.all([
-          getActiveMissions(currentUser.uid),
-          getCompletedMissions(currentUser.uid),
-          getExpiredMissions(currentUser.uid).catch(() => [])
-        ]);
-        missionData = [...activeData, ...completedData, ...expiredData];
-      } else if (missionType === 'active') {
-        missionData = await getActiveMissions(currentUser.uid);
-      } else if (missionType === 'completed') {
-        missionData = await getCompletedMissions(currentUser.uid);
-      } else if (missionType === 'active_completed') {
-        const [activeData, completedData] = await Promise.all([
-          getActiveMissions(currentUser.uid),
-          getCompletedMissions(currentUser.uid)
-        ]);
-        missionData = [...activeData, ...completedData];
-      } else if (missionType === 'expired') {
-        try {
-          missionData = await getExpiredMissions(currentUser.uid);
-        } catch (err) {
-          console.warn('getExpiredMissions not available:', err);
-          missionData = [];
+    if (!currentUser || cachedMissions == null) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setError(null);
+        let missionData;
+        switch (missionType) {
+          case 'active':
+            missionData = cachedMissions.filter(m => m.status === 'active');
+            break;
+          case 'completed':
+            missionData = cachedMissions.filter(m => m.status === 'completed');
+            break;
+          case 'active_completed':
+            missionData = cachedMissions.filter(m => m.status === 'active' || m.status === 'completed');
+            break;
+          case 'expired':
+            missionData = cachedMissions.filter(m => m.status === 'expired');
+            break;
+          case 'all':
+          default:
+            missionData = cachedMissions;
         }
+        const missionsWithDailyStatus = await addDailyMissionStatus(currentUser.uid, missionData);
+        if (cancelled) return;
+        const processedMissions = applyMissionFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
+        setMissions(processedMissions);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Error processing missions:', err);
+        setError('Failed to load missions');
       }
-      
-      const missionsWithDailyStatus = await addDailyMissionStatus(currentUser.uid, missionData);
-      const processedMissions = applyMissionFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
-      console.log('[BACKDATE] loadMissions fetched', {
-        missionType,
-        count: processedMissions.length,
-        completedInFetch: processedMissions
-          .filter(m => m.status === 'completed')
-          .map(m => ({
-            id: m.id,
-            title: m.title,
-            completedAt: m.completedAt?.toDate?.()?.toISOString?.() ?? null,
-          })),
-      });
-      setMissions(processedMissions);
-    } catch (err) {
-      console.error('Error loading missions:', err);
-      setError('Failed to load missions');
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
+    return () => { cancelled = true; };
+  }, [currentUser, cachedMissions, missionType, memoizedFilters]);
+
+  // Backwards-compat alias for the post-mutation reload callers below.
+  // The cache is the source of truth now; refreshing it re-fires the effect
+  // above and re-derives the local list.
+  const loadMissions = refreshMissionsCache;
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     if (selectionMode) return;
@@ -241,6 +232,12 @@ const MissionList = ({
     setMissions(prev => prev.map(m =>
       m.id === missionId ? { ...m, isPriority } : m
     ));
+    // Sync the shared cache so any other surface reading missions sees the
+    // new priority too (otherwise the next derive cycle would overwrite the
+    // local update with the stale cache value).
+    mutateMissionsCache(prev => prev.map(m =>
+      m.id === missionId ? { ...m, isPriority } : m
+    ));
   };
 
   const handleAddMission = (newMission) => {
@@ -251,6 +248,7 @@ const MissionList = ({
     }
 
     setMissions(prev => [newMission, ...prev]);
+    mutateMissionsCache(prev => [newMission, ...prev]);
   };
 
   const handleMissionSelect = (mission) => {
@@ -281,13 +279,19 @@ const MissionList = ({
       }));
       
       await batchUpdateMissionOrders(currentUser.uid, updates);
-      
+
       // Update local state
       const updatedMissions = missions.map((mission, index) => ({
         ...mission,
         customSortOrder: index
       }));
       setMissions(updatedMissions);
+      // Sync the shared cache with the new customSortOrder values so other
+      // surfaces (and the next derive cycle) see them.
+      mutateMissionsCache(prev => prev.map(m => {
+        const idx = updatedMissions.findIndex(u => u.id === m.id);
+        return idx >= 0 ? { ...m, customSortOrder: idx } : m;
+      }));
       setHasInitializedCustomOrder(true);
     } catch (error) {
       console.error('Error initializing custom order:', error);
@@ -333,14 +337,20 @@ const MissionList = ({
       // Update just the dragged mission's order in Firestore
       try {
         await updateMissionCustomOrder(currentUser.uid, active.id, newIndex);
-        
+
         // Update all affected missions in local state
         const updates = reorderedMissions.map((mission, index) => ({
           ...mission,
           customSortOrder: index
         }));
         setMissions(updates);
-        
+        // Sync the shared cache so the new order survives the next derive
+        // cycle and propagates to other surfaces.
+        mutateMissionsCache(prev => prev.map(m => {
+          const idx = updates.findIndex(u => u.id === m.id);
+          return idx >= 0 ? { ...m, customSortOrder: idx } : m;
+        }));
+
       } catch (error) {
         console.error('Error updating mission order:', error);
         // Revert on error

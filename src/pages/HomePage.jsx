@@ -1,5 +1,5 @@
 // src/pages/HomePage.js - UPDATED FOR SIMPLIFIED DAILY MISSIONS
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
@@ -9,11 +9,9 @@ import {
   getDailyMissionStatus,
   needsToSetDailyMissions,
 } from '../services/dailyMissionService';
-import {
-  uncompleteMission,
-  getAllMissions,
-} from '../services/missionService';
+import { uncompleteMission } from '../services/missionService';
 import { useMissionCompletion } from '../contexts/MissionCompletionContext';
+import { useMissions } from '../contexts/MissionsContext';
 import {
   applyOptimisticCompletion,
   applyServerResolved,
@@ -48,6 +46,7 @@ const HomePage = () => {
   const { currentUser } = useAuth();
   const { refreshDailyMissions } = useDailyMissions();
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const { missions: allMissions, refresh: refreshMissionsCache } = useMissions();
   const [character, setCharacter] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
@@ -58,18 +57,41 @@ const HomePage = () => {
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [newAchievements, setNewAchievements] = useState([]);
-  const [baseStats, setBaseStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
-  const [urgentMissionCount, setUrgentMissionCount] = useState(0);
   const [baseName, setBaseName] = useState('');
   const [baseIcon, setBaseIcon] = useState('home');
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [weeklyReviewEligible, setWeeklyReviewEligible] = useState(false);
   const [showWeeklyReviewSheet, setShowWeeklyReviewSheet] = useState(false);
-  // All missions kept in state (not just daily priority IDs) so the
-  // RoutineUpNextCard can filter to today's routine items without a second
-  // fetch. null = still loading, [] = loaded but empty.
-  const [allMissions, setAllMissions] = useState(null);
+
+  // Base stats and urgent count derive from the shared missions cache. They
+  // re-compute whenever the cache changes (initial load, background refresh,
+  // or any mutation via mutateMissionsCache).
+  const baseStats = useMemo(() => {
+    if (!allMissions) return { total: 0, dueThisWeek: 0, overdue: 0 };
+    const now = new Date();
+    const oneWeekFromNow = new Date();
+    oneWeekFromNow.setDate(now.getDate() + 7);
+    const roomMissions = allMissions.filter(m => m.baseLocation && m.status !== 'completed');
+    let total = roomMissions.length;
+    let overdue = 0;
+    let dueThisWeek = 0;
+    roomMissions.forEach(m => {
+      if (m.dueDate) {
+        const d = m.dueDate.toDate ? m.dueDate.toDate() : new Date(m.dueDate);
+        if (d < now) overdue++;
+        else if (d <= oneWeekFromNow) dueThisWeek++;
+      }
+    });
+    return { total, dueThisWeek, overdue };
+  }, [allMissions]);
+
+  const urgentMissionCount = useMemo(() => {
+    if (!allMissions) return 0;
+    return allMissions.filter(m =>
+      m.status === 'active' && (isMissionOverdue(m) || isMissionDueToday(m))
+    ).length;
+  }, [allMissions]);
 
   const MissionBankClick = () => {
     navigate('/mission-bank');
@@ -152,11 +174,12 @@ const HomePage = () => {
       }
       setLoading(true);
       try {
-        const [userDoc, profile, allMissions, entireBaseRoom] = await withTimeout(
+        // Missions come from the shared MissionsContext (already in flight or
+        // already cached). We fetch only the page-specific data here.
+        const [userDoc, profile, entireBaseRoom] = await withTimeout(
           Promise.all([
             getDoc(doc(db, 'users', currentUser.uid)),
             getUserProfile(currentUser.uid),
-            getAllMissions(currentUser.uid),
             getRoom(currentUser.uid, ENTIRE_BASE_ROOM_ID).catch(() => null),
           ])
         );
@@ -164,29 +187,8 @@ const HomePage = () => {
           setCharacter(userDoc.data().character);
         }
         setUserProfile(profile);
-        setAllMissions(allMissions);
         setBaseName(profile?.baseName || '');
         if (entireBaseRoom?.icon) setBaseIcon(entireBaseRoom.icon);
-
-        // Compute base stats across all room-assigned active missions
-        const now = new Date();
-        const oneWeekFromNow = new Date();
-        oneWeekFromNow.setDate(now.getDate() + 7);
-        const roomMissions = allMissions.filter(m => m.baseLocation && m.status !== 'completed');
-        let bTotal = roomMissions.length, bOverdue = 0, bDueThisWeek = 0;
-        roomMissions.forEach(m => {
-          if (m.dueDate) {
-            const d = m.dueDate.toDate ? m.dueDate.toDate() : new Date(m.dueDate);
-            if (d < now) bOverdue++;
-            else if (d <= oneWeekFromNow) bDueThisWeek++;
-          }
-        });
-        setBaseStats({ total: bTotal, dueThisWeek: bDueThisWeek, overdue: bOverdue });
-
-        const urgent = allMissions.filter(m =>
-          m.status === 'active' && (isMissionOverdue(m) || isMissionDueToday(m))
-        ).length;
-        setUrgentMissionCount(urgent);
 
         await fetchDailyMissions();
 
@@ -218,9 +220,9 @@ const HomePage = () => {
   // one drops out of today's view).
   const handleDailyMissionsUpdate = async () => {
     await fetchDailyMissions();
+    // The shared cache owns the all-missions refresh now.
     try {
-      const refreshed = await getAllMissions(currentUser.uid);
-      setAllMissions(refreshed);
+      await refreshMissionsCache();
     } catch (err) {
       console.error('Error refreshing all missions:', err);
     }
