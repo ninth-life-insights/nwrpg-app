@@ -46,7 +46,11 @@ const HomePage = () => {
   const { currentUser } = useAuth();
   const { refreshDailyMissions } = useDailyMissions();
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
-  const { missions: allMissions, refresh: refreshMissionsCache } = useMissions();
+  const {
+    missions: allMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const [character, setCharacter] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
@@ -310,7 +314,7 @@ const HomePage = () => {
   };
 
   return (
-    <LoadingTransition loading={loading} skeleton={<HomePageSkeleton />}>
+    <LoadingTransition loading={loading || missionsCacheLoading} skeleton={<HomePageSkeleton />}>
     <div className="homepage-container">
       {/* Header */}
       <header className="homepage-header">

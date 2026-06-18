@@ -1,26 +1,18 @@
 // src/components/missions/MissionList.js - WITH DRAG AND DROP
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMissions } from '../../contexts/MissionsContext';
+import { useDailyMissions } from '../../contexts/DailyMissionsContext';
 import MissionCard from './MissionCard';
 import MissionListSkeleton from './MissionListSkeleton';
 import AddMissionCard from './AddMissionCard';
 import { useDelayedLoadingState } from '../../hooks/useDelayedLoadingState';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
-  applyOptimisticCompletion,
-  applyServerResolved,
-  applyCompletionRollback,
-} from '../../utils/applyOptimisticCompletion';
-import {
   uncompleteMission,
   updateMissionCustomOrder,
   batchUpdateMissionOrders
 } from '../../services/missionService';
-
-import { 
-  addDailyMissionStatus 
-} from '../../services/dailyMissionService';
 
 import {
   applyMissionFiltersAndSort,
@@ -79,7 +71,7 @@ const MissionList = ({
     refresh: refreshMissionsCache,
     mutate: mutateMissionsCache,
   } = useMissions();
-  const [missions, setMissions] = useState([]);
+  const { dailyMissionIds } = useDailyMissions();
   // Skeleton flashes only on the very first load — revisits read from cache
   // and skip the loading state entirely.
   const loading = cacheIsInitialLoading;
@@ -119,50 +111,41 @@ const MissionList = ({
 
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
 
-  // Derive the local filtered/sorted list from the shared cache. Re-runs
-  // whenever the cache, missionType, or filters change. Daily-status flag
-  // is added asynchronously (it reads a config doc) so we accept the brief
-  // tick of delay; race conditions on rapid filter changes are last-write-wins.
-  useEffect(() => {
-    if (!currentUser || cachedMissions == null) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        setError(null);
-        let missionData;
-        switch (missionType) {
-          case 'active':
-            missionData = cachedMissions.filter(m => m.status === 'active');
-            break;
-          case 'completed':
-            missionData = cachedMissions.filter(m => m.status === 'completed');
-            break;
-          case 'active_completed':
-            missionData = cachedMissions.filter(m => m.status === 'active' || m.status === 'completed');
-            break;
-          case 'expired':
-            missionData = cachedMissions.filter(m => m.status === 'expired');
-            break;
-          case 'all':
-          default:
-            missionData = cachedMissions;
-        }
-        const missionsWithDailyStatus = await addDailyMissionStatus(currentUser.uid, missionData);
-        if (cancelled) return;
-        const processedMissions = applyMissionFiltersAndSort(missionsWithDailyStatus, memoizedFilters);
-        setMissions(processedMissions);
-      } catch (err) {
-        if (cancelled) return;
-        console.error('Error processing missions:', err);
-        setError('Failed to load missions');
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [currentUser, cachedMissions, missionType, memoizedFilters]);
+  // Synchronous derive: filter by missionType → stamp the daily flag from
+  // DailyMissionsContext (no async config read) → apply filters/sort. Runs
+  // on every render but only re-computes when its deps change. Keeping this
+  // synchronous closes the "cache loaded but local list not yet derived"
+  // gap that briefly showed the empty state.
+  const missions = useMemo(() => {
+    if (cachedMissions == null) return [];
+    let missionData;
+    switch (missionType) {
+      case 'active':
+        missionData = cachedMissions.filter(m => m.status === 'active');
+        break;
+      case 'completed':
+        missionData = cachedMissions.filter(m => m.status === 'completed');
+        break;
+      case 'active_completed':
+        missionData = cachedMissions.filter(m => m.status === 'active' || m.status === 'completed');
+        break;
+      case 'expired':
+        missionData = cachedMissions.filter(m => m.status === 'expired');
+        break;
+      case 'all':
+      default:
+        missionData = cachedMissions;
+    }
+    const withDaily = missionData.map(m => ({
+      ...m,
+      isDailyMission: dailyMissionIds.has(m.id),
+    }));
+    return applyMissionFiltersAndSort(withDaily, memoizedFilters);
+  }, [cachedMissions, dailyMissionIds, missionType, memoizedFilters]);
 
   // Backwards-compat alias for the post-mutation reload callers below.
-  // The cache is the source of truth now; refreshing it re-fires the effect
-  // above and re-derives the local list.
+  // The cache is the source of truth now; refreshing it re-runs the memo
+  // above.
   const loadMissions = refreshMissionsCache;
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
@@ -186,16 +169,11 @@ const MissionList = ({
     const completedMission = missions.find((m) => m.id === missionId);
     if (!completedMission) return;
 
+    // The optimistic completion mutates the shared MissionsContext cache
+    // directly (status flip on tap, xpAwarded stamp on resolve, rollback on
+    // error). The synchronous derive picks all of that up, so we no longer
+    // need per-event local-state callbacks here.
     completeMissionOptimistic(missionId, completedMission, {
-      onLocalMutation: (event) => {
-        if (event.type === 'completed') {
-          setMissions((prev) => applyOptimisticCompletion(prev, missionId));
-        } else if (event.type === 'serverResolved') {
-          setMissions((prev) => applyServerResolved(prev, missionId, event.result));
-        } else if (event.type === 'rollback') {
-          setMissions((prev) => applyCompletionRollback(prev, missionId));
-        }
-      },
       onResolved: (result) => {
         if (result.nextMissionCreated && onRecurringMissionCreated) {
           onRecurringMissionCreated({
@@ -229,12 +207,6 @@ const MissionList = ({
   // Avoids the full Firestore reload that onMissionChanged would trigger,
   // which would re-mount the open MissionCardFull and close it.
   const handlePriorityToggled = (missionId, isPriority) => {
-    setMissions(prev => prev.map(m =>
-      m.id === missionId ? { ...m, isPriority } : m
-    ));
-    // Sync the shared cache so any other surface reading missions sees the
-    // new priority too (otherwise the next derive cycle would overwrite the
-    // local update with the stale cache value).
     mutateMissionsCache(prev => prev.map(m =>
       m.id === missionId ? { ...m, isPriority } : m
     ));
@@ -247,7 +219,6 @@ const MissionList = ({
       return;
     }
 
-    setMissions(prev => [newMission, ...prev]);
     mutateMissionsCache(prev => [newMission, ...prev]);
   };
 
@@ -280,14 +251,12 @@ const MissionList = ({
       
       await batchUpdateMissionOrders(currentUser.uid, updates);
 
-      // Update local state
+      // Sync the shared cache with the new customSortOrder values. The
+      // synchronous derive picks them up on the next render.
       const updatedMissions = missions.map((mission, index) => ({
         ...mission,
         customSortOrder: index
       }));
-      setMissions(updatedMissions);
-      // Sync the shared cache with the new customSortOrder values so other
-      // surfaces (and the next derive cycle) see them.
       mutateMissionsCache(prev => prev.map(m => {
         const idx = updatedMissions.findIndex(u => u.id === m.id);
         return idx >= 0 ? { ...m, customSortOrder: idx } : m;
@@ -330,30 +299,24 @@ const MissionList = ({
       const newIndex = missions.findIndex((mission) => mission.id === over.id);
 
       const reorderedMissions = arrayMove(missions, oldIndex, newIndex);
-      
-      // Update local state immediately for responsiveness
-      setMissions(reorderedMissions);
 
-      // Update just the dragged mission's order in Firestore
+      // Optimistically apply the new customSortOrder values to the cache so
+      // the synchronous derive renders the reordered list immediately.
+      const updates = reorderedMissions.map((mission, index) => ({
+        ...mission,
+        customSortOrder: index
+      }));
+      mutateMissionsCache(prev => prev.map(m => {
+        const idx = updates.findIndex(u => u.id === m.id);
+        return idx >= 0 ? { ...m, customSortOrder: idx } : m;
+      }));
+
+      // Persist just the dragged mission's order in Firestore. If it fails,
+      // pull a fresh copy of the list to revert the optimistic move.
       try {
         await updateMissionCustomOrder(currentUser.uid, active.id, newIndex);
-
-        // Update all affected missions in local state
-        const updates = reorderedMissions.map((mission, index) => ({
-          ...mission,
-          customSortOrder: index
-        }));
-        setMissions(updates);
-        // Sync the shared cache so the new order survives the next derive
-        // cycle and propagates to other surfaces.
-        mutateMissionsCache(prev => prev.map(m => {
-          const idx = updates.findIndex(u => u.id === m.id);
-          return idx >= 0 ? { ...m, customSortOrder: idx } : m;
-        }));
-
       } catch (error) {
         console.error('Error updating mission order:', error);
-        // Revert on error
         await loadMissions();
       }
     }
