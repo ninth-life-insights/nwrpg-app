@@ -466,3 +466,20 @@ export const hasDailyMissionsForToday = async (userId) => {
     return false;
   }
 };
+
+export const getDailyMissionsCountForToday = async (userId) => {
+  try {
+    const config = await getDailyMissionsConfig(userId);
+    const today = toDateString(new Date());
+
+    if (config?.setForDate === today && config?.missionIds?.length > 0) {
+      return config.missionIds.length;
+    }
+
+    const history = await getDailyMissionsForDate(userId, today);
+    return history?.selectedMissionIds?.length ?? 0;
+  } catch (error) {
+    console.error('Error getting daily missions count for today:', error);
+    return 0;
+  }
+};

@@ -1,11 +1,12 @@
 // src/services/notificationService.js
 // Pure browser Notification API calls — no Firestore, no React.
 import { getActiveMissions } from './missionService';
-import { hasDailyMissionsForToday } from './dailyMissionService';
+import { getDailyMissionsCountForToday } from './dailyMissionService';
 import { isMissionDueToday, isMissionOverdue } from '../utils/dateHelpers';
 
 const ICON = '/assets/App-Icon/Nwrpg-icon-192.png';
-const BADGE = '/assets/App-Icon/Nwrpg-icon-72.png';
+const BADGE = '/assets/App-Icon/white-icon.png';
+const DAILY_MISSION_TARGET = 3;
 
 // Request notification permission from the browser.
 // Must be called from a user gesture (button click).
@@ -56,16 +57,22 @@ export const msUntil = (hour, minute) => {
 // daily missions have already been set for today.
 export const checkAndFirePlanYourDayAlert = async (userId) => {
   try {
-    const hasMissions = await hasDailyMissionsForToday(userId);
-    if (hasMissions) {
-      await showNotification('Ready to adventure?', {
-        body: 'Your daily missions are set',
-        url: '/home',
-      });
-    } else {
+    const count = await getDailyMissionsCountForToday(userId);
+
+    if (count === 0) {
       await showNotification('Ready to plan your day?', {
         body: 'Your next mission awaits',
         url: '/edit-daily-missions',
+      });
+    } else if (count < DAILY_MISSION_TARGET) {
+      await showNotification('Ready to adventure?', {
+        body: `${count} of ${DAILY_MISSION_TARGET} daily missions set`,
+        url: '/edit-daily-missions',
+      });
+    } else {
+      await showNotification('Ready to adventure?', {
+        body: 'Your daily missions are set',
+        url: '/home',
       });
     }
   } catch (error) {
@@ -85,7 +92,7 @@ export const checkAndFireDueTodayAlert = async (userId) => {
       body: count === 1
         ? '1 mission is due today'
         : `${count} missions are due today`,
-      url: '/mission-bank',
+      url: '/mission-bank?sort=dueDate',
     });
   } catch (error) {
     console.warn('checkAndFireDueTodayAlert failed:', error);

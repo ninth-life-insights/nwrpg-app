@@ -7,7 +7,7 @@ import EditDailyMissionsModal from '../../components/missions/EditDailyMissionsM
 import { getUserProfile } from '../../services/userService';
 import { getRooms } from '../../services/roomService';
 import { getAllQuests } from '../../services/questService';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
@@ -20,8 +20,9 @@ const MissionBank = () => {
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDailyPlanning, setShowDailyPlanning] = useState(false);
+  const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState({
-    sortBy: 'custom',
+    sortBy: searchParams.get('sort') || 'custom',
     sortOrder: 'asc',
     skillFilter: '',
     includeCompleted: false,
