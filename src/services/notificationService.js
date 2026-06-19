@@ -36,6 +36,7 @@ export const showNotification = async (title, { body, url, tag } = {}) => {
       data: { url: url || '/home' },
       requireInteraction: false,
       tag,
+      renotify: Boolean(tag),
     });
   } catch (error) {
     console.warn('showNotification failed:', error);
