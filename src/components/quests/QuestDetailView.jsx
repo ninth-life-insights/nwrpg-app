@@ -1,6 +1,6 @@
 // src/components/quests/QuestDetailView.js
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,7 +24,7 @@ import {
   reorderQuestMissions
 } from '../../services/questService';
 import { createCustomAchievement } from '../../services/achievementService';
-import { getAllMissions } from '../../services/missionService';
+import { useMissions } from '../../contexts/MissionsContext';
 import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
 import { formatForUserLong } from '../../utils/dateHelpers';
@@ -41,10 +41,14 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const isModal = !!onClose;
   const { currentUser } = useAuth();
   const { refreshQuests } = useQuests();
+  const {
+    missions: cachedMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const navigate = useNavigate();
 
   const [quest, setQuest] = useState(null);
-  const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [questAchievement, setQuestAchievement] = useState(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -76,6 +80,15 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
 
   const descriptionInputRef = useRef(null);
 
+  // Quest-scoped mission list derived synchronously from the shared cache.
+  // Excludes expired missions to match the original filter.
+  const missions = useMemo(() => {
+    if (cachedMissions == null) return [];
+    return cachedMissions.filter(
+      m => m.questId === questId && m.status !== MISSION_STATUS.EXPIRED
+    );
+  }, [cachedMissions, questId]);
+
   const handleAddDescription = () => {
     setIsEditMode(true);
     setTimeout(() => {
@@ -102,18 +115,15 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
       setLoading(true);
       setError(null);
 
-      const [questData, allMissions] = await Promise.all([
+      // Missions for this quest are derived from the shared cache; here we
+      // only fetch the quest metadata and (optionally) its linked achievement.
+      // Refresh the cache too so any out-of-page mutation surfaces in this view.
+      const [questData] = await Promise.all([
         getQuest(currentUser.uid, questId),
-        getAllMissions(currentUser.uid),
+        refreshMissionsCache(),
       ]);
 
-      // Filter missions that belong to this quest, excluding archived (expired) ones
-      const questMissions = allMissions.filter(
-        m => m.questId === questId && m.status !== MISSION_STATUS.EXPIRED
-      );
-
       setQuest(questData);
-      setMissions(questMissions);
 
       // Load linked achievement if present
       if (questData.achievement) {
@@ -311,7 +321,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
     await loadQuestData();
   };
 
-  if (loading) {
+  if (loading || missionsCacheLoading) {
     return (
       <div className="quest-detail-view">
         <div className="loading-state">Loading quest...</div>

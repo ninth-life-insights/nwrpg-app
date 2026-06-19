@@ -5,6 +5,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getUserProfile, getSPProgressInLevel } from '../../services/userService';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import SkillsPageSkeleton from './SkillsPageSkeleton';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './SkillsPage.css';
@@ -14,7 +16,6 @@ const SkillsPage = () => {
   const navigate = useNavigate();
   const [skillsData, setSkillsData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
@@ -30,8 +31,6 @@ const SkillsPage = () => {
         return;
       }
       setLoading(true);
-      setIsLoadingSlow(false);
-      const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
         const profile = await withTimeout(getUserProfile(currentUser.uid));
         const savedSkills = profile?.skills || {};
@@ -58,27 +57,15 @@ const SkillsPage = () => {
         console.error('Error fetching skills:', error);
         setLoadError(getLoadErrorMessage(error, 'skills'));
       } finally {
-        clearTimeout(slowTimer);
         setLoading(false);
-        setIsLoadingSlow(false);
       }
     };
 
     fetchSkills();
   }, [currentUser, reloadTrigger]);
 
-  if (loading) {
-    return (
-      <div className="skills-page">
-        <div className="loading">
-          Loading skills...
-          {isLoadingSlow && <p className="loading-slow-hint">Still searching the realm...</p>}
-        </div>
-      </div>
-    );
-  }
-
   return (
+    <LoadingTransition loading={loading} skeleton={<SkillsPageSkeleton />}>
     <div className="skills-page">
       <header className="skills-header">
         <button className="skills-back-btn" onClick={handleBack}>
@@ -128,6 +115,7 @@ const SkillsPage = () => {
         })}
       </div>
     </div>
+    </LoadingTransition>
   );
 };
 

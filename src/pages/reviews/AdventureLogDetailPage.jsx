@@ -9,6 +9,8 @@ import {
 } from '../../services/reviewService';
 import ReviewSummary from '../../components/review/ReviewSummary';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import AdventureLogDetailSkeleton from './AdventureLogDetailSkeleton';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './AdventureLogDetailPage.css';
@@ -27,7 +29,6 @@ const AdventureLogDetailPage = () => {
 
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
@@ -43,8 +44,6 @@ const AdventureLogDetailPage = () => {
         return;
       }
       setLoading(true);
-      setIsLoadingSlow(false);
-      const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
       try {
         const [snap, encounters] = await withTimeout(
           Promise.all([
@@ -57,9 +56,7 @@ const AdventureLogDetailPage = () => {
         console.error('Error loading snapshot:', err);
         setLoadError(getLoadErrorMessage(err, 'this entry'));
       } finally {
-        clearTimeout(slowTimer);
         setLoading(false);
-        setIsLoadingSlow(false);
       }
     };
     load();
@@ -95,12 +92,9 @@ const AdventureLogDetailPage = () => {
       )}
 
       {loading ? (
-        <div className="adventure-log-detail-loading">
-          <p>
-            Loading entry...
-            {isLoadingSlow && <span className="loading-slow-hint"> Still searching the realm...</span>}
-          </p>
-        </div>
+        <LoadingTransition loading={loading} skeleton={<AdventureLogDetailSkeleton />}>
+          <div />
+        </LoadingTransition>
       ) : loadError ? null : !snapshot ? (
         <div className="adventure-log-detail-empty">
           <span className="material-icons">search_off</span>

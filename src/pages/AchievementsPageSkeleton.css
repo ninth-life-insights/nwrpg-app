@@ -1,0 +1,24 @@
+.aps-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.aps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  padding: 0 var(--space-md);
+}
+
+.aps-tile {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}

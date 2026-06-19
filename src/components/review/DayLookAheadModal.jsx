@@ -1,10 +1,13 @@
 // src/components/review/DayLookAheadModal.jsx
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { uncompleteMission } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
-  completeMissionWithRecurrence,
-  uncompleteMission,
-} from '../../services/missionService';
+  applyOptimisticCompletion,
+  applyServerResolved,
+  applyCompletionRollback,
+} from '../../utils/applyOptimisticCompletion';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -17,6 +20,7 @@ const DayLookAheadModal = ({
   onUpdate,     // called after any mutation so parent can reload
 }) => {
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const [localMissions, setLocalMissions] = useState(missions);
   const [showAddMission, setShowAddMission] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -25,23 +29,39 @@ const DayLookAheadModal = ({
 
   const handleToggleComplete = async (missionId, isCompleted) => {
     setActionError(null);
-    try {
-      if (isCompleted) {
+
+    if (isCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
         setLocalMissions(prev =>
           prev.map(m => m.id === missionId ? { ...m, status: 'active' } : m)
         );
-      } else {
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
-        setLocalMissions(prev =>
-          prev.map(m => m.id === missionId ? { ...m, status: 'completed' } : m)
-        );
+        onUpdate?.();
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
+        setActionError("That mission didn't update. Try again.");
       }
-      onUpdate?.();
-    } catch (err) {
-      console.error('Error toggling mission:', err);
-      setActionError("That mission didn't update. Try again.");
+      return;
     }
+
+    const mission = localMissions.find(m => m.id === missionId);
+    completeMissionOptimistic(missionId, mission, {
+      onLocalMutation: (event) => {
+        if (event.type === 'completed') {
+          setLocalMissions(prev => applyOptimisticCompletion(prev, missionId));
+        } else if (event.type === 'serverResolved') {
+          setLocalMissions(prev => applyServerResolved(prev, missionId, event.result));
+        } else if (event.type === 'rollback') {
+          setLocalMissions(prev => applyCompletionRollback(prev, missionId));
+        }
+      },
+      onResolved: () => {
+        onUpdate?.();
+      },
+      onError: () => {
+        setActionError("That mission didn't update. Try again.");
+      },
+    });
   };
 
   const handleMissionChanged = (missionId, changeType) => {

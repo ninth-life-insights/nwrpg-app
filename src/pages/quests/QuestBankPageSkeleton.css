@@ -1,0 +1,21 @@
+.qbps-top-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.qbps-search-row {
+  display: flex;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.qbps-search-row .skeleton:first-child {
+  flex: 1;
+}
+
+.qbps-list {
+  padding: var(--space-md);
+}

@@ -277,20 +277,23 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
       // today filter will fall back to current routine membership.
     }
 
-    await updateDoc(missionRef, {
-      status: MISSION_STATUS.COMPLETED,
-      xpAwarded,
-      spAwarded,
-      completedAt: Timestamp.fromDate(new Date()),
-      routineMemberAtCompletion
-    });
-
-    const xpResult = await addXP(userId, xpAwarded);
-
-    let spResult = null;
-    if (missionData.skill && spAwarded) {
-      spResult = await addSP(userId, missionData.skill, spAwarded);
-    }
+    // The mission write, XP write, and SP write target three different docs and
+    // don't depend on each other's results. Running them in parallel is the
+    // biggest single latency win on completion (was the dominant wall-time cost
+    // behind the "double-tap" UX bug).
+    const [, xpResult, spResult] = await Promise.all([
+      updateDoc(missionRef, {
+        status: MISSION_STATUS.COMPLETED,
+        xpAwarded,
+        spAwarded,
+        completedAt: Timestamp.fromDate(new Date()),
+        routineMemberAtCompletion
+      }),
+      addXP(userId, xpAwarded),
+      (missionData.skill && spAwarded)
+        ? addSP(userId, missionData.skill, spAwarded)
+        : Promise.resolve(null)
+    ]);
 
     // Update quest progress if mission is part of a quest
     if (missionData.questId) {
@@ -651,9 +654,22 @@ const completeRecurringMission = async (userId, missionId, prefetchedData = null
 // Enhanced complete mission function that handles both regular and recurring missions
 export const completeMissionWithRecurrence = async (userId, missionId) => {
   try {
-    // Get the mission to check if it's recurring
+    // Get the mission to check if it's recurring. The daily-mission flag
+    // resolves from a separate collection, so we fetch it in parallel with the
+    // mission read instead of waiting on them sequentially.
     const missionRef = doc(db, 'users', userId, 'missions', missionId);
-    const missionSnap = await getDoc(missionRef);
+    const [missionSnap, isDailyMission] = await Promise.all([
+      getDoc(missionRef),
+      (async () => {
+        try {
+          const { checkIsDailyMission } = await import('./dailyMissionService');
+          return await checkIsDailyMission(userId, missionId);
+        } catch (e) {
+          // best-effort; don't block completion
+          return false;
+        }
+      })()
+    ]);
 
     if (!missionSnap.exists()) {
       throw new Error('Mission not found');
@@ -661,15 +677,8 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
 
     const mission = { id: missionSnap.id, ...missionSnap.data() };
 
-    // Resolve daily mission status once using the unambiguous missionId parameter,
-    // then attach it so all three completion paths get the same consistent flag.
-    let isDailyMission = false;
-    try {
-      const { checkIsDailyMission } = await import('./dailyMissionService');
-      isDailyMission = await checkIsDailyMission(userId, missionId);
-    } catch (e) {
-      // best-effort; don't block completion
-    }
+    // Attach the resolved daily flag so all three completion paths get the
+    // same consistent value.
     const missionWithDaily = { ...mission, id: missionId, isDailyMission };
 
     let completionResult;

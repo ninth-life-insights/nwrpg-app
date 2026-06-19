@@ -1,11 +1,15 @@
 // src/pages/RoomPage.jsx
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRoom, updateRoom, updateRoomCleanliness, confirmRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { getUserProfile } from '../../services/userService';
 import { useRooms } from '../../contexts/RoomsContext';
-import { getAllMissions, completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import { uncompleteMission } from '../../services/missionService';
+import { useMissions } from '../../contexts/MissionsContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import RoomPageSkeleton from './RoomPageSkeleton';
 import MissionCard from '../../components/missions/MissionCard';
 import AddMissionCard from '../../components/missions/AddMissionCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
@@ -49,15 +53,30 @@ const isImageIcon = (icon) => icon && icon.includes('.');
 const RoomPage = () => {
   const { roomId } = useParams();
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const { rooms: allRooms, refreshRooms } = useRooms();
   const navigate = useNavigate();
 
+  const {
+    missions: allMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const [room, setRoom] = useState(null);
   const [baseName, setBaseName] = useState('');
-  const [missions, setMissions] = useState([]);
   const [stats, setStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
+
+  // Room-scoped mission list derived synchronously from the shared cache.
+  // Filtering happens inline (no async config read) so a re-render after the
+  // cache updates lands on the new data the same tick, no flash.
+  const missions = useMemo(() => {
+    if (allMissions == null) return [];
+    return allMissions.filter(m =>
+      m.status !== 'deleted' &&
+      (roomId === ENTIRE_BASE_ROOM_ID ? !!m.baseLocation : m.baseLocation === roomId)
+    );
+  }, [allMissions, roomId]);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [selectedRoomChip, setSelectedRoomChip] = useState('all');
@@ -114,17 +133,12 @@ const RoomPage = () => {
       return;
     }
     setLoading(true);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const fetchList = [
-        getRoom(currentUser.uid, roomId),
-        getAllMissions(currentUser.uid),
-      ];
+      const fetchList = [getRoom(currentUser.uid, roomId)];
       if (roomId === ENTIRE_BASE_ROOM_ID) {
         fetchList.push(getUserProfile(currentUser.uid));
       }
-      const [roomData, allMissions, profile] = await withTimeout(Promise.all(fetchList));
+      const [roomData, profile] = await withTimeout(Promise.all(fetchList));
 
       if (!roomData) {
         setLoadError("This room doesn't exist.");
@@ -133,29 +147,30 @@ const RoomPage = () => {
 
       if (profile) setBaseName(profile.baseName || '');
 
-      const roomMissions = allMissions.filter(m =>
-        m.status !== 'deleted' &&
-        (roomId === ENTIRE_BASE_ROOM_ID ? !!m.baseLocation : m.baseLocation === roomId)
-      );
-      const roomStats = await getRoomStats(roomId, allMissions);
-
       setRoom(roomData);
       setLocalCleanliness(roomData.cleanliness || 3);
-      setMissions(roomMissions);
-      setStats(roomStats);
     } catch (error) {
       console.error('Error fetching room data:', error);
       setLoadError(getLoadErrorMessage(error, 'room'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   }, [currentUser, roomId]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Room stats are derived from the shared cache so they update whenever a
+  // completion / edit / delete elsewhere in the app mutates the cache.
+  useEffect(() => {
+    if (allMissions == null) return;
+    let cancelled = false;
+    getRoomStats(roomId, allMissions).then((next) => {
+      if (!cancelled) setStats(next);
+    }).catch(() => { /* non-fatal */ });
+    return () => { cancelled = true; };
+  }, [allMissions, roomId]);
 
   const handleCleanlinessChange = (e) => {
     setLocalCleanliness(parseInt(e.target.value));
@@ -184,28 +199,42 @@ const RoomPage = () => {
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     setActionError(null);
-    try {
-      if (isCurrentlyCompleted) {
+
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        if (result?.newlyAwardedAchievements?.length > 0) {
-          setNewAchievements(result.newlyAwardedAchievements);
-        }
+        await fetchData();
+      } catch (error) {
+        console.error('Error uncompleting mission:', error);
+        setActionError("That undo didn't go through. Try again.");
       }
-      await fetchData();
-    } catch (error) {
-      console.error('Error toggling mission:', error);
-      setActionError(isCurrentlyCompleted
-        ? "That undo didn't go through. Try again."
-        : "That mission didn't complete. Try again."
-      );
+      return;
     }
+
+    const mission = missions.find((m) => m.id === missionId);
+    // MissionCompletionContext mutates the shared cache directly — the
+    // synchronous derive above re-runs and the card flips on the same tick.
+    completeMissionOptimistic(missionId, mission, {
+      onAchievementsResolved: (achievements) => {
+        setNewAchievements(achievements);
+      },
+      onError: () => {
+        setActionError("That mission didn't complete. Try again.");
+      },
+    });
   };
 
   const handleMissionAdded = async () => {
     setShowAddMission(false);
-    await fetchData();
+    // The new mission was written by AddMissionCard; pull the cache so it
+    // appears in the room view and propagates to every other surface.
+    await refreshMissionsCache();
+  };
+
+  // Fired when a mission is edited or deleted from within MissionCardFull.
+  // Refresh the cache so the change lands here and on every other surface.
+  const handleMissionChanged = async () => {
+    await refreshMissionsCache();
   };
 
   const handleRoomUpdated = async () => {
@@ -226,17 +255,6 @@ const RoomPage = () => {
       setShowDeleteConfirm(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="room-page">
-        <div className="loading">
-          Loading your room...
-          {isLoadingSlow && <p className="loading-slow-hint">The scouts are still searching...</p>}
-        </div>
-      </div>
-    );
-  }
 
   if (loadError || !room) {
     return (
@@ -329,6 +347,7 @@ const RoomPage = () => {
     : `${stats.total} mission${stats.total !== 1 ? 's' : ''}${scope}${stats.overdue > 0 ? ` · ${stats.overdue} late` : ''}${routineCount > 0 ? ` · ${routineCount} in routine` : ''}`;
 
   return (
+    <LoadingTransition loading={loading || missionsCacheLoading} skeleton={<RoomPageSkeleton />}>
     <div className="room-page">
 
       {/* Header */}
@@ -551,7 +570,7 @@ const RoomPage = () => {
                         key={mission.id}
                         mission={mission}
                         onToggleComplete={handleToggleComplete}
-                        onMissionChanged={fetchData}
+                        onMissionChanged={handleMissionChanged}
                         hideRoutineBadge
                       />
                     ))}
@@ -567,7 +586,7 @@ const RoomPage = () => {
                 key={mission.id}
                 mission={mission}
                 onToggleComplete={handleToggleComplete}
-                onMissionChanged={fetchData}
+                onMissionChanged={handleMissionChanged}
                 hideRoomBadge={!isEntireBase || selectedRoomChip !== 'all'}
               />
             ))}
@@ -582,7 +601,7 @@ const RoomPage = () => {
                     key={mission.id}
                     mission={mission}
                     onToggleComplete={handleToggleComplete}
-                    onMissionChanged={fetchData}
+                    onMissionChanged={handleMissionChanged}
                       />
                 ))}
               </>
@@ -629,6 +648,7 @@ const RoomPage = () => {
         onDismiss={() => setNewAchievements([])}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

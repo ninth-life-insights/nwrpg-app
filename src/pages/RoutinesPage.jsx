@@ -4,18 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoutines } from '../contexts/RoutineContext';
+import { useMissions } from '../contexts/MissionsContext';
 import {
   getOrCreateDefaultRoutine,
   isRoutinePaused,
 } from '../services/routineService';
 import { DEFAULT_ROUTINE_ID } from '../types/Routine';
-import {
-  getActiveMissions,
-  getCompletedMissionsSince,
-} from '../services/missionService';
 import RoutineTodaySection from '../components/routines/RoutineTodaySection';
+import RoutineTodaySkeleton from '../components/routines/RoutineTodaySkeleton';
 import PauseRoutineDialog from '../components/routines/PauseRoutineDialog';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import LoadingTransition from '../components/ui/LoadingTransition';
 import PageHeader from '../components/ui/PageHeader';
 import StickyFooter from '../components/ui/StickyFooter';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
@@ -28,9 +27,13 @@ import './RoutinesPage.css';
 const RoutinesPage = () => {
   const { currentUser } = useAuth();
   const { routines, routineRootSet, routineOrderMap, refreshRoutines } = useRoutines();
+  const {
+    missions: cachedMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const navigate = useNavigate();
 
-  const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [showPauseDialog, setShowPauseDialog] = useState(false);
@@ -47,23 +50,37 @@ const RoutinesPage = () => {
   );
   const paused = !!defaultRoutine && isRoutinePaused(defaultRoutine);
 
+  // Active + today's completed missions, derived synchronously from the
+  // shared cache. Today view shows completed items alongside active ones
+  // (progress-through-the-day pattern, not a vanishing checklist).
+  const missions = useMemo(() => {
+    if (cachedMissions == null) return [];
+    const startOfToday = dayjs().startOf('day').toDate();
+    const active = cachedMissions.filter(m => m.status === 'active');
+    const completedToday = cachedMissions.filter(m => {
+      if (m.status !== 'completed') return false;
+      if (!m.completedAt) return false;
+      const completedAt = m.completedAt.toDate
+        ? m.completedAt.toDate()
+        : new Date(m.completedAt);
+      return completedAt >= startOfToday;
+    });
+    return [...active, ...completedToday];
+  }, [cachedMissions]);
+
+  // Called after any in-page mutation that needs fresh data (pause/resume,
+  // bucket skip, completion toggle from within the today section).
   const refresh = useCallback(async () => {
     if (!currentUser) return;
     try {
-      // Fetch active + today's completed in parallel so the today view can
-      // show completed items alongside active ones (progress-through-the-day
-      // pattern, not a vanishing checklist).
-      const startOfToday = dayjs().startOf('day').toDate();
-      const [activeMissions, completedToday] = await Promise.all([
-        getActiveMissions(currentUser.uid),
-        getCompletedMissionsSince(currentUser.uid, startOfToday),
+      await Promise.all([
+        refreshMissionsCache(),
+        refreshRoutines(),
       ]);
-      setMissions([...activeMissions, ...completedToday]);
-      await refreshRoutines();
     } catch (err) {
       console.error('Routines refresh failed:', err);
     }
-  }, [currentUser, refreshRoutines]);
+  }, [currentUser, refreshMissionsCache, refreshRoutines]);
 
   const initialLoad = useCallback(async () => {
     if (!currentUser) return;
@@ -71,14 +88,14 @@ const RoutinesPage = () => {
     setLoadError(null);
     try {
       await getOrCreateDefaultRoutine(currentUser.uid);
-      await refresh();
+      await refreshRoutines();
     } catch (err) {
       console.error('Routines page load failed:', err);
       setLoadError("Your routine didn't load.");
     } finally {
       setLoading(false);
     }
-  }, [currentUser, refresh]);
+  }, [currentUser, refreshRoutines]);
 
   useEffect(() => {
     initialLoad();
@@ -89,13 +106,15 @@ const RoutinesPage = () => {
     setShowPauseDialog(true);
   };
 
+  const isInitialLoad = loading || missionsCacheLoading;
+
   return (
     <div className="routines-page">
       <PageHeader
         title="Routines"
         onBack={handleBack}
         action={
-          !paused && !loading && (
+          !paused && !isInitialLoad && (
             <button
               type="button"
               className="routines-pause-btn"
@@ -116,11 +135,13 @@ const RoutinesPage = () => {
         />
       )}
 
-      {loading && !loadError && (
-        <div className="routines-loading">Loading…</div>
+      {isInitialLoad && !loadError && (
+        <LoadingTransition loading={isInitialLoad} skeleton={<RoutineTodaySkeleton />}>
+          <div />
+        </LoadingTransition>
       )}
 
-      {!loading && !loadError && (
+      {!isInitialLoad && !loadError && (
         <>
           <RoutineTodaySection
             missions={missions}

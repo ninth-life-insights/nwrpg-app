@@ -1,0 +1,22 @@
+.sps2-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.sps2-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin: 0 var(--space-md) var(--space-md);
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+}
+
+.sps2-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

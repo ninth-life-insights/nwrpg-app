@@ -22,6 +22,7 @@ import { useQuests } from '../../contexts/QuestsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
   deleteMission,
   archiveMission,
@@ -152,7 +153,10 @@ const MissionCardFull = ({
   const isRecurring = isRecurringMission(displayMission);
   const isEvergreen = isEvergreenMission(displayMission);
   const recurrenceText = getRecurrenceDisplayText(displayMission, { verbose: true });
+  const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const isCompletionPending = isPending(mission.id);
   const isCompleted = displayMission.status === MISSION_STATUS.COMPLETED;
+  const isVisuallyComplete = isCompleted || isOptimisticallyComplete(mission.id);
   const isActive = displayMission.status === MISSION_STATUS.ACTIVE;
   const isExpired = displayMission.status === MISSION_STATUS.EXPIRED;
   const completedDate = isCompleted && displayMission.completedAt
@@ -589,9 +593,10 @@ const MissionCardFull = ({
               ) : (
                 <button
                   onClick={() => onToggleComplete(mission.id, isCompleted, mission.xpReward)}
-                  className={`action-button ${isCompleted ? 'mark-incomplete' : 'mark-complete'}`}
+                  disabled={isCompletionPending}
+                  className={`action-button ${isVisuallyComplete ? 'mark-incomplete' : 'mark-complete'}`}
                 >
-                  {isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+                  {isVisuallyComplete ? 'Mark as Incomplete' : 'Mark as Complete'}
                 </button>
               )}
             </div>

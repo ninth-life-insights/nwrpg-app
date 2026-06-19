@@ -9,12 +9,14 @@ import {
   reorderRooms,
   ENTIRE_BASE_ROOM_ID,
 } from '../../services/roomService';
-import { getAllMissions } from '../../services/missionService';
+import { useMissions } from '../../contexts/MissionsContext';
 import { getUserProfile } from '../../services/userService';
 import RoomCard from '../../components/base/RoomCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
 import RoomSortModal from '../../components/base/RoomSortModal';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import BasePageSkeleton from './BasePageSkeleton';
 import { applyRoomSort, ROOM_SORT_DEFAULT } from '../../utils/roomListHelpers';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
@@ -47,10 +49,13 @@ const BasePage = () => {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [roomStats, setRoomStats] = useState([]);
-  const [allMissions, setAllMissions] = useState([]);
+  const {
+    missions: allMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const { routineRootSet } = useRoutines();
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reorderError, setReorderError] = useState(null);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
@@ -74,42 +79,37 @@ const BasePage = () => {
     })
   );
 
+  // Re-runs whenever the shared missions cache updates — keeps the per-room
+  // stats and routine counts in sync with completion/edit/delete activity
+  // anywhere in the app, without a redundant getAllMissions fetch here.
   const fetchRoomsAndStats = async () => {
     if (!currentUser) return;
+    if (allMissions == null) return; // wait for the cache
     if (isDefinitelyOffline()) {
       setLoadError("Your rooms didn't load. Check your connection and try again.");
       setLoading(false);
       return;
     }
     setLoading(true);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       await initializeEntireBaseRoom(currentUser.uid);
-      const [missions, profile] = await withTimeout(
-        Promise.all([
-          getAllMissions(currentUser.uid),
-          getUserProfile(currentUser.uid),
-        ])
-      );
-      const roomsWithStats = await withTimeout(getAllRoomStats(currentUser.uid, missions));
+      const profile = await withTimeout(getUserProfile(currentUser.uid));
+      const roomsWithStats = await withTimeout(getAllRoomStats(currentUser.uid, allMissions));
       setRoomStats(roomsWithStats);
       setRooms(roomsWithStats);
-      setAllMissions(missions);
       setBaseName(profile?.baseName || '');
     } catch (error) {
       console.error('Error fetching rooms:', error);
       setLoadError(getLoadErrorMessage(error, 'rooms'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
   useEffect(() => {
     fetchRoomsAndStats();
-  }, [currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, allMissions]);
 
   const handleRoomClick = (roomId) => {
     navigate(`/room/${roomId}`);
@@ -188,23 +188,13 @@ const BasePage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="base-page-container">
-        <div className="loading">
-          Loading your base...
-          {isLoadingSlow && <p className="loading-slow-hint">Your messenger raven is taking the scenic route...</p>}
-        </div>
-      </div>
-    );
-  }
-
   const hasCustomRooms = rooms.length > 1; // More than just "Entire Base"
 
   const entireBaseRoom = rooms.find(r => r.id === ENTIRE_BASE_ROOM_ID);
   const baseIconUnset = !entireBaseRoom || entireBaseRoom.icon === 'home';
 
   return (
+    <LoadingTransition loading={loading || missionsCacheLoading} skeleton={<BasePageSkeleton />}>
     <div className="base-page-container">
       {/* Header */}
       <header className="base-page-header">
@@ -329,6 +319,7 @@ const BasePage = () => {
         onApply={setSortBy}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

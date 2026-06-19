@@ -1,0 +1,30 @@
+.adventure-log-detail-skeleton {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.aldds-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.aldds-summary-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.aldds-story {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}

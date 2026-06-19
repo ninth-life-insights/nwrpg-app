@@ -1,0 +1,17 @@
+.routine-today-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-md);
+}
+
+.rts-datepill {
+  display: flex;
+  justify-content: center;
+}
+
+.rts-bucket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}

@@ -13,6 +13,8 @@ import WeeklyAdventureLogCard from '../../components/review/WeeklyAdventureLogCa
 import AdventureLogFilterModal, { DEFAULT_FILTERS } from '../../components/review/AdventureLogFilterModal';
 import { getAllWeeklySnapshots } from '../../services/weeklyReviewService';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import AdventureLogListSkeleton from './AdventureLogListSkeleton';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './AdventureLogPage.css';
@@ -70,7 +72,6 @@ const AdventureLogPage = () => {
   const [weeklySnapshots, setWeeklySnapshots] = useState([]);
   const [placeholders, setPlaceholders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [generatingDate, setGeneratingDate] = useState(null);
@@ -88,8 +89,6 @@ const AdventureLogPage = () => {
       return;
     }
     setLoading(true);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       const [snaps, holes, weeklies] = await withTimeout(
         Promise.all([
@@ -105,9 +104,7 @@ const AdventureLogPage = () => {
       console.error('Error loading adventure log:', err);
       setLoadError(getLoadErrorMessage(err, 'adventure log'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
@@ -211,10 +208,9 @@ const AdventureLogPage = () => {
 
       <div className="adventure-log-content">
         {loading ? (
-          <p className="adventure-log-loading">
-            Loading your chronicle...
-            {isLoadingSlow && <span className="loading-slow-hint"> The quest board is being restocked...</span>}
-          </p>
+          <LoadingTransition loading={loading} skeleton={<AdventureLogListSkeleton />}>
+            <div />
+          </LoadingTransition>
         ) : loadError ? null : grouped.length === 0 ? (
           <div className="adventure-log-empty">
             <span className="material-icons">auto_stories</span>

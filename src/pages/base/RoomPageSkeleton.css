@@ -1,0 +1,18 @@
+.rps-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.rps-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md) var(--space-md);
+}
+
+.rps-list {
+  padding: 0 var(--space-md);
+}

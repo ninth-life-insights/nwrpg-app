@@ -15,20 +15,28 @@ import {
   reopenQuest,
   restoreQuest
 } from '../../services/questService';
-import { getAllMissions } from '../../services/missionService';
+import { useMissions } from '../../contexts/MissionsContext';
 import { getNextMission } from '../../types/Quests';
-import { completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import { uncompleteMission } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import QuestBankPageSkeleton from './QuestBankPageSkeleton';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './QuestBankPage.css';
 
 const QuestBank = () => {
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();
   
+  const {
+    missions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const [quests, setQuests] = useState([]);
-  const [missions, setMissions] = useState([]);
   // Quests that transitioned to COMPLETED during this page session — kept
   // around so the user sees the completion land (with XP badge, struck-through
   // title) rather than the quest silently disappearing from the active list.
@@ -36,7 +44,6 @@ const QuestBank = () => {
   // recentlyCompletedMissions pattern.
   const [recentlyCompletedQuests, setRecentlyCompletedQuests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [missionsError, setMissionsError] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -61,8 +68,6 @@ const QuestBank = () => {
     }
     setLoading(true);
     setLoadError(null);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
       let questData = [];
       if (filters.showArchive) {
@@ -83,22 +88,18 @@ const QuestBank = () => {
       console.error('Error loading quests:', err);
       setLoadError(getLoadErrorMessage(err, 'quests'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
+  // Missions now come from the shared MissionsContext cache. This wrapper
+  // exists for legacy call sites; it just kicks the cache refresh.
   const loadMissions = async () => {
     setMissionsError(null);
     try {
-      const missionData = await getAllMissions(currentUser.uid);
-      setMissions(missionData);
+      await refreshMissionsCache();
     } catch (err) {
       console.error('Error loading missions:', err);
-      // Quest list can still render without missions, but "next up" cards
-      // and live progress counts depend on this fetch — surface the failure
-      // so the user knows something on the page is incomplete.
       setMissionsError("Your missions didn't load. Quest progress may be off.");
     }
   };
@@ -147,43 +148,52 @@ const QuestBank = () => {
     return m?.questId ?? null;
   };
 
-  const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+  // Quest-state reconciliation after a mission toggle: if the toggle pushed
+  // the parent quest across the auto-complete / auto-reopen boundary, mirror
+  // that into recentlyCompletedQuests so the user sees the transition land
+  // (or reopens cleanly).
+  const reconcileQuestStateAfterToggle = async (missionId) => {
+    const questId = getQuestIdForMission(missionId);
+    if (!questId) return;
     try {
-      const questId = getQuestIdForMission(missionId);
-
-      if (isCurrentlyCompleted) {
-        await uncompleteMission(currentUser.uid, missionId);
+      const updatedQuest = await getQuest(currentUser.uid, questId);
+      if (updatedQuest.status === 'completed') {
+        setRecentlyCompletedQuests(prev =>
+          prev.find(q => q.id === updatedQuest.id)
+            ? prev.map(q => q.id === updatedQuest.id ? updatedQuest : q)
+            : [updatedQuest, ...prev]
+        );
       } else {
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
+        setRecentlyCompletedQuests(prev => prev.filter(q => q.id !== updatedQuest.id));
       }
-
-      // If this mission belongs to a quest, check whether the toggle pushed
-      // the quest across the auto-complete / auto-reopen boundary. If it
-      // just completed, hold it in the recently-completed list so it stays
-      // visible. If it reopened, drop it from that list.
-      if (questId) {
-        try {
-          const updatedQuest = await getQuest(currentUser.uid, questId);
-          if (updatedQuest.status === 'completed') {
-            setRecentlyCompletedQuests(prev =>
-              prev.find(q => q.id === updatedQuest.id)
-                ? prev.map(q => q.id === updatedQuest.id ? updatedQuest : q)
-                : [updatedQuest, ...prev]
-            );
-          } else {
-            setRecentlyCompletedQuests(prev => prev.filter(q => q.id !== updatedQuest.id));
-          }
-        } catch (err) {
-          console.error('Error checking quest state after mission toggle:', err);
-        }
-      }
-
-      // Reload quests and missions to update progress
-      await loadQuests();
-      await loadMissions();
     } catch (err) {
-      console.error('Error toggling mission completion:', err);
+      console.error('Error checking quest state after mission toggle:', err);
     }
+  };
+
+  const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
+    if (isCurrentlyCompleted) {
+      try {
+        await uncompleteMission(currentUser.uid, missionId);
+        await reconcileQuestStateAfterToggle(missionId);
+        await loadQuests();
+        await loadMissions();
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
+      }
+      return;
+    }
+
+    const mission = missions.find((m) => m.id === missionId);
+    // MissionCompletionContext mutates the shared cache directly. The quest
+    // list still needs to reconcile (auto-complete / auto-reopen) so we
+    // keep onResolved.
+    completeMissionOptimistic(missionId, mission, {
+      onResolved: async () => {
+        await reconcileQuestStateAfterToggle(missionId);
+        await loadQuests();
+      },
+    });
   };
 
   const handleQuestToggleComplete = async (questId, isCurrentlyCompleted) => {
@@ -212,16 +222,6 @@ const QuestBank = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="quest-bank-page">
-        <div className="loading-state">
-          Loading quests...
-          {isLoadingSlow && <p className="loading-slow-hint">Still searching the realm...</p>}
-        </div>
-      </div>
-    );
-  }
 
   // Merge the active fetch with this session's just-completed quests.
   // Hide archive view from the merge — recently-completed quests don't make
@@ -256,6 +256,7 @@ const QuestBank = () => {
   })();
 
   return (
+    <LoadingTransition loading={loading || missionsCacheLoading} skeleton={<QuestBankPageSkeleton />}>
     <div className="quest-bank-page">
       {loadError && (
         <ErrorMessage
@@ -381,6 +382,7 @@ const QuestBank = () => {
         onApplyFilters={handleApplyFilters}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

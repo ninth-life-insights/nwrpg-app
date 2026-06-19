@@ -1,0 +1,18 @@
+.routine-builder-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-md);
+}
+
+.rbs-bucket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.rbs-bucket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

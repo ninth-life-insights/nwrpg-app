@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getDeletedQuests, restoreQuest } from '../../services/questService';
 import Badge from '../../components/ui/Badge';
 import ErrorMessage from '../../components/ui/ErrorMessage';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import QuestCardSkeleton from '../../components/quests/QuestCardSkeleton';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
 import './DeletedQuestsPage.css';
 
@@ -109,7 +111,18 @@ const DeletedQuestsPage = () => {
       )}
 
       {loading && !loadError && (
-        <p className="deleted-quests-empty">Loading...</p>
+        <LoadingTransition
+          loading={loading}
+          skeleton={
+            <div className="deleted-quest-list">
+              <QuestCardSkeleton titleWidth="60%" />
+              <QuestCardSkeleton titleWidth="55%" />
+              <QuestCardSkeleton titleWidth="65%" />
+            </div>
+          }
+        >
+          <div />
+        </LoadingTransition>
       )}
 
       {!loading && !loadError && quests.length === 0 && (

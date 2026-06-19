@@ -1,14 +1,15 @@
 // src/components/review/OtherMissionsStep.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import { useMissions } from '../../contexts/MissionsContext';
 import { getDailyMissionsConfig } from '../../services/dailyMissionService';
 import { toDateString } from '../../utils/dateHelpers';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
 import StickyFooter from '../ui/StickyFooter';
-import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
+import { isDefinitelyOffline } from '../../utils/fetchWithTimeout';
 
 const FILTERS = ['All', 'Quests', 'Due Today', 'General'];
 
@@ -16,91 +17,82 @@ const OtherMissionsStep = ({
   onToggleComplete,
   onNext,
   onSkipToSummary,
-  setLevelUpInfo,
-  setSkillLevelUpInfo,
   onAchievementsUnlocked,
 }) => {
   const { currentUser } = useAuth();
-  const [missions, setMissions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    missions: cachedMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
+  const [dailyConfigIds, setDailyConfigIds] = useState(null); // null = not yet loaded
   const [loadError, setLoadError] = useState(null);
-  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [activeFilter, setActiveFilter] = useState('All');
   const [showAddMission, setShowAddMission] = useState(false);
 
   const today = toDateString(new Date());
 
+  // Daily mission IDs are needed to filter out things already in the daily
+  // priorities. The config doc is small and stable; fetch it once.
   useEffect(() => {
-    const load = async () => {
-      if (!currentUser) return;
-      setLoading(true);
-      setIsLoadingSlow(false);
-      if (isDefinitelyOffline()) {
-        setLoadError("Your missions didn't load. Check your connection and try again.");
-        setLoading(false);
-        return;
-      }
-      const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
-      try {
-        const [allActive, allCompleted, config] = await withTimeout(
-          Promise.all([
-            getActiveMissions(currentUser.uid),
-            getCompletedMissions(currentUser.uid),
-            getDailyMissionsConfig(currentUser.uid),
-          ])
-        );
-        const dailyIds = new Set(
-          config?.setForDate === today ? (config?.missionIds ?? []) : []
-        );
-        const activeMissions = allActive.filter(m => !dailyIds.has(m.id));
-        const completedToday = allCompleted.filter(m => {
-          if (!m.completedAt?.toDate) return false;
-          return toDateString(m.completedAt.toDate()) === today;
-        });
-        setMissions([...completedToday, ...activeMissions]);
-      } catch (err) {
-        console.error('Error loading other missions:', err);
-        setLoadError(getLoadErrorMessage(err, 'missions'));
-      } finally {
-        clearTimeout(slowTimer);
-        setLoading(false);
-        setIsLoadingSlow(false);
-      }
-    };
-    load();
-  }, [currentUser, reloadTrigger]);
+    if (!currentUser) return;
+    if (isDefinitelyOffline()) {
+      setLoadError("Your missions didn't load. Check your connection and try again.");
+      return;
+    }
+    setLoadError(null);
+    getDailyMissionsConfig(currentUser.uid).then((config) => {
+      const ids = config?.setForDate === today ? (config?.missionIds ?? []) : [];
+      setDailyConfigIds(new Set(ids));
+    }).catch((err) => {
+      console.error('Error loading daily config:', err);
+      setDailyConfigIds(new Set());
+    });
+  }, [currentUser, today]);
+
+  // Synchronous derive: today's completed missions + active missions not
+  // already on the daily priority list. Re-runs whenever the shared cache
+  // updates so completions land here without a refetch.
+  const missions = useMemo(() => {
+    if (cachedMissions == null || dailyConfigIds == null) return [];
+    const activeMissions = cachedMissions.filter(
+      m => m.status === 'active' && !dailyConfigIds.has(m.id)
+    );
+    const completedToday = cachedMissions.filter(m => {
+      if (m.status !== 'completed') return false;
+      if (!m.completedAt?.toDate) return false;
+      return toDateString(m.completedAt.toDate()) === today;
+    });
+    return [...completedToday, ...activeMissions];
+  }, [cachedMissions, dailyConfigIds, today]);
+
+  const loading = missionsCacheLoading || dailyConfigIds == null;
 
   const handleToggle = async (missionId, isCurrentlyCompleted, xpReward) => {
     try {
       const result = await onToggleComplete(missionId, isCurrentlyCompleted, xpReward);
-      if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
-      if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-      if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
-      setMissions(prev => prev.map(m =>
-        m.id === missionId
-          ? { ...m, status: isCurrentlyCompleted ? 'active' : 'completed', xpAwarded: isCurrentlyCompleted ? null : (result?.xpAwarded ?? m.xpAwarded) }
-          : m
-      ));
+      // Level-up / skill-up modals fire globally from NotificationContext.
+      // Only achievements still need a local hook for the toast.
+      if (result?.newlyAwardedAchievements?.length > 0) {
+        onAchievementsUnlocked?.(result.newlyAwardedAchievements);
+      }
     } catch (err) {
       console.error('Error toggling mission:', err);
     }
   };
 
-  // Called by AddMissionCard after it creates the mission
+  // Called by AddMissionCard after it creates the mission. The mission is
+  // immediately auto-completed; route through the optimistic context so the
+  // double-tap guard, error rollback, and global level-up modal all apply.
   const handleMissionAdded = async (newMission) => {
     setShowAddMission(false);
-    // Immediately complete it and give credit
-    try {
-      const result = await completeMissionWithRecurrence(currentUser.uid, newMission.id);
-      if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
-      if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-      if (result?.newlyAwardedAchievements?.length > 0) onAchievementsUnlocked?.(result.newlyAwardedAchievements);
-      setMissions(prev => [{ ...newMission, status: 'completed', xpAwarded: result?.xpAwarded }, ...prev]);
-    } catch (err) {
-      console.error('Error completing new mission:', err);
-      setMissions(prev => [...prev, newMission]);
-    }
+    // Make sure the new mission is in the shared cache before completion
+    // mutations can touch it.
+    await refreshMissionsCache();
+    await completeMissionOptimistic(newMission.id, newMission, {
+      onAchievementsResolved: (achievements) => onAchievementsUnlocked?.(achievements),
+    });
   };
 
   const filteredMissions = missions.filter(m => {
@@ -143,12 +135,9 @@ const OtherMissionsStep = ({
 
         {/* Scrollable mission list */}
         {loadError ? (
-          <ErrorMessage message={loadError} onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }} />
+          <ErrorMessage message={loadError} onRetry={refreshMissionsCache} />
         ) : loading ? (
-          <p className="review-step-loading">
-            Loading missions...
-            {isLoadingSlow && <span className="loading-slow-hint"> Still searching the realm...</span>}
-          </p>
+          <p className="review-step-loading">Loading missions...</p>
         ) : (
           <div className="review-missions-scroll">
             {filteredMissions.length === 0 ? (
@@ -164,7 +153,7 @@ const OtherMissionsStep = ({
                     key={mission.id}
                     mission={mission}
                     onToggleComplete={handleToggle}
-                    onMissionChanged={() => setReloadTrigger(t => t + 1)}
+                    onMissionChanged={refreshMissionsCache}
                     hideDailyBadge={true}
                   />
                 ))}

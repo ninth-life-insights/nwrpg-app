@@ -28,8 +28,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   updateMission,
   uncompleteMission,
-  completeMissionWithRecurrence,
 } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import ErrorMessage from '../ui/ErrorMessage';
 import MissionCardFull from '../missions/MissionCardFull';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
@@ -149,6 +149,7 @@ const RoutineMonthGrid = ({
   onMutated,
 }) => {
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
 
   const [displayedMonth, setDisplayedMonth] = useState(() => dayjs().startOf('month'));
   const [pendingRecurrence, setPendingRecurrence] = useState(() => new Map());
@@ -281,17 +282,19 @@ const RoutineMonthGrid = ({
 
   const handleToggleComplete = useCallback(async (missionId, isCurrentlyCompleted) => {
     if (!currentUser) return;
-    try {
-      if (isCurrentlyCompleted) {
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
+        await onMutated?.();
+      } catch (err) {
+        console.error('Routine month uncomplete failed:', err);
       }
-      await onMutated?.();
-    } catch (err) {
-      console.error('Routine month toggle failed:', err);
+      return;
     }
-  }, [currentUser, onMutated]);
+    completeMissionOptimistic(missionId, null, {
+      onResolved: async () => { await onMutated?.(); },
+    });
+  }, [currentUser, onMutated, completeMissionOptimistic]);
 
   const goPrev = () => setDisplayedMonth((m) => m.subtract(1, 'month'));
   const goNext = () => setDisplayedMonth((m) => m.add(1, 'month'));

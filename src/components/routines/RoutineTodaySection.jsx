@@ -7,11 +7,10 @@ import AchievementToast from '../achievements/AchievementToast';
 import DatePickerPill from '../ui/DatePickerPill';
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import {
   uncompleteMission,
-  completeMissionWithRecurrence,
   updateMission,
 } from '../../services/missionService';
 import {
@@ -53,7 +52,7 @@ const RoutineTodaySection = ({
   onSaved,
 }) => {
   const { currentUser } = useAuth();
-  const { notifyMissionCompletion } = useNotifications();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const { routines, pausedRootSet, cadenceByChainRoot, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
   const [actionError, setActionError] = useState(null);
@@ -117,28 +116,30 @@ const RoutineTodaySection = ({
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     setActionError(null);
-    try {
-      if (isCurrentlyCompleted) {
+
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        const result = await completeMissionWithRecurrence(
-          currentUser.uid,
-          missionId
-        );
-        notifyMissionCompletion(result);
-        if (result?.newlyAwardedAchievements?.length > 0) {
-          setNewAchievements(result.newlyAwardedAchievements);
-        }
+        await onSaved?.();
+      } catch (err) {
+        console.error('Routine today uncomplete failed:', err);
+        setActionError("That undo didn't go through.");
       }
-      await onSaved?.();
-    } catch (err) {
-      console.error('Routine today toggle failed:', err);
-      setActionError(
-        isCurrentlyCompleted
-          ? "That undo didn't go through."
-          : "That mission didn't complete."
-      );
+      return;
     }
+
+    const mission = (missions || []).find((m) => m.id === missionId);
+    completeMissionOptimistic(missionId, mission, {
+      onResolved: async () => {
+        await onSaved?.();
+      },
+      onAchievementsResolved: (achievements) => {
+        setNewAchievements(achievements);
+      },
+      onError: () => {
+        setActionError("That mission didn't complete.");
+      },
+    });
   };
 
   // Push every still-active item in a bucket to tomorrow. Branches on mission

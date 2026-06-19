@@ -1,11 +1,14 @@
 // src/pages/SkillDetailPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserProfile, getSPProgressInLevel } from '../../services/userService';
-import { getActiveMissions, getCompletedMissions } from '../../services/missionService';
 import MissionCard from '../../components/missions/MissionCard';
-import { completeMissionWithRecurrence, uncompleteMission } from '../../services/missionService';
+import { uncompleteMission } from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import { useMissions } from '../../contexts/MissionsContext';
+import LoadingTransition from '../../components/ui/LoadingTransition';
+import SkillDetailPageSkeleton from './SkillDetailPageSkeleton';
 import AchievementToast from '../../components/achievements/AchievementToast';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
@@ -29,15 +32,29 @@ const SkillDetailPage = () => {
   const { skillName } = useParams();
   const decodedSkillName = decodeURIComponent(skillName);
   const { currentUser } = useAuth();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    missions: allMissions,
+    isInitialLoading: missionsCacheLoading,
+    refresh: refreshMissionsCache,
+  } = useMissions();
   const navigate = useNavigate();
 
   const [skillData, setSkillData] = useState(null);
-  const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
   const [newAchievements, setNewAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
+
+  // Skill-scoped mission list: active first, then completed, both filtered to
+  // this skill. Derived synchronously from the shared cache.
+  const missions = useMemo(() => {
+    if (allMissions == null) return [];
+    const filterBySkill = (m) => m.skill === decodedSkillName;
+    const active = allMissions.filter((m) => m.status === 'active' && filterBySkill(m));
+    const completed = allMissions.filter((m) => m.status === 'completed' && filterBySkill(m));
+    return [...active, ...completed];
+  }, [allMissions, decodedSkillName]);
 
   const handleBack = () => navigate('/skills');
   useAndroidBackButton(handleBack);
@@ -50,85 +67,67 @@ const SkillDetailPage = () => {
       return;
     }
     setLoading(true);
-    setIsLoadingSlow(false);
-    const slowTimer = setTimeout(() => setIsLoadingSlow(true), 3000);
     try {
-      const [profile, activeMissions, completedMissions] = await withTimeout(
-        Promise.all([
-          getUserProfile(currentUser.uid),
-          getActiveMissions(currentUser.uid),
-          getCompletedMissions(currentUser.uid),
-        ])
-      );
-
-      // Skill progress
+      const profile = await withTimeout(getUserProfile(currentUser.uid));
       const saved = profile?.skills?.[decodedSkillName] || { totalSP: 0, level: 1 };
       const progress = getSPProgressInLevel(saved.totalSP);
       setSkillData({ ...saved, progress });
-
-      // Filter missions by skill, active first then completed
-      const filterBySkill = (list) =>
-        list.filter((m) => m.skill === decodedSkillName);
-
-      const filtered = [
-        ...filterBySkill(activeMissions),
-        ...filterBySkill(completedMissions),
-      ];
-      setMissions(filtered);
     } catch (error) {
       console.error('Error fetching skill detail data:', error);
       setLoadError(getLoadErrorMessage(error, 'skill details'));
     } finally {
-      clearTimeout(slowTimer);
       setLoading(false);
-      setIsLoadingSlow(false);
     }
   };
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, decodedSkillName]);
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     setActionError(null);
-    try {
-      if (isCurrentlyCompleted) {
+
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        if (result?.leveledUp) {
-          setLevelUpInfo({ newLevel: result.newLevel });
-        }
-        if (result?.skillLeveledUp) {
-          setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-        }
-        if (result?.newlyAwardedAchievements?.length > 0) {
-          setNewAchievements(result.newlyAwardedAchievements);
-        }
+        await refreshMissionsCache();
+        // Also re-fetch the profile so the SP/level display reflects the undo.
+        await fetchData();
+      } catch (error) {
+        console.error('Error uncompleting mission:', error);
+        setActionError("That undo didn't go through. Try again.");
       }
-      await fetchData();
-    } catch (error) {
-      console.error('Error toggling mission completion:', error);
-      setActionError(isCurrentlyCompleted ? "That undo didn't go through. Try again." : "That mission didn't complete. Try again.");
+      return;
     }
+
+    const mission = missions.find((m) => m.id === missionId);
+    // MissionCompletionContext mutates the shared cache directly; the memo
+    // above re-derives this skill's list on the same tick.
+    completeMissionOptimistic(missionId, mission, {
+      onResolved: () => {
+        // Refresh the profile so the SP bar reflects the new earnings.
+        fetchData();
+      },
+      onAchievementsResolved: (achievements) => {
+        setNewAchievements(achievements);
+      },
+      onError: () => {
+        setActionError("That mission didn't complete. Try again.");
+      },
+    });
   };
 
-  if (loading) {
-    return (
-      <div className="skill-detail-page">
-        <div className="loading">
-          Loading...
-          {isLoadingSlow && <p className="loading-slow-hint">Still searching the realm...</p>}
-        </div>
-      </div>
-    );
-  }
+  const handleMissionChanged = () => {
+    refreshMissionsCache();
+  };
 
   const progress = skillData?.progress;
   const level = skillData?.level || 1;
   const totalSP = skillData?.totalSP || 0;
 
   return (
+    <LoadingTransition loading={loading || missionsCacheLoading} skeleton={<SkillDetailPageSkeleton />}>
     <div className="skill-detail-page">
       <header className="skill-detail-header">
         <button className="skill-detail-back-btn" onClick={handleBack}>
@@ -175,7 +174,7 @@ const SkillDetailPage = () => {
               key={mission.id}
               mission={mission}
               onToggleComplete={handleToggleComplete}
-              onMissionChanged={fetchData}
+              onMissionChanged={handleMissionChanged}
             />
           ))
         )}
@@ -186,6 +185,7 @@ const SkillDetailPage = () => {
         onDismiss={() => setNewAchievements([])}
       />
     </div>
+    </LoadingTransition>
   );
 };
 

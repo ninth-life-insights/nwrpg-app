@@ -3,10 +3,8 @@
 import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from '../missions/MissionCard';
 import { useNotifications } from '../../contexts/NotificationContext';
-import {
-  completeMissionWithRecurrence,
-  uncompleteMission
-} from '../../services/missionService';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import { uncompleteMission } from '../../services/missionService';
 import {
   DndContext,
   closestCenter,
@@ -99,7 +97,7 @@ const QuestMissionList = ({
   onAchievementsUnlocked,
 }) => {
   const { currentUser } = useAuth();
-  const { notifyMissionCompletion } = useNotifications();
+  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(TouchSensor, {
@@ -140,23 +138,30 @@ const QuestMissionList = ({
   });
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
-    try {
-      if (isCurrentlyCompleted) {
+    if (isCurrentlyCompleted) {
+      try {
         await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
-        notifyMissionCompletion(result);
-        if (result?.newlyAwardedAchievements?.length > 0 && onAchievementsUnlocked) {
-          onAchievementsUnlocked(result.newlyAwardedAchievements);
-        }
+        if (onMissionUpdate) onMissionUpdate();
+      } catch (err) {
+        console.error('Error uncompleting mission:', err);
       }
-      
-      if (onMissionUpdate) {
-        onMissionUpdate();
-      }
-    } catch (err) {
-      console.error('Error toggling mission completion:', err);
+      return;
     }
+
+    const mission = missions.find((m) => m.id === missionId);
+    completeMissionOptimistic(missionId, mission, {
+      // QuestMissionList doesn't own the missions array — its parent
+      // (QuestDetailView) does and refreshes via onMissionUpdate. So the
+      // optimistic visual flip relies entirely on the card-level context
+      // selector. The parent refresh runs after server resolves for
+      // eventual consistency.
+      onResolved: () => {
+        if (onMissionUpdate) onMissionUpdate();
+      },
+      onAchievementsResolved: (achievements) => {
+        if (onAchievementsUnlocked) onAchievementsUnlocked(achievements);
+      },
+    });
   };
 
   const handleDragEnd = (event) => {

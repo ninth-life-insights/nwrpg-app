@@ -12,7 +12,9 @@ import { getDeletedMissionsCount } from '../services/missionService';
 import { getDeletedQuestsCount } from '../services/questService';
 import { DAY_NAMES } from '../utils/weeklyReviewHelpers';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import SettingsPageSkeleton from './SettingsPageSkeleton';
 import StickyFooter from '../components/ui/StickyFooter';
+import { useDelayedLoadingState } from '../hooks/useDelayedLoadingState';
 import ChangeEmailModal from '../components/auth/ChangeEmailModal';
 import ChangePasswordModal from '../components/auth/ChangePasswordModal';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
@@ -163,12 +165,12 @@ const SettingsPage = () => {
     }
   };
 
+  // The JSX below dereferences `prefs.X` unguarded, so we can't render it
+  // while prefs is null. Keep the early-return pattern but swap the loading
+  // text for a delayed skeleton.
+  const skeletonVisible = useDelayedLoadingState(!prefs, 250);
   if (!prefs) {
-    return (
-      <div className="settings-container">
-        <p className="settings-loading">Loading...</p>
-      </div>
-    );
+    return skeletonVisible ? <SettingsPageSkeleton /> : null;
   }
 
   return (
