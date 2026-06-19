@@ -23,7 +23,7 @@ export const hasPermission = () => {
 
 // Show a notification via the active service worker registration.
 // url is stored in notification.data.url for the sw.js notificationclick handler.
-export const showNotification = async (title, { body, url } = {}) => {
+export const showNotification = async (title, { body, url, tag } = {}) => {
   if (!hasPermission()) return;
   if (!('serviceWorker' in navigator)) return;
 
@@ -35,6 +35,7 @@ export const showNotification = async (title, { body, url } = {}) => {
       badge: BADGE,
       data: { url: url || '/home' },
       requireInteraction: false,
+      tag,
     });
   } catch (error) {
     console.warn('showNotification failed:', error);
@@ -63,16 +64,19 @@ export const checkAndFirePlanYourDayAlert = async (userId) => {
       await showNotification('Ready to plan your day?', {
         body: 'Your next mission awaits',
         url: '/edit-daily-missions',
+        tag: 'plan-your-day',
       });
     } else if (count < DAILY_MISSION_TARGET) {
       await showNotification('Ready to adventure?', {
         body: `${count} of ${DAILY_MISSION_TARGET} daily missions set`,
         url: '/edit-daily-missions',
+        tag: 'plan-your-day',
       });
     } else {
       await showNotification('Ready to adventure?', {
         body: 'Your daily missions are set',
         url: '/home',
+        tag: 'plan-your-day',
       });
     }
   } catch (error) {
@@ -93,6 +97,7 @@ export const checkAndFireDueTodayAlert = async (userId) => {
         ? '1 mission is due today'
         : `${count} missions are due today`,
       url: '/mission-bank?sort=dueDate',
+      tag: 'due-today',
     });
   } catch (error) {
     console.warn('checkAndFireDueTodayAlert failed:', error);
@@ -112,6 +117,7 @@ export const checkAndFireOverdueAlert = async (userId) => {
         ? '1 mission is overdue'
         : `${count} missions are overdue`,
       url: '/mission-bank',
+      tag: 'overdue',
     });
   } catch (error) {
     console.warn('checkAndFireOverdueAlert failed:', error);

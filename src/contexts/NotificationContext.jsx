@@ -57,6 +57,7 @@ export const NotificationProvider = ({ children }) => {
         () => showNotification('Today\'s tale is ready', {
           body: 'Read how your adventure unfolded',
           url: '/daily-review',
+          tag: 'review-your-day',
         }),
         msUntil(prefs.reviewYourDay.hour, prefs.reviewYourDay.minute)
       );
