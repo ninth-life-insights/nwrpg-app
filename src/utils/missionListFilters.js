@@ -293,18 +293,7 @@ export const getMissionListDisplayMissions = ({
   // backdating completedAt get masked by the stale snapshot.
   const recentlyCompletedDisplay = recentlyCompletedMissions.map(cached => {
     const fresh = missions.find(m => m.id === cached.id);
-    const used = fresh && fresh.status === 'completed' ? fresh : cached;
-    console.log('[BACKDATE] getMissionListDisplayMissions resolving recently-completed', {
-      missionId: cached.id,
-      cachedCompletedAt: cached.completedAt instanceof Date
-        ? cached.completedAt.toISOString()
-        : cached.completedAt?.toDate?.()?.toISOString?.() ?? String(cached.completedAt),
-      freshFound: !!fresh,
-      freshStatus: fresh?.status ?? null,
-      freshCompletedAt: fresh?.completedAt?.toDate?.()?.toISOString?.() ?? null,
-      using: used === fresh ? 'fresh' : 'cached',
-    });
-    return used;
+    return fresh && fresh.status === 'completed' ? fresh : cached;
   });
 
   const trimmedQuery = (searchQuery || '').trim().toLowerCase();

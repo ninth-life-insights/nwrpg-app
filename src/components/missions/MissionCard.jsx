@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MissionCardFull from './MissionCardFull';
 import Badge from '../ui/Badge';
+import ErrorMessage from '../ui/ErrorMessage';
 import {
   MISSION_STATUS,
   COMPLETION_TYPES,
@@ -28,6 +29,7 @@ import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
+import { areMissionRendersEqual } from '../../utils/missionHelpers';
 import './MissionCard.css';
 
 const MissionCard = ({
@@ -65,6 +67,7 @@ const MissionCard = ({
   const [viewingDetails, setViewingDetails] = useState(false);
   const [yesterdayLoading, setYesterdayLoading] = useState(false);
   const [markedYesterday, setMarkedYesterday] = useState(false);
+  const [yesterdayError, setYesterdayError] = useState(null);
   // Local override for completedAt so a chip click here is visible to
   // MissionCardFull when the user opens it — without forcing a parent reload.
   const [completedAtOverride, setCompletedAtOverride] = useState(null);
@@ -149,19 +152,14 @@ const MissionCard = ({
     : null;
   const isCompletedToday = completedDate === today;
 
-  const handleMarkYesterday = async (e) => {
-    e.stopPropagation();
+  const handleMarkYesterday = async () => {
     if (yesterdayLoading || markedYesterday || !currentUser) return;
     setYesterdayLoading(true);
     setMarkedYesterday(true);
+    setYesterdayError(null);
     try {
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-      console.log('[BACKDATE] MissionCard chip clicked', { missionId: mission.id, yesterday });
       const result = await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
-      console.log('[BACKDATE] MissionCard chip → setCompletedAtOverride', {
-        missionId: mission.id,
-        newCompletedAt: result.completedAt?.toDate?.()?.toISOString?.() ?? null,
-      });
       setCompletedAtOverride(result.completedAt);
       // Patch the parent's recentlyCompletedMissions snapshot so the prop
       // flowing back down on the next render also reflects the new date —
@@ -170,7 +168,7 @@ const MissionCard = ({
       onRecentlyCompletedUpdated?.(mission.id, { completedAt: result.completedAt });
     } catch (err) {
       setMarkedYesterday(false);
-      console.error('[BACKDATE] MissionCard chip FAILED:', err);
+      setYesterdayError("That date didn't save.");
     } finally {
       setYesterdayLoading(false);
     }
@@ -252,7 +250,7 @@ const MissionCard = ({
               <button
                 type="button"
                 className={`mark-yesterday-chip ${markedYesterday ? 'marked' : ''}`}
-                onClick={handleMarkYesterday}
+                onClick={(e) => { e.stopPropagation(); handleMarkYesterday(); }}
                 disabled={yesterdayLoading || markedYesterday}
               >
                 {markedYesterday ? 'Moved to yesterday ✓' : 'Did this yesterday?'}
@@ -311,6 +309,12 @@ const MissionCard = ({
             )}
           </div>
         </div>
+
+        {yesterdayError && (
+          <div className="mission-card-yesterday-error" onClick={(e) => e.stopPropagation()}>
+            <ErrorMessage message={yesterdayError} onRetry={handleMarkYesterday} />
+          </div>
+        )}
 
         {/* Description */}
         {mission.description && (
@@ -371,16 +375,6 @@ const MissionCard = ({
       const effectiveMission = completedAtOverride
         ? { ...mission, completedAt: completedAtOverride }
         : mission;
-      console.log('[BACKDATE] MissionCard opening MissionCardFull', {
-        missionId: mission.id,
-        title: mission.title,
-        propCompletedAt: mission.completedAt?.toDate?.()?.toISOString?.()
-          ?? (mission.completedAt instanceof Date ? mission.completedAt.toISOString() : String(mission.completedAt)),
-        completedAtOverride: completedAtOverride?.toDate?.()?.toISOString?.() ?? null,
-        usingOverride: !!completedAtOverride,
-        effectiveCompletedAt: effectiveMission.completedAt?.toDate?.()?.toISOString?.()
-          ?? (effectiveMission.completedAt instanceof Date ? effectiveMission.completedAt.toISOString() : String(effectiveMission.completedAt)),
-      });
       return (
         <MissionCardFull
           mission={effectiveMission}
@@ -399,4 +393,20 @@ const MissionCard = ({
   );
 };
 
-export default MissionCard;
+// Wrapped in React.memo so a sibling re-render (e.g. completing one card in
+// a long list) doesn't force every other card to re-render. The comparator
+// covers every prop that drives visual output; function props are
+// intentionally not compared — they're treated as stable across renders
+// from the same parent.
+export default React.memo(MissionCard, (prev, next) => {
+  if (!areMissionRendersEqual(prev.mission, next.mission)) return false;
+  return (
+    prev.isRecentlyCompleted === next.isRecentlyCompleted &&
+    prev.selectionMode === next.selectionMode &&
+    prev.isCustomOrderMode === next.isCustomOrderMode &&
+    prev.hideDailyBadge === next.hideDailyBadge &&
+    prev.hideRoomBadge === next.hideRoomBadge &&
+    prev.hideQuestIndicator === next.hideQuestIndicator &&
+    prev.hideRoutineBadge === next.hideRoutineBadge
+  );
+});

@@ -136,16 +136,6 @@ const MissionCardFull = ({
   const editedDisplay = wasEdited() ? formatTimestamp(displayMission.updatedAt) : null;
   const expiryDisplay = displayMission.expiryDate ? formatForUserLong(displayMission.expiryDate) : null;
   const completedDisplay = formatTimestamp(displayMission.completedAt);
-  console.log('[BACKDATE] MissionCardFull rendering', {
-    missionId: mission.id,
-    propCompletedAt: mission.completedAt?.toDate?.()?.toISOString?.()
-      ?? (mission.completedAt instanceof Date ? mission.completedAt.toISOString() : String(mission.completedAt)),
-    missionOverrideCompletedAt: missionOverride?.completedAt?.toDate?.()?.toISOString?.()
-      ?? (missionOverride?.completedAt instanceof Date ? missionOverride.completedAt.toISOString() : missionOverride?.completedAt && String(missionOverride.completedAt)),
-    displayedCompletedAt: displayMission.completedAt?.toDate?.()?.toISOString?.()
-      ?? (displayMission.completedAt instanceof Date ? displayMission.completedAt.toISOString() : String(displayMission.completedAt)),
-    completedDisplay,
-  });
   const today = toDateString(new Date());
   const futureScheduledDates = (displayMission.scheduledDates ?? [])
     .filter(d => d >= today)

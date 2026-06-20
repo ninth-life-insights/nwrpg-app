@@ -3,13 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- viewport-fit=cover lets content extend under iOS notch / home indicator;
+         StickyFooter etc. already use env(safe-area-inset-*) for spacing. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Mom Life RPG — a quest log for the real work of running a household."
     />
-    <link rel="apple-touch-icon" href="/logo192.png" />
+    <!-- Prevent iOS from auto-linking strings that look like phone numbers. -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- iOS PWA: install-to-home-screen support. apple-touch-icon must be a
+         real PNG path; iOS won't fall back to the manifest icons. -->
+    <link rel="apple-touch-icon" href="/assets/App-Icon/Nwrpg-icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Mom Life RPG" />
+
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 
@@ -21,7 +32,7 @@
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
     <link rel="manifest" href="/manifest.json" />
-    <title>React App</title>
+    <title>Mom Life RPG</title>
     <script>
       (function () {
         var KEY = '__nwrpg_errors';

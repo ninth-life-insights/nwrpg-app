@@ -1,5 +1,5 @@
 // src/App.js
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -13,37 +13,42 @@ import { Navigate } from 'react-router-dom';
 import OfflineIndicator from './components/OfflineIndicator';
 import './App.css';
 
+// Entry-path pages stay in the main bundle — every cold start hits one of these,
+// so paying for a separate chunk fetch would just add latency before first paint.
 import LandingPage from './pages/auth/LandingPage';
 import LoginPage from './pages/auth/LogInPage';
 import SignupPage from './pages/auth/SignupPage';
-import CharacterCreationPage from './pages/character/CharacterCreationPage';
-import TermsPage from './pages/legal/TermsPage';
-import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
-
 import HomePage from './pages/HomePage';
-import HomePageSandbox from './pages/HomePageSandbox';
-import EditDailyMissionsPage from './pages/missions/EditDailyMissionsPage';
-import DailyReviewPage from './pages/reviews/DailyReviewPage';
-import AdventureLogPage from './pages/reviews/AdventureLogPage';
-import AdventureLogDetailPage from './pages/reviews/AdventureLogDetailPage';
-import MissionBankPage from './pages/missions/MissionBankPage';
-import DeletedMissionsPage from './pages/missions/DeletedMissionsPage';
-import QuestBank from './pages/quests/QuestBankPage';
-import DeletedQuestsPage from './pages/quests/DeletedQuestsPage';
-import QuestDetailView from './components/quests/QuestDetailView';
-import SkillsPage from './pages/skills/SkillsPage';
-import SkillDetailPage from './pages/skills/SkillDetailPage';
-import BasePage from './pages/base/BasePage';
-import RoomPage from './pages/base/RoomPage';
-import AchievementsPage from './pages/AchievementsPage';
-import SettingsPage from './pages/SettingsPage';
-import EditCharacterPage from './pages/character/EditCharacterPage';
-import WeeklyReviewPage from './pages/reviews/WeeklyReviewPage';
-import WeeklyLogDetailPage from './pages/reviews/WeeklyLogDetailPage';
-import RoutinesPage from './pages/RoutinesPage';
-import RoutineBuilderPage from './pages/RoutineBuilderPage';
-import RoutineWeekViewPage from './pages/RoutineWeekViewPage';
-import RoutineMonthViewPage from './pages/RoutineMonthViewPage';
+
+// Everything else is route-split. Each chunk downloads on first navigation to
+// that page and is cached for the rest of the session. The page's own skeleton
+// takes over once mounted, so Suspense just needs a quiet fallback.
+const CharacterCreationPage = lazy(() => import('./pages/character/CharacterCreationPage'));
+const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/legal/PrivacyPolicyPage'));
+const HomePageSandbox = lazy(() => import('./pages/HomePageSandbox'));
+const EditDailyMissionsPage = lazy(() => import('./pages/missions/EditDailyMissionsPage'));
+const DailyReviewPage = lazy(() => import('./pages/reviews/DailyReviewPage'));
+const AdventureLogPage = lazy(() => import('./pages/reviews/AdventureLogPage'));
+const AdventureLogDetailPage = lazy(() => import('./pages/reviews/AdventureLogDetailPage'));
+const MissionBankPage = lazy(() => import('./pages/missions/MissionBankPage'));
+const DeletedMissionsPage = lazy(() => import('./pages/missions/DeletedMissionsPage'));
+const QuestBank = lazy(() => import('./pages/quests/QuestBankPage'));
+const DeletedQuestsPage = lazy(() => import('./pages/quests/DeletedQuestsPage'));
+const QuestDetailView = lazy(() => import('./components/quests/QuestDetailView'));
+const SkillsPage = lazy(() => import('./pages/skills/SkillsPage'));
+const SkillDetailPage = lazy(() => import('./pages/skills/SkillDetailPage'));
+const BasePage = lazy(() => import('./pages/base/BasePage'));
+const RoomPage = lazy(() => import('./pages/base/RoomPage'));
+const AchievementsPage = lazy(() => import('./pages/AchievementsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const EditCharacterPage = lazy(() => import('./pages/character/EditCharacterPage'));
+const WeeklyReviewPage = lazy(() => import('./pages/reviews/WeeklyReviewPage'));
+const WeeklyLogDetailPage = lazy(() => import('./pages/reviews/WeeklyLogDetailPage'));
+const RoutinesPage = lazy(() => import('./pages/RoutinesPage'));
+const RoutineBuilderPage = lazy(() => import('./pages/RoutineBuilderPage'));
+const RoutineWeekViewPage = lazy(() => import('./pages/RoutineWeekViewPage'));
+const RoutineMonthViewPage = lazy(() => import('./pages/RoutineMonthViewPage'));
 
 
 
@@ -73,6 +78,7 @@ function AppContent() {
   return (
     <div className="App">
       <OfflineIndicator />
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/log-in" element={<PublicRoute><LoginPage /></PublicRoute>} />
@@ -105,6 +111,7 @@ function AppContent() {
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/edit-character" element={<ProtectedRoute><EditCharacterPage /></ProtectedRoute>} />
       </Routes>
+      </Suspense>
     </div>
   );
 }

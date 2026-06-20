@@ -969,14 +969,6 @@ export const updateMissionCompletedDate = async (userId, missionId, newDateStrin
   const newTimestamp = Timestamp.fromDate(newCompletedAt);
   const logEntry = await findCompletionActivityLogEntry(userId, missionId);
 
-  console.log('[BACKDATE] updateMissionCompletedDate ▶', {
-    missionId,
-    newDateString,
-    oldCompletedAt: oldCompletedAt.toISOString(),
-    newCompletedAt: newCompletedAt.toISOString(),
-    activityLogEntryId: logEntry?.id ?? null,
-  });
-
   const batch = writeBatch(db);
   batch.update(missionRef, {
     completedAt: newTimestamp,
@@ -989,8 +981,6 @@ export const updateMissionCompletedDate = async (userId, missionId, newDateStrin
     });
   }
   await batch.commit();
-
-  console.log('[BACKDATE] updateMissionCompletedDate ✓ batch committed for', missionId);
 
   return { completedAt: newTimestamp };
 };

@@ -1,7 +1,8 @@
 // src/components/missions/MissionCardCondensed.jsx
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import MissionCardFull from './MissionCardFull';
 import Badge from '../ui/Badge';
+import ErrorMessage from '../ui/ErrorMessage';
 import {
   MISSION_STATUS,
   hasSkill,
@@ -20,6 +21,7 @@ import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
+import { areMissionRendersEqual } from '../../utils/missionHelpers';
 import dayjs from 'dayjs';
 import './MissionCardCondensed.css';
 
@@ -57,6 +59,7 @@ const MissionCardCondensed = ({
   const [viewingDetails, setViewingDetails] = useState(false);
   const [yesterdayLoading, setYesterdayLoading] = useState(false);
   const [markedYesterday, setMarkedYesterday] = useState(false);
+  const [yesterdayError, setYesterdayError] = useState(null);
   // Local override for completedAt so a chip click here is visible to
   // MissionCardFull when the user opens it — without forcing a parent reload.
   const [completedAtOverride, setCompletedAtOverride] = useState(null);
@@ -97,11 +100,11 @@ const MissionCardCondensed = ({
     onToggleComplete(mission.id, isCompleted, mission.xpReward, mission.spReward);
   };
 
-  const handleMarkYesterday = async (e) => {
-    e.stopPropagation();
+  const handleMarkYesterday = async () => {
     if (yesterdayLoading || markedYesterday || !currentUser) return;
     setYesterdayLoading(true);
     setMarkedYesterday(true);
+    setYesterdayError(null);
     try {
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
       const result = await updateMissionCompletedDate(currentUser.uid, mission.id, yesterday);
@@ -109,7 +112,7 @@ const MissionCardCondensed = ({
       onRecentlyCompletedUpdated?.(mission.id, { completedAt: result.completedAt });
     } catch (err) {
       setMarkedYesterday(false);
-      console.error('Failed to mark mission as completed yesterday:', err);
+      setYesterdayError("That date didn't save.");
     } finally {
       setYesterdayLoading(false);
     }
@@ -158,7 +161,7 @@ const MissionCardCondensed = ({
               <button
                 type="button"
                 className={`mcc-mark-yesterday-chip ${markedYesterday ? 'marked' : ''}`}
-                onClick={handleMarkYesterday}
+                onClick={(e) => { e.stopPropagation(); handleMarkYesterday(); }}
                 disabled={yesterdayLoading || markedYesterday}
               >
                 {markedYesterday ? 'Moved to yesterday ✓' : 'Did this yesterday?'}
@@ -189,6 +192,11 @@ const MissionCardCondensed = ({
             )}
           </div>
         </div>
+        {yesterdayError && (
+          <div className="mcc-yesterday-error" onClick={(e) => e.stopPropagation()}>
+            <ErrorMessage message={yesterdayError} onRetry={handleMarkYesterday} />
+          </div>
+        )}
       </div>
 
       {actionSlot ? actionSlot : (
@@ -231,4 +239,18 @@ const MissionCardCondensed = ({
   );
 };
 
-export default MissionCardCondensed;
+// Wrapped in React.memo so a sibling re-render in a long list (HomePage
+// daily missions, EditDailyMissionsPage bank, routine views) doesn't force
+// every other condensed card to re-render. Function props are intentionally
+// not compared — treated as stable across renders from the same parent.
+export default React.memo(MissionCardCondensed, (prev, next) => {
+  if (!areMissionRendersEqual(prev.mission, next.mission)) return false;
+  return (
+    prev.readOnly === next.readOnly &&
+    prev.actionSlot === next.actionSlot &&
+    prev.hideRecurrenceBadge === next.hideRecurrenceBadge &&
+    prev.hideRoutineBadge === next.hideRoutineBadge &&
+    prev.hideEvergreenBadge === next.hideEvergreenBadge &&
+    prev.tintEvergreen === next.tintEvergreen
+  );
+});

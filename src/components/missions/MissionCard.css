@@ -267,6 +267,11 @@
   cursor: not-allowed;
 }
 
+.mission-card .mission-card-yesterday-error {
+  margin-top: var(--space-sm);
+  cursor: default;
+}
+
 /* ===== MISSION ACTIONS ===== */
 .mission-actions {
   display: flex;

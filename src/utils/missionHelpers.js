@@ -182,3 +182,41 @@ export const detectDailyMissionInconsistencies = (configMissionIds, flaggedMissi
     flaggedMissionIds: [...flaggedIds]
   };
 };
+
+// Shallow equality check across every mission field the card components
+// actually read. Used as the comparator inside React.memo on MissionCard /
+// MissionCardCondensed so a sibling re-render in a long list doesn't force
+// every other card to re-render.
+//
+// Reference comparison is sufficient for the object-valued fields
+// (recurrence) because mission services consistently replace those rather
+// than mutate in place.
+export const areMissionRendersEqual = (a, b) => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    a.id === b.id &&
+    a.title === b.title &&
+    a.status === b.status &&
+    a.completedAt === b.completedAt &&
+    a.xpAwarded === b.xpAwarded &&
+    a.spAwarded === b.spAwarded &&
+    a.xpReward === b.xpReward &&
+    a.spReward === b.spReward &&
+    a.isPriority === b.isPriority &&
+    a.skill === b.skill &&
+    a.difficulty === b.difficulty &&
+    a.dueDate === b.dueDate &&
+    a.baseLocation === b.baseLocation &&
+    a.questId === b.questId &&
+    a.completionType === b.completionType &&
+    a.timerDurationMinutes === b.timerDurationMinutes &&
+    a.targetCount === b.targetCount &&
+    a.currentCount === b.currentCount &&
+    a.parentMissionId === b.parentMissionId &&
+    a.recurrence === b.recurrence &&
+    a.updatedAt === b.updatedAt &&
+    a.createdAt === b.createdAt &&
+    a.expiryDate === b.expiryDate
+  );
+};
