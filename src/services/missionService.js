@@ -925,7 +925,6 @@ export const toggleMissionPriority = async (userId, missionId) => {
 // Validation:
 //  - newDateString must be 'YYYY-MM-DD'
 //  - cannot be in the future
-//  - cannot be before the mission's createdAt
 //
 // Note: any daily snapshot that has already been generated for the old or new
 // date is NOT auto-regenerated. The mission + activity log are the source of
@@ -950,15 +949,6 @@ export const updateMissionCompletedDate = async (userId, missionId, newDateStrin
 
   if (missionData.status !== MISSION_STATUS.COMPLETED || !missionData.completedAt) {
     throw new Error('Only completed missions can have their completed date changed');
-  }
-
-  if (missionData.createdAt) {
-    const createdAtDate = missionData.createdAt.toDate
-      ? missionData.createdAt.toDate()
-      : new Date(missionData.createdAt);
-    if (newDateDayjs.isBefore(dayjs(createdAtDate), 'day')) {
-      throw new Error('Completed date cannot be before the mission was created');
-    }
   }
 
   // Preserve the original time-of-day so intra-day ordering of completions

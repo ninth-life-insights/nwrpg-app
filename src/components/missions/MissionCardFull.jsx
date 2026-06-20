@@ -163,9 +163,6 @@ const MissionCardFull = ({
     ? toDateString(displayMission.completedAt.toDate?.() ?? new Date(displayMission.completedAt))
     : null;
   const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-  const createdAtDateString = displayMission.createdAt
-    ? toDateString(displayMission.createdAt.toDate?.() ?? new Date(displayMission.createdAt))
-    : null;
 
   const handleDelete = async () => {
     setActionError(null);
@@ -514,7 +511,6 @@ const MissionCardFull = ({
                       className="completed-date-picker-input"
                       value={datePickerValue}
                       max={today}
-                      min={createdAtDateString || undefined}
                       onChange={(e) => {
                         setDatePickerValue(e.target.value);
                         setDateError(null);
