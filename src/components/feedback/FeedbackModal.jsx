@@ -61,8 +61,8 @@ const FeedbackModal = ({ page, displayName, onClose }) => {
         category,
       });
       setSent(true);
-      // Brief acknowledgement, then close.
-      setTimeout(onClose, 900);
+      // Hold the thank-you state long enough to feel intentional.
+      setTimeout(onClose, 2200);
     } catch (err) {
       console.error('Error sending feedback:', err);
       setSubmitError("Your feedback didn't send.");
@@ -77,84 +77,91 @@ const FeedbackModal = ({ page, displayName, onClose }) => {
     <div className="feedback-overlay" onClick={handleBackdropClick}>
       <div className="feedback-modal" role="dialog" aria-label="Send feedback">
 
-        <div className="feedback-header">
-          <div className="feedback-header-text">
-            <h2 className="feedback-title">Send feedback</h2>
-            <p className="feedback-subtitle">Your input helps me improve the beta.</p>
+        {sent ? (
+          <div className="feedback-sent-view" role="status" aria-live="polite">
+            <h2 className="feedback-sent-title">Thank you!</h2>
+            <p className="feedback-sent-subtitle">
+              I look forward to reviewing your feedback.
+            </p>
           </div>
-          <button
-            className="feedback-close"
-            onClick={onClose}
-            aria-label="Close"
-            disabled={submitting}
-          >
-            <span className="material-icons">close</span>
-          </button>
-        </div>
-
-        <div className="feedback-body">
-          <p className="feedback-context">
-            On <strong>{pageLabel}</strong> · as <strong>{userLabel}</strong>
-          </p>
-
-          <div className="feedback-chip-row" role="group" aria-label="Category">
-            {CATEGORIES.map(({ value, label }) => (
+        ) : (
+          <>
+            <div className="feedback-header">
+              <div className="feedback-header-text">
+                <h2 className="feedback-title">Send feedback</h2>
+                <p className="feedback-subtitle">Your input helps me improve the beta.</p>
+              </div>
               <button
-                key={value}
-                type="button"
-                className={`feedback-chip${category === value ? ' is-selected' : ''}`}
-                onClick={() => handleChipClick(value)}
-                aria-pressed={category === value}
-                disabled={submitting}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <textarea
-            className="feedback-textarea"
-            placeholder="What's on your mind?"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            maxLength={2000}
-            rows={6}
-            autoFocus
-            disabled={submitting || sent}
-          />
-        </div>
-
-        <div className="feedback-footer">
-          {submitError && (
-            <ErrorMessage
-              message={submitError}
-              onRetry={handleSubmit}
-              className="feedback-error"
-            />
-          )}
-          {sent ? (
-            <p className="feedback-sent">Thanks — sent.</p>
-          ) : (
-            <div className="feedback-actions">
-              <button
-                type="button"
-                className="feedback-cancel"
+                className="feedback-close"
                 onClick={onClose}
+                aria-label="Close"
                 disabled={submitting}
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="feedback-send"
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-              >
-                {submitting ? 'Sending…' : 'Send'}
+                <span className="material-icons">close</span>
               </button>
             </div>
-          )}
-        </div>
+
+            <div className="feedback-body">
+              <p className="feedback-context">
+                On <strong>{pageLabel}</strong> · as <strong>{userLabel}</strong>
+              </p>
+
+              <div className="feedback-chip-row" role="group" aria-label="Category">
+                {CATEGORIES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`feedback-chip${category === value ? ' is-selected' : ''}`}
+                    onClick={() => handleChipClick(value)}
+                    aria-pressed={category === value}
+                    disabled={submitting}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                className="feedback-textarea"
+                placeholder="What's on your mind?"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                maxLength={2000}
+                rows={6}
+                autoFocus
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="feedback-footer">
+              {submitError && (
+                <ErrorMessage
+                  message={submitError}
+                  onRetry={handleSubmit}
+                  className="feedback-error"
+                />
+              )}
+              <div className="feedback-actions">
+                <button
+                  type="button"
+                  className="feedback-cancel"
+                  onClick={onClose}
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="feedback-send"
+                  onClick={handleSubmit}
+                  disabled={!canSubmit}
+                >
+                  {submitting ? 'Sending…' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
     </div>

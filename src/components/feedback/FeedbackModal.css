@@ -255,10 +255,35 @@
   cursor: not-allowed;
 }
 
-.feedback-sent {
-  margin: 0;
+/* Thank-you state — replaces the whole modal interior on success. */
+.feedback-sent-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  gap: var(--space-sm);
+  padding: calc(var(--space-xl) * 2) var(--space-xl);
+  min-height: 280px;
+  animation: feedbackSentFadeIn 0.35s ease-out;
+}
+
+@keyframes feedbackSentFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.feedback-sent-title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.feedback-sent-subtitle {
+  margin: 0;
   font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-success);
+  color: var(--color-text-medium);
+  max-width: 280px;
+  line-height: 1.4;
 }
