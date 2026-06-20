@@ -34,16 +34,5 @@
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff",
-  "orientation": "portrait",
-  "shortcuts": [
-    {
-      "name": "Diagnostics",
-      "short_name": "Debug",
-      "description": "Open the diagnostic page if the app shows a blank screen",
-      "url": "/debug.html",
-      "icons": [
-        { "src": "/assets/App-Icon/Nwrpg-icon-192.png", "sizes": "192x192" }
-      ]
-    }
-  ]
+  "orientation": "portrait"
 }

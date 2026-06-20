@@ -1,0 +1,289 @@
+/* src/components/feedback/FeedbackModal.css
+ * Mirrors the AddRoomModal bottom-sheet pattern (sheet on mobile, centered
+ * dialog on desktop). All styles namespaced under .feedback-modal to avoid
+ * colliding with other global class names. */
+
+.feedback-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+@media (min-width: 480px) {
+  .feedback-overlay {
+    align-items: center;
+  }
+}
+
+.feedback-modal {
+  background: var(--color-bg-main);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100vw;
+  max-width: 480px;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: feedbackSlideUp 0.25s ease-out;
+}
+
+@media (min-width: 480px) {
+  .feedback-modal {
+    border-radius: var(--radius-xl);
+    max-height: 90vh;
+  }
+}
+
+@keyframes feedbackSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@media (min-width: 480px) {
+  @keyframes feedbackSlideUp {
+    from { transform: translateY(20px) scale(0.97); opacity: 0; }
+    to   { transform: translateY(0) scale(1);        opacity: 1; }
+  }
+}
+
+/* Header */
+.feedback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.feedback-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.feedback-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.feedback-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.feedback-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.feedback-close:hover:not(:disabled) {
+  color: var(--color-text-dark);
+}
+
+.feedback-close:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Body */
+.feedback-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.feedback-context {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+}
+
+.feedback-context strong {
+  color: var(--color-text-medium);
+  font-weight: 600;
+}
+
+/* Category chips */
+.feedback-chip-row {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.feedback-chip {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  padding: 6px 14px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.feedback-chip:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.feedback-chip.is-selected,
+.feedback-chip.is-selected:hover:not(:disabled) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.feedback-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Textarea */
+.feedback-textarea {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  color: var(--color-text-dark);
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 140px;
+  transition: border-color var(--transition);
+}
+
+.feedback-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.feedback-textarea::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.feedback-textarea:disabled {
+  opacity: 0.7;
+}
+
+/* Footer */
+.feedback-footer {
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.feedback-error {
+  margin: 0;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.feedback-cancel {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.feedback-cancel:hover:not(:disabled) {
+  background: var(--color-bg-white);
+}
+
+.feedback-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback-send {
+  flex: 2;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.feedback-send:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.feedback-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Thank-you state — replaces the whole modal interior on success. */
+.feedback-sent-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-sm);
+  padding: calc(var(--space-xl) * 2) var(--space-xl);
+  min-height: 280px;
+  animation: feedbackSentFadeIn 0.35s ease-out;
+}
+
+@keyframes feedbackSentFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.feedback-sent-title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.feedback-sent-subtitle {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
+  max-width: 280px;
+  line-height: 1.4;
+}

@@ -1,0 +1,68 @@
+/* src/components/feedback/FeedbackButton.css
+ * Position is driven entirely by an inline translate3d so the JS owns the
+ * absolute coords. CSS positions at (0,0) fixed; the transform places it. */
+
+.feedback-btn {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary);
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+  cursor: grab;
+  z-index: 20;
+  /* touch-action: none prevents the browser from claiming the pointer for
+   * scroll/zoom, so drag works on touch devices without flicker. */
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  will-change: transform;
+  transition: box-shadow var(--transition), background var(--transition);
+}
+
+.feedback-btn:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+.feedback-btn:active {
+  cursor: grabbing;
+}
+
+/* While dragging, lift above other fixed UI (e.g. centered FABs) and kill
+ * the transition so the button tracks the pointer 1:1 without lag. */
+.feedback-btn.is-dragging {
+  z-index: 1001;
+  cursor: grabbing;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+  transition: none;
+}
+
+/* Per CLAUDE.md Material Icons gotcha: target the descendant glyph AND use
+ * !important so it always wins, no matter what global icon color rules say. */
+.feedback-btn,
+.feedback-btn .material-icons {
+  color: #fff !important;
+}
+
+.feedback-btn .material-icons {
+  font-size: 22px;
+  pointer-events: none;
+}
+
+@media (min-width: 480px) {
+  .feedback-btn {
+    width: 52px;
+    height: 52px;
+  }
+  .feedback-btn .material-icons {
+    font-size: 24px;
+  }
+}
