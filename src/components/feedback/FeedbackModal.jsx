@@ -3,7 +3,7 @@
 // displayName, page, and timestamp are recorded automatically. Renders via
 // createPortal so no ancestor stacking context can trap it.
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createFeedback } from '../../services/feedbackService';
@@ -28,7 +28,17 @@ const FeedbackModal = ({ page, displayName, onClose }) => {
 
   useModalBackButton(true, onClose);
 
+  // Ignore backdrop clicks for the first ~250ms after mount. The synthesized
+  // click from the button-tap that opened the modal can land on the freshly
+  // mounted overlay and close it immediately ("flash and gone").
+  const readyForBackdropClick = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyForBackdropClick.current = true; }, 250);
+    return () => clearTimeout(t);
+  }, []);
+
   const handleBackdropClick = (e) => {
+    if (!readyForBackdropClick.current) return;
     if (e.target === e.currentTarget && !submitting) onClose();
   };
 
@@ -68,7 +78,10 @@ const FeedbackModal = ({ page, displayName, onClose }) => {
       <div className="feedback-modal" role="dialog" aria-label="Send feedback">
 
         <div className="feedback-header">
-          <h2 className="feedback-title">Send feedback</h2>
+          <div className="feedback-header-text">
+            <h2 className="feedback-title">Send feedback</h2>
+            <p className="feedback-subtitle">Your input helps me improve the beta.</p>
+          </div>
           <button
             className="feedback-close"
             onClick={onClose}
