@@ -23,7 +23,6 @@ const RoomDetailModal = ({ roomId, onClose }) => {
     isInitialLoading: missionsCacheLoading,
     refresh: refreshMissionsCache,
   } = useMissions();
->>>>>>> chore/loading-speed
   const [room, setRoom] = useState(null);
   const [roomTitle, setRoomTitle] = useState('');
   const [loading, setLoading] = useState(true);

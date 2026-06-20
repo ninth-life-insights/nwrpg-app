@@ -8,5 +8,13 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+
+    // Beta feedback. Authed users can submit feedback only for themselves;
+    // no client reads — browse via Firebase console or full DB export.
+    match /feedback/{docId} {
+      allow create: if request.auth != null
+                  && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
   }
 }

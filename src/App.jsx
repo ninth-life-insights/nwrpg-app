@@ -11,6 +11,7 @@ import { DailyMissionsProvider } from './contexts/DailyMissionsContext';
 import { RoutineProvider } from './contexts/RoutineContext';
 import { Navigate } from 'react-router-dom';
 import OfflineIndicator from './components/OfflineIndicator';
+import FeedbackButton from './components/feedback/FeedbackButton';
 import './App.css';
 
 import LandingPage from './pages/auth/LandingPage';
@@ -70,6 +71,7 @@ function PublicRoute({ children }) {
 
 
 function AppContent() {
+  const { currentUser } = useAuth();
   return (
     <div className="App">
       <OfflineIndicator />
@@ -105,6 +107,7 @@ function AppContent() {
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/edit-character" element={<ProtectedRoute><EditCharacterPage /></ProtectedRoute>} />
       </Routes>
+      {currentUser && <FeedbackButton />}
     </div>
   );
 }
