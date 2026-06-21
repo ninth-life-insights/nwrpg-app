@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { logEvent, setUserId } from 'firebase/analytics';
+import { logEvent, setUserId, setUserProperties } from 'firebase/analytics';
 import { analytics } from '../services/firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,6 +15,13 @@ export const useAnalytics = () => {
   useEffect(() => {
     if (!analytics) return;
     setUserId(analytics, currentUser ? currentUser.uid : null);
+    // display-mode tells us standalone (installed PWA) vs browser tab.
+    // Sticky on the analytics instance, but re-setting on auth change is
+    // idempotent and covers the case where analytics resolved after mount.
+    const displayMode = window.matchMedia('(display-mode: standalone)').matches
+      ? 'standalone'
+      : 'browser';
+    setUserProperties(analytics, { display_mode: displayMode });
   }, [currentUser]);
 
   useEffect(() => {
