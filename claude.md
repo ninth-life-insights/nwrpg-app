@@ -196,6 +196,22 @@ If you find a card extending past its container, the bug is almost certainly NOT
 
 ---
 
+## Firestore Timestamp reads — dual-shape gotcha
+
+Datetime fields written via `serverTimestamp()` (e.g. `completedAt`, `createdAt`, `deletedAt`) come back from Firestore as **Firestore Timestamp** objects with a `.toDate()` method. But the optimistic cache in `MissionCompletionContext` patches the cache with a plain **JS Date** for `completedAt` while the server write is in flight. Any consumer that reads the field must handle both shapes, or the mission will vanish from the UI for the duration of the optimistic window.
+
+**Rule**: when reading a `serverTimestamp()`-backed field from the cache, always use the dual-shape pattern:
+
+```js
+const date = value?.toDate ? value.toDate() : new Date(value);
+```
+
+Reference implementations: `WeeklyReviewSummary.jsx`, `BaseCheckInStep.jsx`, `MissionCardFull.jsx`, `OtherMissionsStep.jsx`.
+
+**Eventually fix at the source**: `MissionCompletionContext` should write a Timestamp-shaped object (with a `.toDate()` method) in its optimistic patch so consumers don't have to know about this. Until that lands, the dual-shape read pattern is the convention.
+
+---
+
 ## Error Handling Patterns
 
 ### Principle
