@@ -12,6 +12,7 @@ import { RoutineProvider } from './contexts/RoutineContext';
 import { Navigate } from 'react-router-dom';
 import OfflineIndicator from './components/OfflineIndicator';
 import FeedbackButton from './components/feedback/FeedbackButton';
+import { useAnalytics } from './hooks/useAnalytics';
 import './App.css';
 
 // Entry-path pages stay in the main bundle — every cold start hits one of these,
@@ -76,6 +77,7 @@ function PublicRoute({ children }) {
 
 
 function AppContent() {
+  useAnalytics();
   const { currentUser } = useAuth();
   return (
     <div className="App">
