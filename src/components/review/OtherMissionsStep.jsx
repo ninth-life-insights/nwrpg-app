@@ -61,8 +61,11 @@ const OtherMissionsStep = ({
     );
     const completedToday = cachedMissions.filter(m => {
       if (m.status !== 'completed') return false;
-      if (!m.completedAt?.toDate) return false;
-      return toDateString(m.completedAt.toDate()) === today;
+      if (!m.completedAt) return false;
+      const completedDate = m.completedAt.toDate
+        ? m.completedAt.toDate()
+        : new Date(m.completedAt);
+      return toDateString(completedDate) === today;
     });
     return [...completedToday, ...activeMissions];
   }, [cachedMissions, dailyConfigIds, today]);
