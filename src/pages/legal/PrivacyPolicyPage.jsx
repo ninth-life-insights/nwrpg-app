@@ -76,6 +76,16 @@ export default function PrivacyPolicyPage() {
             <li>To debug crashes and improve the app</li>
           </ul>
 
+          <h2>Usage analytics</h2>
+          <p>
+            We use Google Analytics for Firebase to understand how the beta is
+            being used — which screens are popular, how long sessions last, and
+            whether people return. This collects basic device information and an
+            anonymous identifier; during beta we tie it to your account so we
+            can see your activity specifically. We don't sell or share this
+            data, and we don't use it for advertising.
+          </p>
+
           <h2>Research and product improvement</h2>
           <p>
             To make the app better, we may analyze patterns of how the app is

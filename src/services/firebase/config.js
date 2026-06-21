@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getAnalytics, isSupported } from 'firebase/analytics';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -26,5 +27,10 @@ export const db = initializeFirestore(app, {
   }),
 });
 export const storage = getStorage(app);
+
+// null until the async support check resolves; consumers must null-check.
+// isSupported() rejects in SSR, some PWA shells, and ad-blocked browsers.
+export let analytics = null;
+isSupported().then((ok) => { if (ok) analytics = getAnalytics(app); });
 
 export default app;
