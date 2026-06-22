@@ -20,8 +20,17 @@ const MAX_QUESTS = 500;
 const MAX_DELETED_QUESTS = 200;
 import { db } from './firebase/config';
 import { checkAndAwardAchievements, awardPendingAchievement, unawardPendingAchievement } from './achievementService';
-import { QUEST_STATUS } from '../types/Quests';
+import { QUEST_STATUS, QUEST_TYPE } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
+
+// Flip the user's onboardingCompleted flag — called when the tutorial quest
+// reaches a terminal state (completed, archived, or deleted). Stored on the
+// root user doc (users/{uid}), matching where CharacterCreationPage writes
+// the initial `false`. Fire-and-forget; logged on failure.
+const markOnboardingCompleted = (userId) => {
+  return updateDoc(doc(db, 'users', userId), { onboardingCompleted: true })
+    .catch(e => console.error('Failed to mark onboardingCompleted:', e));
+};
 
 // Collection reference
 const getQuestsCollection = (userId) => {
@@ -140,6 +149,12 @@ export const completeQuest = async (userId, questId) => {
     await awardPendingAchievement(userId, quest.achievement);
   }
 
+  // Tutorial-specific: flip onboardingCompleted when the Training Grounds
+  // quest is manually completed.
+  if (quest.type === QUEST_TYPE.TUTORIAL) {
+    markOnboardingCompleted(userId);
+  }
+
   return getQuest(userId, questId);
 };
 
@@ -175,7 +190,13 @@ export const reopenQuest = async (userId, questId) => {
 
 // Archive a quest
 export const archiveQuest = async (userId, questId) => {
-  return updateQuestStatus(userId, questId, QUEST_STATUS.ARCHIVED);
+  const result = await updateQuestStatus(userId, questId, QUEST_STATUS.ARCHIVED);
+  // Tutorial-specific: flip onboardingCompleted when the Training Grounds
+  // quest is archived (opt-out path).
+  if (result?.type === QUEST_TYPE.TUTORIAL) {
+    markOnboardingCompleted(userId);
+  }
+  return result;
 };
 
 // Get archived quests
@@ -261,6 +282,11 @@ export const deleteQuest = async (userId, questId) => {
   }
   const questRef = doc(db, 'users', userId, 'quests', questId);
   await updateDoc(questRef, { status: QUEST_STATUS.DELETED, deletedAt: serverTimestamp() });
+  // Tutorial-specific: flip onboardingCompleted when the Training Grounds
+  // quest is deleted (also an opt-out path).
+  if (quest.type === QUEST_TYPE.TUTORIAL) {
+    markOnboardingCompleted(userId);
+  }
 };
 
 // Add mission to quest
@@ -390,8 +416,10 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
       updates.xpAwarded = quest.xpReward;
     }
 
-    // Check for quest-related achievements
-    checkAndAwardAchievements(userId, { questCompleted: true }).catch(e =>
+    // Check for quest-related achievements. Passing `quest` in context lets
+    // the tutorial-complete check (and any future quest-shape-aware checks)
+    // inspect quest.type without re-reading the doc.
+    checkAndAwardAchievements(userId, { questCompleted: true, quest }).catch(e =>
       console.error('Achievement check failed:', e)
     );
 
@@ -400,6 +428,12 @@ export const updateQuestProgress = async (userId, questId, missionId, isComplete
       awardPendingAchievement(userId, quest.achievement).catch(e =>
         console.error('Achievement award failed:', e)
       );
+    }
+
+    // Tutorial-specific: flip onboardingCompleted when the Training Grounds
+    // quest auto-completes. Mirrors the archive/delete paths below.
+    if (quest.type === QUEST_TYPE.TUTORIAL) {
+      markOnboardingCompleted(userId);
     }
   }
 

@@ -17,6 +17,14 @@ export const QUEST_DIFFICULTY = {
   HARD: 'hard'
 };
 
+// Quest type. 'normal' covers user-created quests. 'tutorial' marks the
+// auto-seeded onboarding quest so it can be detected for achievement firing,
+// the onboardingCompleted flip, and (later) tutorial-specific card rendering.
+export const QUEST_TYPE = {
+  NORMAL: 'normal',
+  TUTORIAL: 'tutorial',
+};
+
 // XP rewards for completing quests (bonus on top of mission XP)
 export const QUEST_XP_REWARDS = {
   [QUEST_DIFFICULTY.EASY]: 10,
@@ -54,6 +62,9 @@ export const QUEST_SCHEMA = {
   completedAt: null,                  // Timestamp | null - when completed
   archivedAt: null,                   // Timestamp | null - when archived
   
+  // Quest classification (tutorial = the onboarding "Training Grounds" quest)
+  type: QUEST_TYPE.NORMAL,            // string - 'normal' | 'tutorial'
+
   // Future features
   achievement: null,                  // string | null - achievement ID when implemented
   tags: [],                           // array - for filtering/organization

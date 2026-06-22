@@ -3,6 +3,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
+import { initializeTutorialQuest } from '../../services/tutorialService';
 
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import StickyFooter from '../../components/ui/StickyFooter';
@@ -72,6 +73,17 @@ const CharacterCreationPage = () => {
         onboardingCompleted: false,
         updatedAt: new Date(),
       }, { merge: true });
+
+      // Seed the onboarding tutorial quest. Don't block signup on failure —
+      // HomePage retries on mount when tutorialSeedFailed is set.
+      try {
+        await initializeTutorialQuest(currentUser.uid);
+      } catch (seedError) {
+        console.error('Tutorial quest seed failed:', seedError);
+        await setDoc(doc(db, 'users', currentUser.uid), {
+          tutorialSeedFailed: true,
+        }, { merge: true }).catch(() => {});
+      }
 
       navigate('/home');
     } catch (error) {

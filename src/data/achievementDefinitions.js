@@ -49,6 +49,8 @@ export const BUILDER_SYMBOLS = [
 //   early_missions    — count missions completed before 7am
 //   skill_level_5     — any skill has reached level >= 5
 //   skill_3_at_5      — three or more different skills have reached level >= 5
+//   tutorial_quest_completed — fires when the auto-seeded tutorial quest
+//                              completes; checked via context.quest?.type === 'tutorial'
 
 const ACHIEVEMENTS = [
   // --- Missions Completed ---
@@ -257,6 +259,19 @@ const ACHIEVEMENTS = [
     badgeImage: '/assets/Achievements/achievements_quirky_early_bird.png',
     checkType: 'early_missions',
     threshold: 1,
+  },
+
+  // --- Tutorial ---
+  {
+    id: 'training_grounds_complete',
+    name: 'Training Grounds Complete',
+    description: 'Finish the onboarding tutorial quest.',
+    category: ACHIEVEMENT_CATEGORIES.QUESTS,
+    badgeColor: 'amber',
+    badgeIcon: 'school',
+    badgeImage: '/assets/Achievements/achievements_quests_training_grounds_complete.png',
+    checkType: 'tutorial_quest_completed',
+    threshold: null,
   },
 
   // --- Skills ---

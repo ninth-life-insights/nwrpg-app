@@ -543,6 +543,17 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   const snapshotRef = doc(db, 'users', userId, 'dailySnapshots', date);
   await setDoc(snapshotRef, snapshotData);
 
+  // Tutorial watcher: first daily review submission auto-completes the
+  // "Hindsight is 20/20" tutorial step. Fire-and-forget; no-op when no
+  // active tutorial quest matches.
+  (async () => {
+    try {
+      const { completeTutorialStepIfActive } = await import('./tutorialService');
+      const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+      completeTutorialStepIfActive(userId, TUTORIAL_STEPS.FIRST_DAILY_REVIEW);
+    } catch { /* noop */ }
+  })();
+
   return snapshotData;
   } catch (error) {
     console.error('Error generating daily snapshot:', error);

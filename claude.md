@@ -282,6 +282,10 @@ users/{userId}/
   rooms/{id}            — home base rooms
 ```
 
+## Known future features (out of scope for current beta)
+
+- **Base archiving for moves.** A user changing homes should be able to archive their current base (and all its rooms) and set up a new one without losing history. Not blocking current beta — capture as future work when scope allows.
+
 ## Tests
 
 Test files exist in `src/services/tests/`, `src/components/missions/tests/`, `src/pages/tests/`, and `src/types/tests/` — but they are currently deprecated and not maintained. Do not rely on them as a source of truth, and don't write new tests unless explicitly asked.

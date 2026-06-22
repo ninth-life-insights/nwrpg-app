@@ -22,6 +22,20 @@ import { db } from './firebase/config';
 import { toDateString } from '../utils/dateHelpers';
 import { getActiveMissions, getCompletedMissions, completeMissionWithRecurrence } from './missionService';
 
+// Tutorial watcher hook — fired after any daily-plan write so the user's
+// "Mission Briefing" tutorial step auto-completes the first time they submit
+// a plan, even if they never tap the tutorial mission directly. Fire-and-
+// forget; no-op when no active tutorial quest matches.
+const triggerTutorialPlanWatcher = (userId) => {
+  (async () => {
+    try {
+      const { completeTutorialStepIfActive } = await import('./tutorialService');
+      const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+      completeTutorialStepIfActive(userId, TUTORIAL_STEPS.PLAN_FIRST_DAY);
+    } catch { /* noop */ }
+  })();
+};
+
 // SIMPLIFIED CONFIG STRUCTURE
 // users/{userId}/dailyMissions/config
 // {
@@ -66,13 +80,15 @@ export const setDailyMissions = async (userId, missionIds) => {
   try {
     const today = toDateString(new Date());
     const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
-    
+
     await setDoc(configRef, {
       missionIds: missionIds,
       setForDate: today,
       createdAt: serverTimestamp()
     });
-    
+
+    triggerTutorialPlanWatcher(userId);
+
     return { success: true };
   } catch (error) {
     console.error('Error setting daily missions:', error);
@@ -85,13 +101,15 @@ export const updateDailyMissionsConfig = async (userId, missionIds) => {
   try {
     const today = toDateString(new Date());
     const configRef = doc(db, 'users', userId, 'dailyMissions', 'config');
-    
+
     await setDoc(configRef, {
       missionIds: missionIds,
       setForDate: today,
       updatedAt: serverTimestamp()
     });
-    
+
+    triggerTutorialPlanWatcher(userId);
+
     return { success: true };
   } catch (error) {
     console.error('Error updating daily missions config:', error);
@@ -283,6 +301,7 @@ export const planDailyMissionsForDate = async (userId, missionIds, dateString) =
       selectedMissionIds: missionIds,
       setAt: serverTimestamp()
     }, { merge: true });
+    triggerTutorialPlanWatcher(userId);
     return { success: true };
   } catch (error) {
     console.error('Error planning daily missions for date:', error);

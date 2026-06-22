@@ -111,6 +111,11 @@ export const MISSION_SCHEMA = {
 
   isPriority: false,                  // boolean - marks mission for visual emphasis + filtering
 
+  // Tutorial linkage. Only set on missions belonging to the auto-seeded
+  // "Training Grounds" tutorial quest. Identifies which tutorial script the
+  // overlay system runs for this mission (e.g., 'create_first_mission').
+  tutorialStep: null,                  // string | null - tutorial step key
+
   // Snapshotted at completion time: was this mission's chain root in any
   // active routine when it was marked completed? Lets the routine today view
   // keep showing morning completions even if the user later removes the

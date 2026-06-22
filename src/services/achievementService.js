@@ -21,6 +21,7 @@ const MAX_ACTIVITY_DOCS = 5000;
 import { db } from './firebase/config';
 import ACHIEVEMENTS, { ACHIEVEMENT_MAP } from '../data/achievementDefinitions';
 import { toDateString } from '../utils/dateHelpers';
+import { QUEST_TYPE } from '../types/Quests';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -325,6 +326,13 @@ export const checkAndAwardAchievements = async (userId, context = {}) => {
         case 'skill_3_at_5': {
           const skills = context.skills || {};
           passed = countSkillsAtLevel(skills, def.threshold) >= 3;
+          break;
+        }
+        case 'tutorial_quest_completed': {
+          // Fires when updateQuestProgress auto-completes a tutorial-type quest.
+          // Caller passes { questCompleted: true, quest } in context.
+          passed = context.questCompleted === true &&
+                   context.quest?.type === QUEST_TYPE.TUTORIAL;
           break;
         }
         default:

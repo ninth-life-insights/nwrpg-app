@@ -319,6 +319,19 @@ const completeMission = async (userId, missionId, prefetchedData = null) => {
     // Log to activity log for daily review — fire-and-forget, never blocks completion
     await logActivityEvent(userId, { id: missionId, ...missionData }, completionResult);
 
+    // Tutorial watcher: if the user just completed their first custom mission
+    // (i.e., not a tutorial mission itself), auto-complete the "Mission Possible"
+    // tutorial step. No-op for users without an active tutorial quest.
+    if (!missionData.tutorialStep) {
+      (async () => {
+        try {
+          const { completeTutorialStepIfActive } = await import('./tutorialService');
+          const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+          completeTutorialStepIfActive(userId, TUTORIAL_STEPS.CREATE_FIRST_MISSION);
+        } catch { /* fire-and-forget */ }
+      })();
+    }
+
     return completionResult;
 
   } catch (error) {

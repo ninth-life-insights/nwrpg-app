@@ -1,8 +1,9 @@
 // src/pages/HomePage.js - UPDATED FOR SIMPLIFIED DAILY MISSIONS
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase/config';
+import { initializeTutorialQuest } from '../services/tutorialService';
 import { useNavigate } from 'react-router-dom';
 import { 
   getTodaysDailyMissions,
@@ -193,6 +194,22 @@ const HomePage = () => {
         setUserProfile(profile);
         setBaseName(profile?.baseName || '');
         if (entireBaseRoom?.icon) setBaseIcon(entireBaseRoom.icon);
+
+        // Retry the tutorial quest seed if signup-time write failed. Only
+        // fires when the flag is explicitly true, so existing accounts that
+        // predate the tutorial feature are unaffected (no backfill).
+        if (userDoc.exists() && userDoc.data().tutorialSeedFailed === true) {
+          try {
+            await initializeTutorialQuest(currentUser.uid);
+            await setDoc(doc(db, 'users', currentUser.uid), {
+              tutorialSeedFailed: false,
+            }, { merge: true });
+            await refreshMissionsCache();
+          } catch (retryError) {
+            console.error('Tutorial seed retry failed:', retryError);
+            // Leave the flag set — will retry on next mount.
+          }
+        }
 
         await fetchDailyMissions();
 
