@@ -10,7 +10,8 @@ import {
   query,
   orderBy,
   limit,
-  serverTimestamp
+  serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 
 // Generous cap — most users have <20 rooms. Guardrail only.
@@ -90,6 +91,50 @@ export const createRoom = async (userId, roomData) => {
     console.error('Error creating room:', error);
     throw error;
   }
+};
+
+// Atomically create multiple rooms in one writeBatch. Used by the home
+// template picker so picking a template either creates every room or none.
+// Each room takes {name, icon} from the template; order is assigned
+// sequentially starting from the user's current max order + 1.
+export const createRoomsBatch = async (userId, rooms) => {
+  if (!Array.isArray(rooms) || rooms.length === 0) return [];
+
+  const roomsRef = getUserRoomsRef(userId);
+  const existing = await getRooms(userId);
+  const maxOrder = existing.length > 0
+    ? Math.max(...existing.map(r => r.order || 0))
+    : 0;
+
+  const batch = writeBatch(db);
+  const newRefs = rooms.map(() => doc(roomsRef));
+
+  rooms.forEach((room, i) => {
+    batch.set(newRefs[i], {
+      name: room.name,
+      icon: room.icon || 'room',
+      order: maxOrder + i + 1,
+      cleanliness: 3,
+      cleanlinessUpdatedAt: serverTimestamp(),
+      isDefault: false,
+      canDelete: true,
+      createdAt: serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+
+  // Tutorial watcher — same trigger as single-room creation. Fires once
+  // after the batch lands.
+  (async () => {
+    try {
+      const { completeTutorialStepIfActive } = await import('./tutorialService');
+      const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+      completeTutorialStepIfActive(userId, TUTORIAL_STEPS.SETUP_BASE);
+    } catch { /* noop */ }
+  })();
+
+  return newRefs.map(r => r.id);
 };
 
 // Get all rooms for a user

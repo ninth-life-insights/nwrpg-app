@@ -11,8 +11,17 @@ import RoutineBuilderSkeleton from '../components/routines/RoutineBuilderSkeleto
 import ErrorMessage from '../components/ui/ErrorMessage';
 import LoadingTransition from '../components/ui/LoadingTransition';
 import PageHeader from '../components/ui/PageHeader';
+import SuggestedMissionsPicker from '../components/missions/SuggestedMissionsPicker';
+import { SUGGESTED_MISSIONS } from '../data/suggestedMissions';
+import { createMission } from '../services/missionService';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import './RoutinesPage.css';
+
+// Show only catalog entries that declare a routine context (filters out
+// room-bound ones with no routine cadence).
+const ROUTINE_SUGGESTIONS = SUGGESTED_MISSIONS.filter(
+  s => Array.isArray(s.routineContexts) && s.routineContexts.length > 0
+);
 
 // Builder lives on its own page so the today view (/routines) stays a clean
 // action surface. Header navigates back to /routines explicitly.
@@ -28,6 +37,7 @@ const RoutineBuilderPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [showSuggestionsPicker, setShowSuggestionsPicker] = useState(false);
 
   const handleBack = () => navigate('/routines');
   useAndroidBackButton(handleBack);
@@ -93,13 +103,50 @@ const RoutineBuilderPage = () => {
       )}
 
       {!isInitialLoad && !loadError && (
-        <RoutineBuilderSection
-          missions={missions}
-          routineRootSet={routineRootSet}
-          routineId={DEFAULT_ROUTINE_ID}
-          onSaved={refresh}
-        />
+        <>
+          <div className="routine-builder-suggestions-row">
+            <button
+              type="button"
+              className="routine-builder-suggestions-btn"
+              onClick={() => setShowSuggestionsPicker(true)}
+            >
+              <span className="material-icons">lightbulb</span>
+              Browse suggested missions
+            </button>
+          </div>
+          <RoutineBuilderSection
+            missions={missions}
+            routineRootSet={routineRootSet}
+            routineId={DEFAULT_ROUTINE_ID}
+            onSaved={refresh}
+          />
+        </>
       )}
+
+      <SuggestedMissionsPicker
+        open={showSuggestionsPicker}
+        onClose={() => setShowSuggestionsPicker(false)}
+        title="Routine suggestions"
+        subtitle="Pick a few common missions to add to your routine. Skip anything that doesn't fit."
+        suggestions={ROUTINE_SUGGESTIONS}
+        ctaLabel="Add to routine"
+        onAdd={async (selected) => {
+          await Promise.all(selected.map(s =>
+            createMission(
+              currentUser.uid,
+              {
+                title: s.title,
+                description: s.description || '',
+                difficulty: s.difficulty,
+                dueType: s.dueType,
+                skill: s.skill || null,
+              },
+              { routineId: DEFAULT_ROUTINE_ID }
+            )
+          ));
+          await refresh();
+        }}
+      />
     </div>
   );
 };

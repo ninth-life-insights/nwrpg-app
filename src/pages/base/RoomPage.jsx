@@ -1,11 +1,13 @@
 // src/pages/RoomPage.jsx
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRoom, updateRoom, updateRoomCleanliness, confirmRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { getUserProfile } from '../../services/userService';
 import { useRooms } from '../../contexts/RoomsContext';
-import { uncompleteMission } from '../../services/missionService';
+import { uncompleteMission, createMission } from '../../services/missionService';
+import SuggestedMissionsPicker from '../../components/missions/SuggestedMissionsPicker';
+import { getSuggestionsForRoomIcon } from '../../data/suggestionHelpers';
 import { useMissions } from '../../contexts/MissionsContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import LoadingTransition from '../../components/ui/LoadingTransition';
@@ -56,6 +58,21 @@ const RoomPage = () => {
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const { rooms: allRooms, refreshRooms } = useRooms();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // When this page was navigated to from AddRoomModal's "create new room"
+  // path, location.state carries { openSuggestions: true, roomIcon } so we
+  // open the picker immediately on mount. Cleared after first open via
+  // window.history so a later back/forward nav doesn't re-trigger.
+  const [showSuggestionsPicker, setShowSuggestionsPicker] = useState(
+    !!location.state?.openSuggestions
+  );
+  const navRoomIcon = location.state?.roomIcon ?? null;
+  useEffect(() => {
+    if (location.state?.openSuggestions) {
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
 
   const {
     missions: allMissions,
@@ -646,6 +663,28 @@ const RoomPage = () => {
       <AchievementToast
         achievements={newAchievements}
         onDismiss={() => setNewAchievements([])}
+      />
+
+      <SuggestedMissionsPicker
+        open={showSuggestionsPicker}
+        onClose={() => setShowSuggestionsPicker(false)}
+        title="Pick a few missions"
+        subtitle={`Add common missions for ${room?.name || 'this room'}. Skip anything that doesn't fit your life.`}
+        suggestions={getSuggestionsForRoomIcon(room?.icon || navRoomIcon)}
+        ctaLabel="Add to room"
+        onAdd={async (selected) => {
+          await Promise.all(selected.map(s =>
+            createMission(currentUser.uid, {
+              title: s.title,
+              description: s.description || '',
+              difficulty: s.difficulty,
+              dueType: s.dueType,
+              skill: s.skill || null,
+              baseLocation: roomId,
+            })
+          ));
+          await refreshMissionsCache();
+        }}
       />
     </div>
     </LoadingTransition>

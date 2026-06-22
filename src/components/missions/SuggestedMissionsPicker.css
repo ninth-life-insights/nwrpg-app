@@ -1,0 +1,185 @@
+/* SuggestedMissionsPicker — centered modal sheet. z-index 1000 (standard
+   modal tier) so the tutorial overlay (2000) still wins when both are open
+   during tutorial steps. */
+
+.suggested-missions-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.suggested-missions-panel {
+  background: var(--color-bg-white);
+  width: 100%;
+  max-width: var(--max-width-card);
+  max-height: calc(100dvh - 48px);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.suggested-missions-header-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 12px 0 0;
+  flex-shrink: 0;
+}
+
+.suggested-missions-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-light);
+  border-radius: var(--radius-sm);
+}
+
+.suggested-missions-close:hover {
+  color: var(--color-text-dark);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.suggested-missions-close .material-icons {
+  font-size: 22px;
+}
+
+.suggested-missions-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 120px;
+}
+
+.suggested-missions-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.suggested-missions-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-medium);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.suggested-missions-empty {
+  font-size: var(--font-size-base);
+  color: var(--color-text-light);
+  margin: 24px 0;
+  text-align: center;
+}
+
+.suggested-missions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggested-missions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-white);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.suggested-missions-row:hover {
+  background: #f9fafb;
+}
+
+.suggested-missions-row.selected {
+  background: var(--color-tutorial-bg);
+  border-color: var(--color-tutorial-border);
+}
+
+.suggested-missions-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suggested-missions-row-title {
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.suggested-missions-row-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.suggested-missions-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: white;
+}
+
+.suggested-missions-check.selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white !important;
+}
+
+.suggested-missions-check.selected .material-icons {
+  color: white !important;
+  font-size: 16px;
+}
+
+.suggested-missions-cta {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 14px 24px;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  width: 100%;
+}
+
+.suggested-missions-cta:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.suggested-missions-cta:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.suggested-missions-error {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin-bottom: 8px;
+  text-align: center;
+}

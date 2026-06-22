@@ -102,3 +102,35 @@
 .routines-load-error {
   margin-bottom: var(--space-md);
 }
+
+/* Routine builder — "Browse suggested missions" affordance. */
+.routine-builder-suggestions-row {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-md) 0;
+}
+
+.routine-builder-suggestions-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-dark);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.routine-builder-suggestions-btn:hover {
+  background: #f9fafb;
+  border-color: var(--color-text-light);
+}
+
+.routine-builder-suggestions-btn .material-icons {
+  font-size: 18px;
+  color: var(--color-text-medium);
+}

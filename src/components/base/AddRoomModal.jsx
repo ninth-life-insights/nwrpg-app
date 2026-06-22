@@ -1,5 +1,6 @@
 // src/components/base/AddRoomModal.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRooms } from '../../contexts/RoomsContext';
 import { createRoom, updateRoom } from '../../services/roomService';
@@ -46,6 +47,7 @@ const CLEANLINESS_COLORS = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc
 
 const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null, isBaseRoom = false, baseName = '' }) => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const { refreshRooms } = useRooms();
   const isEditing = !!editRoom;
   const isFirstTimeBase = isBaseRoom && (!editRoom?.icon || editRoom?.icon === 'home');
@@ -73,6 +75,7 @@ const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null, isBaseRoom = fals
     setSaveError(null);
     setSaving(true);
     try {
+      let newRoomId = null;
       if (isBaseRoom) {
         await updateRoom(currentUser.uid, editRoom.id, { icon: selectedIcon });
         await updateUserProfile(currentUser.uid, { baseName: roomName.trim() });
@@ -83,7 +86,7 @@ const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null, isBaseRoom = fals
           cleanliness,
         });
       } else {
-        await createRoom(currentUser.uid, {
+        newRoomId = await createRoom(currentUser.uid, {
           name: roomName.trim(),
           icon: selectedIcon,
           cleanliness,
@@ -91,6 +94,15 @@ const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null, isBaseRoom = fals
       }
       await refreshRooms();
       onRoomAdded();
+
+      // After creating a brand new room (not editing, not base setup),
+      // navigate to its page and signal the suggestion picker to open.
+      // The picker is filtered by the icon the user chose.
+      if (newRoomId && navigate) {
+        navigate(`/room/${newRoomId}`, {
+          state: { openSuggestions: true, roomIcon: selectedIcon },
+        });
+      }
     } catch (err) {
       console.error('Error saving room:', err);
       if (isBaseRoom) {

@@ -8,12 +8,14 @@ import {
   getAllRoomStats,
   initializeEntireBaseRoom,
   reorderRooms,
+  createRoomsBatch,
   ENTIRE_BASE_ROOM_ID,
 } from '../../services/roomService';
 import { useMissions } from '../../contexts/MissionsContext';
 import { getUserProfile } from '../../services/userService';
 import RoomCard from '../../components/base/RoomCard';
 import AddRoomModal from '../../components/base/AddRoomModal';
+import HomeTemplatePicker from '../../components/rooms/HomeTemplatePicker';
 import RoomSortModal from '../../components/base/RoomSortModal';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import LoadingTransition from '../../components/ui/LoadingTransition';
@@ -65,6 +67,7 @@ const BasePage = () => {
   const [loadError, setLoadError] = useState(null);
   const [reorderError, setReorderError] = useState(null);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
+  const [showHomeTemplateModal, setShowHomeTemplateModal] = useState(false);
   const [showBaseIconModal, setShowBaseIconModal] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [sortBy, setSortBy] = useState(ROOM_SORT_DEFAULT);
@@ -123,6 +126,16 @@ const BasePage = () => {
 
   const handleAddRoom = () => {
     setShowAddRoomModal(true);
+  };
+
+  const handleOpenTemplatePicker = () => {
+    setShowHomeTemplateModal(true);
+  };
+
+  const handleApplyTemplate = async (template) => {
+    if (!currentUser || !template) return;
+    await createRoomsBatch(currentUser.uid, template.rooms);
+    await fetchRoomsAndStats();
   };
 
   const handleRoomAdded = async () => {
@@ -220,6 +233,14 @@ const BasePage = () => {
             </svg>
             {hasActiveSort && <span className="base-page-sort-dot" />}
           </button>
+          <button
+            className="base-page-add-room-btn base-page-template-btn"
+            onClick={handleOpenTemplatePicker}
+            title="Use a home template"
+            aria-label="Use a home template"
+          >
+            <span className="material-icons">home_work</span>
+          </button>
           <button className="base-page-add-room-btn" onClick={handleAddRoom}>
             <span className="material-icons">add</span>
             Room
@@ -283,16 +304,31 @@ const BasePage = () => {
               );
             })}
 
-            {/* First-room empty state — header button handles all other adds */}
+            {/* First-room empty state — header button handles all other adds.
+                Two options: a prominent home template picker (batch create the
+                whole place) and a single-room add. */}
             {!hasCustomRooms && (
-              <div className="room-card-slot">
-                <div className="add-room-card" onClick={handleAddRoom}>
-                  <div className="add-room-icon">
-                    <span className="material-icons">add</span>
+              <>
+                <div className="room-card-slot">
+                  <div
+                    className="add-room-card add-room-card-template"
+                    onClick={handleOpenTemplatePicker}
+                  >
+                    <div className="add-room-icon">
+                      <span className="material-icons">home_work</span>
+                    </div>
+                    <div className="add-room-label">Pick a home template</div>
                   </div>
-                  <div className="add-room-label">Add your first room</div>
                 </div>
-              </div>
+                <div className="room-card-slot">
+                  <div className="add-room-card" onClick={handleAddRoom}>
+                    <div className="add-room-icon">
+                      <span className="material-icons">add</span>
+                    </div>
+                    <div className="add-room-label">Add a single room</div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </SortableContext>
@@ -305,6 +341,13 @@ const BasePage = () => {
           onRoomAdded={handleRoomAdded}
         />
       )}
+
+      {/* Home Template Picker — batch room creation */}
+      <HomeTemplatePicker
+        open={showHomeTemplateModal}
+        onClose={() => setShowHomeTemplateModal(false)}
+        onApply={handleApplyTemplate}
+      />
 
       {/* Base icon + nickname setup modal */}
       {showBaseIconModal && entireBaseRoom && (
