@@ -106,7 +106,7 @@ export const TUTORIAL_SCRIPT = {
   // ── Quest missions (no auto-fire watchers yet — manual for now) ──────
 
   [TUTORIAL_STEPS.SETUP_BASE]: {
-    completionTrigger: 'manual',
+    completionTrigger: 'auto',
     screens: [
       {
         variant: 'story',

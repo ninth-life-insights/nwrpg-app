@@ -1,6 +1,7 @@
 // src/pages/EditDailyMissionsPage.js - UPDATED FOR SIMPLIFIED SYSTEM
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import { useNavigate } from 'react-router-dom';
 
 // Component imports
@@ -69,6 +70,8 @@ const EditDailyMissionsPage = ({
   initialTargetDate = null,  // pre-set the date (YYYY-MM-DD); defaults to today when null
 }) => {
   const { currentUser } = useAuth();
+  const { triggerStep } = useTutorial();
+  useEffect(() => { triggerStep('daily-plan'); }, [triggerStep]);
   const navigate = useNavigate();
 
   const today = toDateString(new Date());

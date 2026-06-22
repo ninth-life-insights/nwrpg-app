@@ -1,6 +1,7 @@
 // src/pages/BasePage.js
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import { useRooms } from '../../contexts/RoomsContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -45,6 +46,8 @@ import './BasePage.css';
 
 const BasePage = () => {
   const { currentUser } = useAuth();
+  const { triggerStep } = useTutorial();
+  useEffect(() => { triggerStep('base'); }, [triggerStep]);
   const { refreshRooms } = useRooms();
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);

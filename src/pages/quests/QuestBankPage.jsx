@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import { useNavigate } from 'react-router-dom';
 import QuestCard from '../../components/quests/QuestCard';
 import CreateQuestModal from '../../components/quests/CreateQuestModal';
@@ -28,6 +29,8 @@ import './QuestBankPage.css';
 
 const QuestBank = () => {
   const { currentUser } = useAuth();
+  const { triggerStep } = useTutorial();
+  useEffect(() => { triggerStep('quests'); }, [triggerStep]);
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();
   

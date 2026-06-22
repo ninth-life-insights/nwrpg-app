@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useAuth } from '../contexts/AuthContext';
+import { useTutorial } from '../contexts/TutorialContext';
 import { useRoutines } from '../contexts/RoutineContext';
 import { useMissions } from '../contexts/MissionsContext';
 import {
@@ -26,6 +27,8 @@ import './RoutinesPage.css';
 // always discoverable on first load.
 const RoutinesPage = () => {
   const { currentUser } = useAuth();
+  const { triggerStep } = useTutorial();
+  useEffect(() => { triggerStep('routine'); }, [triggerStep]);
   const { routines, routineRootSet, routineOrderMap, refreshRoutines } = useRoutines();
   const {
     missions: cachedMissions,

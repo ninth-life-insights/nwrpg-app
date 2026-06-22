@@ -1,6 +1,7 @@
 // src/pages/MissionBank.js - UPDATED FOR SIMPLIFIED DAILY MISSIONS
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import MissionList from '../../components/missions/MissionList';
 import MissionFilterModal from '../../components/missions/sub-components/MissionFilterModal';
 import EditDailyMissionsModal from '../../components/missions/EditDailyMissionsModal';
@@ -16,6 +17,8 @@ import './MissionBankPage.css';
 
 const MissionBank = () => {
   const { currentUser } = useAuth();
+  const { triggerStep } = useTutorial();
+  useEffect(() => { triggerStep('mission-bank'); }, [triggerStep]);
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);

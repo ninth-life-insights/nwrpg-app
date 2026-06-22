@@ -14,6 +14,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -23,8 +24,24 @@ import { useAuth } from './AuthContext';
 import { useQuests } from './QuestsContext';
 import { useMissions } from './MissionsContext';
 import { QUEST_TYPE } from '../types/Quests';
+import { MISSION_STATUS } from '../types/Mission';
+import { TUTORIAL_STEPS } from '../data/tutorialQuest';
 import { getScriptForStep, WELCOME_SCREEN } from '../data/tutorialScript';
 import { completeMissionWithRecurrence } from '../services/missionService';
+
+// Maps feature page identifiers to tutorial step keys. Feature pages call
+// `triggerStep('mission-bank')` on mount; the context resolves to the
+// matching tutorial step and opens the overlay if it's still incomplete.
+const FEATURE_KEY_TO_STEP = {
+  'mission-bank': TUTORIAL_STEPS.CREATE_FIRST_MISSION,
+  'daily-plan':   TUTORIAL_STEPS.PLAN_FIRST_DAY,
+  'daily-review': TUTORIAL_STEPS.FIRST_DAILY_REVIEW,
+  'base':         TUTORIAL_STEPS.SETUP_BASE,
+  'routine':      TUTORIAL_STEPS.FIRST_ROUTINE,
+  'quests':       TUTORIAL_STEPS.TOUR_QUESTS,
+  'skills':       TUTORIAL_STEPS.TOUR_SKILLS,
+  'achievements': TUTORIAL_STEPS.TOUR_ACHIEVEMENTS,
+};
 
 const TutorialContext = createContext(null);
 
@@ -38,6 +55,7 @@ export const useTutorial = () => {
       activeStep: null,
       isTutorialMission: () => false,
       openStepForMission: () => {},
+      triggerStep: () => {},
       advance: () => {},
       completeCurrentStep: () => {},
       dismiss: () => {},
@@ -49,7 +67,12 @@ export const useTutorial = () => {
 export const TutorialProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const { quests, refreshQuests } = useQuests();
-  const { refresh: refreshMissionsCache } = useMissions();
+  const { missions, refresh: refreshMissionsCache } = useMissions();
+
+  // Tracks which steps have already auto-fired in this browser session.
+  // Survives dismissal so bouncing back to a feature page doesn't re-open
+  // the overlay every time. Cleared on full reload.
+  const autoTriggeredRef = useRef(new Set());
 
   // welcomeSeen: null = unknown (haven't read user doc), true = seen, false = not seen.
   // Defaulting null means we never accidentally show welcome twice during the
@@ -170,11 +193,31 @@ export const TutorialProvider = ({ children }) => {
 
   const dismiss = useCallback(() => setActiveStep(null), []);
 
+  // Auto-fire entry point. Feature pages call this on mount with their
+  // feature key. Opens the overlay if (a) the user has an active tutorial
+  // quest, (b) the matching tutorial step is still incomplete, and
+  // (c) this step hasn't already auto-fired in the current session.
+  const triggerStep = useCallback((featureKey) => {
+    const stepKey = FEATURE_KEY_TO_STEP[featureKey];
+    if (!stepKey) return;
+    if (autoTriggeredRef.current.has(stepKey)) return;
+    if (!activeTutorialQuest) return;
+
+    const mission = missions.find(
+      m => m.tutorialStep === stepKey && m.status === MISSION_STATUS.ACTIVE
+    );
+    if (!mission) return;
+
+    autoTriggeredRef.current.add(stepKey);
+    openStepForMission(mission);
+  }, [activeTutorialQuest, missions, openStepForMission]);
+
   const value = useMemo(() => ({
     activeTutorialQuest,
     activeStep,
     isTutorialMission,
     openStepForMission,
+    triggerStep,
     advance,
     completeCurrentStep,
     dismiss,
@@ -183,6 +226,7 @@ export const TutorialProvider = ({ children }) => {
     activeStep,
     isTutorialMission,
     openStepForMission,
+    triggerStep,
     advance,
     completeCurrentStep,
     dismiss,

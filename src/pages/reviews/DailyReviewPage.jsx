@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import { useDailyMissions } from '../../contexts/DailyMissionsContext';
 import { getUserProfile } from '../../services/userService';
 import {
@@ -35,6 +36,8 @@ const TOTAL_STEPS = 4;
 
 const DailyReviewPage = () => {
   const { currentUser } = useAuth();
+  const { triggerStep } = useTutorial();
+  useEffect(() => { triggerStep('daily-review'); }, [triggerStep]);
   const { refreshDailyMissions } = useDailyMissions();
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();

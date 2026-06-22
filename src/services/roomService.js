@@ -74,7 +74,17 @@ export const createRoom = async (userId, roomData) => {
       canDelete: true,
       createdAt: serverTimestamp()
     });
-    
+
+    // Tutorial watcher — first room creation auto-completes the "Home Sweet
+    // Home" tutorial step. No-op when no active tutorial quest matches.
+    (async () => {
+      try {
+        const { completeTutorialStepIfActive } = await import('./tutorialService');
+        const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+        completeTutorialStepIfActive(userId, TUTORIAL_STEPS.SETUP_BASE);
+      } catch { /* noop */ }
+    })();
+
     return docRef.id;
   } catch (error) {
     console.error('Error creating room:', error);
