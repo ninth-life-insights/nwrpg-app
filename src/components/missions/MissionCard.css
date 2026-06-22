@@ -44,6 +44,12 @@
   border-color: #bfdbfe; /* Light blue border */
 }
 
+/* Tutorial Mission Card Styling - purple tint */
+.mission-card.tutorial-mission-card {
+  background: var(--color-tutorial-bg);
+  border-color: var(--color-tutorial-border);
+}
+
 /* Archived Mission Card Styling - gray */
 .mission-card.archived-mission-card {
   background-color: #f3f4f6;

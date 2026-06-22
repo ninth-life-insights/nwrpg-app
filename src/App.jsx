@@ -9,6 +9,8 @@ import { RoomsProvider } from './contexts/RoomsContext';
 import { QuestsProvider } from './contexts/QuestsContext';
 import { DailyMissionsProvider } from './contexts/DailyMissionsContext';
 import { RoutineProvider } from './contexts/RoutineContext';
+import { TutorialProvider } from './contexts/TutorialContext';
+import TutorialOverlay from './components/tutorial/TutorialOverlay';
 import { Navigate } from 'react-router-dom';
 import OfflineIndicator from './components/OfflineIndicator';
 import FeedbackButton from './components/feedback/FeedbackButton';
@@ -132,7 +134,10 @@ function App() {
                 <QuestsProvider>
                   <DailyMissionsProvider>
                     <RoutineProvider>
-                      <AppContent />
+                      <TutorialProvider>
+                        <AppContent />
+                        <TutorialOverlay />
+                      </TutorialProvider>
                     </RoutineProvider>
                   </DailyMissionsProvider>
                 </QuestsProvider>

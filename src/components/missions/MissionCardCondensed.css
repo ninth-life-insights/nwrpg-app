@@ -36,6 +36,16 @@
   border-color: #ec4899;
 }
 
+/* Tutorial mission tint — purple. Wins over daily/priority because
+   tutorial missions are the user's onboarding focus and should read
+   as a distinct surface even when also a daily or priority. */
+.mission-card-condensed.tutorial,
+.mission-card-condensed.tutorial.daily,
+.mission-card-condensed.tutorial.priority {
+  background-color: var(--color-tutorial-bg);
+  border-color: var(--color-tutorial-border);
+}
+
 /* Evergreen tint — opt-in per surface via the `tintEvergreen` prop. Same
    hue family as the evergreen Badge (#dcfce7) but lighter so the card tint
    doesn't compete with the badge sitting on top of it. Listed BEFORE the

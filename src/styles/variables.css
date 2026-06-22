@@ -41,6 +41,12 @@
   --color-quest-bg-completed: #253552;  /* desaturated for completed state */
   --color-quest-border: #3b82f6;
   --color-quest-border-soft: rgba(59, 130, 246, 0.4); /* completed-state border */
+
+  /* Tutorial mission tint — purple, in the same family as routine surfaces
+     but at the saturation level of daily/quest mission tints. Applied to
+     tutorial mission cards (MissionCard + MissionCardCondensed). */
+  --color-tutorial-bg: #f3e8ff;
+  --color-tutorial-border: #c084fc;
   
   /* === SPACING === */
   --space-xs: 4px;

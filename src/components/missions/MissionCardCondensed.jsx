@@ -18,10 +18,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import { updateMissionCompletedDate } from '../../services/missionService';
 import { isRecurringMission, isEvergreenMission, getRecurrenceDisplayText } from '../../utils/recurrenceHelpers';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
 import { areMissionRendersEqual } from '../../utils/missionHelpers';
+import TutorialPlayButton from '../tutorial/TutorialPlayButton';
 import dayjs from 'dayjs';
 import './MissionCardCondensed.css';
 
@@ -41,6 +43,13 @@ const MissionCardCondensed = ({
   const { routineRootSet, pausedRootSet } = useRoutines();
   const isDailyMission = useIsDailyMission(mission.id);
   const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const { isTutorialMission, openStepForMission } = useTutorial();
+  // Tutorial missions get the purple-variant card, a play button instead
+  // of the toggle, and body-click opens the overlay (not MissionCardFull).
+  // Only kicks in when the caller hasn't already overridden via readOnly /
+  // actionSlot (selection surfaces drive their own behavior).
+  const isTutorial = isTutorialMission(mission);
+  const useTutorialRender = isTutorial && !readOnly && !actionSlot;
   const isCompletionPending = isPending(mission.id);
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const isVisuallyComplete = isCompleted || isOptimisticallyComplete(mission.id);
@@ -127,9 +136,10 @@ const MissionCardCondensed = ({
     ? 'daily'
     : mission.isPriority ? 'priority' : '';
   const evergreenClass = tintEvergreen && isEvergreen ? 'evergreen' : '';
+  const tutorialClass = isTutorial ? 'tutorial' : '';
   const cardClass = readOnly
-    ? `mission-card-condensed readonly ${evergreenClass}`.trim()
-    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${priorityClass} ${evergreenClass}`.trim();
+    ? `mission-card-condensed readonly ${evergreenClass} ${tutorialClass}`.trim()
+    : `mission-card-condensed ${isCompleted ? 'completed' : ''} ${priorityClass} ${evergreenClass} ${tutorialClass}`.trim();
   const titleClass = readOnly
     ? 'mcc-title'
     : `mcc-title ${isCompleted ? 'completed' : ''}`;
@@ -139,7 +149,13 @@ const MissionCardCondensed = ({
     <div className={cardClass}>
       <div
         className="mcc-content"
-        onClick={readOnly ? undefined : () => setViewingDetails(true)}
+        onClick={
+          readOnly
+            ? undefined
+            : useTutorialRender
+              ? () => openStepForMission(mission)
+              : () => setViewingDetails(true)
+        }
         style={readOnly ? { cursor: 'default' } : undefined}
       >
         <div className="mcc-row">
@@ -200,7 +216,9 @@ const MissionCardCondensed = ({
       </div>
 
       {actionSlot ? actionSlot : (
-        !readOnly && (
+        useTutorialRender ? (
+          <TutorialPlayButton mission={mission} size="md" />
+        ) : !readOnly && (
           <button
             className={`mcc-toggle ${isVisuallyComplete ? 'completed' : ''}`}
             onClick={handleToggleComplete}
