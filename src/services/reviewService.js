@@ -315,6 +315,12 @@ export const logActivityEvent = async (userId, missionData, completionResult) =>
       questId: missionData.questId || null,
       questTitle: questTitle,
 
+      // Tutorial provenance — tutorial mission completions are excluded from
+      // most achievement counters (count-based, daily-sweep, quirky) so the
+      // tutorial doesn't pad milestones. Only training_grounds_complete relies
+      // on the tutorial quest itself.
+      isTutorial: !!missionData.tutorialStep,
+
       // Level-up events
       leveledUp: completionResult.leveledUp || false,
       newLevel: completionResult.newLevel || null,

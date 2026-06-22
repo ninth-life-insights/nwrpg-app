@@ -183,8 +183,15 @@ export const getTodaysDailyMissions = async (userId) => {
 
     const allMissions = [...activeMissions, ...completedMissions];
 
+    // Preserve the order from config.missionIds — Firestore's mission read
+    // order is arbitrary (often by createdAt desc), but the user's chosen
+    // priority order lives in the config array. Without this sort, two
+    // missions created in the same writeBatch (same serverTimestamp) render
+    // in random order.
+    const idOrder = new Map(missionIds.map((id, i) => [id, i]));
     return allMissions
       .filter(mission => missionIds.includes(mission.id))
+      .sort((a, b) => idOrder.get(a.id) - idOrder.get(b.id))
       .map(mission => ({ ...mission, isDailyMission: true }));
   } catch (error) {
     console.error('Error getting today\'s daily missions:', error);

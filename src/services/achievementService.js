@@ -185,17 +185,24 @@ export const unawardPendingAchievement = async (userId, achievementId) => {
 
 // ─── Check Helpers (pure functions over already-fetched data) ─────────────────
 
+// Tutorial mission completions are excluded from all count-based achievement
+// checks — they shouldn't pad milestones like "complete 5 missions in a day"
+// or "complete your first mission." The only achievement that depends on the
+// tutorial is training_grounds_complete, which keys off the quest itself.
+const isCountableMissionEvent = (d) =>
+  d.type === 'mission_completed' && !d.isTutorial;
+
 const countTotalMissions = (activityDocs) =>
-  activityDocs.filter(d => d.type === 'mission_completed').length;
+  activityDocs.filter(isCountableMissionEvent).length;
 
 const countHardMissions = (activityDocs) =>
-  activityDocs.filter(d => d.type === 'mission_completed' && d.difficulty === 'hard').length;
+  activityDocs.filter(d => isCountableMissionEvent(d) && d.difficulty === 'hard').length;
 
 const countMissionsOnDate = (activityDocs, date) =>
-  activityDocs.filter(d => d.type === 'mission_completed' && d.date === date).length;
+  activityDocs.filter(d => isCountableMissionEvent(d) && d.date === date).length;
 
 const allDailyMissionsComplete = (activityDocs, date) => {
-  const dayEntries = activityDocs.filter(d => d.type === 'mission_completed' && d.date === date);
+  const dayEntries = activityDocs.filter(d => isCountableMissionEvent(d) && d.date === date);
   const dailyEntries = dayEntries.filter(d => d.isDailyMission === true);
   // Need at least one daily mission completed, and all completed missions that were daily
   // We detect "full sweep" by checking if dailyMissionsTotal was set and matched
@@ -210,7 +217,7 @@ const allDailyMissionsComplete = (activityDocs, date) => {
 
 const countMidnightMissions = (activityDocs) =>
   activityDocs.filter(d => {
-    if (d.type !== 'mission_completed') return false;
+    if (!isCountableMissionEvent(d)) return false;
     const ts = d.timestamp?.toDate ? d.timestamp.toDate() : null;
     if (!ts) return false;
     const hour = ts.getHours();
@@ -219,7 +226,7 @@ const countMidnightMissions = (activityDocs) =>
 
 const countEarlyMissions = (activityDocs) =>
   activityDocs.filter(d => {
-    if (d.type !== 'mission_completed') return false;
+    if (!isCountableMissionEvent(d)) return false;
     const ts = d.timestamp?.toDate ? d.timestamp.toDate() : null;
     if (!ts) return false;
     return ts.getHours() < 7;
@@ -270,9 +277,19 @@ export const checkAndAwardAchievements = async (userId, context = {}) => {
     const getQuestCount = async () => {
       if (questCount !== null) return questCount;
       // getCountFromServer doesn't pull the docs — single read instead of N.
+      // Exclude the tutorial quest from the count so finishing onboarding
+      // doesn't earn the "Questing 101" achievement. Two count queries beats
+      // fetching docs to filter client-side.
       const ref = collection(db, 'users', userId, 'quests');
-      const snap = await getCountFromServer(query(ref, where('status', '==', 'completed')));
-      questCount = snap.data().count;
+      const [allSnap, tutorialSnap] = await Promise.all([
+        getCountFromServer(query(ref, where('status', '==', 'completed'))),
+        getCountFromServer(query(
+          ref,
+          where('status', '==', 'completed'),
+          where('type', '==', QUEST_TYPE.TUTORIAL),
+        )),
+      ]);
+      questCount = allSnap.data().count - tutorialSnap.data().count;
       return questCount;
     };
 
