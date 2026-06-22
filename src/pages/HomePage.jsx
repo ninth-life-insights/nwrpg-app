@@ -13,6 +13,7 @@ import {
 import { uncompleteMission } from '../services/missionService';
 import { useMissionCompletion } from '../contexts/MissionCompletionContext';
 import { useMissions } from '../contexts/MissionsContext';
+import { useQuests } from '../contexts/QuestsContext';
 import {
   applyOptimisticCompletion,
   applyServerResolved,
@@ -47,6 +48,7 @@ const HomePage = () => {
   const { currentUser } = useAuth();
   const { refreshDailyMissions } = useDailyMissions();
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const { refreshQuests } = useQuests();
   const {
     missions: allMissions,
     isInitialLoading: missionsCacheLoading,
@@ -204,7 +206,13 @@ const HomePage = () => {
             await setDoc(doc(db, 'users', currentUser.uid), {
               tutorialSeedFailed: false,
             }, { merge: true });
-            await refreshMissionsCache();
+            // Refresh the shared caches so the freshly-seeded quest,
+            // missions, and daily config become visible without a reload.
+            await Promise.all([
+              refreshQuests?.(),
+              refreshMissionsCache?.(),
+              refreshDailyMissions?.(),
+            ].map(p => Promise.resolve(p).catch(() => {})));
           } catch (retryError) {
             console.error('Tutorial seed retry failed:', retryError);
             // Leave the flag set — will retry on next mount.

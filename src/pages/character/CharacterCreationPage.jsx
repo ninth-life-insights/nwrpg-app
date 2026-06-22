@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
+import { useQuests } from '../../contexts/QuestsContext';
+import { useMissions } from '../../contexts/MissionsContext';
+import { useDailyMissions } from '../../contexts/DailyMissionsContext';
 import { db } from '../../services/firebase/config';
 import { useNavigate } from 'react-router-dom';
 import { initializeTutorialQuest } from '../../services/tutorialService';
@@ -23,6 +26,9 @@ const CharacterCreationPage = () => {
   const [error, setError] = useState('');
 
   const { currentUser } = useAuth();
+  const { refreshQuests } = useQuests();
+  const { refresh: refreshMissions } = useMissions();
+  const { refreshDailyMissions } = useDailyMissions();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,13 +82,27 @@ const CharacterCreationPage = () => {
 
       // Seed the onboarding tutorial quest. Don't block signup on failure —
       // HomePage retries on mount when tutorialSeedFailed is set.
+      let seedSucceeded = false;
       try {
         await initializeTutorialQuest(currentUser.uid);
+        seedSucceeded = true;
       } catch (seedError) {
         console.error('Tutorial quest seed failed:', seedError);
         await setDoc(doc(db, 'users', currentUser.uid), {
           tutorialSeedFailed: true,
         }, { merge: true }).catch(() => {});
+      }
+
+      // After a successful seed, refresh the shared contexts so they pick up
+      // the freshly-written quest, missions, and daily config. They were
+      // already populated (empty) when the user landed here, and don't
+      // refetch on their own without something forcing them to.
+      if (seedSucceeded) {
+        await Promise.all([
+          refreshQuests?.(),
+          refreshMissions?.(),
+          refreshDailyMissions?.(),
+        ].map(p => Promise.resolve(p).catch(() => {})));
       }
 
       navigate('/home');
