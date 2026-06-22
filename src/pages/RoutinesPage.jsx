@@ -28,7 +28,10 @@ import './RoutinesPage.css';
 const RoutinesPage = () => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('routine'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('routine');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const { routines, routineRootSet, routineOrderMap, refreshRoutines } = useRoutines();
   const {
     missions: cachedMissions,

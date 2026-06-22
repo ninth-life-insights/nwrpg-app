@@ -15,7 +15,10 @@ import './SkillsPage.css';
 const SkillsPage = () => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('skills'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('skills');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const navigate = useNavigate();
   const [skillsData, setSkillsData] = useState([]);
   const [loading, setLoading] = useState(true);

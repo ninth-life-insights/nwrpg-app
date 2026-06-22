@@ -71,7 +71,10 @@ const EditDailyMissionsPage = ({
 }) => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('daily-plan'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('daily-plan');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const navigate = useNavigate();
 
   const today = toDateString(new Date());

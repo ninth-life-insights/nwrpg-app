@@ -30,7 +30,10 @@ import './QuestBankPage.css';
 const QuestBank = () => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('quests'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('quests');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();
   

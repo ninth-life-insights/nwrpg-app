@@ -47,7 +47,10 @@ import './BasePage.css';
 const BasePage = () => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('base'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('base');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const { refreshRooms } = useRooms();
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);

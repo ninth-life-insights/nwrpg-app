@@ -18,7 +18,10 @@ import './MissionBankPage.css';
 const MissionBank = () => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('mission-bank'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('mission-bank');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const [userProfile, setUserProfile] = useState(null);
   const [showAddMission, setShowAddMission] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);

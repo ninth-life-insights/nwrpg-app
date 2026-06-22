@@ -37,7 +37,10 @@ const TOTAL_STEPS = 4;
 const DailyReviewPage = () => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('daily-review'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('daily-review');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const { refreshDailyMissions } = useDailyMissions();
   const { completeMission: completeMissionOptimistic } = useMissionCompletion();
   const navigate = useNavigate();

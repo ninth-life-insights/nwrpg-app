@@ -83,6 +83,13 @@ export const TutorialProvider = ({ children }) => {
   //             or null when no overlay is showing.
   const [activeStep, setActiveStep] = useState(null);
 
+  // The feature key the user is currently on. Set by pages via triggerStep().
+  // A resolver useEffect below opens the overlay as soon as data is ready —
+  // decoupled from page lifecycle so cold data loads don't miss the auto-fire
+  // window. Pages clear this on unmount so a stale key doesn't fire on the
+  // wrong screen after navigation.
+  const [pendingFeatureKey, setPendingFeatureKey] = useState(null);
+
   // Derive the user's active tutorial quest from QuestsContext.
   const activeTutorialQuest = useMemo(() =>
     quests.find(q => q.type === QUEST_TYPE.TUTORIAL && q.status === 'active') ?? null,
@@ -194,14 +201,25 @@ export const TutorialProvider = ({ children }) => {
   const dismiss = useCallback(() => setActiveStep(null), []);
 
   // Auto-fire entry point. Feature pages call this on mount with their
-  // feature key. Opens the overlay if (a) the user has an active tutorial
-  // quest, (b) the matching tutorial step is still incomplete, and
-  // (c) this step hasn't already auto-fired in the current session.
+  // feature key, and again with null on unmount to clear. The function
+  // itself is intentionally stable (no deps) — it just records intent.
+  // The resolver useEffect below opens the overlay the moment data
+  // conditions are met, so a cold data load can't miss the window.
   const triggerStep = useCallback((featureKey) => {
-    const stepKey = FEATURE_KEY_TO_STEP[featureKey];
+    setPendingFeatureKey(featureKey ?? null);
+  }, []);
+
+  // Resolver — fires whenever any condition changes. Opens the overlay
+  // the instant: (a) a feature page has registered its key, (b) data
+  // (quest + missions) has loaded, (c) the matching tutorial mission is
+  // still active, and (d) this step hasn't already auto-fired this session.
+  useEffect(() => {
+    if (!pendingFeatureKey) return;
+    const stepKey = FEATURE_KEY_TO_STEP[pendingFeatureKey];
     if (!stepKey) return;
     if (autoTriggeredRef.current.has(stepKey)) return;
     if (!activeTutorialQuest) return;
+    if (!missions) return; // null until first fetch resolves
 
     const mission = missions.find(
       m => m.tutorialStep === stepKey && m.status === MISSION_STATUS.ACTIVE
@@ -209,8 +227,9 @@ export const TutorialProvider = ({ children }) => {
     if (!mission) return;
 
     autoTriggeredRef.current.add(stepKey);
+    setPendingFeatureKey(null);
     openStepForMission(mission);
-  }, [activeTutorialQuest, missions, openStepForMission]);
+  }, [pendingFeatureKey, activeTutorialQuest, missions, openStepForMission]);
 
   const value = useMemo(() => ({
     activeTutorialQuest,

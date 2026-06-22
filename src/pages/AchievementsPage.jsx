@@ -16,7 +16,10 @@ import './AchievementsPage.css';
 const AchievementsPage = () => {
   const { currentUser } = useAuth();
   const { triggerStep } = useTutorial();
-  useEffect(() => { triggerStep('achievements'); }, [triggerStep]);
+  useEffect(() => {
+    triggerStep('achievements');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const navigate = useNavigate();
   const [library, setLibrary] = useState(null);
   const [loading, setLoading] = useState(true);
