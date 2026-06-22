@@ -152,11 +152,13 @@ const MissionCardCondensed = ({
         onClick={
           readOnly
             ? undefined
-            : useTutorialRender
+            : useTutorialRender && !isVisuallyComplete
               ? () => openStepForMission(mission)
-              : () => setViewingDetails(true)
+              : useTutorialRender
+                ? undefined
+                : () => setViewingDetails(true)
         }
-        style={readOnly ? { cursor: 'default' } : undefined}
+        style={readOnly || (useTutorialRender && isVisuallyComplete) ? { cursor: 'default' } : undefined}
       >
         <div className="mcc-row">
           <h3
@@ -216,7 +218,7 @@ const MissionCardCondensed = ({
       </div>
 
       {actionSlot ? actionSlot : (
-        useTutorialRender ? (
+        useTutorialRender && !isVisuallyComplete ? (
           <TutorialPlayButton mission={mission} size="md" />
         ) : !readOnly && (
           <button

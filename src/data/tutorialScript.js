@@ -20,10 +20,10 @@ import { TUTORIAL_STEPS } from './tutorialQuest';
 // user doc so subsequent opens skip it.
 export const WELCOME_SCREEN = {
   variant: 'story',
-  title: 'Your training begins.',
+  title: 'Welcome to the Tutorial',
   body: [
-    "The Training Grounds has been laid out for you — your first quest. Each mission walks you through one part of the app.",
-    "Skip around or play in order. You can opt out anytime by archiving or deleting the quest.",
+    "Your first quest is already waiting. The Training Grounds walks you through each part of the app, one by one. Skip around or play in order.",
+    "You can opt out anytime by archiving or deleting the quest.",
   ],
   ctaLabel: 'Begin',
 };
@@ -208,8 +208,8 @@ export const TUTORIAL_SCRIPT = {
         variant: 'story',
         title: 'About achievements.',
         body: [
-          'Milestones. Built-in ones like "First Step" fire automatically when you hit them.',
-          'You can also make your own — for surviving a tough day, finishing the thing nobody else would notice, whatever is worth marking. Make as many as you want.',
+          'Recognize your efforts with achievements, including built-in rewards for mission-related milestones.',
+          'You can also make your own. Whether you finally potty-trained your toddler or just built a gravity-defying block tower, commemorate the milestones worth remembering.',
         ],
         ctaLabel: 'Continue',
       },

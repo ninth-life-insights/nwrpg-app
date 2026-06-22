@@ -28,8 +28,10 @@ import { useQuests } from '../../contexts/QuestsContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import { isMissionInRoutineSet } from '../../utils/routineHelpers';
 import { areMissionRendersEqual } from '../../utils/missionHelpers';
+import TutorialPlayButton from '../tutorial/TutorialPlayButton';
 import './MissionCard.css';
 
 const MissionCard = ({
@@ -61,7 +63,13 @@ const MissionCard = ({
     pausedRootSet &&
     pausedRootSet.has(mission.parentMissionId || mission.id);
   const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const { isTutorialMission, openStepForMission } = useTutorial();
   const isCompletionPending = isPending(mission.id);
+  // Tutorial detection — wins over daily/priority/quest tints, swaps the
+  // toggle for the play button, and routes body-click to the overlay.
+  // Defers to selectionMode so selection surfaces still work normally.
+  const isTutorial = isTutorialMission(mission);
+  const useTutorialRender = isTutorial && !selectionMode;
   const isOptimisticComplete = isOptimisticallyComplete(mission.id);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
@@ -198,7 +206,7 @@ const MissionCard = ({
   <div
     ref={setNodeRef}
     style={style}
-    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : isDailyMission ? 'daily-mission-card' : mission.isPriority ? 'priority-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${isDragging ? 'dragging' : ''}`}
+    className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : isTutorial ? 'tutorial-mission-card' : isDailyMission ? 'daily-mission-card' : mission.isPriority ? 'priority-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${isDragging ? 'dragging' : ''}`}
   >
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (
@@ -223,6 +231,11 @@ const MissionCard = ({
     <div className="content-area" onClick={() => {
       if (selectionMode && onSelect) {
         onSelect(mission);
+      } else if (useTutorialRender && !isVisuallyComplete) {
+        openStepForMission(mission);
+      } else if (useTutorialRender) {
+        // Completed tutorial mission — no body action (no overlay re-play, no
+        // re-completion). User sees the greened checkmark.
       } else if (!selectionMode) {
         setViewingDetails(true);
       }
@@ -349,25 +362,29 @@ const MissionCard = ({
 
       </div>
 
-      {/* Action button - completion toggle */}
+      {/* Action button - completion toggle, or tutorial play button */}
       <div className="mission-actions">
-        <button
-          onClick={handleToggleComplete}
-          disabled={isCompletionPending}
-          className={`mission-toggle ${isVisuallyComplete || isRecentlyCompleted ? 'completed' : ''}`}
-          aria-label={isVisuallyComplete ? 'Mark as incomplete' : 'Mark as complete'}
-        >
-          {/* Checkmark icon */}
-          <svg
-            className={`check-icon ${isVisuallyComplete ? 'completed' : ''}`}
-            xmlns="http://www.w3.org/2000/svg" 
-            height="20px" 
-            viewBox="0 -960 960 960" 
-            width="20px"
+        {useTutorialRender && !isVisuallyComplete ? (
+          <TutorialPlayButton mission={mission} size="md" />
+        ) : (
+          <button
+            onClick={handleToggleComplete}
+            disabled={isCompletionPending}
+            className={`mission-toggle ${isVisuallyComplete || isRecentlyCompleted ? 'completed' : ''}`}
+            aria-label={isVisuallyComplete ? 'Mark as incomplete' : 'Mark as complete'}
           >
-            <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
-          </svg>
-        </button>
+            {/* Checkmark icon */}
+            <svg
+              className={`check-icon ${isVisuallyComplete ? 'completed' : ''}`}
+              xmlns="http://www.w3.org/2000/svg"
+              height="20px"
+              viewBox="0 -960 960 960"
+              width="20px"
+            >
+              <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
+            </svg>
+          </button>
+        )}
       </div>
     </div>
 
