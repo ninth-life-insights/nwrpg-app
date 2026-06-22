@@ -27,14 +27,16 @@ const TutorialOverlay = () => {
   return createPortal(
     <div className="tutorial-overlay" onClick={dismiss}>
       <div className="tutorial-panel" onClick={onPanelClick}>
-        <button
-          type="button"
-          className="tutorial-close"
-          aria-label="Close tutorial"
-          onClick={dismiss}
-        >
-          <span className="material-icons">close</span>
-        </button>
+        <div className="tutorial-header-row">
+          <button
+            type="button"
+            className="tutorial-close"
+            aria-label="Close tutorial"
+            onClick={dismiss}
+          >
+            <span className="material-icons">close</span>
+          </button>
+        </div>
 
         <div className="tutorial-content">
           {screen.title && <h2 className="tutorial-title">{screen.title}</h2>}
