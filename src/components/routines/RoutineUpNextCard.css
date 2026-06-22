@@ -85,9 +85,11 @@
   letter-spacing: 0;
 }
 
-/* "Set up your routine" / "Routine clear today" — quieter one-line link rows
-   for the empty + all-done states. Match the same warm amber palette so the
-   slot reads consistently across states. */
+/* "Set up your routine" / "Routine clear today" / "Routine paused..." —
+   quieter one-line link rows for the empty, all-done, and paused states.
+   Dark text reads cleanly on the lavender background across all themes
+   (primary-color text can collide with the dusty-purple wrapper depending
+   on the user's themed --color-primary). */
 .routine-up-next-link {
   display: flex;
   align-items: center;
@@ -102,13 +104,9 @@
   cursor: pointer;
   text-align: center;
   font-family: var(--font-family);
-  color: var(--color-primary);
-  transition: color var(--transition), background var(--transition);
+  color: var(--color-text-dark);
+  transition: background var(--transition);
   box-shadow: var(--shadow-card);
-}
-
-.routine-up-next-link:hover {
-  color: var(--color-primary-hover);
 }
 
 .routine-up-next-link-label {
@@ -119,32 +117,7 @@
 .routine-up-next-link-arrow,
 .routine-up-next-link-arrow.material-icons {
   font-size: 18px;
-  color: var(--color-primary) !important;
-}
-
-/* Clear states ("Routine clear today", "Today's routine is on your priority
-   list") — override the default primary color, which can collide with the
-   dusty-purple wrapper depending on the user's themed --color-primary. Dark
-   text reads cleanly on the lavender background across all themes. */
-.routine-up-next-link--clear .routine-up-next-link-label {
-  color: var(--color-text-dark);
-}
-
-.routine-up-next-link--clear .routine-up-next-link-arrow,
-.routine-up-next-link--clear .routine-up-next-link-arrow.material-icons {
   color: var(--color-text-dark) !important;
-}
-
-/* Paused state — keeps the same dusty-purple wrapper as the other link
-   variants but with a muted label color so it reads as "the routine is
-   quietly out of the picture" rather than active. */
-.routine-up-next-link--paused .routine-up-next-link-label {
-  color: var(--color-text-medium);
-}
-
-.routine-up-next-link--paused .routine-up-next-link-arrow,
-.routine-up-next-link--paused .routine-up-next-link-arrow.material-icons {
-  color: var(--color-text-medium) !important;
 }
 
 /* Leading pause icon for the paused state — sits before the label to give

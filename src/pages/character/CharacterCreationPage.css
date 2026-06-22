@@ -13,7 +13,10 @@
   margin-bottom: var(--space-lg);
 }
 
-.character-title {
+/* Scoped to .character-creation-container so this rule doesn't collide with
+   HomePage.css's bare `.character-title` once both CSS files have loaded into
+   the global namespace. Per CLAUDE.md's CSS scope gotcha. */
+.character-creation-container .character-title {
   font-size: var(--font-size-xl) !important;
   font-style: normal !important;
   font-weight: 700;
@@ -22,7 +25,7 @@
   line-height: 1.2;
 }
 
-.character-subtitle {
+.character-creation-container .character-subtitle {
   font-size: var(--font-size-base);
   color: var(--color-text-medium);
   margin: 0;

@@ -89,7 +89,7 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
     return (
       <button
         type="button"
-        className="routine-up-next-link routine-up-next-link--paused"
+        className="routine-up-next-link"
         onClick={() => navigate('/routines')}
       >
         <span
@@ -127,7 +127,7 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
     return (
       <button
         type="button"
-        className="routine-up-next-link routine-up-next-link--clear"
+        className="routine-up-next-link"
         onClick={() => navigate('/routines')}
       >
         <span className="routine-up-next-link-label">Routine clear today ✓</span>
@@ -145,7 +145,7 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
     return (
       <button
         type="button"
-        className="routine-up-next-link routine-up-next-link--clear"
+        className="routine-up-next-link"
         onClick={() => navigate('/routines')}
       >
         <span className="routine-up-next-link-label">
