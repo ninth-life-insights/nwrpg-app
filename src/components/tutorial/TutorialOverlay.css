@@ -124,15 +124,16 @@
   z-index: 2000;
 }
 
-/* Full-viewport dim with a clip-path hole over the target. Blocks clicks
-   in the dim area; the target shows through the cutout and remains
-   clickable normally. */
+/* Full-viewport dim with a clip-path hole over the target. Visual only —
+   `pointer-events: none` lets the user interact with anything on the page
+   during a spotlight (the highlight is guidance, not a lock). A document-
+   level click listener in the renderer handles dismissal on outside-click. */
 .tutorial-spotlight-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 2000;
-  cursor: pointer;
+  pointer-events: none;
   animation: tutorialFadeIn 0.2s ease-out;
 }
 

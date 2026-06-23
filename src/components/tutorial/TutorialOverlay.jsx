@@ -114,17 +114,30 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
     };
   }, [targetEl]);
 
-  // Advance the screen when the user clicks the spotlight target. The
-  // click still propagates to the underlying handler, so the action's
-  // modal opens cleanly. If the next screen is a `wait` state, the overlay
-  // hides until the watched event fires (e.g., new mission created).
-  // Otherwise the next prompt renders right away.
+  // Document-level click handler. The backdrop is pointer-events: none so
+  // the user can interact with any element on the page during the
+  // spotlight. We dispatch based on where the click landed:
+  //   - on the target → advance (and let the native handler run too)
+  //   - on the panel → do nothing (panel is the tutorial UI itself)
+  //   - anywhere else → dismiss (and let the native handler run too)
+  const panelRef = useRef(null);
   useEffect(() => {
     if (!targetEl) return;
-    const handleClick = () => advance();
-    targetEl.addEventListener('click', handleClick);
-    return () => targetEl.removeEventListener('click', handleClick);
-  }, [targetEl, advance]);
+    const handleDocClick = (e) => {
+      if (targetEl.contains(e.target)) {
+        advance();
+        return;
+      }
+      if (panelRef.current && panelRef.current.contains(e.target)) {
+        return;
+      }
+      dismiss();
+    };
+    // Capture phase so we run before any stopPropagation calls deeper in
+    // the tree could swallow the event from our reach.
+    document.addEventListener('click', handleDocClick, true);
+    return () => document.removeEventListener('click', handleDocClick, true);
+  }, [targetEl, advance, dismiss]);
 
   // While we're still hunting for the target, render an invisible placeholder
   // so the parent doesn't try to mount story-variant in the meantime.
@@ -175,9 +188,8 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
       <div
         className="tutorial-spotlight-backdrop"
         style={{ clipPath: `polygon(${clipPath})` }}
-        onClick={dismiss}
       />
-      <div className="tutorial-spotlight-panel" style={panelStyle}>
+      <div className="tutorial-spotlight-panel" style={panelStyle} ref={panelRef}>
         <div className="tutorial-header-row">
           <button
             type="button"
