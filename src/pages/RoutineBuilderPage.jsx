@@ -158,9 +158,9 @@ const RoutineBuilderPage = () => {
         onAdd={async (selected) => {
           // Sequential creates — addMissionToRoutine updates the same routine
           // doc on each call, so parallel writes can race and drop entries.
-          // Force evergreen for routine-attached missions; the routine handles
-          // cadence so we discard the per-suggestion recurrence pattern.
-          const { DUE_TYPES } = await import('../types/Mission');
+          // Preserve each suggestion's natural cadence: clean-out-fridge stays
+          // monthly, vacuum stays weekly, make-bed stays daily. Evergreen
+          // suggestions (run a load of laundry, restock TP) stay evergreen.
           for (const s of selected) {
             await createMission(
               currentUser.uid,
@@ -168,7 +168,10 @@ const RoutineBuilderPage = () => {
                 title: s.title,
                 description: s.description || '',
                 difficulty: s.difficulty,
-                dueType: DUE_TYPES.EVERGREEN,
+                dueType: s.dueType,
+                recurrence: s.recurrence
+                  ? { pattern: s.recurrence.pattern, interval: s.recurrence.interval, weekdays: [] }
+                  : undefined,
                 skill: s.skill || null,
               },
               { routineId: DEFAULT_ROUTINE_ID }
