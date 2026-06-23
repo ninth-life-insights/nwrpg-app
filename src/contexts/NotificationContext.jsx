@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef } f
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import UndoActionToast from '../components/ui/UndoActionToast';
+import TutorialStepToast from '../components/tutorial/TutorialStepToast';
 import { useAuth } from './AuthContext';
 import { getNotificationPrefs } from '../services/notificationPrefsService';
 import {
@@ -30,6 +31,8 @@ export const NotificationProvider = ({ children }) => {
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
   const [actionToast, setActionToast] = useState(null);
   const actionToastIdRef = useRef(0);
+  const [tutorialStepToast, setTutorialStepToast] = useState(null);
+  const tutorialStepToastIdRef = useRef(0);
 
   // --- Push notification scheduling ---
   const { currentUser } = useAuth();
@@ -165,6 +168,19 @@ export const NotificationProvider = ({ children }) => {
     showUndoToast({ label: 'Home template added', missionTitle: templateName, onUndo });
   }, [showUndoToast]);
 
+  // Tutorial mission step completion — lightweight celebration toast.
+  // Fired by TutorialContext when it observes a tutorial mission flipping
+  // from active to completed. The id changes per call so the toast remounts
+  // and its auto-dismiss timer resets if steps complete in quick succession.
+  const notifyTutorialStepComplete = useCallback(({ missionTitle, questId }) => {
+    tutorialStepToastIdRef.current += 1;
+    setTutorialStepToast({
+      id: tutorialStepToastIdRef.current,
+      missionTitle,
+      questId,
+    });
+  }, []);
+
   return (
     <NotificationContext.Provider value={{
       notifyMissionCompletion,
@@ -176,6 +192,7 @@ export const NotificationProvider = ({ children }) => {
       notifyQuestArchived,
       notifyRoutineRebucketed,
       notifyHomeTemplateApplied,
+      notifyTutorialStepComplete,
       refreshSchedule,
     }}>
       {children}
@@ -202,6 +219,14 @@ export const NotificationProvider = ({ children }) => {
           missionTitle={actionToast.missionTitle}
           onUndo={actionToast.onUndo}
           onDismiss={() => setActionToast(null)}
+        />
+      )}
+
+      {tutorialStepToast && (
+        <TutorialStepToast
+          key={tutorialStepToast.id}
+          step={tutorialStepToast}
+          onDismiss={() => setTutorialStepToast(null)}
         />
       )}
     </NotificationContext.Provider>

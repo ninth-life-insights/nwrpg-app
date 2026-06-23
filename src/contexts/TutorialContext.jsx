@@ -24,6 +24,7 @@ import { db } from '../services/firebase/config';
 import { useAuth } from './AuthContext';
 import { useQuests } from './QuestsContext';
 import { useMissions } from './MissionsContext';
+import { useNotifications } from './NotificationContext';
 import { QUEST_TYPE } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
 import { TUTORIAL_STEPS } from '../data/tutorialQuest';
@@ -69,6 +70,7 @@ export const TutorialProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const { quests, refreshQuests } = useQuests();
   const { missions, refresh: refreshMissionsCache } = useMissions();
+  const { notifyTutorialStepComplete } = useNotifications();
   const navigate = useNavigate();
 
   // Tracks which steps have already auto-fired in this browser session.
@@ -216,6 +218,34 @@ export const TutorialProvider = ({ children }) => {
   }, [activeStep, markWelcomeSeen, completeCurrentStep, navigate]);
 
   const dismiss = useCallback(() => setActiveStep(null), []);
+
+  // Tutorial step completion toast. Watches the missions array for tutorial
+  // missions transitioning active → completed and fires a lightweight
+  // celebration via NotificationContext. The map of prior statuses lives in
+  // a ref so re-renders don't re-fire the same toast.
+  const prevTutorialStatusesRef = useRef(null);
+  useEffect(() => {
+    if (!missions) return;
+    const tutorialMissions = missions.filter(m => m.tutorialStep);
+    // First pass after data loads — record baseline and bail. Avoids firing
+    // for already-completed missions on initial load (e.g., page refresh).
+    if (prevTutorialStatusesRef.current === null) {
+      prevTutorialStatusesRef.current = Object.fromEntries(
+        tutorialMissions.map(m => [m.id, m.status])
+      );
+      return;
+    }
+    for (const m of tutorialMissions) {
+      const prev = prevTutorialStatusesRef.current[m.id];
+      if (prev === MISSION_STATUS.ACTIVE && m.status === MISSION_STATUS.COMPLETED) {
+        notifyTutorialStepComplete({
+          missionTitle: m.title,
+          questId: m.questId ?? null,
+        });
+      }
+      prevTutorialStatusesRef.current[m.id] = m.status;
+    }
+  }, [missions, notifyTutorialStepComplete]);
 
   // Wait-state advance: when the current screen is a `wait` variant, watch
   // the appropriate context data and auto-advance once the watched event

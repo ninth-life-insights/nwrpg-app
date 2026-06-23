@@ -1,0 +1,102 @@
+/* TutorialStepToast — bottom-center pill, z-index 2000 tier to sit above
+   modals but below celebrations (level-up, achievement). Visual family
+   matches AchievementToast: pill shape, small icon, label + name, X. */
+
+.tutorial-step-toast-wrapper {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 2000;
+  pointer-events: none;
+  padding: 0 16px;
+  max-width: var(--max-width-card);
+  width: calc(100% - 32px);
+  animation: tutorialStepToastIn 0.22s ease-out;
+}
+
+.tutorial-step-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-tutorial-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: 10px 12px 10px 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
+}
+
+.tutorial-step-toast__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-tutorial-bg);
+  flex-shrink: 0;
+}
+
+.tutorial-step-toast__icon,
+.tutorial-step-toast__icon .material-icons {
+  color: var(--color-primary) !important;
+}
+
+.tutorial-step-toast__icon .material-icons {
+  font-size: 22px;
+}
+
+.tutorial-step-toast__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tutorial-step-toast__label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.tutorial-step-toast__name {
+  font-size: var(--font-size-base);
+  color: var(--color-text-dark);
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tutorial-step-toast__close {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-light);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.tutorial-step-toast__close:hover {
+  color: var(--color-text-dark);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.tutorial-step-toast__close .material-icons {
+  font-size: 18px;
+}
+
+@keyframes tutorialStepToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
