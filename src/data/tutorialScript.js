@@ -42,6 +42,7 @@ export const TUTORIAL_SCRIPT = {
           'A mission has a name, optional description, difficulty, optional skill tag, and a type (unique, repeating, or evergreen).',
         ],
         ctaLabel: 'Open the Mission Bank',
+        navigateTo: '/mission-bank',
       },
       {
         variant: 'spotlight',

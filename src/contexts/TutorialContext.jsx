@@ -18,6 +18,7 @@ import React, {
   useState,
 } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 import { db } from '../services/firebase/config';
 import { useAuth } from './AuthContext';
@@ -68,6 +69,7 @@ export const TutorialProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const { quests, refreshQuests } = useQuests();
   const { missions, refresh: refreshMissionsCache } = useMissions();
+  const navigate = useNavigate();
 
   // Tracks which steps have already auto-fired in this browser session.
   // Survives dismissal so bouncing back to a feature page doesn't re-open
@@ -131,6 +133,12 @@ export const TutorialProvider = ({ children }) => {
       ? [WELCOME_SCREEN, ...script.screens]
       : script.screens;
 
+    // Mark this step as auto-triggered so the resolver useEffect doesn't
+    // clobber screenIndex back to 0 when the user lands on a feature page
+    // whose triggerStep would otherwise re-open the same step. Applies to
+    // every open path: play button, manual mission tap, navigateTo landing.
+    autoTriggeredRef.current.add(mission.tutorialStep);
+
     setActiveStep({
       missionId: mission.id,
       tutorialStep: mission.tutorialStep,
@@ -171,18 +179,27 @@ export const TutorialProvider = ({ children }) => {
     }
   }, [activeStep, currentUser, refreshQuests, refreshMissionsCache]);
 
-  // Advance one screen. If at the last screen and trigger is 'manual',
+  // Advance one screen. If the current screen has a `navigateTo`, route
+  // the user there first (the overlay stays mounted at App level so it
+  // travels with them). If at the last screen and trigger is 'manual',
   // completes the mission and dismisses. If at the last screen and trigger
   // is 'auto', just dismisses (the user will perform the real action and
   // the watcher will complete the mission separately).
   const advance = useCallback(async () => {
     if (!activeStep) return;
+    const currentScreen = activeStep.screens[activeStep.screenIndex];
     const isLast = activeStep.screenIndex >= activeStep.screens.length - 1;
-    const onWelcome = activeStep.screens[activeStep.screenIndex] === WELCOME_SCREEN;
+    const onWelcome = currentScreen === WELCOME_SCREEN;
 
     if (onWelcome) {
       // Fire-and-forget the persistence. Don't block UI.
       markWelcomeSeen();
+    }
+
+    // Per-screen navigation. Fires before screen index advances so the new
+    // route mounts in time for any spotlight target on the next screen.
+    if (currentScreen?.navigateTo) {
+      navigate(currentScreen.navigateTo);
     }
 
     if (!isLast) {
@@ -196,7 +213,7 @@ export const TutorialProvider = ({ children }) => {
     } else {
       setActiveStep(null);
     }
-  }, [activeStep, markWelcomeSeen, completeCurrentStep]);
+  }, [activeStep, markWelcomeSeen, completeCurrentStep, navigate]);
 
   const dismiss = useCallback(() => setActiveStep(null), []);
 
