@@ -410,6 +410,7 @@ const handleAddNewMission = async (missionData) => {
             value={targetDate}
             onChange={setTargetDate}
             heading="Plan for..."
+            data-tutorial-target="daily-plan-date-pill"
           />
         )}
 

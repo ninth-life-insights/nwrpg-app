@@ -21,6 +21,9 @@ const DatePickerPill = ({
   heading = 'Pick a day',
   minDate,
   className = '',
+  // Optional data-tutorial-target — forwarded to the pill button so the
+  // tutorial spotlight system can find this element. No effect otherwise.
+  'data-tutorial-target': tutorialTarget,
 }) => {
   const [showSheet, setShowSheet] = useState(false);
 
@@ -49,6 +52,7 @@ const DatePickerPill = ({
         className={`date-selector-pill ${!isToday ? 'future' : ''} ${className}`.trim()}
         onClick={() => setShowSheet(true)}
         aria-label="Change date"
+        data-tutorial-target={tutorialTarget}
       >
         <span className="date-selector-icon">📅</span>
         <span className="date-selector-label">{pillLabel}</span>
