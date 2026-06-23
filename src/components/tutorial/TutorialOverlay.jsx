@@ -61,36 +61,40 @@ const StoryRenderer = ({ screen, ctaLabel, advance, dismiss }) => (
 const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) => {
   const [targetEl, setTargetEl] = useState(null);
   const [targetRect, setTargetRect] = useState(null);
-  const fallbackTimerRef = useRef(null);
 
   // Locate the target element. Retries on each animation frame until found
-  // or until the fallback timer fires.
+  // or until the fallback timer fires. `found` is a local flag rather than
+  // reading targetEl from the closure (which would always be the stale
+  // null from initial render — that was the original "spotlight flashes
+  // then falls back" bug).
   useEffect(() => {
     let mounted = true;
     let rafId = null;
+    let fallbackTimer = null;
+    let found = false;
 
     const tryFind = () => {
-      if (!mounted) return;
+      if (!mounted || found) return;
       const el = document.querySelector(`[data-tutorial-target="${screen.target}"]`);
       if (el) {
+        found = true;
         setTargetEl(el);
+        if (fallbackTimer) clearTimeout(fallbackTimer);
         return;
       }
       rafId = requestAnimationFrame(tryFind);
     };
     tryFind();
 
-    fallbackTimerRef.current = setTimeout(() => {
-      if (mounted && !targetEl) onFallback();
+    fallbackTimer = setTimeout(() => {
+      if (mounted && !found) onFallback();
     }, SPOTLIGHT_TARGET_RETRY_MS);
 
     return () => {
       mounted = false;
       if (rafId) cancelAnimationFrame(rafId);
-      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
     };
-  // onFallback is stable from parent; targetEl change is fine to leave out
-  // (we just want to stop retrying once we've found it).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen.target]);
 
