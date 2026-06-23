@@ -196,11 +196,13 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
               ))
             : screen.body && <p className="tutorial-body">{screen.body}</p>}
         </div>
-        <div className="tutorial-actions">
-          <button type="button" className="tutorial-cta" onClick={advance}>
-            {ctaLabel}
-          </button>
-        </div>
+        {ctaLabel && (
+          <div className="tutorial-actions">
+            <button type="button" className="tutorial-cta" onClick={advance}>
+              {ctaLabel}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
@@ -228,9 +230,14 @@ const TutorialOverlay = () => {
   if (screen.variant === 'wait') return null;
 
   const isLast = activeStep.screenIndex >= activeStep.screens.length - 1;
-  const ctaLabel = screen.ctaLabel || (isLast ? 'Got it' : 'Continue');
-
   const useSpotlight = screen.variant === 'spotlight' && screen.target && !fallback;
+
+  // Story always has a CTA (it's the only way to advance). Spotlight gates
+  // the user on clicking the target by default — only shows a CTA when the
+  // screen explicitly declares one (use for "look at this, no click needed").
+  const ctaLabel = useSpotlight
+    ? (screen.ctaLabel ?? null)
+    : (screen.ctaLabel || (isLast ? 'Got it' : 'Continue'));
 
   return createPortal(
     useSpotlight ? (

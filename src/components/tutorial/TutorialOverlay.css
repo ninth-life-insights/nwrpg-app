@@ -152,5 +152,12 @@
   flex-direction: column;
   gap: 16px;
   z-index: 2001;
-  animation: tutorialScaleIn 0.18s ease-out;
+  /* Dedicated keyframe preserves translateX(-50%) during the scale-in,
+     so the panel doesn't briefly snap to the right edge of the screen. */
+  animation: tutorialSpotlightIn 0.18s ease-out;
+}
+
+@keyframes tutorialSpotlightIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.96); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
 }
