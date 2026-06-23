@@ -352,11 +352,15 @@ const BasePage = () => {
         />
       )}
 
-      {/* Home Template Picker — batch room creation */}
+      {/* Home Template Picker — batch room creation. Confirms before
+          applying when the user already has custom rooms, since templates
+          append (don't merge) and can create duplicate names. */}
       <HomeTemplatePicker
         open={showHomeTemplateModal}
         onClose={() => setShowHomeTemplateModal(false)}
         onApply={handleApplyTemplate}
+        confirmBeforeApply={hasCustomRooms}
+        existingRoomCount={Math.max(rooms.length - 1, 0)}
       />
 
       {/* Base icon + nickname setup modal */}

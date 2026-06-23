@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTutorial } from '../contexts/TutorialContext';
 import { useRoutines } from '../contexts/RoutineContext';
 import { useMissions } from '../contexts/MissionsContext';
 import { getOrCreateDefaultRoutine } from '../services/routineService';
@@ -41,6 +42,14 @@ const ROUTINE_FILTER_OPTIONS = [
 // action surface. Header navigates back to /routines explicitly.
 const RoutineBuilderPage = () => {
   const { currentUser } = useAuth();
+  const { triggerStep } = useTutorial();
+  // The home-page "routines" link skips /routines for users who haven't
+  // initialized a routine yet — it lands them directly on /routine-builder.
+  // Auto-fire from both pages so the tutorial step doesn't miss either path.
+  useEffect(() => {
+    triggerStep('routine');
+    return () => triggerStep(null);
+  }, [triggerStep]);
   const { routineRootSet, refreshRoutines } = useRoutines();
   const {
     missions: cachedMissions,

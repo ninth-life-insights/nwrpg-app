@@ -14,26 +14,43 @@ const HomeTemplatePicker = ({
   open,
   onClose,
   onApply, // (template) => Promise<void> | void
+  // When true, hitting "Use this template" first shows an inline confirm
+  // step rather than applying immediately. Caller passes true when the
+  // user already has custom rooms, so they don't accidentally append
+  // duplicate rooms to a configured base.
+  confirmBeforeApply = false,
+  existingRoomCount = 0,
 }) => {
   const [selectedId, setSelectedId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
   if (!open) return null;
+
+  const selectedTemplate = HOME_TEMPLATES.find(t => t.id === selectedId);
 
   const handleSelect = (templateId) => {
     setSelectedId(templateId);
     setExpandedId(prev => (prev === templateId ? null : templateId));
   };
 
-  const handleApply = async () => {
-    const template = HOME_TEMPLATES.find(t => t.id === selectedId);
-    if (!template) return;
+  const handleCtaClick = () => {
+    if (!selectedTemplate) return;
+    if (confirmBeforeApply && !awaitingConfirm) {
+      setAwaitingConfirm(true);
+      return;
+    }
+    runApply();
+  };
+
+  const runApply = async () => {
+    if (!selectedTemplate) return;
     setSubmitting(true);
     setError(null);
     try {
-      await onApply?.(template);
+      await onApply?.(selectedTemplate);
       onClose?.();
     } catch (e) {
       console.error('Home template apply failed:', e);
@@ -42,6 +59,8 @@ const HomeTemplatePicker = ({
       setSubmitting(false);
     }
   };
+
+  const cancelConfirm = () => setAwaitingConfirm(false);
 
   const onPanelClick = (e) => e.stopPropagation();
 
@@ -118,14 +137,44 @@ const HomeTemplatePicker = ({
           {error && (
             <div className="home-template-error">{error}</div>
           )}
-          <button
-            type="button"
-            className="home-template-cta"
-            onClick={handleApply}
-            disabled={submitting || !selectedId}
-          >
-            {submitting ? 'Creating rooms...' : 'Use this template'}
-          </button>
+
+          {awaitingConfirm ? (
+            <>
+              <div className="home-template-confirm-warning">
+                You already have {existingRoomCount} {existingRoomCount === 1 ? 'room' : 'rooms'}.
+                Applying <strong>{selectedTemplate?.name}</strong> will add its
+                {' '}{selectedTemplate?.rooms.length} rooms alongside, which can
+                create duplicates (you can rename or delete any after).
+              </div>
+              <div className="home-template-confirm-actions">
+                <button
+                  type="button"
+                  className="home-template-cta home-template-cta-secondary"
+                  onClick={cancelConfirm}
+                  disabled={submitting}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  className="home-template-cta"
+                  onClick={runApply}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Adding...' : 'Add rooms anyway'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="home-template-cta"
+              onClick={handleCtaClick}
+              disabled={submitting || !selectedId}
+            >
+              {submitting ? 'Creating rooms...' : 'Use this template'}
+            </button>
+          )}
         </div>
       </div>
     </div>,
