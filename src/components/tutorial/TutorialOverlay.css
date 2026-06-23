@@ -113,3 +113,44 @@
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* ─── Spotlight variant ─────────────────────────────────────────────── */
+
+/* Invisible placeholder while the spotlight target is being located. */
+.tutorial-spotlight-loading {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2000;
+}
+
+/* Full-viewport dim with a clip-path hole over the target. Blocks clicks
+   in the dim area; the target shows through the cutout and remains
+   clickable normally. */
+.tutorial-spotlight-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  cursor: pointer;
+  animation: tutorialFadeIn 0.2s ease-out;
+}
+
+/* Floating instruction panel positioned near the target. The CTA button
+   stays inside the panel; close button at the top-right of the panel. */
+.tutorial-spotlight-panel {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: var(--max-width-card);
+  background: var(--color-bg-main);
+  border-radius: var(--radius-xl);
+  padding: 12px 24px 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 2001;
+  animation: tutorialScaleIn 0.18s ease-out;
+}

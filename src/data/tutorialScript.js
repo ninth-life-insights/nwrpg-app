@@ -44,10 +44,11 @@ export const TUTORIAL_SCRIPT = {
         ctaLabel: 'Open the Mission Bank',
       },
       {
-        variant: 'story',
+        variant: 'spotlight',
+        target: 'mission-bank-add-btn',
         title: 'Make your first mission.',
         body: [
-          'Tap + in the Mission Bank to create one. Try something easy — "drink a glass of water" or "take five deep breaths."',
+          'Tap the + to create one. Try something easy — "drink a glass of water" or "take five deep breaths."',
           'When you check it off, this tutorial mission will complete automatically.',
         ],
         ctaLabel: 'Back to home',

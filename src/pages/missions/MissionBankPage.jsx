@@ -284,6 +284,7 @@ const MissionBank = () => {
         className="add-mission-fab"
         onClick={handleShowAddMission}
         aria-label="Add Mission"
+        data-tutorial-target="mission-bank-add-btn"
       >
         <span className="material-icons">add</span>
         Add Mission

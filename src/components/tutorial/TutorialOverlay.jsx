@@ -1,32 +1,167 @@
 // src/components/tutorial/TutorialOverlay.jsx
 //
 // Portal-rendered overlay shown when TutorialContext has an active step.
-// Phase 2 supports the `story` variant (full-screen explainer). The
-// `spotlight` variant (dimmed background with target cutout) lands in a
-// follow-up slice — for now spotlight screens fall through to the story
-// renderer so the flow still works end-to-end.
+// Supports two variants per screen:
+//   - 'story':    centered modal panel with title/body/CTA
+//   - 'spotlight': dimmed backdrop with a cutout over a target element
+//                  (clip-path), instruction panel positioned near the target
+//
+// Spotlight screens declare `target: 'data-tutorial-target-value'`. The
+// renderer looks up the element via querySelector with rAF retries (handles
+// page-still-mounting), then keeps its rect synced via ResizeObserver +
+// scroll/resize listeners. If the target can't be found within a short
+// retry window, falls back to story rendering so the lesson still lands.
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorial } from '../../contexts/TutorialContext';
 import './TutorialOverlay.css';
 
-const TutorialOverlay = () => {
-  const { activeStep, advance, dismiss } = useTutorial();
+// How long to keep retrying to find a spotlight target before falling back
+// to story rendering. Most pages mount well within this window.
+const SPOTLIGHT_TARGET_RETRY_MS = 1500;
 
-  if (!activeStep) return null;
-  const screen = activeStep.screens[activeStep.screenIndex];
-  if (!screen) return null;
+// Padding around the spotlight cutout so the target doesn't touch the dim.
+const SPOTLIGHT_PADDING = 8;
 
-  const isLast = activeStep.screenIndex >= activeStep.screens.length - 1;
-  const ctaLabel = screen.ctaLabel || (isLast ? 'Got it' : 'Continue');
+// Approximate panel height used for placement decisions. Doesn't need to be
+// exact — the panel auto-sizes; this is just for "does it fit below or above."
+const APPROX_PANEL_HEIGHT = 200;
 
-  // Stop propagation on the panel so taps inside it don't dismiss.
-  const onPanelClick = (e) => e.stopPropagation();
+const StoryRenderer = ({ screen, ctaLabel, advance, dismiss }) => (
+  <div className="tutorial-overlay" onClick={dismiss}>
+    <div className="tutorial-panel" onClick={(e) => e.stopPropagation()}>
+      <div className="tutorial-header-row">
+        <button
+          type="button"
+          className="tutorial-close"
+          aria-label="Close tutorial"
+          onClick={dismiss}
+        >
+          <span className="material-icons">close</span>
+        </button>
+      </div>
+      <div className="tutorial-content">
+        {screen.title && <h2 className="tutorial-title">{screen.title}</h2>}
+        {Array.isArray(screen.body)
+          ? screen.body.map((p, i) => (
+              <p key={i} className="tutorial-body">{p}</p>
+            ))
+          : screen.body && <p className="tutorial-body">{screen.body}</p>}
+      </div>
+      <div className="tutorial-actions">
+        <button type="button" className="tutorial-cta" onClick={advance}>
+          {ctaLabel}
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
-  return createPortal(
-    <div className="tutorial-overlay" onClick={dismiss}>
-      <div className="tutorial-panel" onClick={onPanelClick}>
+const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) => {
+  const [targetEl, setTargetEl] = useState(null);
+  const [targetRect, setTargetRect] = useState(null);
+  const fallbackTimerRef = useRef(null);
+
+  // Locate the target element. Retries on each animation frame until found
+  // or until the fallback timer fires.
+  useEffect(() => {
+    let mounted = true;
+    let rafId = null;
+
+    const tryFind = () => {
+      if (!mounted) return;
+      const el = document.querySelector(`[data-tutorial-target="${screen.target}"]`);
+      if (el) {
+        setTargetEl(el);
+        return;
+      }
+      rafId = requestAnimationFrame(tryFind);
+    };
+    tryFind();
+
+    fallbackTimerRef.current = setTimeout(() => {
+      if (mounted && !targetEl) onFallback();
+    }, SPOTLIGHT_TARGET_RETRY_MS);
+
+    return () => {
+      mounted = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    };
+  // onFallback is stable from parent; targetEl change is fine to leave out
+  // (we just want to stop retrying once we've found it).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen.target]);
+
+  // Once we have the target, observe size + scroll/resize for rect updates.
+  useEffect(() => {
+    if (!targetEl) return;
+    const measure = () => setTargetRect(targetEl.getBoundingClientRect());
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(targetEl);
+    window.addEventListener('scroll', measure, { capture: true, passive: true });
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('scroll', measure, { capture: true });
+      window.removeEventListener('resize', measure);
+    };
+  }, [targetEl]);
+
+  // While we're still hunting for the target, render an invisible placeholder
+  // so the parent doesn't try to mount story-variant in the meantime.
+  if (!targetRect) {
+    return <div className="tutorial-spotlight-loading" aria-hidden="true" />;
+  }
+
+  // Pad the cutout slightly so the target has some visual breathing room.
+  const cutout = {
+    top: Math.max(targetRect.top - SPOTLIGHT_PADDING, 0),
+    left: Math.max(targetRect.left - SPOTLIGHT_PADDING, 0),
+    right: Math.min(targetRect.right + SPOTLIGHT_PADDING, window.innerWidth),
+    bottom: Math.min(targetRect.bottom + SPOTLIGHT_PADDING, window.innerHeight),
+  };
+
+  // clip-path polygon with the viewport outline + a counter-clockwise hole
+  // around the target rect. Even-odd fill rule (default for clip-path
+  // polygon) creates the cutout.
+  const clipPath = [
+    `0 0`,
+    `100% 0`,
+    `100% 100%`,
+    `0 100%`,
+    `0 0`,
+    `${cutout.left}px ${cutout.top}px`,
+    `${cutout.left}px ${cutout.bottom}px`,
+    `${cutout.right}px ${cutout.bottom}px`,
+    `${cutout.right}px ${cutout.top}px`,
+    `${cutout.left}px ${cutout.top}px`,
+  ].join(', ');
+
+  // Position the panel below the cutout if there's room, above if not,
+  // anchored to viewport bottom otherwise.
+  const vh = window.innerHeight;
+  const spaceBelow = vh - cutout.bottom;
+  const spaceAbove = cutout.top;
+  let panelStyle;
+  if (spaceBelow >= APPROX_PANEL_HEIGHT + 32) {
+    panelStyle = { top: cutout.bottom + 16, bottom: 'auto' };
+  } else if (spaceAbove >= APPROX_PANEL_HEIGHT + 32) {
+    panelStyle = { bottom: vh - cutout.top + 16, top: 'auto' };
+  } else {
+    panelStyle = { bottom: 24, top: 'auto' };
+  }
+
+  return (
+    <>
+      <div
+        className="tutorial-spotlight-backdrop"
+        style={{ clipPath: `polygon(${clipPath})` }}
+        onClick={dismiss}
+      />
+      <div className="tutorial-spotlight-panel" style={panelStyle}>
         <div className="tutorial-header-row">
           <button
             type="button"
@@ -37,7 +172,6 @@ const TutorialOverlay = () => {
             <span className="material-icons">close</span>
           </button>
         </div>
-
         <div className="tutorial-content">
           {screen.title && <h2 className="tutorial-title">{screen.title}</h2>}
           {Array.isArray(screen.body)
@@ -46,18 +180,55 @@ const TutorialOverlay = () => {
               ))
             : screen.body && <p className="tutorial-body">{screen.body}</p>}
         </div>
-
         <div className="tutorial-actions">
-          <button
-            type="button"
-            className="tutorial-cta"
-            onClick={advance}
-          >
+          <button type="button" className="tutorial-cta" onClick={advance}>
             {ctaLabel}
           </button>
         </div>
       </div>
-    </div>,
+    </>
+  );
+};
+
+const TutorialOverlay = () => {
+  const { activeStep, advance, dismiss } = useTutorial();
+  // When a spotlight screen can't find its target, we flip this flag and
+  // re-render the same screen as story instead. Resets when the screen
+  // changes.
+  const [fallback, setFallback] = useState(false);
+  const stepKey = `${activeStep?.missionId ?? 'none'}-${activeStep?.screenIndex ?? 0}`;
+  const lastKeyRef = useRef(stepKey);
+  if (lastKeyRef.current !== stepKey) {
+    lastKeyRef.current = stepKey;
+    if (fallback) setFallback(false);
+  }
+
+  if (!activeStep) return null;
+  const screen = activeStep.screens[activeStep.screenIndex];
+  if (!screen) return null;
+
+  const isLast = activeStep.screenIndex >= activeStep.screens.length - 1;
+  const ctaLabel = screen.ctaLabel || (isLast ? 'Got it' : 'Continue');
+
+  const useSpotlight = screen.variant === 'spotlight' && screen.target && !fallback;
+
+  return createPortal(
+    useSpotlight ? (
+      <SpotlightRenderer
+        screen={screen}
+        ctaLabel={ctaLabel}
+        advance={advance}
+        dismiss={dismiss}
+        onFallback={() => setFallback(true)}
+      />
+    ) : (
+      <StoryRenderer
+        screen={screen}
+        ctaLabel={ctaLabel}
+        advance={advance}
+        dismiss={dismiss}
+      />
+    ),
     document.body
   );
 };
