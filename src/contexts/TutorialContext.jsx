@@ -217,6 +217,42 @@ export const TutorialProvider = ({ children }) => {
 
   const dismiss = useCallback(() => setActiveStep(null), []);
 
+  // Wait-state advance: when the current screen is a `wait` variant, watch
+  // the appropriate context data and auto-advance once the watched event
+  // fires (e.g., user creates a mission). Baseline is captured on entry to
+  // the wait state so growth-since-entry is what triggers advance — not
+  // pre-existing data.
+  const waitBaselineRef = useRef(null);
+  useEffect(() => {
+    if (!activeStep) {
+      waitBaselineRef.current = null;
+      return;
+    }
+    const currentScreen = activeStep.screens[activeStep.screenIndex];
+    if (currentScreen?.variant !== 'wait') {
+      waitBaselineRef.current = null;
+      return;
+    }
+
+    if (currentScreen.waitFor === 'mission-created') {
+      const count = missions?.length ?? 0;
+      if (waitBaselineRef.current === null) {
+        waitBaselineRef.current = count;
+        return;
+      }
+      if (count > waitBaselineRef.current) {
+        waitBaselineRef.current = null;
+        // Defer one tick so other listeners (e.g., MissionsContext refresh)
+        // settle before the next overlay screen renders.
+        setTimeout(() => {
+          setActiveStep(prev => prev
+            ? { ...prev, screenIndex: prev.screenIndex + 1 }
+            : null);
+        }, 0);
+      }
+    }
+  }, [activeStep, missions]);
+
   // Auto-fire entry point. Feature pages call this on mount with their
   // feature key, and again with null on unmount to clear. The function
   // itself is intentionally stable (no deps) — it just records intent.

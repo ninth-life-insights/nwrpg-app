@@ -114,17 +114,17 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
     };
   }, [targetEl]);
 
-  // Dismiss the overlay when the user clicks the spotlight target. The
-  // click still propagates to the underlying handler (we don't stop it),
-  // so the action's modal opens cleanly without the tutorial sitting on
-  // top of it. Completion is handled by the watcher when the user finishes
-  // the underlying action.
+  // Advance the screen when the user clicks the spotlight target. The
+  // click still propagates to the underlying handler, so the action's
+  // modal opens cleanly. If the next screen is a `wait` state, the overlay
+  // hides until the watched event fires (e.g., new mission created).
+  // Otherwise the next prompt renders right away.
   useEffect(() => {
     if (!targetEl) return;
-    const handleClick = () => dismiss();
+    const handleClick = () => advance();
     targetEl.addEventListener('click', handleClick);
     return () => targetEl.removeEventListener('click', handleClick);
-  }, [targetEl, dismiss]);
+  }, [targetEl, advance]);
 
   // While we're still hunting for the target, render an invisible placeholder
   // so the parent doesn't try to mount story-variant in the meantime.
@@ -222,6 +222,10 @@ const TutorialOverlay = () => {
   if (!activeStep) return null;
   const screen = activeStep.screens[activeStep.screenIndex];
   if (!screen) return null;
+
+  // Wait state — render no UI. TutorialContext watches for the event and
+  // auto-advances when it fires.
+  if (screen.variant === 'wait') return null;
 
   const isLast = activeStep.screenIndex >= activeStep.screens.length - 1;
   const ctaLabel = screen.ctaLabel || (isLast ? 'Got it' : 'Continue');

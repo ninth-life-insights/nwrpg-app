@@ -49,10 +49,24 @@ export const TUTORIAL_SCRIPT = {
         target: 'mission-bank-add-btn',
         title: 'Make your first mission.',
         body: [
-          'Tap the + to create one. Try something easy — "drink a glass of water" or "take five deep breaths."',
-          'When you check it off, this tutorial mission will complete automatically.',
+          'Tap the + to start. Try something easy — "drink a glass of water" or "take five deep breaths."',
         ],
-        ctaLabel: 'Back to home',
+      },
+      // Invisible wait state — hides the overlay while the user fills in
+      // and saves their first mission. Auto-advances when missions count
+      // grows (i.e., createMission has resolved + MissionsContext refreshed).
+      {
+        variant: 'wait',
+        waitFor: 'mission-created',
+      },
+      {
+        variant: 'story',
+        title: 'Now check it off.',
+        body: [
+          'Your new mission is in the bank. Tap its checkmark to complete it.',
+          'That\'ll finish this tutorial mission automatically.',
+        ],
+        ctaLabel: 'Got it',
       },
     ],
   },
