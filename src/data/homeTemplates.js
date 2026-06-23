@@ -4,6 +4,9 @@
 //
 // Each room declares the icon value the AddRoomModal would have used,
 // matching ROOM_ICONS in src/components/base/AddRoomModal.jsx.
+//
+// Bedroom and bathroom icons cycle through visual variants so multiple of
+// the same room type don't look identical in the bank.
 
 export const HOME_TEMPLATES = [
   {
@@ -34,7 +37,7 @@ export const HOME_TEMPLATES = [
     description: 'Two bedrooms, one bathroom, kitchen, and living room.',
     rooms: [
       { name: 'Primary Bedroom', icon: 'Room-bed.jpg' },
-      { name: 'Second Bedroom',  icon: 'Room-bed.jpg' },
+      { name: 'Second Bedroom',  icon: 'Room-sleep.png' },
       { name: 'Bathroom',        icon: 'Room-Shower.jpg' },
       { name: 'Kitchen',         icon: 'Room-kitchen.png' },
       { name: 'Living Room',     icon: 'Room-couch.jpg' },
@@ -47,7 +50,7 @@ export const HOME_TEMPLATES = [
     description: 'Two bedrooms, two bathrooms, kitchen, living and dining.',
     rooms: [
       { name: 'Primary Bedroom',  icon: 'Room-bed.jpg' },
-      { name: 'Second Bedroom',   icon: 'Room-bed.jpg' },
+      { name: 'Second Bedroom',   icon: 'Room-sleep.png' },
       { name: 'Primary Bathroom', icon: 'Room-Shower.jpg' },
       { name: 'Guest Bathroom',   icon: 'Room-toilet.jpg' },
       { name: 'Kitchen',          icon: 'Room-kitchen.png' },
@@ -62,8 +65,8 @@ export const HOME_TEMPLATES = [
     description: 'Three bedrooms, two bathrooms, kitchen, living, dining, and laundry.',
     rooms: [
       { name: 'Primary Bedroom',  icon: 'Room-bed.jpg' },
-      { name: 'Second Bedroom',   icon: 'Room-bed.jpg' },
-      { name: 'Third Bedroom',    icon: 'Room-bed.jpg' },
+      { name: 'Second Bedroom',   icon: 'Room-sleep.png' },
+      { name: 'Third Bedroom',    icon: 'Room-books.png' },
       { name: 'Primary Bathroom', icon: 'Room-Shower.jpg' },
       { name: 'Guest Bathroom',   icon: 'Room-toilet.jpg' },
       { name: 'Kitchen',          icon: 'Room-kitchen.png' },
@@ -79,7 +82,7 @@ export const HOME_TEMPLATES = [
     description: 'Family layout — adds a nursery and playroom, no separate dining room.',
     rooms: [
       { name: 'Primary Bedroom',  icon: 'Room-bed.jpg' },
-      { name: 'Kid\'s Bedroom',   icon: 'Room-bed.jpg' },
+      { name: 'Kid\'s Bedroom',   icon: 'Room-sleep.png' },
       { name: 'Nursery',          icon: 'Room-crib.png' },
       { name: 'Primary Bathroom', icon: 'Room-Shower.jpg' },
       { name: 'Guest Bathroom',   icon: 'Room-toilet.jpg' },
@@ -96,12 +99,12 @@ export const HOME_TEMPLATES = [
     description: 'Larger home with garage and outdoor space.',
     rooms: [
       { name: 'Primary Bedroom',  icon: 'Room-bed.jpg' },
-      { name: 'Second Bedroom',   icon: 'Room-bed.jpg' },
-      { name: 'Third Bedroom',    icon: 'Room-bed.jpg' },
+      { name: 'Second Bedroom',   icon: 'Room-sleep.png' },
+      { name: 'Third Bedroom',    icon: 'Room-books.png' },
       { name: 'Fourth Bedroom',   icon: 'Room-bed.jpg' },
       { name: 'Primary Bathroom', icon: 'Room-Shower.jpg' },
       { name: 'Guest Bathroom',   icon: 'Room-toilet.jpg' },
-      { name: 'Powder Room',      icon: 'Room-toilet.jpg' },
+      { name: 'Powder Room',      icon: 'Room-bath.png' },
       { name: 'Kitchen',          icon: 'Room-kitchen.png' },
       { name: 'Living Room',      icon: 'Room-couch.jpg' },
       { name: 'Dining Room',      icon: 'Room-dining.jpg' },

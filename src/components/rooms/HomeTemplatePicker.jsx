@@ -7,7 +7,6 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import StickyFooter from '../ui/StickyFooter';
 import { HOME_TEMPLATES } from '../../data/homeTemplates';
 import './HomeTemplatePicker.css';
 
@@ -64,7 +63,7 @@ const HomeTemplatePicker = ({
           <h2 className="home-template-title">Pick a home template</h2>
           <p className="home-template-subtitle">
             Start your base with a set of rooms that matches your place.
-            You can edit, rename, or delete any room afterwards.
+            You can rename, edit, delete, or add more rooms afterwards.
           </p>
 
           <ul className="home-template-list">
@@ -115,7 +114,7 @@ const HomeTemplatePicker = ({
           </ul>
         </div>
 
-        <StickyFooter bgColor="var(--color-bg-white)">
+        <div className="home-template-footer">
           {error && (
             <div className="home-template-error">{error}</div>
           )}
@@ -127,7 +126,7 @@ const HomeTemplatePicker = ({
           >
             {submitting ? 'Creating rooms...' : 'Use this template'}
           </button>
-        </StickyFooter>
+        </div>
       </div>
     </div>,
     document.body

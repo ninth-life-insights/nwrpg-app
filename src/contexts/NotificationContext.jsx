@@ -158,6 +158,13 @@ export const NotificationProvider = ({ children }) => {
     showUndoToast({ label: `Moved to ${bucketLabel}`, missionTitle, onUndo });
   }, [showUndoToast]);
 
+  // Home template batch room creation — undo soft-deletes every room from
+  // the batch. The window is short (toast auto-dismisses), so the practical
+  // risk of undoing into a freshly-edited room is small.
+  const notifyHomeTemplateApplied = useCallback(({ templateName, onUndo }) => {
+    showUndoToast({ label: 'Home template added', missionTitle: templateName, onUndo });
+  }, [showUndoToast]);
+
   return (
     <NotificationContext.Provider value={{
       notifyMissionCompletion,
@@ -168,6 +175,7 @@ export const NotificationProvider = ({ children }) => {
       notifyQuestDeleted,
       notifyQuestArchived,
       notifyRoutineRebucketed,
+      notifyHomeTemplateApplied,
       refreshSchedule,
     }}>
       {children}

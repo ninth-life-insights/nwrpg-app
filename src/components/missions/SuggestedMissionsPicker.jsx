@@ -12,7 +12,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import Badge from '../ui/Badge';
-import StickyFooter from '../ui/StickyFooter';
 import './SuggestedMissionsPicker.css';
 
 const SuggestedMissionsPicker = ({
@@ -20,31 +19,46 @@ const SuggestedMissionsPicker = ({
   title = 'Suggested missions',
   subtitle = null,
   suggestions = [],
+  // Optional filter chips. Each: { key, label, predicate?: (s) => boolean }.
+  // A chip with no predicate matches every suggestion (use for "All").
+  filterOptions = null,
+  initialFilterKey = null,
   onClose,
   onAdd, // (selectedSuggestions: Suggestion[]) => Promise<void> | void
   ctaLabel = 'Add selected',
   emptyMessage = 'No suggestions available for this surface.',
 }) => {
-  const [selectedIndices, setSelectedIndices] = useState(() => new Set());
+  // Selection tracked by suggestion object reference so changing the
+  // active filter doesn't invalidate the user's picks.
+  const [selectedSuggestions, setSelectedSuggestions] = useState(() => new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [activeFilterKey, setActiveFilterKey] = useState(
+    initialFilterKey ?? filterOptions?.[0]?.key ?? null
+  );
 
   if (!open) return null;
 
-  const toggle = (idx) => {
-    setSelectedIndices(prev => {
+  // Apply the active filter's predicate, if any.
+  const activeFilter = filterOptions?.find(f => f.key === activeFilterKey) ?? null;
+  const visibleSuggestions = activeFilter?.predicate
+    ? suggestions.filter(activeFilter.predicate)
+    : suggestions;
+
+  const toggle = (suggestion) => {
+    setSelectedSuggestions(prev => {
       const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
+      if (next.has(suggestion)) next.delete(suggestion);
+      else next.add(suggestion);
       return next;
     });
   };
 
   const handleAdd = async () => {
-    if (selectedIndices.size === 0) return;
+    if (selectedSuggestions.size === 0) return;
     setSubmitting(true);
     setError(null);
-    const selected = [...selectedIndices].map(i => suggestions[i]);
+    const selected = [...selectedSuggestions];
     try {
       await onAdd?.(selected);
       onClose?.();
@@ -76,17 +90,34 @@ const SuggestedMissionsPicker = ({
           <h2 className="suggested-missions-title">{title}</h2>
           {subtitle && <p className="suggested-missions-subtitle">{subtitle}</p>}
 
-          {suggestions.length === 0 ? (
+          {filterOptions && filterOptions.length > 0 && (
+            <div className="suggested-missions-filters" role="tablist">
+              {filterOptions.map(f => (
+                <button
+                  key={f.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeFilterKey === f.key}
+                  className={`suggested-missions-filter-chip${activeFilterKey === f.key ? ' active' : ''}`}
+                  onClick={() => setActiveFilterKey(f.key)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {visibleSuggestions.length === 0 ? (
             <p className="suggested-missions-empty">{emptyMessage}</p>
           ) : (
             <ul className="suggested-missions-list">
-              {suggestions.map((s, i) => {
-                const selected = selectedIndices.has(i);
+              {visibleSuggestions.map((s, i) => {
+                const selected = selectedSuggestions.has(s);
                 return (
                   <li
                     key={`${s.title}-${i}`}
                     className={`suggested-missions-row${selected ? ' selected' : ''}`}
-                    onClick={() => toggle(i)}
+                    onClick={() => toggle(s)}
                   >
                     <div className="suggested-missions-row-text">
                       <div className="suggested-missions-row-title">{s.title}</div>
@@ -94,6 +125,9 @@ const SuggestedMissionsPicker = ({
                         <Badge variant="difficulty" difficulty={s.difficulty}>
                           {s.difficulty}
                         </Badge>
+                        {s.skill && (
+                          <Badge variant="skill">{s.skill}</Badge>
+                        )}
                       </div>
                     </div>
                     <span
@@ -112,7 +146,7 @@ const SuggestedMissionsPicker = ({
         </div>
 
         {suggestions.length > 0 && (
-          <StickyFooter bgColor="var(--color-bg-white)">
+          <div className="suggested-missions-footer">
             {error && (
               <div className="suggested-missions-error">{error}</div>
             )}
@@ -120,15 +154,15 @@ const SuggestedMissionsPicker = ({
               type="button"
               className="suggested-missions-cta"
               onClick={handleAdd}
-              disabled={submitting || selectedIndices.size === 0}
+              disabled={submitting || selectedSuggestions.size === 0}
             >
               {submitting
                 ? 'Adding...'
-                : selectedIndices.size === 0
+                : selectedSuggestions.size === 0
                   ? ctaLabel
-                  : `${ctaLabel} (${selectedIndices.size})`}
+                  : `${ctaLabel} (${selectedSuggestions.size})`}
             </button>
-          </StickyFooter>
+          </div>
         )}
       </div>
     </div>,

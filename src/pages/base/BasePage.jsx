@@ -9,8 +9,10 @@ import {
   initializeEntireBaseRoom,
   reorderRooms,
   createRoomsBatch,
+  deleteRoom,
   ENTIRE_BASE_ROOM_ID,
 } from '../../services/roomService';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { useMissions } from '../../contexts/MissionsContext';
 import { getUserProfile } from '../../services/userService';
 import RoomCard from '../../components/base/RoomCard';
@@ -48,6 +50,7 @@ import './BasePage.css';
 
 const BasePage = () => {
   const { currentUser } = useAuth();
+  const { notifyHomeTemplateApplied } = useNotifications();
   const { triggerStep } = useTutorial();
   useEffect(() => {
     triggerStep('base');
@@ -134,8 +137,25 @@ const BasePage = () => {
 
   const handleApplyTemplate = async (template) => {
     if (!currentUser || !template) return;
-    await createRoomsBatch(currentUser.uid, template.rooms);
+    const newRoomIds = await createRoomsBatch(currentUser.uid, template.rooms);
     await fetchRoomsAndStats();
+
+    // Surface an undo toast so a wrong-template tap can be reversed without
+    // manually deleting every room. Auto-dismisses in ~5s. Undo soft-deletes
+    // the just-created rooms sequentially and refetches.
+    notifyHomeTemplateApplied({
+      templateName: template.name,
+      onUndo: async () => {
+        for (const roomId of newRoomIds) {
+          try {
+            await deleteRoom(currentUser.uid, roomId);
+          } catch (e) {
+            console.error('Undo: failed to delete room', roomId, e);
+          }
+        }
+        await fetchRoomsAndStats();
+      },
+    });
   };
 
   const handleRoomAdded = async () => {
@@ -304,31 +324,21 @@ const BasePage = () => {
               );
             })}
 
-            {/* First-room empty state — header button handles all other adds.
-                Two options: a prominent home template picker (batch create the
-                whole place) and a single-room add. */}
+            {/* First-room empty state — prominent template CTA only. The
+                "+ Room" button stays in the header for users who want to add
+                rooms one at a time. */}
             {!hasCustomRooms && (
-              <>
-                <div className="room-card-slot">
-                  <div
-                    className="add-room-card add-room-card-template"
-                    onClick={handleOpenTemplatePicker}
-                  >
-                    <div className="add-room-icon">
-                      <span className="material-icons">home_work</span>
-                    </div>
-                    <div className="add-room-label">Pick a home template</div>
+              <div className="room-card-slot">
+                <div
+                  className="add-room-card add-room-card-template"
+                  onClick={handleOpenTemplatePicker}
+                >
+                  <div className="add-room-icon">
+                    <span className="material-icons">home_work</span>
                   </div>
+                  <div className="add-room-label">Pick a home template</div>
                 </div>
-                <div className="room-card-slot">
-                  <div className="add-room-card" onClick={handleAddRoom}>
-                    <div className="add-room-icon">
-                      <span className="material-icons">add</span>
-                    </div>
-                    <div className="add-room-label">Add a single room</div>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
           </div>
         </SortableContext>

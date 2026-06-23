@@ -673,16 +673,21 @@ const RoomPage = () => {
         suggestions={getSuggestionsForRoomIcon(room?.icon || navRoomIcon)}
         ctaLabel="Add to room"
         onAdd={async (selected) => {
-          await Promise.all(selected.map(s =>
-            createMission(currentUser.uid, {
+          // Sequential to avoid concurrent writes to shared docs. Each create
+          // also re-fetches some state; doing them in parallel can race.
+          for (const s of selected) {
+            await createMission(currentUser.uid, {
               title: s.title,
               description: s.description || '',
               difficulty: s.difficulty,
               dueType: s.dueType,
+              recurrence: s.recurrence
+                ? { pattern: s.recurrence.pattern, interval: s.recurrence.interval, weekdays: [] }
+                : undefined,
               skill: s.skill || null,
               baseLocation: roomId,
-            })
-          ));
+            });
+          }
           await refreshMissionsCache();
         }}
       />
