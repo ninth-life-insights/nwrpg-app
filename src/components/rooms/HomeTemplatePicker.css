@@ -231,7 +231,13 @@
   gap: 8px;
 }
 
-.home-template-cta-secondary {
+/* Override the base .home-template-cta `width: 100%` inside the confirm
+   row so the two buttons can share the available width via flex. */
+.home-template-confirm-actions .home-template-cta {
+  width: auto;
+}
+
+.home-template-confirm-actions .home-template-cta-secondary {
   background: transparent;
   color: var(--color-text-medium);
   border: 1px solid var(--color-border);
@@ -239,11 +245,12 @@
   min-width: 96px;
 }
 
-.home-template-cta-secondary:hover:not(:disabled) {
+.home-template-confirm-actions .home-template-cta-secondary:hover:not(:disabled) {
   background: #f9fafb;
   color: var(--color-text-dark);
 }
 
 .home-template-confirm-actions .home-template-cta:not(.home-template-cta-secondary) {
   flex: 1;
+  min-width: 0;
 }
