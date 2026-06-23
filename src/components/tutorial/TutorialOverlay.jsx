@@ -114,6 +114,18 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
     };
   }, [targetEl]);
 
+  // Dismiss the overlay when the user clicks the spotlight target. The
+  // click still propagates to the underlying handler (we don't stop it),
+  // so the action's modal opens cleanly without the tutorial sitting on
+  // top of it. Completion is handled by the watcher when the user finishes
+  // the underlying action.
+  useEffect(() => {
+    if (!targetEl) return;
+    const handleClick = () => dismiss();
+    targetEl.addEventListener('click', handleClick);
+    return () => targetEl.removeEventListener('click', handleClick);
+  }, [targetEl, dismiss]);
+
   // While we're still hunting for the target, render an invisible placeholder
   // so the parent doesn't try to mount story-variant in the meantime.
   if (!targetRect) {
