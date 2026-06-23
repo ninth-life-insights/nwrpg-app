@@ -557,24 +557,22 @@ const RoutineBuilderSection = ({
           </select>
         </label>
 
-        {rooms.length > 0 && (
-          <label className="routine-builder-filter">
-            <span className="routine-builder-filter-label">Room</span>
-            <select
-              className="routine-builder-filter-select"
-              value={roomFilter}
-              onChange={(e) => setRoomFilter(e.target.value)}
-            >
-              <option value="">Any</option>
-              <option value={NO_ROOM_FILTER}>Personal</option>
-              {rooms.map((room) => (
-                <option key={room.id} value={room.id}>
-                  {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label className="routine-builder-filter">
+          <span className="routine-builder-filter-label">Room</span>
+          <select
+            className="routine-builder-filter-select"
+            value={roomFilter}
+            onChange={(e) => setRoomFilter(e.target.value)}
+          >
+            <option value="">Any</option>
+            <option value={NO_ROOM_FILTER}>Personal</option>
+            {rooms.map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.id === ENTIRE_BASE_ROOM_ID ? 'Entire Base' : room.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="routine-builder-top-actions">
