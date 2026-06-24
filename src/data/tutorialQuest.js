@@ -46,8 +46,8 @@ export const TUTORIAL_MISSIONS = [
     dueType: DUE_TYPES.UNIQUE,
   },
   {
-    title: 'Mission Briefing',
-    description: "Plan tomorrow's three priorities.",
+    title: 'Get Your Priorities Straight',
+    description: "Plan tomorrow's three daily missions.",
     tutorialStep: TUTORIAL_STEPS.PLAN_FIRST_DAY,
     difficulty: DIFFICULTY_LEVELS.EASY,
     dueType: DUE_TYPES.UNIQUE,

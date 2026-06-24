@@ -550,7 +550,7 @@ const handleAddNewMission = async (missionData) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="action-buttons">
+      <div className="action-buttons" data-tutorial-target="daily-plan-actions">
         <button
           className="action-btn secondary"
           onClick={handleAddNewMissionClick}
