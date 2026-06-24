@@ -32,6 +32,100 @@ const markOnboardingCompleted = (userId) => {
     .catch(e => console.error('Failed to mark onboardingCompleted:', e));
 };
 
+// Fetch every tutorial mission for a quest (any status). Used by the cascade
+// helpers below — tutorial missions are useless without their parent quest,
+// so archive/delete/restore propagates from quest to missions.
+const getTutorialMissionsForQuest = async (userId, questId) => {
+  const missionsRef = collection(db, 'users', userId, 'missions');
+  const q = query(missionsRef, where('questId', '==', questId));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(m => m.tutorialStep);
+};
+
+// Drop the given mission ids from today's daily priorities and any future
+// planned dates. Mirrors the cleanup expireMission/deleteMission do for a
+// single mission. Best-effort — failures don't block the cascade itself.
+const removeTutorialMissionsFromDailyPlans = async (userId, missions) => {
+  if (!missions.length) return;
+  try {
+    const {
+      removeMissionFromDailyMissions,
+      removeMissionFromPlannedDates,
+    } = await import('./dailyMissionService');
+    await Promise.allSettled(
+      missions.flatMap(m => [
+        removeMissionFromDailyMissions(userId, m.id),
+        m.scheduledDates?.length
+          ? removeMissionFromPlannedDates(userId, m.id, m.scheduledDates)
+          : Promise.resolve(),
+      ])
+    );
+  } catch (e) {
+    console.error('Tutorial mission daily-plan cleanup failed:', e);
+  }
+};
+
+// Cascade: when the tutorial quest is archived, also archive all of its
+// tutorial missions (set EXPIRED). Already-EXPIRED or DELETED stay as-is.
+// completedAt is preserved on the doc so restoreTutorialMissions can put
+// the user back into COMPLETED vs ACTIVE per the existing convention.
+const cascadeArchiveTutorialMissions = async (userId, questId) => {
+  const missions = await getTutorialMissionsForQuest(userId, questId);
+  const targets = missions.filter(
+    m => m.status !== MISSION_STATUS.EXPIRED && m.status !== MISSION_STATUS.DELETED
+  );
+  if (!targets.length) return;
+  const batch = writeBatch(db);
+  for (const m of targets) {
+    batch.update(doc(db, 'users', userId, 'missions', m.id), {
+      status: MISSION_STATUS.EXPIRED,
+      expiredAt: serverTimestamp(),
+      scheduledDates: [],
+    });
+  }
+  await batch.commit();
+  await removeTutorialMissionsFromDailyPlans(userId, targets);
+};
+
+// Cascade: tutorial quest deleted → soft-delete all tutorial missions.
+const cascadeDeleteTutorialMissions = async (userId, questId) => {
+  const missions = await getTutorialMissionsForQuest(userId, questId);
+  const targets = missions.filter(m => m.status !== MISSION_STATUS.DELETED);
+  if (!targets.length) return;
+  const batch = writeBatch(db);
+  for (const m of targets) {
+    batch.update(doc(db, 'users', userId, 'missions', m.id), {
+      status: MISSION_STATUS.DELETED,
+      deletedAt: serverTimestamp(),
+      scheduledDates: [],
+    });
+  }
+  await batch.commit();
+  await removeTutorialMissionsFromDailyPlans(userId, targets);
+};
+
+// Cascade: tutorial quest restored → restore its missions. Uses completedAt
+// to decide ACTIVE vs COMPLETED (same convention as restoreQuest). Skips
+// missions already in a live state.
+const cascadeRestoreTutorialMissions = async (userId, questId) => {
+  const missions = await getTutorialMissionsForQuest(userId, questId);
+  const targets = missions.filter(
+    m => m.status === MISSION_STATUS.EXPIRED || m.status === MISSION_STATUS.DELETED
+  );
+  if (!targets.length) return;
+  const batch = writeBatch(db);
+  for (const m of targets) {
+    batch.update(doc(db, 'users', userId, 'missions', m.id), {
+      status: m.completedAt ? MISSION_STATUS.COMPLETED : MISSION_STATUS.ACTIVE,
+      expiredAt: null,
+      deletedAt: null,
+    });
+  }
+  await batch.commit();
+};
+
 // Collection reference
 const getQuestsCollection = (userId) => {
   return collection(db, 'users', userId, 'quests');
@@ -191,10 +285,15 @@ export const reopenQuest = async (userId, questId) => {
 // Archive a quest
 export const archiveQuest = async (userId, questId) => {
   const result = await updateQuestStatus(userId, questId, QUEST_STATUS.ARCHIVED);
-  // Tutorial-specific: flip onboardingCompleted when the Training Grounds
-  // quest is archived (opt-out path).
+  // Tutorial-specific: flip onboardingCompleted + cascade archive to all
+  // tutorial missions in this quest (they're useless when orphaned).
   if (result?.type === QUEST_TYPE.TUTORIAL) {
     markOnboardingCompleted(userId);
+    try {
+      await cascadeArchiveTutorialMissions(userId, questId);
+    } catch (e) {
+      console.error('Tutorial mission archive cascade failed:', e);
+    }
   }
   return result;
 };
@@ -270,6 +369,16 @@ export const restoreQuest = async (userId, questId) => {
       });
     }
   }
+  // Tutorial-specific: bring back the cascaded missions too. Uses
+  // completedAt on each mission doc as the COMPLETED-vs-ACTIVE signal,
+  // mirroring the convention this function uses for the quest itself.
+  if (quest.type === QUEST_TYPE.TUTORIAL) {
+    try {
+      await cascadeRestoreTutorialMissions(userId, questId);
+    } catch (e) {
+      console.error('Tutorial mission restore cascade failed:', e);
+    }
+  }
 };
 
 // Delete a quest (soft-delete — mirrors deleteMission pattern)
@@ -282,10 +391,15 @@ export const deleteQuest = async (userId, questId) => {
   }
   const questRef = doc(db, 'users', userId, 'quests', questId);
   await updateDoc(questRef, { status: QUEST_STATUS.DELETED, deletedAt: serverTimestamp() });
-  // Tutorial-specific: flip onboardingCompleted when the Training Grounds
-  // quest is deleted (also an opt-out path).
+  // Tutorial-specific: flip onboardingCompleted + cascade delete to all
+  // tutorial missions in this quest (they're useless when orphaned).
   if (quest.type === QUEST_TYPE.TUTORIAL) {
     markOnboardingCompleted(userId);
+    try {
+      await cascadeDeleteTutorialMissions(userId, questId);
+    } catch (e) {
+      console.error('Tutorial mission delete cascade failed:', e);
+    }
   }
 };
 

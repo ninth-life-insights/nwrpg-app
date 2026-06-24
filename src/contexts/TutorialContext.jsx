@@ -99,16 +99,25 @@ export const TutorialProvider = ({ children }) => {
   // wrong screen after navigation.
   const [pendingFeatureKey, setPendingFeatureKey] = useState(null);
 
+  // Set true right before an overlay-initiated `navigate()` so the route
+  // watcher (below) lets that pathname change through instead of dismissing.
+  // Cleared on the very next pathname change.
+  const expectedRouteChangeRef = useRef(false);
+
   // Derive the user's active tutorial quest from QuestsContext.
   const activeTutorialQuest = useMemo(() =>
     quests.find(q => q.type === QUEST_TYPE.TUTORIAL && q.status === 'active') ?? null,
     [quests]
   );
 
-  // Read tutorialWelcomeSeen from user doc on currentUser change.
+  // Read tutorialWelcomeSeen from user doc on currentUser change. Also
+  // clears any open overlay state on sign-out so the previous user's step
+  // doesn't bleed into the auth screens or the next user's session.
   useEffect(() => {
     if (!currentUser) {
       setWelcomeSeen(null);
+      setActiveStep(null);
+      autoTriggeredRef.current = new Set();
       return;
     }
     let cancelled = false;
@@ -123,6 +132,22 @@ export const TutorialProvider = ({ children }) => {
     })();
     return () => { cancelled = true; };
   }, [currentUser]);
+
+  // Clear activeStep if the user archives or deletes the tutorial quest mid-
+  // flow (activeTutorialQuest goes from non-null to null). Without this the
+  // overlay would keep pointing at an orphan mission. The quest service's
+  // tutorial-specific mission cascade also archives/deletes the underlying
+  // tutorial missions, but the UI cleanup needs to happen before that data
+  // round-trips through the cache.
+  const prevActiveQuestIdRef = useRef(activeTutorialQuest?.id ?? null);
+  useEffect(() => {
+    const prevId = prevActiveQuestIdRef.current;
+    const nowId = activeTutorialQuest?.id ?? null;
+    if (prevId && !nowId) {
+      setActiveStep(null);
+    }
+    prevActiveQuestIdRef.current = nowId;
+  }, [activeTutorialQuest]);
 
   const isTutorialMission = useCallback(
     (mission) => !!mission?.tutorialStep,
@@ -146,6 +171,16 @@ export const TutorialProvider = ({ children }) => {
     // every open path: play button, manual mission tap, navigateTo landing.
     autoTriggeredRef.current.add(mission.tutorialStep);
 
+    // Explicit open clears any prior session-dismissal so the resolver can
+    // re-fire for this step later in the session if needed.
+    if (currentUser) {
+      try {
+        sessionStorage.removeItem(
+          `tutorialDismissed:${currentUser.uid}:${mission.tutorialStep}`
+        );
+      } catch { /* private mode etc. */ }
+    }
+
     setActiveStep({
       missionId: mission.id,
       tutorialStep: mission.tutorialStep,
@@ -153,7 +188,7 @@ export const TutorialProvider = ({ children }) => {
       screenIndex: 0,
       completionTrigger: script.completionTrigger,
     });
-  }, [welcomeSeen]);
+  }, [welcomeSeen, currentUser]);
 
   // Mark the welcome screen as seen — fires the moment the user advances
   // past it. Idempotent: safe to call repeatedly.
@@ -210,6 +245,9 @@ export const TutorialProvider = ({ children }) => {
     // and useModalBackButton (closing a modal would then land on the stray
     // entry and trigger the page's back handler).
     if (currentScreen?.navigateTo && location.pathname !== currentScreen.navigateTo) {
+      // Mark the imminent pathname change as overlay-initiated so the
+      // route-watcher below doesn't dismiss us mid-advance.
+      expectedRouteChangeRef.current = true;
       navigate(currentScreen.navigateTo);
     }
 
@@ -226,7 +264,42 @@ export const TutorialProvider = ({ children }) => {
     }
   }, [activeStep, markWelcomeSeen, completeCurrentStep, navigate, location.pathname]);
 
-  const dismiss = useCallback(() => setActiveStep(null), []);
+  // Session-scoped per-step "user dismissed me, don't auto-fire again" flag.
+  // Keyed by uid so a different user signing in this session doesn't inherit
+  // it. Cleared by openStepForMission (explicit re-entry signals intent) and
+  // implicitly by sign-out (sessionStorage persists across reloads within a
+  // tab but a new sign-in clears autoTriggeredRef + uses a different key).
+  const dismissedStorageKey = useCallback((stepKey) =>
+    currentUser ? `tutorialDismissed:${currentUser.uid}:${stepKey}` : null,
+    [currentUser]
+  );
+
+  const dismiss = useCallback(() => {
+    setActiveStep(prev => {
+      if (prev) {
+        const key = dismissedStorageKey(prev.tutorialStep);
+        if (key) {
+          try { sessionStorage.setItem(key, '1'); } catch { /* private mode etc. */ }
+        }
+      }
+      return null;
+    });
+  }, [dismissedStorageKey]);
+
+  // Dismiss the overlay whenever the user navigates somewhere other than the
+  // route the current screen expects. Spotlights are page-specific; carrying
+  // them across to a route where the target doesn't exist strands the user
+  // in a stale story-fallback. Wait screens carry too — same hazard. The
+  // expectedRouteChangeRef gate (set in advance()) lets overlay-initiated
+  // navigation through.
+  useEffect(() => {
+    if (expectedRouteChangeRef.current) {
+      expectedRouteChangeRef.current = false;
+      return;
+    }
+    if (activeStep) setActiveStep(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // Step back N screens. Called by the overlay when a spotlight target
   // disappears mid-flow (e.g. user dismisses a modal the spotlight was
@@ -343,7 +416,10 @@ export const TutorialProvider = ({ children }) => {
   // Resolver — fires whenever any condition changes. Opens the overlay
   // the instant: (a) a feature page has registered its key, (b) data
   // (quest + missions) has loaded, (c) the matching tutorial mission is
-  // still active, and (d) this step hasn't already auto-fired this session.
+  // still active, (d) this step hasn't already auto-fired this session,
+  // and (e) the user hasn't dismissed this step in the current tab
+  // session (sessionStorage flag survives reloads, cleared on sign-out
+  // and on explicit openStepForMission).
   useEffect(() => {
     if (!pendingFeatureKey) return;
     const stepKey = FEATURE_KEY_TO_STEP[pendingFeatureKey];
@@ -351,6 +427,13 @@ export const TutorialProvider = ({ children }) => {
     if (autoTriggeredRef.current.has(stepKey)) return;
     if (!activeTutorialQuest) return;
     if (!missions) return; // null until first fetch resolves
+
+    const dismissedKey = dismissedStorageKey(stepKey);
+    if (dismissedKey) {
+      try {
+        if (sessionStorage.getItem(dismissedKey) === '1') return;
+      } catch { /* private mode etc. — treat as not-dismissed */ }
+    }
 
     const mission = missions.find(
       m => m.tutorialStep === stepKey && m.status === MISSION_STATUS.ACTIVE
@@ -360,7 +443,7 @@ export const TutorialProvider = ({ children }) => {
     autoTriggeredRef.current.add(stepKey);
     setPendingFeatureKey(null);
     openStepForMission(mission);
-  }, [pendingFeatureKey, activeTutorialQuest, missions, openStepForMission]);
+  }, [pendingFeatureKey, activeTutorialQuest, missions, openStepForMission, dismissedStorageKey]);
 
   const value = useMemo(() => ({
     activeTutorialQuest,
