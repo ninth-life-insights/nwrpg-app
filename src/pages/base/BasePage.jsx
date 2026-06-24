@@ -139,6 +139,10 @@ const BasePage = () => {
     if (!currentUser || !template) return;
     const newRoomIds = await createRoomsBatch(currentUser.uid, template.rooms);
     await fetchRoomsAndStats();
+    // Keep RoomsContext in sync so anything reading from it (AddMissionCard's
+    // room dropdown, the tutorial wait-on-'room-created' state, etc.) sees
+    // the new rooms immediately.
+    await refreshRooms();
 
     // Surface an undo toast so a wrong-template tap can be reversed without
     // manually deleting every room. Auto-dismisses in ~5s. Undo soft-deletes
@@ -161,6 +165,8 @@ const BasePage = () => {
   const handleRoomAdded = async () => {
     setShowAddRoomModal(false);
     await fetchRoomsAndStats();
+    // Keep RoomsContext in sync — see handleApplyTemplate for context.
+    await refreshRooms();
   };
 
   const isCustomOrderMode = sortBy === 'custom';
@@ -258,10 +264,15 @@ const BasePage = () => {
             onClick={handleOpenTemplatePicker}
             title="Use a home template"
             aria-label="Use a home template"
+            data-tutorial-target="base-page-template-btn"
           >
             <span className="material-icons">home_work</span>
           </button>
-          <button className="base-page-add-room-btn" onClick={handleAddRoom}>
+          <button
+            className="base-page-add-room-btn"
+            onClick={handleAddRoom}
+            data-tutorial-target="base-page-add-room-btn"
+          >
             <span className="material-icons">add</span>
             Room
           </button>
@@ -295,7 +306,7 @@ const BasePage = () => {
           strategy={rectSortingStrategy}
           disabled={!isCustomOrderMode}
         >
-          <div className="rooms-grid">
+          <div className="rooms-grid" data-tutorial-target="rooms-grid">
             {displayRooms.map((room) => {
               const isEntireBase = room.id === ENTIRE_BASE_ROOM_ID || room.roomId === ENTIRE_BASE_ROOM_ID;
               const displayRoom = isEntireBase
@@ -315,7 +326,11 @@ const BasePage = () => {
                     isCustomOrderMode={isCustomOrderMode}
                   />
                   {isEntireBase && baseIconUnset && (
-                    <button className="base-look-btn" onClick={() => setShowBaseIconModal(true)}>
+                    <button
+                      className="base-look-btn"
+                      onClick={() => setShowBaseIconModal(true)}
+                      data-tutorial-target="base-look-btn"
+                    >
                       <span className="material-icons">photo</span>
                       Choose base look
                     </button>
@@ -332,6 +347,7 @@ const BasePage = () => {
                 <div
                   className="add-room-card add-room-card-template"
                   onClick={handleOpenTemplatePicker}
+                  data-tutorial-target="add-room-card-template"
                 >
                   <div className="add-room-icon">
                     <span className="material-icons">home_work</span>

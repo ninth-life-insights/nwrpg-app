@@ -24,6 +24,7 @@ import { db } from '../services/firebase/config';
 import { useAuth } from './AuthContext';
 import { useQuests } from './QuestsContext';
 import { useMissions } from './MissionsContext';
+import { useRooms } from './RoomsContext';
 import { useNotifications } from './NotificationContext';
 import { QUEST_TYPE } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
@@ -63,6 +64,7 @@ export const useTutorial = () => {
       dismiss: () => {},
       revertScreens: () => {},
       notifyReviewSummaryReached: () => {},
+      signalExpectedRouteChange: () => {},
     };
   }
   return ctx;
@@ -72,6 +74,7 @@ export const TutorialProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const { quests, refreshQuests } = useQuests();
   const { missions, refresh: refreshMissionsCache } = useMissions();
+  const { rooms } = useRooms();
   const { notifyTutorialStepComplete } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
@@ -320,6 +323,17 @@ export const TutorialProvider = ({ children }) => {
     }));
   }, []);
 
+  // Arm the next pathname change to be treated as overlay-expected — i.e.
+  // skip the dismiss-on-route-change behavior for one transition. Used by
+  // the spotlight click handler when the screen declares
+  // `expectsRouteChangeOnAdvance: true`, because the user's click on the
+  // target will both advance the tutorial and navigate the app (e.g.
+  // tapping a room card opens RoomPage). The ref is consumed by the next
+  // pathname change.
+  const signalExpectedRouteChange = useCallback(() => {
+    expectedRouteChangeRef.current = true;
+  }, []);
+
   // Step back N screens. Called by the overlay when a spotlight target
   // disappears mid-flow (e.g. user dismisses a modal the spotlight was
   // pointing at) and the screen declared `revertOnTargetLoss`.
@@ -408,6 +422,24 @@ export const TutorialProvider = ({ children }) => {
             : null);
         }, 0);
       }
+    } else if (currentScreen.waitFor === 'room-created') {
+      // Baseline rooms count on entry; advance when it grows. createRoom
+      // and createRoomsBatch in roomService both write straight to
+      // Firestore and RoomsContext picks up the new entries on its next
+      // refresh, so we just watch the array length.
+      const count = (rooms ?? []).length;
+      if (waitBaselineRef.current === null) {
+        waitBaselineRef.current = count;
+        return;
+      }
+      if (count > waitBaselineRef.current) {
+        waitBaselineRef.current = null;
+        setTimeout(() => {
+          setActiveStep(prev => prev
+            ? { ...prev, screenIndex: prev.screenIndex + 1 }
+            : null);
+        }, 0);
+      }
     } else {
       // Signal-counter waitFor (e.g., 'review-summary'). Baseline the
       // current counter on entry; advance when the counter grows.
@@ -426,7 +458,7 @@ export const TutorialProvider = ({ children }) => {
         }, 0);
       }
     }
-  }, [activeStep, missions, signalCounts]);
+  }, [activeStep, missions, rooms, signalCounts]);
 
   // Auto-clear activeStep when the underlying tutorial mission transitions
   // to completed. The server-side Phase 1 watcher completes the mission;
@@ -492,6 +524,7 @@ export const TutorialProvider = ({ children }) => {
     dismiss,
     revertScreens,
     notifyReviewSummaryReached,
+    signalExpectedRouteChange,
   }), [
     activeTutorialQuest,
     activeStep,
@@ -503,6 +536,7 @@ export const TutorialProvider = ({ children }) => {
     dismiss,
     revertScreens,
     notifyReviewSummaryReached,
+    signalExpectedRouteChange,
   ]);
 
   return (

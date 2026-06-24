@@ -91,6 +91,20 @@ export const createMission = async (userId, missionData, options = {}) => {
       await addMissionToRoutine(userId, options.routineId, docRef.id);
     }
 
+    // Tutorial watcher — first mission with a room assignment completes
+    // the "Home Sweet Home" SETUP_BASE step. Skips tutorial missions
+    // themselves so the seed doesn't accidentally finish the step. No-op
+    // when no active tutorial quest matches.
+    if (!missionData.tutorialStep && missionData.baseLocation) {
+      (async () => {
+        try {
+          const { completeTutorialStepIfActive } = await import('./tutorialService');
+          const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+          completeTutorialStepIfActive(userId, TUTORIAL_STEPS.SETUP_BASE);
+        } catch { /* noop */ }
+      })();
+    }
+
     return docRef.id;
   } catch (error) {
     console.error('Error creating mission:', error);
@@ -365,6 +379,20 @@ export const updateMission = async (userId, missionId, updates) => {
       ...updateData,
       updatedAt: serverTimestamp()
     });
+
+    // Tutorial watcher — same trigger as createMission. If a user edits an
+    // existing mission to assign it to a room, that also counts as "using
+    // the base feature." Idempotent: completeTutorialStepIfActive no-ops
+    // for already-completed steps.
+    if (updateData.baseLocation) {
+      (async () => {
+        try {
+          const { completeTutorialStepIfActive } = await import('./tutorialService');
+          const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+          completeTutorialStepIfActive(userId, TUTORIAL_STEPS.SETUP_BASE);
+        } catch { /* noop */ }
+      })();
+    }
 
   } catch (error) {
     console.error('Error updating mission:', error);

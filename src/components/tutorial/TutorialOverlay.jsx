@@ -99,6 +99,7 @@ const SpotlightRenderer = ({
   dismiss,
   onFallback,
   onTargetLost,
+  signalExpectedRouteChange,
 }) => {
   const [targetEls, setTargetEls] = useState([]);
   const [targetRect, setTargetRect] = useState(null);
@@ -200,6 +201,13 @@ const SpotlightRenderer = ({
     if (screen.waitForCompletion) return; // Watcher-driven — same idea
     const handleDocClick = (e) => {
       if (targetEls.some(el => el.contains(e.target))) {
+        // If the target click is expected to trigger app navigation
+        // (e.g. tapping a card that links to a detail page), pre-arm the
+        // route-change watcher so it lets the transition through instead
+        // of dismissing the overlay.
+        if (screen.expectsRouteChangeOnAdvance) {
+          signalExpectedRouteChange();
+        }
         advance();
         return;
       }
@@ -212,7 +220,7 @@ const SpotlightRenderer = ({
     // the tree could swallow the event from our reach.
     document.addEventListener('click', handleDocClick, true);
     return () => document.removeEventListener('click', handleDocClick, true);
-  }, [targetEls, ctaLabel, screen.waitForCompletion, advance, dismiss]);
+  }, [targetEls, ctaLabel, screen.waitForCompletion, screen.expectsRouteChangeOnAdvance, advance, dismiss, signalExpectedRouteChange]);
 
   // While we're still hunting for the targets, render an invisible placeholder
   // so the parent doesn't try to mount story-variant in the meantime.
@@ -296,7 +304,13 @@ const SpotlightRenderer = ({
 };
 
 const TutorialOverlay = () => {
-  const { activeStep, advance, dismiss, revertScreens } = useTutorial();
+  const {
+    activeStep,
+    advance,
+    dismiss,
+    revertScreens,
+    signalExpectedRouteChange,
+  } = useTutorial();
   // When a spotlight screen can't find its target, we flip this flag and
   // re-render the same screen as story instead. Resets when the screen
   // changes.
@@ -347,6 +361,7 @@ const TutorialOverlay = () => {
         ctaLabel={ctaLabel}
         advance={advance}
         dismiss={dismiss}
+        signalExpectedRouteChange={signalExpectedRouteChange}
         onFallback={() => setFallback(true)}
         onTargetLost={() => {
           const n = screen.revertOnTargetLoss ?? 0;

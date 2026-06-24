@@ -24,6 +24,12 @@
 //                         mission-completion watcher finishes the tutorial
 //                         mission). Off-clicks and target clicks pass
 //                         through; only the X button can dismiss.
+//   - expectsRouteChangeOnAdvance: true → the target click is expected to
+//                         navigate the app (e.g. a card click that opens a
+//                         detail page). Arms the route-change watcher to
+//                         skip its dismiss-on-route-change behavior for the
+//                         next transition, so the next screen can render on
+//                         the new route.
 //
 // Each step also declares `completionTrigger`:
 //   - 'auto'   — completion is driven by the Phase 1 watchers (the user does
@@ -208,19 +214,60 @@ export const TUTORIAL_SCRIPT = {
         variant: 'story',
         title: 'Your home is your castle',
         body: [
-          'A base gives you a finer-grained filter for finding and planning missions. Tag a mission to the kitchen and you can see what is piling up there without scanning your whole list.',
-          'One-time setup: name your base, add rooms, add some missions.',
+          "Your base is where you can find and plan missions for each room of your home and keep track of what needs attention. Let's customize yours now.",
         ],
         ctaLabel: 'Continue',
+        navigateTo: '/base',
+      },
+      {
+        variant: 'spotlight',
+        target: 'base-look-btn',
+        title: 'A little flair',
+        body: [
+          'Start by choosing a nickname and icon for your base overall. Tasks can be assigned to the base directly, and you can see a summary of everything across rooms here.',
+        ],
+        // Opens the base-look modal on top of the page; spotlight cutout
+        // remains underneath. Default advance on target click.
+      },
+      {
+        variant: 'spotlight',
+        target: [
+          'base-page-template-btn',
+          'base-page-add-room-btn',
+          'add-room-card-template',
+        ],
+        title: 'Add some rooms',
+        body: [
+          'Start off with a base template to add a batch of standard rooms, like a 2-bed 1-bath apartment or a 3-bed 2-bath home. Then add or edit rooms one by one to make it yours.',
+        ],
+      },
+      // Wait until at least one custom room is added. Pickers/modals can
+      // resolve asynchronously, and createRoomsBatch may add several at
+      // once — this just gates on the rooms count growing.
+      {
+        variant: 'wait',
+        waitFor: 'room-created',
+      },
+      {
+        variant: 'spotlight',
+        target: 'rooms-grid',
+        title: 'Room cleanliness',
+        body: [
+          "You can track the cleanliness of each room on a scale from 1 to 5. Your weekly review is a great time to check in on where you've been making progress and what needs attention.",
+          'Tap on the room card now to see more details.',
+        ],
+        // User taps a room card → RoomPage opens. Without this flag, the
+        // route-change watcher in TutorialContext would dismiss the
+        // overlay before Screen 5 renders.
+        expectsRouteChangeOnAdvance: true,
       },
       {
         variant: 'story',
-        title: 'A weekly look',
+        title: 'Manage missions',
         body: [
-          'Each room tracks cleanliness from 1–5. If you do not update it for two weeks, it shows as "unknown" — a nudge to take a fresh look.',
-          'Your weekly review surfaces overdue rooms so you get a birds-eye view of your base once a week.',
+          "In each room, you can update cleanliness ratings; add, edit, or complete missions; and view your room's cleaning routine. Try adding a task to any room to finish this tutorial step.",
         ],
-        ctaLabel: 'Got it',
+        ctaLabel: "Let's get cleaning",
       },
     ],
   },
