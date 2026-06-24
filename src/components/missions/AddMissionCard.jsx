@@ -443,7 +443,7 @@ const AddMissionCard = ({
           </div>
 
           {/* Difficulty Badge Selector */}
-          <div className="add-mission-badges">
+          <div className="add-mission-badges" data-tutorial-target="add-mission-difficulty">
             <div className="difficulty-selector">
               {Object.values(DIFFICULTY_LEVELS).map((difficulty) => (
                 <button
@@ -472,7 +472,7 @@ const AddMissionCard = ({
           /> */}
 
           {/* Due Type Selector */}
-          <div className="due-type-section">
+          <div className="due-type-section" data-tutorial-target="add-mission-due-type">
             <label className="section-label">Mission Type</label>
             <div className="due-type-selector" data-selected={formData.dueType}>
               {[
@@ -496,7 +496,7 @@ const AddMissionCard = ({
           </div>
 
           {/* Optional Field Ghost Badges */}
-          <div className="ghost-badges">
+          <div className="ghost-badges" data-tutorial-target="add-mission-ghost-badges">
             {formData.dueType === DUE_TYPES.UNIQUE && !showDueDateField && !formData.dueDate && (
               <button
                 type="button"

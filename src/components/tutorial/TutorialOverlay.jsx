@@ -1,18 +1,35 @@
 // src/components/tutorial/TutorialOverlay.jsx
 //
 // Portal-rendered overlay shown when TutorialContext has an active step.
-// Supports two variants per screen:
-//   - 'story':    centered modal panel with title/body/CTA
-//   - 'spotlight': dimmed backdrop with a cutout over a target element
-//                  (clip-path), instruction panel positioned near the target
+// Supports three variants per screen:
+//   - 'story':     centered modal panel with title/body/CTA
+//   - 'spotlight': dimmed backdrop with a cutout over one or more target
+//                  elements (clip-path), instruction panel positioned near it
+//   - 'wait':      no UI; TutorialContext watches an event and advances
 //
-// Spotlight screens declare `target: 'data-tutorial-target-value'`. The
-// renderer looks up the element via querySelector with rAF retries (handles
-// page-still-mounting), then keeps its rect synced via ResizeObserver +
-// scroll/resize listeners. If the target can't be found within a short
-// retry window, falls back to story rendering so the lesson still lands.
+// Spotlight `target` can be:
+//   - string:    one data-tutorial-target value
+//   - string[]:  multiple values, unioned into one bounding rect
+//   - function:  receives the activeStep and returns string | string[].
+//                Use when the target id depends on runtime data captured by
+//                an earlier wait screen (e.g. the new mission's id).
+//
+// Spotlight click behavior depends on the screen config:
+//   - no ctaLabel:           target click → advance; off-target → dismiss
+//   - has ctaLabel:          clicks pass through; the user must use the CTA
+//                            or X (lets them interact with form fields
+//                            inside a modal without dismissing the tutorial)
+//   - waitForCompletion:     clicks pass through; the spotlight stays put
+//                            until an external watcher (e.g., the Phase 1
+//                            mission-completion watcher) clears activeStep.
+//                            Only the X button can dismiss
+//
+// If a spotlight target disappears mid-screen (e.g. the user closes the
+// modal it was pointing at), `revertOnTargetLoss` on the screen causes the
+// tutorial to step back N screens via TutorialContext.revertScreens(n).
+// Without it, the renderer falls back to story rendering of the same screen.
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorial } from '../../contexts/TutorialContext';
 import './TutorialOverlay.css';
@@ -27,6 +44,22 @@ const SPOTLIGHT_PADDING = 8;
 // Approximate panel height used for placement decisions. Doesn't need to be
 // exact — the panel auto-sizes; this is just for "does it fit below or above."
 const APPROX_PANEL_HEIGHT = 200;
+
+// Compute the union bounding rect of a list of elements. Returns null for
+// an empty list. Used so a single spotlight cutout can cover several
+// adjacent UI elements (e.g. a difficulty selector + a type selector).
+const unionRect = (els) => {
+  if (!els.length) return null;
+  let top = Infinity, left = Infinity, right = -Infinity, bottom = -Infinity;
+  for (const el of els) {
+    const r = el.getBoundingClientRect();
+    if (r.top < top) top = r.top;
+    if (r.left < left) left = r.left;
+    if (r.right > right) right = r.right;
+    if (r.bottom > bottom) bottom = r.bottom;
+  }
+  return { top, left, right, bottom, width: right - left, height: bottom - top };
+};
 
 const StoryRenderer = ({ screen, ctaLabel, advance, dismiss }) => (
   <div className="tutorial-overlay" onClick={dismiss}>
@@ -58,27 +91,51 @@ const StoryRenderer = ({ screen, ctaLabel, advance, dismiss }) => (
   </div>
 );
 
-const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) => {
-  const [targetEl, setTargetEl] = useState(null);
+const SpotlightRenderer = ({
+  screen,
+  targets,
+  ctaLabel,
+  advance,
+  dismiss,
+  onFallback,
+  onTargetLost,
+}) => {
+  const [targetEls, setTargetEls] = useState([]);
   const [targetRect, setTargetRect] = useState(null);
 
-  // Locate the target element. Retries on each animation frame until found
+  // Stable key so the find-effect re-runs when the target list changes but
+  // not on every render. JSON.stringify is fine here — the array is short
+  // and effectively constant for a given screen.
+  const targetsKey = useMemo(() => JSON.stringify(targets), [targets]);
+
+  // Locate all targets. Retries on each animation frame until all are found
   // or until the fallback timer fires. `found` is a local flag rather than
-  // reading targetEl from the closure (which would always be the stale
-  // null from initial render — that was the original "spotlight flashes
-  // then falls back" bug).
+  // reading targetEls from the closure (which would always be the stale
+  // empty array from initial render).
   useEffect(() => {
     let mounted = true;
     let rafId = null;
     let fallbackTimer = null;
     let found = false;
 
+    if (!targets.length) {
+      // Dynamic target resolved to nothing — fall back immediately so the
+      // user still sees the lesson.
+      fallbackTimer = setTimeout(() => mounted && onFallback(), 0);
+      return () => {
+        mounted = false;
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+      };
+    }
+
     const tryFind = () => {
       if (!mounted || found) return;
-      const el = document.querySelector(`[data-tutorial-target="${screen.target}"]`);
-      if (el) {
+      const els = targets
+        .map(t => document.querySelector(`[data-tutorial-target="${t}"]`))
+        .filter(Boolean);
+      if (els.length === targets.length) {
         found = true;
-        setTargetEl(el);
+        setTargetEls(els);
         if (fallbackTimer) clearTimeout(fallbackTimer);
         return;
       }
@@ -96,15 +153,15 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
       if (fallbackTimer) clearTimeout(fallbackTimer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen.target]);
+  }, [targetsKey]);
 
-  // Once we have the target, observe size + scroll/resize for rect updates.
+  // Once we have the targets, observe size + scroll/resize for rect updates.
   useEffect(() => {
-    if (!targetEl) return;
-    const measure = () => setTargetRect(targetEl.getBoundingClientRect());
+    if (!targetEls.length) return;
+    const measure = () => setTargetRect(unionRect(targetEls));
     measure();
     const ro = new ResizeObserver(measure);
-    ro.observe(targetEl);
+    targetEls.forEach(el => ro.observe(el));
     window.addEventListener('scroll', measure, { capture: true, passive: true });
     window.addEventListener('resize', measure);
     return () => {
@@ -112,19 +169,37 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
       window.removeEventListener('scroll', measure, { capture: true });
       window.removeEventListener('resize', measure);
     };
-  }, [targetEl]);
+  }, [targetEls]);
 
-  // Document-level click handler. The backdrop is pointer-events: none so
-  // the user can interact with any element on the page during the
-  // spotlight. We dispatch based on where the click landed:
-  //   - on the target → advance (and let the native handler run too)
-  //   - on the panel → do nothing (panel is the tutorial UI itself)
-  //   - anywhere else → dismiss (and let the native handler run too)
+  // Watch for any tracked element being removed from the DOM (e.g. the user
+  // closed the modal it was pointing at). MutationObserver on body subtree
+  // is cheap enough — it only fires on real mutations.
+  useEffect(() => {
+    if (!targetEls.length) return;
+    const check = () => {
+      if (targetEls.some(el => !el.isConnected)) {
+        onTargetLost();
+      }
+    };
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [targetEls, onTargetLost]);
+
+  // Document-level click handler. Backdrop is pointer-events: none so the
+  // user can interact with anything during the spotlight. Behavior splits
+  // on whether the screen has an explicit CTA:
+  //   - no CTA: click on target advances; click elsewhere dismisses
+  //   - has CTA: clicks pass through to the underlying UI; only the CTA or
+  //              X button can advance/dismiss. Lets the user manipulate
+  //              form fields inside a modal without losing the spotlight.
   const panelRef = useRef(null);
   useEffect(() => {
-    if (!targetEl) return;
+    if (!targetEls.length) return;
+    if (ctaLabel) return; // CTA mode — no automatic advance/dismiss
+    if (screen.waitForCompletion) return; // Watcher-driven — same idea
     const handleDocClick = (e) => {
-      if (targetEl.contains(e.target)) {
+      if (targetEls.some(el => el.contains(e.target))) {
         advance();
         return;
       }
@@ -137,9 +212,9 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
     // the tree could swallow the event from our reach.
     document.addEventListener('click', handleDocClick, true);
     return () => document.removeEventListener('click', handleDocClick, true);
-  }, [targetEl, advance, dismiss]);
+  }, [targetEls, ctaLabel, screen.waitForCompletion, advance, dismiss]);
 
-  // While we're still hunting for the target, render an invisible placeholder
+  // While we're still hunting for the targets, render an invisible placeholder
   // so the parent doesn't try to mount story-variant in the meantime.
   if (!targetRect) {
     return <div className="tutorial-spotlight-loading" aria-hidden="true" />;
@@ -221,7 +296,7 @@ const SpotlightRenderer = ({ screen, ctaLabel, advance, dismiss, onFallback }) =
 };
 
 const TutorialOverlay = () => {
-  const { activeStep, advance, dismiss } = useTutorial();
+  const { activeStep, advance, dismiss, revertScreens } = useTutorial();
   // When a spotlight screen can't find its target, we flip this flag and
   // re-render the same screen as story instead. Resets when the screen
   // changes.
@@ -233,6 +308,19 @@ const TutorialOverlay = () => {
     if (fallback) setFallback(false);
   }
 
+  // Resolve the spotlight target list. Strings and arrays pass through;
+  // functions are called with the current activeStep so they can read
+  // runtime context (e.g. a mission id captured by a wait screen).
+  const resolvedTargets = useMemo(() => {
+    const screen = activeStep?.screens?.[activeStep.screenIndex];
+    if (!screen || screen.variant !== 'spotlight') return [];
+    const raw = typeof screen.target === 'function'
+      ? screen.target(activeStep)
+      : screen.target;
+    if (!raw) return [];
+    return Array.isArray(raw) ? raw : [raw];
+  }, [activeStep]);
+
   if (!activeStep) return null;
   const screen = activeStep.screens[activeStep.screenIndex];
   if (!screen) return null;
@@ -242,7 +330,7 @@ const TutorialOverlay = () => {
   if (screen.variant === 'wait') return null;
 
   const isLast = activeStep.screenIndex >= activeStep.screens.length - 1;
-  const useSpotlight = screen.variant === 'spotlight' && screen.target && !fallback;
+  const useSpotlight = screen.variant === 'spotlight' && !fallback;
 
   // Story always has a CTA (it's the only way to advance). Spotlight gates
   // the user on clicking the target by default — only shows a CTA when the
@@ -255,10 +343,16 @@ const TutorialOverlay = () => {
     useSpotlight ? (
       <SpotlightRenderer
         screen={screen}
+        targets={resolvedTargets}
         ctaLabel={ctaLabel}
         advance={advance}
         dismiss={dismiss}
         onFallback={() => setFallback(true)}
+        onTargetLost={() => {
+          const n = screen.revertOnTargetLoss ?? 0;
+          if (n > 0) revertScreens(n);
+          else setFallback(true);
+        }}
       />
     ) : (
       <StoryRenderer

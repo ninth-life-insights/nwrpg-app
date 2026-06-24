@@ -40,7 +40,7 @@ export const TUTORIAL_QUEST = {
 export const TUTORIAL_MISSIONS = [
   {
     title: 'Mission Possible',
-    description: 'Make and complete your first mission. Get a feel for the loop.',
+    description: 'Make and complete your first mission.',
     tutorialStep: TUTORIAL_STEPS.CREATE_FIRST_MISSION,
     difficulty: DIFFICULTY_LEVELS.EASY,
     dueType: DUE_TYPES.UNIQUE,

@@ -61,6 +61,7 @@ export const useTutorial = () => {
       advance: () => {},
       completeCurrentStep: () => {},
       dismiss: () => {},
+      revertScreens: () => {},
     };
   }
   return ctx;
@@ -84,8 +85,11 @@ export const TutorialProvider = ({ children }) => {
   // doc-read race; we only show it when we *know* it hasn't been seen.
   const [welcomeSeen, setWelcomeSeen] = useState(null);
 
-  // activeStep: { missionId, tutorialStep, screens, screenIndex, completionTrigger }
+  // activeStep: { missionId, tutorialStep, screens, screenIndex,
+  //               completionTrigger, waitResult? }
   //             or null when no overlay is showing.
+  // waitResult carries forward data captured by a wait screen (e.g. the
+  // id of a just-created mission) so a later spotlight screen can target it.
   const [activeStep, setActiveStep] = useState(null);
 
   // The feature key the user is currently on. Set by pages via triggerStep().
@@ -224,6 +228,18 @@ export const TutorialProvider = ({ children }) => {
 
   const dismiss = useCallback(() => setActiveStep(null), []);
 
+  // Step back N screens. Called by the overlay when a spotlight target
+  // disappears mid-flow (e.g. user dismisses a modal the spotlight was
+  // pointing at) and the screen declared `revertOnTargetLoss`.
+  const revertScreens = useCallback((n) => {
+    setActiveStep(prev => {
+      if (!prev) return prev;
+      const next = Math.max(0, prev.screenIndex - n);
+      if (next === prev.screenIndex) return prev;
+      return { ...prev, screenIndex: next };
+    });
+  }, []);
+
   // Tutorial step completion toast. Watches the missions array for tutorial
   // missions transitioning active → completed and fires a lightweight
   // celebration via NotificationContext. The map of prior statuses lives in
@@ -257,6 +273,10 @@ export const TutorialProvider = ({ children }) => {
   // fires (e.g., user creates a mission). Baseline is captured on entry to
   // the wait state so growth-since-entry is what triggers advance — not
   // pre-existing data.
+  //
+  // For 'mission-created' we baseline the set of mission ids so we can
+  // identify the new one when count grows, and pass it forward via
+  // waitResult so a later spotlight screen can target it.
   const waitBaselineRef = useRef(null);
   useEffect(() => {
     if (!activeStep) {
@@ -270,23 +290,46 @@ export const TutorialProvider = ({ children }) => {
     }
 
     if (currentScreen.waitFor === 'mission-created') {
-      const count = missions?.length ?? 0;
+      const ids = new Set((missions ?? []).map(m => m.id));
       if (waitBaselineRef.current === null) {
-        waitBaselineRef.current = count;
+        waitBaselineRef.current = ids;
         return;
       }
-      if (count > waitBaselineRef.current) {
+      const baseline = waitBaselineRef.current;
+      // Find ids that exist now but didn't at baseline. Exclude tutorial
+      // missions in case a seed write resolves after baseline capture —
+      // the user-created mission is the one we care about.
+      const newId = (missions ?? []).find(
+        m => !baseline.has(m.id) && !m.tutorialStep
+      )?.id ?? null;
+      if (newId) {
         waitBaselineRef.current = null;
         // Defer one tick so other listeners (e.g., MissionsContext refresh)
         // settle before the next overlay screen renders.
         setTimeout(() => {
           setActiveStep(prev => prev
-            ? { ...prev, screenIndex: prev.screenIndex + 1 }
+            ? {
+                ...prev,
+                screenIndex: prev.screenIndex + 1,
+                waitResult: { ...(prev.waitResult ?? {}), newMissionId: newId },
+              }
             : null);
         }, 0);
       }
     }
   }, [activeStep, missions]);
+
+  // Auto-clear activeStep when the underlying tutorial mission transitions
+  // to completed. The server-side Phase 1 watcher completes the mission;
+  // without this clear, the overlay would keep showing (e.g., Screen 6's
+  // "Check it off" panel) after the user already did the thing.
+  useEffect(() => {
+    if (!activeStep?.missionId || !missions) return;
+    const m = missions.find(x => x.id === activeStep.missionId);
+    if (m && m.status === MISSION_STATUS.COMPLETED) {
+      setActiveStep(null);
+    }
+  }, [activeStep?.missionId, missions]);
 
   // Auto-fire entry point. Feature pages call this on mount with their
   // feature key, and again with null on unmount to clear. The function
@@ -328,6 +371,7 @@ export const TutorialProvider = ({ children }) => {
     advance,
     completeCurrentStep,
     dismiss,
+    revertScreens,
   }), [
     activeTutorialQuest,
     activeStep,
@@ -337,6 +381,7 @@ export const TutorialProvider = ({ children }) => {
     advance,
     completeCurrentStep,
     dismiss,
+    revertScreens,
   ]);
 
   return (

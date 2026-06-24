@@ -207,6 +207,7 @@ const MissionCard = ({
     ref={setNodeRef}
     style={style}
     className={`mission-card ${isCompleted || isRecentlyCompleted ? 'completed' : ''} ${mission.status === MISSION_STATUS.EXPIRED ? 'archived-mission-card' : isTutorial ? 'tutorial-mission-card' : isDailyMission ? 'daily-mission-card' : mission.isPriority ? 'priority-mission-card' : quest && !hideQuestIndicator ? 'quest-mission-card' : ''} ${isDragging ? 'dragging' : ''}`}
+    data-tutorial-target={`mission-card:${mission.id}`}
   >
     {/* Drag Handle - only visible in custom order mode */}
     {isCustomOrderMode && !selectionMode && (

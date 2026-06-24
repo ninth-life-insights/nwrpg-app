@@ -2,9 +2,28 @@
 // (the mission.tutorialStep field on tutorial mission docs).
 //
 // Each step is an ordered list of screens. Each screen has a variant:
-//   - 'story':    full-screen explainer with a Continue / Got it CTA
+//   - 'story':     full-screen explainer with a Continue / Got it CTA
 //   - 'spotlight': dimmed background with a target-element cutout
-//                  (spotlight implementation lands in a follow-up slice)
+//   - 'wait':      invisible — pauses the tutorial until a watched event
+//                  fires (e.g. mission-created). Auto-advances on event.
+//
+// Spotlight `target` can be:
+//   - a string:    a single data-tutorial-target value
+//   - an array:    multiple data-tutorial-target values, unioned into one
+//                  bounding rect (use for adjacent UI groups)
+//   - a function:  receives the activeStep and returns a string or array.
+//                  Use when the target depends on runtime data (e.g. the
+//                  id of a just-created mission captured by a wait screen).
+//
+// Optional spotlight fields:
+//   - revertOnTargetLoss: number of screens to step back if the target
+//                         element disappears mid-spotlight (e.g. the user
+//                         dismisses the modal it was pointing at).
+//   - waitForCompletion:  true → spotlight stays put until an external
+//                         watcher clears activeStep (e.g. the Phase 1
+//                         mission-completion watcher finishes the tutorial
+//                         mission). Off-clicks and target clicks pass
+//                         through; only the X button can dismiss.
 //
 // Each step also declares `completionTrigger`:
 //   - 'auto'   — completion is driven by the Phase 1 watchers (the user does
@@ -36,10 +55,10 @@ export const TUTORIAL_SCRIPT = {
     screens: [
       {
         variant: 'story',
-        title: 'Missions vs quests.',
+        title: 'About missions.',
         body: [
-          'Missions are tasks. Quests are projects — groups of missions toward a bigger goal.',
-          'A mission has a name, optional description, difficulty, optional skill tag, and a type (unique, repeating, or evergreen).',
+          'Missions represent tasks or to-do items. Check them off to earn XP and level up: 5 XP for easy, 10 XP for medium, and 20 XP for hard.',
+          'All your missions can be found in the Mission Bank, even if they were created elsewhere.',
         ],
         ctaLabel: 'Open the Mission Bank',
         navigateTo: '/mission-bank',
@@ -49,24 +68,54 @@ export const TUTORIAL_SCRIPT = {
         target: 'mission-bank-add-btn',
         title: 'Make your first mission.',
         body: [
-          'Tap the + to start. Try something easy — "drink a glass of water" or "take five deep breaths."',
+          "Try adding your first mission. Let's keep it basic to start, something like 'drink a glass of water.'",
         ],
+      },
+      // Multi-target spotlight covering the difficulty selector and the
+      // mission-type radios. Explicit CTA so radio clicks don't advance.
+      {
+        variant: 'spotlight',
+        target: ['add-mission-difficulty', 'add-mission-due-type'],
+        title: 'Mission types.',
+        body: [
+          'Edit difficulty here. Then, select recurring for missions that repeat, or evergreen for missions you want to keep doing indefinitely without the pressure of a due date.',
+        ],
+        ctaLabel: 'Show me more',
+        revertOnTargetLoss: 1,
+      },
+      {
+        variant: 'spotlight',
+        target: 'add-mission-ghost-badges',
+        title: 'Spice it up.',
+        body: [
+          "Add a skill to earn SP (Skill Points) from checking off the mission. Once you've set up your base or added quests, missions can be assigned to either.",
+        ],
+        ctaLabel: 'Fill out the details',
+        revertOnTargetLoss: 2,
       },
       // Invisible wait state — hides the overlay while the user fills in
       // and saves their first mission. Auto-advances when missions count
-      // grows (i.e., createMission has resolved + MissionsContext refreshed).
+      // grows; captures the new mission id into activeStep.waitResult so
+      // the next screen can spotlight it.
       {
         variant: 'wait',
         waitFor: 'mission-created',
       },
       {
-        variant: 'story',
-        title: 'Now check it off.',
+        variant: 'spotlight',
+        target: (step) => step?.waitResult?.newMissionId
+          ? `mission-card:${step.waitResult.newMissionId}`
+          : null,
+        title: 'Check it off.',
         body: [
-          'Your new mission is in the bank. Tap its checkmark to complete it.',
-          'That\'ll finish this tutorial mission automatically.',
+          'Your first mission is now in the Mission Bank. Check it off to earn XP and finish this tutorial step.',
+          'Tap the card to see more details, edit, archive, or delete.',
         ],
-        ctaLabel: 'Got it',
+        // No CTA: the Phase 1 watcher completes the tutorial mission when the
+        // user checks off their custom mission, and the activeStep auto-
+        // clears. waitForCompletion stops the spotlight from advancing on
+        // body taps (which open the detail view) or dismissing on off-clicks.
+        waitForCompletion: true,
       },
     ],
   },
