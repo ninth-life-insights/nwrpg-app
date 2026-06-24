@@ -92,7 +92,9 @@ const EditDailyMissionsPage = ({
   useModalBackButton(showMissionBank, closeMissionBank);
   // When rendered as a page (not a modal), route the OS back to the page's
   // explicit "up" destination instead of last-URL.
-  const handleBack = () => navigate('/home');
+  const handleBack = () => {
+    navigate('/home');
+  };
   useAndroidBackButton(isModal ? null : handleBack);
 
   const {
@@ -326,6 +328,9 @@ const handleAddNewMission = async (missionData) => {
       if (isModal && onComplete) {
         onComplete();
       } else {
+        // TEMP DIAGNOSTIC
+        console.log('[EditDailyMissions] handleSetDailyMissions success -> /home');
+        console.trace();
         navigate('/home');
       }
 

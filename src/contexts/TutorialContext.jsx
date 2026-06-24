@@ -18,7 +18,7 @@ import React, {
   useState,
 } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { db } from '../services/firebase/config';
 import { useAuth } from './AuthContext';
@@ -72,6 +72,7 @@ export const TutorialProvider = ({ children }) => {
   const { missions, refresh: refreshMissionsCache } = useMissions();
   const { notifyTutorialStepComplete } = useNotifications();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Tracks which steps have already auto-fired in this browser session.
   // Survives dismissal so bouncing back to a feature page doesn't re-open
@@ -200,7 +201,11 @@ export const TutorialProvider = ({ children }) => {
 
     // Per-screen navigation. Fires before screen index advances so the new
     // route mounts in time for any spotlight target on the next screen.
-    if (currentScreen?.navigateTo) {
+    // Skip when already on the target path — pushing a duplicate same-URL
+    // history entry breaks the page/modal sentinel pairing in useAndroidBackButton
+    // and useModalBackButton (closing a modal would then land on the stray
+    // entry and trigger the page's back handler).
+    if (currentScreen?.navigateTo && location.pathname !== currentScreen.navigateTo) {
       navigate(currentScreen.navigateTo);
     }
 
@@ -215,7 +220,7 @@ export const TutorialProvider = ({ children }) => {
     } else {
       setActiveStep(null);
     }
-  }, [activeStep, markWelcomeSeen, completeCurrentStep, navigate]);
+  }, [activeStep, markWelcomeSeen, completeCurrentStep, navigate, location.pathname]);
 
   const dismiss = useCallback(() => setActiveStep(null), []);
 

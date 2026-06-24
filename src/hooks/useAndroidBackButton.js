@@ -48,6 +48,16 @@ export function useAndroidBackButton(onBack) {
 
     consumedViaBack.current = false;
 
+    // Capture the URL we're mounted at. A real hardware-back leaving this page
+    // changes the URL before popstate fires, so any popstate that lands us on
+    // the *same* URL is intermediate same-route history activity (a router
+    // redirect, a tutorial navigate-to-current-route, etc.) and should not
+    // trigger our onBack. This is defense-in-depth on top of the sentinel
+    // checks — if something else has pushed a non-sentinel entry between our
+    // page sentinel and a modal sentinel, the modal's cleanup pop lands here
+    // without it, and we'd otherwise mistake it for hardware back.
+    const mountedHref = location.href;
+
     if (cleanupTimer.current !== null) {
       // StrictMode re-run: a deferred sentinel removal is pending. Cancel it
       // and adopt the existing sentinel rather than pushing a second one.
@@ -69,6 +79,12 @@ export function useAndroidBackButton(onBack) {
       // us popped its sentinel during UI close, not a hardware back press.
       // Don't fire onBack.
       if (event.state && event.state.__pageSentinel && event.state.__sentinelId === sentinelId.current) {
+        return;
+      }
+      // URL didn't change — we're still on this page. Some other actor pushed
+      // a same-URL history entry that just got popped; this is not hardware
+      // back leaving the page.
+      if (location.href === mountedHref) {
         return;
       }
       consumedViaBack.current = true;
