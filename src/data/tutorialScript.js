@@ -167,15 +167,34 @@ export const TUTORIAL_SCRIPT = {
           "The daily review gives you a place to check in, log what actually got done, and write the day into your story.",
         ],
         ctaLabel: 'Continue',
+        navigateTo: '/daily-review',
       },
       {
         variant: 'story',
-        title: 'When you are ready',
+        title: 'Walk through your day',
         body: [
-          "Tap Daily Review on the home page when you want to wrap up your day.",
-          "Submitting any review — today, tomorrow, or later — completes this tutorial mission.",
+          '1. Priorities: Check off the daily missions you got done, or edit them if your goals changed partway through.',
+          "2. Other missions: Log anything else you completed that wasn't on your list. Missions added here are automatically marked complete.",
+          '3. Encounters: These notes on events or challenges of the day help flavor your daily story.',
         ],
-        ctaLabel: 'Back to home',
+        ctaLabel: 'Try it out',
+      },
+      // Wait until the user reaches the review summary step. DailyReviewPage
+      // calls notifyReviewSummaryReached() when its internal step becomes 4
+      // (ReviewSummary mounts). Tutorial sits invisible while the user does
+      // the first three review steps, then pops Screen 3 over the summary.
+      {
+        variant: 'wait',
+        waitFor: 'review-summary',
+      },
+      {
+        variant: 'story',
+        title: 'Your daily story',
+        body: [
+          'The heart of your review is the story, which you can edit or regenerate as needed. (Change the narrative tone in settings.) The daily summary also shows stats, from XP earned and missions completed to level ups, Skill Points, quest progress, and achievements.',
+          'Save your daily summary to finish this tutorial step.',
+        ],
+        ctaLabel: 'Got it',
       },
     ],
   },

@@ -549,9 +549,20 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
   const snapshotRef = doc(db, 'users', userId, 'dailySnapshots', date);
   await setDoc(snapshotRef, snapshotData);
 
-  // Tutorial watcher: first daily review submission auto-completes the
-  // "Hindsight is 20/20" tutorial step. Fire-and-forget; no-op when no
-  // active tutorial quest matches.
+  return snapshotData;
+  } catch (error) {
+    console.error('Error generating daily snapshot:', error);
+    throw error;
+  }
+};
+
+// Signal the daily review tutorial watcher that the user has finished the
+// review (i.e. tapped Done from the summary). Fire-and-forget; no-op when
+// no active tutorial quest matches. The watcher used to fire from inside
+// generateDailySnapshot, but the snapshot is auto-generated the moment the
+// user reaches the summary step — which is too early to honestly call the
+// review "submitted." Wiring it to the Done click matches user intent.
+export const markDailyReviewSubmitted = (userId) => {
   (async () => {
     try {
       const { completeTutorialStepIfActive } = await import('./tutorialService');
@@ -559,12 +570,6 @@ export const generateDailySnapshot = async (userId, dateString, displayName, { f
       completeTutorialStepIfActive(userId, TUTORIAL_STEPS.FIRST_DAILY_REVIEW);
     } catch { /* noop */ }
   })();
-
-  return snapshotData;
-  } catch (error) {
-    console.error('Error generating daily snapshot:', error);
-    throw error;
-  }
 };
 
 // ─── AI Story Generation ──────────────────────────────────────────────────────

@@ -54,7 +54,7 @@ export const TUTORIAL_MISSIONS = [
   },
   {
     title: 'Hindsight is 20/20',
-    description: 'Try out the daily review when you\'re ready.',
+    description: 'Try the daily review to reflect on how your day went.',
     tutorialStep: TUTORIAL_STEPS.FIRST_DAILY_REVIEW,
     difficulty: DIFFICULTY_LEVELS.EASY,
     dueType: DUE_TYPES.UNIQUE,

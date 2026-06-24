@@ -62,6 +62,7 @@ export const useTutorial = () => {
       completeCurrentStep: () => {},
       dismiss: () => {},
       revertScreens: () => {},
+      notifyReviewSummaryReached: () => {},
     };
   }
   return ctx;
@@ -91,6 +92,13 @@ export const TutorialProvider = ({ children }) => {
   // waitResult carries forward data captured by a wait screen (e.g. the
   // id of a just-created mission) so a later spotlight screen can target it.
   const [activeStep, setActiveStep] = useState(null);
+
+  // Counters for external signals that `wait` screens can listen on. Pages
+  // bump a counter via the notify* methods below; the wait-state effect
+  // baselines the value on entry and advances when it grows. Keyed by
+  // signal name so multiple signals can coexist without stepping on each
+  // other.
+  const [signalCounts, setSignalCounts] = useState({});
 
   // The feature key the user is currently on. Set by pages via triggerStep().
   // A resolver useEffect below opens the overlay as soon as data is ready —
@@ -301,6 +309,17 @@ export const TutorialProvider = ({ children }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  // Notify the tutorial that the user just reached the daily review summary
+  // step (review step 4). Bumps the 'review-summary' signal counter so a
+  // wait screen listening on this signal advances. Idempotent in effect —
+  // multiple bumps just re-trigger the wait advance if it's pending.
+  const notifyReviewSummaryReached = useCallback(() => {
+    setSignalCounts(prev => ({
+      ...prev,
+      'review-summary': (prev['review-summary'] ?? 0) + 1,
+    }));
+  }, []);
+
   // Step back N screens. Called by the overlay when a spotlight target
   // disappears mid-flow (e.g. user dismisses a modal the spotlight was
   // pointing at) and the screen declared `revertOnTargetLoss`.
@@ -389,8 +408,25 @@ export const TutorialProvider = ({ children }) => {
             : null);
         }, 0);
       }
+    } else {
+      // Signal-counter waitFor (e.g., 'review-summary'). Baseline the
+      // current counter on entry; advance when the counter grows.
+      const key = currentScreen.waitFor;
+      const count = signalCounts[key] ?? 0;
+      if (waitBaselineRef.current === null) {
+        waitBaselineRef.current = count;
+        return;
+      }
+      if (count > waitBaselineRef.current) {
+        waitBaselineRef.current = null;
+        setTimeout(() => {
+          setActiveStep(prev => prev
+            ? { ...prev, screenIndex: prev.screenIndex + 1 }
+            : null);
+        }, 0);
+      }
     }
-  }, [activeStep, missions]);
+  }, [activeStep, missions, signalCounts]);
 
   // Auto-clear activeStep when the underlying tutorial mission transitions
   // to completed. The server-side Phase 1 watcher completes the mission;
@@ -455,6 +491,7 @@ export const TutorialProvider = ({ children }) => {
     completeCurrentStep,
     dismiss,
     revertScreens,
+    notifyReviewSummaryReached,
   }), [
     activeTutorialQuest,
     activeStep,
@@ -465,6 +502,7 @@ export const TutorialProvider = ({ children }) => {
     completeCurrentStep,
     dismiss,
     revertScreens,
+    notifyReviewSummaryReached,
   ]);
 
   return (

@@ -9,6 +9,7 @@ import {
   generateDailySnapshot,
   updateSnapshotStory,
   getEncountersForDate,
+  markDailyReviewSubmitted,
 } from '../../services/reviewService';
 import {
   getTodaysDailyMissions,
@@ -36,7 +37,7 @@ const TOTAL_STEPS = 4;
 
 const DailyReviewPage = () => {
   const { currentUser } = useAuth();
-  const { triggerStep } = useTutorial();
+  const { triggerStep, notifyReviewSummaryReached } = useTutorial();
   useEffect(() => {
     triggerStep('daily-review');
     return () => triggerStep(null);
@@ -46,6 +47,14 @@ const DailyReviewPage = () => {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
+
+  // When the user reaches the summary step (step 4), nudge the tutorial
+  // wait screen listening on 'review-summary' so Screen 3 of the
+  // "Hindsight is 20/20" tutorial step pops over the summary.
+  useEffect(() => {
+    if (step === 4) notifyReviewSummaryReached();
+  }, [step, notifyReviewSummaryReached]);
+
   const [dailyMissions, setDailyMissions] = useState([]);
   const [encounters, setEncounters] = useState([]);
   const [snapshot, setSnapshot] = useState(null);
@@ -250,7 +259,10 @@ const DailyReviewPage = () => {
             <ReviewSummary
               snapshot={snapshot}
               loading={summaryLoading}
-              onDone={() => navigate('/home')}
+              onDone={() => {
+                markDailyReviewSubmitted(currentUser.uid);
+                navigate('/home');
+              }}
               onUpdateStory={handleUpdateStory}
               onRegenerateStory={(newStory) => setSnapshot(prev => ({ ...prev, aiStory: newStory, aiStoryGenerated: true }))}
               userId={currentUser.uid}
