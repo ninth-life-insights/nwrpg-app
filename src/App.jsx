@@ -11,7 +11,7 @@ import { DailyMissionsProvider } from './contexts/DailyMissionsContext';
 import { RoutineProvider } from './contexts/RoutineContext';
 import { TutorialProvider } from './contexts/TutorialContext';
 import TutorialOverlay from './components/tutorial/TutorialOverlay';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import OfflineIndicator from './components/OfflineIndicator';
 import FeedbackButton from './components/feedback/FeedbackButton';
 import { useAnalytics } from './hooks/useAnalytics';
@@ -57,24 +57,39 @@ const RoutineMonthViewPage = lazy(() => import('./pages/RoutineMonthViewPage'));
 
 
 function ProtectedRoute({ children }) {
-  const { currentUser } = useAuth();
-  
+  const { currentUser, hasCharacter } = useAuth();
+  const location = useLocation();
+
   if (!currentUser) {
     return <Navigate to="/" />;
   }
-  
+
+  // Wait for character status before deciding where the user belongs —
+  // otherwise we'd flash the wrong screen during the profile fetch.
+  if (hasCharacter === null) {
+    return null;
+  }
+
+  if (!hasCharacter && location.pathname !== '/character-creation') {
+    return <Navigate to="/character-creation" replace />;
+  }
+
   return children;
 }
 
 // Component for public routes that should redirect if already logged in
 function PublicRoute({ children }) {
-  const { currentUser } = useAuth();
-  
-  if (currentUser) {
-    return <Navigate to="/home" />;
+  const { currentUser, hasCharacter } = useAuth();
+
+  if (!currentUser) {
+    return children;
   }
-  
-  return children;
+
+  if (hasCharacter === null) {
+    return null;
+  }
+
+  return <Navigate to={hasCharacter ? '/home' : '/character-creation'} replace />;
 }
 
 

@@ -26,6 +26,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [hasCharacter, setHasCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
 
@@ -116,29 +117,39 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Load and apply user's theme color when they log in
+  // Load the user's profile doc when they log in: applies their theme color
+  // and records whether character creation is done. hasCharacter gates the
+  // route wrappers so a fresh signup goes straight to /character-creation
+  // without flashing /home in between.
   useEffect(() => {
-    const loadUserTheme = async () => {
-      if (currentUser) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.character?.color) {
-              updateThemeColor(userData.character.color);
-            }
-          }
-        } catch (error) {
-          console.error('Error loading user theme:', error);
-        }
-      }
-    };
+    if (!currentUser) {
+      setHasCharacter(null);
+      return;
+    }
 
-    loadUserTheme();
+    let cancelled = false;
+    (async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (cancelled) return;
+        const character = userDoc.exists() ? userDoc.data().character : null;
+        if (character?.color) updateThemeColor(character.color);
+        setHasCharacter(Boolean(character));
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        // Default to true on fetch failure so existing users aren't bounced
+        // into character creation. New signups still reach /character-creation
+        // via the imperative navigate in Signup.jsx.
+        if (!cancelled) setHasCharacter(true);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [currentUser]);
 
   const value = {
     currentUser,
+    hasCharacter,
     signup,
     login,
     logout,
