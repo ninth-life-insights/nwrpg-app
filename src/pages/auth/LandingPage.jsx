@@ -21,14 +21,20 @@ const LandingPage = () => {
 
   const slides = [
     {
+      image: "/assets/Landing-Page/landing-pg-01.png",
+      imageAlt: "Illustration of a tactician planning the day",
       title: "Manage Your Priorities",
-      content: "Plan your day like a pro tactician. Track the status of your base (home), adventuring party (family), missions (to-dos), and quests (projects)."
+      content: "Plan your day like a pro tactician. Track the status of your home and family life with missions, quests, and routines."
     },
     {
+      image: "/assets/Landing-Page/landing-page-02.png",
+      imageAlt: "Illustration of a journal tracking progress",
       title: "Track Your Progress",
-      content: "Feel a sense of accomplishment with daily, weekly, and monthly reviews that combine stats with storytelling."
+      content: "Feel a sense of accomplishment with daily and weekly reviews that combine stats with storytelling. Plus, earn achievements or give yourself a custom award!"
     },
     {
+      image: "/assets/Landing-Page/landing-page-03.png",
+      imageAlt: "Illustration of a magical everyday moment",
       title: "Make Life More Magical",
       content: "Where a tough day with a teething baby becomes 'curing the curse of the hidden molar!' Add a dose of creativity or silliness to your day with avatars, achievements, and encounters."
     }
@@ -89,6 +95,11 @@ const LandingPage = () => {
           }}>
             {slides.map((slide, index) => (
               <div key={index} className="slide">
+                <img
+                  src={slide.image}
+                  alt={slide.imageAlt}
+                  className="slide-image"
+                />
                 <h2 className="slide-title">
                   {slide.title}
                 </h2>

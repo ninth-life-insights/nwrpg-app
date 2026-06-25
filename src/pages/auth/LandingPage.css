@@ -63,6 +63,15 @@
   box-sizing: border-box;
 }
 
+.slide-image {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto var(--space-lg) auto;
+  object-fit: contain;
+}
+
 .slide-title {
   font-size: var(--font-size-xl);
   font-weight: 600;
