@@ -128,7 +128,6 @@ const FeedbackModal = ({ page, displayName, onClose }) => {
                 onChange={(e) => setMessage(e.target.value)}
                 maxLength={2000}
                 rows={6}
-                autoFocus
                 disabled={submitting}
               />
             </div>

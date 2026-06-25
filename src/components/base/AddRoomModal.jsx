@@ -152,7 +152,6 @@ const AddRoomModal = ({ onClose, onRoomAdded, editRoom = null, isBaseRoom = fals
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               maxLength={40}
-              autoFocus
             />
           </div>
 

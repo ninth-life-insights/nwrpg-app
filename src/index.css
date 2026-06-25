@@ -12,6 +12,15 @@ code {
     monospace;
 }
 
+/* iOS Safari auto-zooms any focused form element whose font-size is below
+   16px. Override globally so component-level rules using the 14px design
+   token don't reintroduce the zoom. */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
 /* Shown after 3s of loading to hint at a slow connection */
 .loading-slow-hint {
   margin: 8px 0 0;

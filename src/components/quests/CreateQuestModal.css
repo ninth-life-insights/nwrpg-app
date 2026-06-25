@@ -16,7 +16,10 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100%;
   max-width: var(--max-width-card);
+  /* vh fallback for iOS < 15.4; bottom safe-area clears the home indicator. */
+  max-height: 92vh;
   max-height: 92dvh;
+  padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);

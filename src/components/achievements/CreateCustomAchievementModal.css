@@ -24,7 +24,10 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100%;
   max-width: 480px;
+  /* dvh upgrades support; bottom safe-area clears the iOS home indicator. */
   max-height: 92vh;
+  max-height: 92dvh;
+  padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   animation: sheetSlideUp 0.25s ease-out;
@@ -34,6 +37,7 @@
   .custom-achievement-modal {
     border-radius: var(--radius-xl);
     max-height: 90vh;
+    max-height: 90dvh;
   }
 }
 

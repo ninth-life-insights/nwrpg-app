@@ -24,7 +24,11 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100vw;
   max-width: 480px;
+  /* vh fallback for iOS < 15.4 (no dvh); bottom safe-area clears the home
+     indicator so the Send button isn't tucked under it. */
+  max-height: 92vh;
   max-height: 92dvh;
+  padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -36,6 +40,7 @@
   .feedback-modal {
     border-radius: var(--radius-xl);
     max-height: 90vh;
+    max-height: 90dvh;
   }
 }
 

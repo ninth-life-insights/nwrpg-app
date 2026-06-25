@@ -1,5 +1,5 @@
 // src/components/routines/QuickAddRoutineSheet.jsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
@@ -144,9 +144,11 @@ const QuickAddRoutineSheet = ({
 
   useModalBackButton(true, onClose);
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  // Intentionally no auto-focus on mount: on older iOS, focusing an input inside
+  // a fixed-position bottom sheet pops the keyboard up over the sheet itself,
+  // so the input is covered. User-initiated focus (a tap) avoids the cover-up.
+  // The post-add re-focus in handleAdd is fine because the keyboard is already
+  // up at that point.
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();

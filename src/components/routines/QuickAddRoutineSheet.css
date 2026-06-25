@@ -21,7 +21,11 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100vw;
   max-width: 480px;
+  /* vh first as a fallback for iOS < 15.4 (no dvh support); dvh upgrades
+     supporting browsers. Bottom safe-area clears the iOS home indicator. */
+  max-height: 92vh;
   max-height: 92dvh;
+  padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -32,6 +36,7 @@
 @media (min-width: 480px) {
   .quick-add-routine-sheet {
     border-radius: var(--radius-xl);
+    max-height: 90vh;
     max-height: 90dvh;
   }
 }

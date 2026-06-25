@@ -185,7 +185,6 @@ const CreateCustomAchievementModal = ({ onClose, onCreated, pendingMode = false,
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={60}
-              autoFocus
             />
           </div>
 
