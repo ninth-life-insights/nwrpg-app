@@ -4,6 +4,7 @@ import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
 import UndoActionToast from '../components/ui/UndoActionToast';
 import TutorialStepToast from '../components/tutorial/TutorialStepToast';
+import AchievementToast from '../components/achievements/AchievementToast';
 import { useAuth } from './AuthContext';
 import { getNotificationPrefs } from '../services/notificationPrefsService';
 import {
@@ -33,6 +34,16 @@ export const NotificationProvider = ({ children }) => {
   const actionToastIdRef = useRef(0);
   const [tutorialStepToast, setTutorialStepToast] = useState(null);
   const tutorialStepToastIdRef = useRef(0);
+
+  // Achievement toast queue. Pages call notifyAchievementsUnlocked with the
+  // batch of achievements unlocked by an action; we queue them so that
+  // (a) the tutorial step toast always shows first (Christine's call — the
+  // tutorial step completion celebration takes precedence over the
+  // achievement reward), and (b) multiple unlocks in quick succession queue
+  // sequentially instead of stacking on top of each other.
+  const [currentAchievementToast, setCurrentAchievementToast] = useState(null);
+  const [achievementToastQueue, setAchievementToastQueue] = useState([]);
+  const achievementToastIdRef = useRef(0);
 
   // --- Push notification scheduling ---
   const { currentUser } = useAuth();
@@ -181,6 +192,29 @@ export const NotificationProvider = ({ children }) => {
     });
   }, []);
 
+  // Achievement unlock toast — queued so it shows after any active tutorial
+  // step toast (so the tutorial celebration always lands first) and after
+  // any currently-rendering achievement batch (so rapid successive unlocks
+  // don't stack on top of each other).
+  const notifyAchievementsUnlocked = useCallback((achievements) => {
+    if (!achievements?.length) return;
+    achievementToastIdRef.current += 1;
+    setAchievementToastQueue(prev => [
+      ...prev,
+      { id: achievementToastIdRef.current, achievements },
+    ]);
+  }, []);
+
+  // Dequeue: when there's no tutorial step toast in flight and no current
+  // achievement toast rendering, promote the next queued batch.
+  useEffect(() => {
+    if (tutorialStepToast) return;
+    if (currentAchievementToast) return;
+    if (achievementToastQueue.length === 0) return;
+    setCurrentAchievementToast(achievementToastQueue[0]);
+    setAchievementToastQueue(prev => prev.slice(1));
+  }, [tutorialStepToast, currentAchievementToast, achievementToastQueue]);
+
   return (
     <NotificationContext.Provider value={{
       notifyMissionCompletion,
@@ -193,6 +227,7 @@ export const NotificationProvider = ({ children }) => {
       notifyRoutineRebucketed,
       notifyHomeTemplateApplied,
       notifyTutorialStepComplete,
+      notifyAchievementsUnlocked,
       refreshSchedule,
     }}>
       {children}
@@ -227,6 +262,14 @@ export const NotificationProvider = ({ children }) => {
           key={tutorialStepToast.id}
           step={tutorialStepToast}
           onDismiss={() => setTutorialStepToast(null)}
+        />
+      )}
+
+      {currentAchievementToast && (
+        <AchievementToast
+          key={currentAchievementToast.id}
+          achievements={currentAchievementToast.achievements}
+          onDismiss={() => setCurrentAchievementToast(null)}
         />
       )}
     </NotificationContext.Provider>

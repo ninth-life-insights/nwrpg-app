@@ -407,7 +407,15 @@ export const TutorialProvider = ({ children }) => {
   // missions transitioning active → completed and fires a lightweight
   // celebration via NotificationContext. The map of prior statuses lives in
   // a ref so re-renders don't re-fire the same toast.
+  //
+  // Also stamps `lastTutorialStepCompletedAtRef` on each completion so the
+  // auto-fire resolver can suppress TOUR_QUESTS for a short cooldown after
+  // any tutorial step finishes — closes the ricochet where tapping the
+  // completion toast lands the user on the tutorial quest's detail view,
+  // then the back button drops them on /quest-bank, which would otherwise
+  // open TOUR_QUESTS unprompted.
   const prevTutorialStatusesRef = useRef(null);
+  const lastTutorialStepCompletedAtRef = useRef(0);
   useEffect(() => {
     if (!missions) return;
     const tutorialMissions = missions.filter(m => m.tutorialStep);
@@ -422,6 +430,7 @@ export const TutorialProvider = ({ children }) => {
     for (const m of tutorialMissions) {
       const prev = prevTutorialStatusesRef.current[m.id];
       if (prev === MISSION_STATUS.ACTIVE && m.status === MISSION_STATUS.COMPLETED) {
+        lastTutorialStepCompletedAtRef.current = Date.now();
         notifyTutorialStepComplete({
           missionTitle: m.title,
           questId: m.questId ?? null,
@@ -430,6 +439,13 @@ export const TutorialProvider = ({ children }) => {
       prevTutorialStatusesRef.current[m.id] = m.status;
     }
   }, [missions, notifyTutorialStepComplete]);
+
+  // Cooldown window during which TOUR_QUESTS auto-fire is suppressed after a
+  // tutorial step completes. Scoped only to TOUR_QUESTS because that's the
+  // step the toast-ricochet path lands on (toast → quest detail → back →
+  // /quest-bank). Other steps' auto-fires aren't reachable via the ricochet,
+  // so they stay normal.
+  const TOUR_QUESTS_COOLDOWN_MS = 60_000;
 
   // Wait-state advance: when the current screen is a `wait` variant, watch
   // the appropriate context data and auto-advance once the watched event
@@ -552,6 +568,12 @@ export const TutorialProvider = ({ children }) => {
     if (autoTriggeredRef.current.has(stepKey)) return;
     if (!activeTutorialQuest) return;
     if (!missions) return; // null until first fetch resolves
+
+    // TOUR_QUESTS-specific cooldown — see lastTutorialStepCompletedAtRef.
+    if (stepKey === TUTORIAL_STEPS.TOUR_QUESTS) {
+      const since = Date.now() - lastTutorialStepCompletedAtRef.current;
+      if (since < TOUR_QUESTS_COOLDOWN_MS) return;
+    }
 
     const dismissedKey = dismissedStorageKey(stepKey);
     if (dismissedKey) {

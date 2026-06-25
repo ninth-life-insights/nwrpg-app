@@ -26,7 +26,7 @@ import MissionCardCondensed from '../components/missions/MissionCardCondensed.js
 import RoutineUpNextCard from '../components/routines/RoutineUpNextCard';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
-import AchievementToast from '../components/achievements/AchievementToast';
+import { useNotifications } from '../contexts/NotificationContext';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../utils/fetchWithTimeout';
 import { isMissionOverdue, isMissionDueToday } from '../utils/dateHelpers';
@@ -48,7 +48,7 @@ const HomePageSandbox = () => {
   const navigate = useNavigate();
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
-  const [newAchievements, setNewAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
   const [baseStats, setBaseStats] = useState({ total: 0, dueThisWeek: 0, overdue: 0 });
   const [urgentMissionCount, setUrgentMissionCount] = useState(0);
   const [baseName, setBaseName] = useState('');
@@ -253,7 +253,7 @@ const HomePageSandbox = () => {
         }
 
         if (result?.newlyAwardedAchievements?.length > 0) {
-          setNewAchievements(result.newlyAwardedAchievements);
+          notifyAchievementsUnlocked(result.newlyAwardedAchievements);
         }
       }
 
@@ -467,10 +467,6 @@ const HomePageSandbox = () => {
         />
       )}
 
-      <AchievementToast
-        achievements={newAchievements}
-        onDismiss={() => setNewAchievements([])}
-      />
 
       {showWeeklyReviewSheet && (
         <div className="review-sheet-overlay" onClick={() => setShowWeeklyReviewSheet(false)}>

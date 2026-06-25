@@ -22,7 +22,7 @@ import {
   applyCompletionRollback,
 } from '../../utils/applyOptimisticCompletion';
 import { getAchievementsAwardedOnDate } from '../../services/achievementService';
-import AchievementToast from '../../components/achievements/AchievementToast';
+import { useNotifications } from '../../contexts/NotificationContext';
 import DailyMissionsStep from '../../components/review/DailyMissionsStep';
 import OtherMissionsStep from '../../components/review/OtherMissionsStep';
 import EncountersStep from '../../components/review/EncountersStep';
@@ -59,7 +59,7 @@ const DailyReviewPage = () => {
   const [encounters, setEncounters] = useState([]);
   const [snapshot, setSnapshot] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [sessionAchievements, setSessionAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
   const [todayAchievements, setTodayAchievements] = useState([]);
   const [loadError, setLoadError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
@@ -131,7 +131,7 @@ const DailyReviewPage = () => {
         }
       },
       onAchievementsResolved: (achievements) => {
-        setSessionAchievements((prev) => [...prev, ...achievements]);
+        notifyAchievementsUnlocked(achievements);
       },
     });
 
@@ -232,7 +232,7 @@ const DailyReviewPage = () => {
             onNext={handleNext}
             onBack={handleBack}
             onSkipToSummary={goToSummary}
-            onAchievementsUnlocked={(achieved) => setSessionAchievements(prev => [...prev, ...achieved])}
+            onAchievementsUnlocked={notifyAchievementsUnlocked}
           />
         )}
 
@@ -276,10 +276,6 @@ const DailyReviewPage = () => {
 
       {/* Level-up / skill-up modals render globally from NotificationContext
           now that completions go through MissionCompletionContext. */}
-      <AchievementToast
-        achievements={sessionAchievements}
-        onDismiss={() => setSessionAchievements([])}
-      />
     </div>
   );
 };

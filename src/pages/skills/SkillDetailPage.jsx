@@ -9,7 +9,7 @@ import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useMissions } from '../../contexts/MissionsContext';
 import LoadingTransition from '../../components/ui/LoadingTransition';
 import SkillDetailPageSkeleton from './SkillDetailPageSkeleton';
-import AchievementToast from '../../components/achievements/AchievementToast';
+import { useNotifications } from '../../contexts/NotificationContext';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
@@ -42,7 +42,7 @@ const SkillDetailPage = () => {
 
   const [skillData, setSkillData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [newAchievements, setNewAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
   const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
 
@@ -110,7 +110,7 @@ const SkillDetailPage = () => {
         fetchData();
       },
       onAchievementsResolved: (achievements) => {
-        setNewAchievements(achievements);
+        notifyAchievementsUnlocked(achievements);
       },
       onError: () => {
         setActionError("That mission didn't complete. Try again.");
@@ -180,10 +180,6 @@ const SkillDetailPage = () => {
         )}
       </div>
 
-      <AchievementToast
-        achievements={newAchievements}
-        onDismiss={() => setNewAchievements([])}
-      />
     </div>
     </LoadingTransition>
   );

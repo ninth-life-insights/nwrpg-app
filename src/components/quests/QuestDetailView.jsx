@@ -29,7 +29,6 @@ import { MISSION_STATUS } from '../../types/Mission';
 import { calculateQuestProgress, QUEST_DIFFICULTY, QUEST_STATUS } from '../../types/Quests';
 import { formatForUserLong } from '../../utils/dateHelpers';
 import AchievementBadge from '../achievements/AchievementBadge';
-import AchievementToast from '../achievements/AchievementToast';
 import CreateCustomAchievementModal from '../achievements/CreateCustomAchievementModal';
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
@@ -52,7 +51,6 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [questAchievement, setQuestAchievement] = useState(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
-  const [newAchievements, setNewAchievements] = useState([]);
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -60,7 +58,12 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const actionsMenuRef = useRef(null);
-  const { notifyMissionCompletion, notifyQuestArchived, notifyQuestDeleted } = useNotifications();
+  const {
+    notifyMissionCompletion,
+    notifyQuestArchived,
+    notifyQuestDeleted,
+    notifyAchievementsUnlocked,
+  } = useNotifications();
 
   useEffect(() => {
     if (!showActionsMenu) return;
@@ -543,7 +546,7 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
           onMissionUpdate={handleMissionUpdate}
           onRemoveMission={handleRemoveMission}
           onReorderMissions={handleReorderMissions}
-          onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
+          onAchievementsUnlocked={notifyAchievementsUnlocked}
         />
       </div>
 
@@ -604,10 +607,6 @@ const QuestDetailView = ({ questId: questIdProp, onClose }) => {
         />
       )}
 
-      <AchievementToast
-        achievements={newAchievements}
-        onDismiss={() => setNewAchievements([])}
-      />
 
       {showRewardModal && (
         <CreateCustomAchievementModal

@@ -9,7 +9,7 @@ import { getUserProfile } from '../../services/userService';
 import { getRooms } from '../../services/roomService';
 import { getAllQuests } from '../../services/questService';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import AchievementToast from '../../components/achievements/AchievementToast';
+import { useNotifications } from '../../contexts/NotificationContext';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import { useAndroidBackButton } from '../../hooks/useAndroidBackButton';
@@ -46,7 +46,7 @@ const MissionBank = () => {
 
   // State to track recently completed missions
   const [recentlyCompletedMissions, setRecentlyCompletedMissions] = useState([]);
-  const [newAchievements, setNewAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
   const [loadError, setLoadError] = useState(null);
 
   const navigate = useNavigate();
@@ -259,7 +259,7 @@ const MissionBank = () => {
         onMissionCompletion={handleMissionCompletion}
         onMissionUncompletion={handleMissionUncompletion}
         onRecentlyCompletedUpdated={handleRecentlyCompletedUpdated}
-        onAchievementsUnlocked={(achievements) => setNewAchievements(achievements)}
+        onAchievementsUnlocked={notifyAchievementsUnlocked}
       />
 
       {/* Filter Modal */}
@@ -273,10 +273,6 @@ const MissionBank = () => {
         baseName={userProfile?.baseName || ''}
       />
 
-      <AchievementToast
-        achievements={newAchievements}
-        onDismiss={() => setNewAchievements([])}
-      />
 
       {/* Floating "Add Mission" — primary create action lives in the thumb zone */}
       <button

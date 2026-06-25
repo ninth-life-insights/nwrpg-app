@@ -35,7 +35,7 @@ const ROUTINE_BUCKETS = [
   { key: 'yearly', label: 'Yearly' },
 ];
 import ErrorMessage from '../../components/ui/ErrorMessage';
-import AchievementToast from '../../components/achievements/AchievementToast';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { withTimeout, isDefinitelyOffline, getLoadErrorMessage } from '../../utils/fetchWithTimeout';
 import {
   isCleanlinessStale,
@@ -113,7 +113,7 @@ const RoomPage = () => {
   const [showAddRoutine, setShowAddRoutine] = useState(false);
   const [showEditRoom, setShowEditRoom] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [newAchievements, setNewAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
 
   // Tab between "All" missions (default, the room's full task list) and
   // "Routine" (just routine-member missions whose baseLocation is this
@@ -233,7 +233,7 @@ const RoomPage = () => {
     // synchronous derive above re-runs and the card flips on the same tick.
     completeMissionOptimistic(missionId, mission, {
       onAchievementsResolved: (achievements) => {
-        setNewAchievements(achievements);
+        notifyAchievementsUnlocked(achievements);
       },
       onError: () => {
         setActionError("That mission didn't complete. Try again.");
@@ -660,10 +660,6 @@ const RoomPage = () => {
         />
       )}
 
-      <AchievementToast
-        achievements={newAchievements}
-        onDismiss={() => setNewAchievements([])}
-      />
 
       <SuggestedMissionsPicker
         open={showSuggestionsPicker}

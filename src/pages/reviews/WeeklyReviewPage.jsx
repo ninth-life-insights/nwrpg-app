@@ -7,7 +7,7 @@ import { getWeeklySnapshot, generateWeeklySnapshot, updateWeeklySnapshotStory } 
 import { getWeeklyReviewInfo } from '../../utils/weeklyReviewHelpers';
 import LevelUpModal from '../../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../../components/ui/SkillLevelUpModal';
-import AchievementToast from '../../components/achievements/AchievementToast';
+import { useNotifications } from '../../contexts/NotificationContext';
 import BaseCheckInStep from '../../components/review/BaseCheckInStep';
 import QuestGroomingStep from '../../components/review/QuestGroomingStep';
 import WeekPlanningStep from '../../components/review/WeekPlanningStep';
@@ -33,7 +33,7 @@ const WeeklyReviewPage = () => {
   const [storyStyle, setStoryStyle] = useState('balanced');
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
-  const [sessionAchievements, setSessionAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
 
   // On mount: determine week context and check for existing snapshot
   useEffect(() => {
@@ -108,7 +108,7 @@ const WeeklyReviewPage = () => {
     if (result?.leveledUp) setLevelUpInfo({ newLevel: result.newLevel });
     if (result?.skillLeveledUp) setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
     if (result?.newlyAwardedAchievements?.length > 0) {
-      setSessionAchievements(prev => [...prev, ...result.newlyAwardedAchievements]);
+      notifyAchievementsUnlocked(result.newlyAwardedAchievements);
     }
   };
 
@@ -219,10 +219,6 @@ const WeeklyReviewPage = () => {
         />
       )}
 
-      <AchievementToast
-        achievements={sessionAchievements}
-        onDismiss={() => setSessionAchievements([])}
-      />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import MissionCardCondensed from '../missions/MissionCardCondensed';
-import AchievementToast from '../achievements/AchievementToast';
+import { useNotifications } from '../../contexts/NotificationContext';
 import DatePickerPill from '../ui/DatePickerPill';
 import ErrorMessage from '../ui/ErrorMessage';
 import { useAuth } from '../../contexts/AuthContext';
@@ -56,7 +56,7 @@ const RoutineTodaySection = ({
   const { routines, pausedRootSet, cadenceByChainRoot, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
   const [actionError, setActionError] = useState(null);
-  const [newAchievements, setNewAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
   const [viewDate, setViewDate] = useState(() => dayjs().format('YYYY-MM-DD'));
   const [resuming, setResuming] = useState(false);
   const todayString = useMemo(() => dayjs().format('YYYY-MM-DD'), []);
@@ -134,7 +134,7 @@ const RoutineTodaySection = ({
         await onSaved?.();
       },
       onAchievementsResolved: (achievements) => {
-        setNewAchievements(achievements);
+        notifyAchievementsUnlocked(achievements);
       },
       onError: () => {
         setActionError("That mission didn't complete.");
@@ -322,10 +322,6 @@ const RoutineTodaySection = ({
         </div>
       )}
 
-      <AchievementToast
-        achievements={newAchievements}
-        onDismiss={() => setNewAchievements([])}
-      />
     </section>
   );
 };

@@ -32,7 +32,7 @@ import MissionCardCondensed from '../components/missions/MissionCardCondensed.js
 import RoutineUpNextCard from '../components/routines/RoutineUpNextCard';
 import LevelUpModal from '../components/ui/LevelUpModal';
 import SkillLevelUpModal from '../components/ui/SkillLevelUpModal';
-import AchievementToast from '../components/achievements/AchievementToast';
+import { useNotifications } from '../contexts/NotificationContext';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import EmailVerificationBanner from '../components/auth/EmailVerificationBanner';
 import LoadingTransition from '../components/ui/LoadingTransition';
@@ -63,7 +63,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [levelUpInfo, setLevelUpInfo] = useState(null);
   const [skillLevelUpInfo, setSkillLevelUpInfo] = useState(null);
-  const [newAchievements, setNewAchievements] = useState([]);
+  const { notifyAchievementsUnlocked } = useNotifications();
   const [baseName, setBaseName] = useState('');
   const [baseIcon, setBaseIcon] = useState('home');
   const [loadError, setLoadError] = useState(null);
@@ -330,7 +330,7 @@ const HomePage = () => {
           .catch((e) => console.error('Profile refresh after completion failed:', e));
       },
       onAchievementsResolved: (achievements) => {
-        setNewAchievements(achievements);
+        notifyAchievementsUnlocked(achievements);
       },
       onError: () => {
         setActionError("That mission didn't complete. Try again.");
@@ -558,10 +558,6 @@ const HomePage = () => {
         />
       )}
 
-      <AchievementToast
-        achievements={newAchievements}
-        onDismiss={() => setNewAchievements([])}
-      />
 
       {showWeeklyReviewSheet && (
         <div className="review-sheet-overlay" onClick={() => setShowWeeklyReviewSheet(false)}>
