@@ -1,5 +1,4 @@
 import React from 'react';
-import { logError } from '../utils/errorBuffer';
 import { captureError } from '../utils/sentry';
 
 async function softReset() {
@@ -26,7 +25,6 @@ export default class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error('App ErrorBoundary caught:', error, info);
-    logError('react', error, { componentStack: info?.componentStack || null });
     captureError(error, { componentStack: info?.componentStack || null });
   }
 
@@ -63,9 +61,6 @@ export default class ErrorBoundary extends React.Component {
         <button style={secondaryBtn} onClick={softReset}>
           Soft reset (keeps you logged in)
         </button>
-        <a href="/debug.html" style={{ color: '#3b82f6', fontSize: '0.9rem' }}>
-          Open diagnostic page
-        </a>
       </div>
     );
   }

@@ -2,7 +2,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { getAllQuests } from '../services/questService';
-import { logError } from '../utils/errorBuffer';
 
 const QuestsContext = createContext(null);
 
@@ -25,7 +24,6 @@ export const QuestsProvider = ({ children }) => {
       setQuestsMap(Object.fromEntries(data.map(q => [q.id, q])));
     } catch (err) {
       console.error('fetchQuests failed:', err);
-      logError('quests-fetch', err);
     }
   }, [currentUser]);
 

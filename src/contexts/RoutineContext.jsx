@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 import { useAuth } from './AuthContext';
 import { getRoutines, resumeRoutine, isRoutinePaused } from '../services/routineService';
 import { getRoutineMissionRootSet } from '../utils/routineHelpers';
-import { logError } from '../utils/errorBuffer';
 
 const RoutineContext = createContext(null);
 
@@ -38,7 +37,6 @@ export const RoutineProvider = ({ children }) => {
       setRoutines(data);
     } catch (err) {
       console.error('fetchRoutines failed:', err);
-      logError('routines-fetch', err);
     }
   }, [currentUser]);
 
@@ -72,7 +70,6 @@ export const RoutineProvider = ({ children }) => {
           await resumeRoutine(currentUser.uid, r.id);
         } catch (err) {
           console.error('Auto-resume failed for routine', r.id, err);
-          logError('routine-auto-resume', err);
         }
       }
       await fetchRoutines();

@@ -2,7 +2,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { getRooms } from '../services/roomService';
-import { logError } from '../utils/errorBuffer';
 
 const RoomsContext = createContext(null);
 
@@ -25,7 +24,6 @@ export const RoomsProvider = ({ children }) => {
       setRoomsMap(Object.fromEntries(data.map(r => [r.id, r])));
     } catch (err) {
       console.error('fetchRooms failed:', err);
-      logError('rooms-fetch', err);
     }
   }, [currentUser]);
 

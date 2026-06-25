@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useCallback, useEffect, useMemo } 
 import { useAuth } from './AuthContext';
 import { getDailyMissionsConfig } from '../services/dailyMissionService';
 import { toDateString } from '../utils/dateHelpers';
-import { logError } from '../utils/errorBuffer';
 
 const DailyMissionsContext = createContext(null);
 
@@ -37,7 +36,6 @@ export const DailyMissionsProvider = ({ children }) => {
       setDailyMissionIds(new Set(isToday ? (config?.missionIds || []) : []));
     } catch (err) {
       console.error('fetchDailyConfig failed:', err);
-      logError('daily-config-fetch', err);
       setDailyMissionIds(new Set());
       setIsConfigForToday(false);
     }
