@@ -34,6 +34,11 @@ export const NotificationProvider = ({ children }) => {
   const actionToastIdRef = useRef(0);
   const [tutorialStepToast, setTutorialStepToast] = useState(null);
   const tutorialStepToastIdRef = useRef(0);
+  // Per-session dedupe: each tutorial step only ever produces one toast in
+  // the lifetime of this provider. Guards against any re-fire path that
+  // would resurrect the toast after the user dismisses it (observed once on
+  // an older iOS PWA where the X tap didn't make it go away).
+  const shownTutorialStepsRef = useRef(new Set());
 
   // Achievement toast queue. Pages call notifyAchievementsUnlocked with the
   // batch of achievements unlocked by an action; we queue them so that
@@ -183,7 +188,12 @@ export const NotificationProvider = ({ children }) => {
   // Fired by TutorialContext when it observes a tutorial mission flipping
   // from active to completed. The id changes per call so the toast remounts
   // and its auto-dismiss timer resets if steps complete in quick succession.
-  const notifyTutorialStepComplete = useCallback(({ missionTitle, questId }) => {
+  //
+  // Dedupe by tutorialStep: a given step only ever produces one toast per
+  // provider lifetime, so a stray re-fire can't resurrect a dismissed toast.
+  const notifyTutorialStepComplete = useCallback(({ tutorialStep, missionTitle, questId }) => {
+    if (tutorialStep && shownTutorialStepsRef.current.has(tutorialStep)) return;
+    if (tutorialStep) shownTutorialStepsRef.current.add(tutorialStep);
     tutorialStepToastIdRef.current += 1;
     setTutorialStepToast({
       id: tutorialStepToastIdRef.current,

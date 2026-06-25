@@ -432,6 +432,7 @@ export const TutorialProvider = ({ children }) => {
       if (prev === MISSION_STATUS.ACTIVE && m.status === MISSION_STATUS.COMPLETED) {
         lastTutorialStepCompletedAtRef.current = Date.now();
         notifyTutorialStepComplete({
+          tutorialStep: m.tutorialStep,
           missionTitle: m.title,
           questId: m.questId ?? null,
         });
