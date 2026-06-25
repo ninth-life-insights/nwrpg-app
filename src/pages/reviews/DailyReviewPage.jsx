@@ -14,12 +14,12 @@ import {
 import {
   getTodaysDailyMissions,
 } from '../../services/dailyMissionService';
-import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
   applyOptimisticCompletion,
   applyServerResolved,
   applyCompletionRollback,
+  applyOptimisticUncompletion,
 } from '../../utils/applyOptimisticCompletion';
 import { getAchievementsAwardedOnDate } from '../../services/achievementService';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -43,7 +43,10 @@ const DailyReviewPage = () => {
     return () => triggerStep(null);
   }, [triggerStep]);
   const { refreshDailyMissions } = useDailyMissions();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -101,21 +104,31 @@ const DailyReviewPage = () => {
     setDailyMissions(missions);
   };
 
-  // Uncompletion keeps the original (non-optimistic) reload-then-resync path —
-  // it's a correction action and not part of the slow-tap problem.
-  // Completion is routed through MissionCompletionContext: the card flips
-  // instantly via optimistic state, and child steps get the resolved result
-  // back via the returned promise so existing level-up handling still works.
+  // Both directions are routed through MissionCompletionContext: the card
+  // flips instantly via optimistic state, child steps get the resolved
+  // result back via the returned promise (existing level-up handling), and
+  // the per-mission pending guard prevents a same-tick re-tap from racing
+  // either direction.
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     if (isCurrentlyCompleted) {
-      try {
-        const result = await uncompleteMission(currentUser.uid, missionId);
-        await reloadDailyMissionsList();
-        return result;
-      } catch (err) {
-        console.error('Error uncompleting mission:', err);
-        return undefined;
-      }
+      return uncompleteMissionOptimistic(missionId, {
+        onLocalMutation: (event) => {
+          if (event.type === 'uncompleted') {
+            setDailyMissions((prev) => applyOptimisticUncompletion(prev, missionId));
+          }
+        },
+        onResolved: () => {
+          // Re-sync from server in the background so anything that depends
+          // on adjacent fields (recurrence spawning, etc.) catches up.
+          reloadDailyMissionsList();
+        },
+        onError: () => {
+          // Pull authoritative state on failure — the cache snapshot has
+          // already been restored by the context, but the local
+          // dailyMissions list may be out of sync.
+          reloadDailyMissionsList();
+        },
+      });
     }
 
     const mission = dailyMissions.find((m) => m.id === missionId);

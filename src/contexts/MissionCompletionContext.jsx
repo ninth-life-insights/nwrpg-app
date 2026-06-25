@@ -2,13 +2,17 @@ import { createContext, useContext, useState, useCallback, useRef } from 'react'
 import { useAuth } from './AuthContext';
 import { useNotifications } from './NotificationContext';
 import { useMissions } from './MissionsContext';
-import { completeMissionWithRecurrence } from '../services/missionService';
+import {
+  completeMissionWithRecurrence,
+  uncompleteMission as uncompleteMissionService,
+} from '../services/missionService';
 import { MISSION_STATUS } from '../types/Mission';
 
 // Wraps the mission-completion service so every surface gets the same
 // optimistic-UI behavior:
-//   - tap → checkbox flips instantly
-//   - second tap during the in-flight write is dropped (double-tap guard)
+//   - tap → checkbox flips instantly (in either direction)
+//   - second tap during the in-flight write is dropped (double-tap guard,
+//     and it covers both directions — no completing-during-uncomplete races)
 //   - server resolves → level-up / achievement modals fire
 //   - server rejects → optimistic state rolls back, transient error chip shows
 const MissionCompletionContext = createContext(null);
@@ -138,6 +142,79 @@ export const MissionCompletionProvider = ({ children }) => {
     }
   }, [currentUser, notifyMissionCompletion, mutateMissions, refreshMissions]);
 
+  // Mirror of completeMission for the other direction. Same pending guard
+  // (the ref Set is per-mission, not per-direction — so a tap-uncomplete
+  // during an in-flight complete is dropped, and vice versa). Synchronously
+  // clears the optimistic-complete flag AND patches the cache to ACTIVE, so
+  // the checkmark flips OFF instantly. On error, both the flag and the cache
+  // snapshot are restored so the card snaps back to "complete" — matching
+  // the actual server state.
+  const uncompleteMission = useCallback(async (missionId, options = {}) => {
+    const { onLocalMutation, onError, onResolved } = options;
+
+    if (!currentUser?.uid || !missionId) return null;
+    if (pendingIdsRef.current.has(missionId)) return null;
+
+    pendingIdsRef.current.add(missionId);
+    addToSet(setPendingIds, missionId);
+    removeFromSet(setOptimisticCompletedIds, missionId);
+
+    // Clear any prior error chip on this mission so the new attempt isn't
+    // visually shadowed by a stale failure.
+    removeFromSet(setFailedIds, missionId);
+    const existingTimer = errorClearTimersRef.current.get(missionId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      errorClearTimersRef.current.delete(missionId);
+    }
+
+    // Snapshot the mission BEFORE mutating so rollback can restore its
+    // completedAt / xpAwarded / spAwarded exactly.
+    let preSnapshot = null;
+    mutateMissions((prev) => prev.map((m) => {
+      if (m.id !== missionId) return m;
+      preSnapshot = m;
+      return {
+        ...m,
+        status: MISSION_STATUS.ACTIVE,
+        completedAt: null,
+        xpAwarded: null,
+        spAwarded: null,
+      };
+    }));
+
+    onLocalMutation?.({ type: 'uncompleted', missionId });
+
+    try {
+      const result = await uncompleteMissionService(currentUser.uid, missionId);
+      onLocalMutation?.({ type: 'serverResolved', missionId, result });
+      onResolved?.(result);
+      return result;
+    } catch (err) {
+      console.error('Optimistic mission uncomplete failed:', err);
+      addToSet(setOptimisticCompletedIds, missionId);
+      addToSet(setFailedIds, missionId);
+      const timer = setTimeout(() => {
+        removeFromSet(setFailedIds, missionId);
+        errorClearTimersRef.current.delete(missionId);
+      }, ERROR_CHIP_MS);
+      errorClearTimersRef.current.set(missionId, timer);
+
+      if (preSnapshot) {
+        mutateMissions((prev) => prev.map((m) => (
+          m.id === missionId ? preSnapshot : m
+        )));
+      }
+
+      onLocalMutation?.({ type: 'rollback', missionId });
+      onError?.(missionId, err);
+      return null;
+    } finally {
+      pendingIdsRef.current.delete(missionId);
+      removeFromSet(setPendingIds, missionId);
+    }
+  }, [currentUser, mutateMissions]);
+
   const isPending = useCallback((id) => pendingIds.has(id), [pendingIds]);
   const isOptimisticallyComplete = useCallback(
     (id) => optimisticCompletedIds.has(id),
@@ -148,6 +225,7 @@ export const MissionCompletionProvider = ({ children }) => {
   return (
     <MissionCompletionContext.Provider value={{
       completeMission,
+      uncompleteMission,
       isPending,
       isOptimisticallyComplete,
       hasError,

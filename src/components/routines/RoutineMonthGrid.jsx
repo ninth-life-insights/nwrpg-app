@@ -27,7 +27,6 @@ import { getHeatmapTier, computeLoadScore } from '../../utils/heatmapTier';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   updateMission,
-  uncompleteMission,
 } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -149,7 +148,10 @@ const RoutineMonthGrid = ({
   onMutated,
 }) => {
   const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
 
   const [displayedMonth, setDisplayedMonth] = useState(() => dayjs().startOf('month'));
   const [pendingRecurrence, setPendingRecurrence] = useState(() => new Map());
@@ -283,18 +285,15 @@ const RoutineMonthGrid = ({
   const handleToggleComplete = useCallback(async (missionId, isCurrentlyCompleted) => {
     if (!currentUser) return;
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        await onMutated?.();
-      } catch (err) {
-        console.error('Routine month uncomplete failed:', err);
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => { onMutated?.(); },
+      });
       return;
     }
     completeMissionOptimistic(missionId, null, {
       onResolved: async () => { await onMutated?.(); },
     });
-  }, [currentUser, onMutated, completeMissionOptimistic]);
+  }, [currentUser, onMutated, completeMissionOptimistic, uncompleteMissionOptimistic]);
 
   const goPrev = () => setDisplayedMonth((m) => m.subtract(1, 'month'));
   const goNext = () => setDisplayedMonth((m) => m.add(1, 'month'));

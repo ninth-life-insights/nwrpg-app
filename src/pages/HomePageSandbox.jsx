@@ -13,9 +13,9 @@ import {
 } from '../services/dailyMissionService';
 import {
   completeMissionWithRecurrence,
-  uncompleteMission,
   getAllMissions,
 } from '../services/missionService';
+import { useMissionCompletion } from '../contexts/MissionCompletionContext';
 import {
   getUserProfile,
   getXPProgressInLevel,
@@ -38,6 +38,7 @@ import './HomePageSandbox.css';
 const HomePageSandbox = () => {
   const { currentUser } = useAuth();
   const { refreshDailyMissions } = useDailyMissions();
+  const { uncompleteMission: uncompleteMissionOptimistic } = useMissionCompletion();
   const [character, setCharacter] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [dailyMissions, setDailyMissions] = useState([]);
@@ -236,35 +237,43 @@ const HomePageSandbox = () => {
     );
   }
 
+  const refreshAfterToggle = async () => {
+    const updatedProfile = await getUserProfile(currentUser.uid);
+    setUserProfile(updatedProfile);
+    await handleDailyMissionsUpdate();
+  };
+
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     setActionError(null);
+
+    if (isCurrentlyCompleted) {
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => { refreshAfterToggle(); },
+        onError: () => setActionError("That undo didn't go through. Try again."),
+      });
+      return;
+    }
+
     try {
-      if (isCurrentlyCompleted) {
-        await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
+      const result = await completeMissionWithRecurrence(currentUser.uid, missionId);
 
-        if (result?.leveledUp) {
-          setLevelUpInfo({ newLevel: result.newLevel });
-        }
-
-        if (result?.skillLeveledUp) {
-          setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
-        }
-
-        if (result?.newlyAwardedAchievements?.length > 0) {
-          notifyAchievementsUnlocked(result.newlyAwardedAchievements);
-        }
+      if (result?.leveledUp) {
+        setLevelUpInfo({ newLevel: result.newLevel });
       }
 
-      const updatedProfile = await getUserProfile(currentUser.uid);
-      setUserProfile(updatedProfile);
+      if (result?.skillLeveledUp) {
+        setSkillLevelUpInfo({ skillName: result.skillName, newLevel: result.newSkillLevel });
+      }
 
-      await handleDailyMissionsUpdate();
+      if (result?.newlyAwardedAchievements?.length > 0) {
+        notifyAchievementsUnlocked(result.newlyAwardedAchievements);
+      }
+
+      await refreshAfterToggle();
 
     } catch (err) {
       console.error('Error toggling mission completion:', err);
-      setActionError(isCurrentlyCompleted ? "That undo didn't go through. Try again." : "That mission didn't complete. Try again.");
+      setActionError("That mission didn't complete. Try again.");
     }
   };
 

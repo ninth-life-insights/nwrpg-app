@@ -36,3 +36,15 @@ export const applyCompletionRollback = (missions, missionId) => {
     return { ...rest, status: MISSION_STATUS.ACTIVE };
   });
 };
+
+// Mirror of applyOptimisticCompletion for the uncomplete tap. Flips status
+// back to active and clears the completion-derived fields so any local list
+// re-renders as "not completed" on the same tick. Shape matches what the
+// server will eventually write back.
+export const applyOptimisticUncompletion = (missions, missionId) => {
+  return missions.map((m) => {
+    if (m.id !== missionId) return m;
+    const { completedAt, xpAwarded, spAwarded, ...rest } = m;
+    return { ...rest, status: MISSION_STATUS.ACTIVE };
+  });
+};

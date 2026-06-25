@@ -9,7 +9,6 @@ import AddMissionCard from './AddMissionCard';
 import { useDelayedLoadingState } from '../../hooks/useDelayedLoadingState';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
-  uncompleteMission,
   updateMissionCustomOrder,
   batchUpdateMissionOrders
 } from '../../services/missionService';
@@ -109,7 +108,10 @@ const MissionList = ({
 
   const isCustomOrderMode = memoizedFilters.sortBy === 'custom';
 
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
 
   // Synchronous derive: filter by missionType → stamp the daily flag from
   // DailyMissionsContext (no async config read) → apply filters/sort. Runs
@@ -151,18 +153,15 @@ const MissionList = ({
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     if (selectionMode) return;
 
-    // Uncompletion remains non-optimistic — no double-tap problem here, and
-    // the surface still benefits from a list refresh afterward.
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        if (onMissionUncompletion) onMissionUncompletion(missionId);
-        await loadMissions();
-        if (onMissionUpdate) onMissionUpdate();
-      } catch (err) {
-        console.error('Error uncompleting mission:', err);
-        setError('Failed to update mission');
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => {
+          if (onMissionUncompletion) onMissionUncompletion(missionId);
+          loadMissions();
+          if (onMissionUpdate) onMissionUpdate();
+        },
+        onError: () => setError('Failed to update mission'),
+      });
       return;
     }
 

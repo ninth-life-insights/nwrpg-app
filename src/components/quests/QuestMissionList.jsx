@@ -1,10 +1,8 @@
 // src/components/quests/QuestMissionList.js
 
-import { useAuth } from '../../contexts/AuthContext';
 import MissionCard from '../missions/MissionCard';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
-import { uncompleteMission } from '../../services/missionService';
 import {
   DndContext,
   closestCenter,
@@ -96,8 +94,10 @@ const QuestMissionList = ({
   onReorderMissions,
   onAchievementsUnlocked,
 }) => {
-  const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(TouchSensor, {
@@ -139,12 +139,11 @@ const QuestMissionList = ({
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        if (onMissionUpdate) onMissionUpdate();
-      } catch (err) {
-        console.error('Error uncompleting mission:', err);
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => {
+          if (onMissionUpdate) onMissionUpdate();
+        },
+      });
       return;
     }
 

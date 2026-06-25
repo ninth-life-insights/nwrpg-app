@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getRoom, updateRoom, updateRoomCleanliness, confirmRoomCleanliness, deleteRoom, getRoomStats, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { getUserProfile } from '../../services/userService';
 import { useRooms } from '../../contexts/RoomsContext';
-import { uncompleteMission, createMission } from '../../services/missionService';
+import { createMission } from '../../services/missionService';
 import SuggestedMissionsPicker from '../../components/missions/SuggestedMissionsPicker';
 import { getSuggestionsForRoomIcon } from '../../data/suggestionHelpers';
 import { useMissions } from '../../contexts/MissionsContext';
@@ -55,7 +55,10 @@ const isImageIcon = (icon) => icon && icon.includes('.');
 const RoomPage = () => {
   const { roomId } = useParams();
   const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const { rooms: allRooms, refreshRooms } = useRooms();
   const navigate = useNavigate();
   const location = useLocation();
@@ -218,13 +221,12 @@ const RoomPage = () => {
     setActionError(null);
 
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        await fetchData();
-      } catch (error) {
-        console.error('Error uncompleting mission:', error);
-        setActionError("That undo didn't go through. Try again.");
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => { fetchData(); },
+        onError: () => {
+          setActionError("That undo didn't go through. Try again.");
+        },
+      });
       return;
     }
 

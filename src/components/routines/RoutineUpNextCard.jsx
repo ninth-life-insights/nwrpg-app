@@ -1,11 +1,9 @@
 // src/components/routines/RoutineUpNextCard.jsx
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { useDailyMissions } from '../../contexts/DailyMissionsContext';
-import { uncompleteMission } from '../../services/missionService';
 import { isRoutinePaused } from '../../services/routineService';
 import { getRoutineMissionsForDate } from '../../utils/routineHelpers';
 import { fromDateString } from '../../utils/dateHelpers';
@@ -24,8 +22,10 @@ import './RoutineUpNextCard.css';
 // home page doesn't show the same task twice — the routine card surfaces
 // the next routine thing she hasn't already planned.
 const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
-  const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const { routines, routineRootSet, routineOrderMap, pausedRootSet, cadenceByChainRoot } = useRoutines();
   const { dailyMissionIds } = useDailyMissions();
   const navigate = useNavigate();
@@ -62,12 +62,9 @@ const RoutineUpNextCard = ({ missions, onMissionChanged }) => {
 
   const handleToggleComplete = async (missionId, isCurrentlyCompleted) => {
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        onMissionChanged?.();
-      } catch (err) {
-        console.error('Routine up-next uncomplete failed:', err);
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => onMissionChanged?.(),
+      });
       return;
     }
 

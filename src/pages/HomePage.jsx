@@ -10,7 +10,6 @@ import {
   getDailyMissionStatus,
   needsToSetDailyMissions,
 } from '../services/dailyMissionService';
-import { uncompleteMission } from '../services/missionService';
 import { useMissionCompletion } from '../contexts/MissionCompletionContext';
 import { useMissions } from '../contexts/MissionsContext';
 import { useQuests } from '../contexts/QuestsContext';
@@ -18,6 +17,7 @@ import {
   applyOptimisticCompletion,
   applyServerResolved,
   applyCompletionRollback,
+  applyOptimisticUncompletion,
 } from '../utils/applyOptimisticCompletion';
 import { addXP, 
   subtractXP, 
@@ -47,7 +47,10 @@ import './HomePage.css';
 const HomePage = () => {
   const { currentUser } = useAuth();
   const { refreshDailyMissions } = useDailyMissions();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const { refreshQuests } = useQuests();
   const {
     missions: allMissions,
@@ -288,24 +291,32 @@ const HomePage = () => {
 
   const dailyStatus = getDailyMissionsDisplayInfo();
 
-  // Toggle completion. Completion is routed through MissionCompletionContext
-  // for optimistic UI + double-tap guard; uncompletion stays on the original
-  // (non-optimistic) path since it isn't part of the slow-tap problem.
+  // Toggle completion. Both directions go through MissionCompletionContext
+  // for optimistic UI + a shared per-mission pending guard (so the user
+  // can't race a complete against an in-flight uncomplete or vice versa).
   // Level-up + skill-up modals are now rendered globally by NotificationContext,
   // so we no longer call setLevelUpInfo/setSkillLevelUpInfo here.
   const handleToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     setActionError(null);
 
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        const updatedProfile = await getUserProfile(currentUser.uid);
-        setUserProfile(updatedProfile);
-        await handleDailyMissionsUpdate();
-      } catch (err) {
-        console.error('Error uncompleting mission:', err);
-        setActionError("That undo didn't go through. Try again.");
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onLocalMutation: (event) => {
+          if (event.type === 'uncompleted') {
+            setDailyMissions((prev) => applyOptimisticUncompletion(prev, missionId));
+          }
+        },
+        onResolved: () => {
+          // Background refresh of profile (XP rolled back) and daily list.
+          getUserProfile(currentUser.uid)
+            .then(setUserProfile)
+            .catch((e) => console.error('Profile refresh after uncomplete failed:', e));
+          handleDailyMissionsUpdate();
+        },
+        onError: () => {
+          setActionError("That undo didn't go through. Try again.");
+        },
+      });
       return;
     }
 

@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRoom, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
-import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useMissions } from '../../contexts/MissionsContext';
 import { getUserProfile } from '../../services/userService';
@@ -17,7 +16,10 @@ import './RoomDetailModal.css';
 const RoomDetailModal = ({ roomId, onClose }) => {
   const { currentUser } = useAuth();
   useModalBackButton(true, onClose);
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const {
     missions: allMissions,
     isInitialLoading: missionsCacheLoading,
@@ -73,13 +75,11 @@ const RoomDetailModal = ({ roomId, onClose }) => {
     setActionError(null);
 
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        await refreshMissionsCache();
-      } catch (err) {
-        console.error('Error uncompleting mission:', err);
-        setActionError("That undo didn't go through. Try again.");
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onError: () => {
+          setActionError("That undo didn't go through. Try again.");
+        },
+      });
       return;
     }
 

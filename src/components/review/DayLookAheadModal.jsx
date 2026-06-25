@@ -1,12 +1,11 @@
 // src/components/review/DayLookAheadModal.jsx
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import {
   applyOptimisticCompletion,
   applyServerResolved,
   applyCompletionRollback,
+  applyOptimisticUncompletion,
 } from '../../utils/applyOptimisticCompletion';
 import MissionCard from '../missions/MissionCard';
 import AddMissionCard from '../missions/AddMissionCard';
@@ -19,8 +18,10 @@ const DayLookAheadModal = ({
   onClose,
   onUpdate,     // called after any mutation so parent can reload
 }) => {
-  const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const [localMissions, setLocalMissions] = useState(missions);
   const [showAddMission, setShowAddMission] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -31,16 +32,21 @@ const DayLookAheadModal = ({
     setActionError(null);
 
     if (isCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        setLocalMissions(prev =>
-          prev.map(m => m.id === missionId ? { ...m, status: 'active' } : m)
-        );
-        onUpdate?.();
-      } catch (err) {
-        console.error('Error uncompleting mission:', err);
-        setActionError("That mission didn't update. Try again.");
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onLocalMutation: (event) => {
+          if (event.type === 'uncompleted') {
+            setLocalMissions(prev => applyOptimisticUncompletion(prev, missionId));
+          } else if (event.type === 'rollback') {
+            setLocalMissions(prev => applyOptimisticCompletion(prev, missionId));
+          }
+        },
+        onResolved: () => {
+          onUpdate?.();
+        },
+        onError: () => {
+          setActionError("That mission didn't update. Try again.");
+        },
+      });
       return;
     }
 

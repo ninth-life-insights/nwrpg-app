@@ -10,7 +10,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import {
-  uncompleteMission,
   updateMission,
 } from '../../services/missionService';
 import {
@@ -52,7 +51,10 @@ const RoutineTodaySection = ({
   onSaved,
 }) => {
   const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const { routines, pausedRootSet, cadenceByChainRoot, refreshRoutines } = useRoutines();
   const navigate = useNavigate();
   const [actionError, setActionError] = useState(null);
@@ -118,13 +120,12 @@ const RoutineTodaySection = ({
     setActionError(null);
 
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        await onSaved?.();
-      } catch (err) {
-        console.error('Routine today uncomplete failed:', err);
-        setActionError("That undo didn't go through.");
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => { onSaved?.(); },
+        onError: () => {
+          setActionError("That undo didn't go through.");
+        },
+      });
       return;
     }
 

@@ -16,9 +16,9 @@ import DatePickerPill from '../../components/ui/DatePickerPill';
 import {
   createMission,
   completeMissionWithRecurrence,
-  uncompleteMission,
 } from '../../services/missionService';
 import { useMissions } from '../../contexts/MissionsContext';
+import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { getRooms } from '../../services/roomService';
 import { getAllQuests } from '../../services/questService';
 
@@ -70,6 +70,7 @@ const EditDailyMissionsPage = ({
   initialTargetDate = null,  // pre-set the date (YYYY-MM-DD); defaults to today when null
 }) => {
   const { currentUser } = useAuth();
+  const { uncompleteMission: uncompleteMissionOptimistic } = useMissionCompletion();
   const { triggerStep } = useTutorial();
   useEffect(() => {
     triggerStep('daily-plan');
@@ -236,14 +237,14 @@ const handleAddNewMission = async (missionData) => {
   };
 
   const handleMissionCardToggleComplete = async (missionId, isCurrentlyCompleted) => {
+    if (isCurrentlyCompleted) {
+      // Context patches the shared cache synchronously; nothing else needs
+      // a manual refresh here.
+      uncompleteMissionOptimistic(missionId);
+      return;
+    }
     try {
-      if (isCurrentlyCompleted) {
-        await uncompleteMission(currentUser.uid, missionId);
-      } else {
-        await completeMissionWithRecurrence(currentUser.uid, missionId);
-      }
-      // Pull the shared cache so any other surface (and this page's daily
-      // slots) sees the new status.
+      await completeMissionWithRecurrence(currentUser.uid, missionId);
       await refreshMissionsCache();
     } catch (err) {
       console.error('Error toggling mission complete:', err);

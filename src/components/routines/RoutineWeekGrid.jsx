@@ -22,7 +22,6 @@ import { getHeatmapTier, computeLoadScore } from '../../utils/heatmapTier';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   updateMission,
-  uncompleteMission,
 } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import ErrorMessage from '../ui/ErrorMessage';
@@ -114,7 +113,10 @@ const RoutineWeekGrid = ({
   onMutated,
 }) => {
   const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   // Optimistic pending state — keyed by missionId, holds the post-drop
   // weekdays so the UI reflects the move without waiting for Firestore.
   // Cleared once the next refresh's prop data carries the same change.
@@ -256,18 +258,15 @@ const RoutineWeekGrid = ({
   const handleToggleComplete = useCallback(async (missionId, isCurrentlyCompleted) => {
     if (!currentUser) return;
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        await onMutated?.();
-      } catch (err) {
-        console.error('Routine week uncomplete failed:', err);
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => { onMutated?.(); },
+      });
       return;
     }
     completeMissionOptimistic(missionId, null, {
       onResolved: async () => { await onMutated?.(); },
     });
-  }, [currentUser, onMutated, completeMissionOptimistic]);
+  }, [currentUser, onMutated, completeMissionOptimistic, uncompleteMissionOptimistic]);
 
   if (totalCount === 0) {
     return (

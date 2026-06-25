@@ -18,7 +18,6 @@ import {
 } from '../../services/questService';
 import { useMissions } from '../../contexts/MissionsContext';
 import { getNextMission } from '../../types/Quests';
-import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import ErrorMessage from '../../components/ui/ErrorMessage';
 import LoadingTransition from '../../components/ui/LoadingTransition';
@@ -34,7 +33,10 @@ const QuestBank = () => {
     triggerStep('quests');
     return () => triggerStep(null);
   }, [triggerStep]);
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const navigate = useNavigate();
   
   const {
@@ -179,14 +181,13 @@ const QuestBank = () => {
 
   const handleMissionToggleComplete = async (missionId, isCurrentlyCompleted, xpReward) => {
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        await reconcileQuestStateAfterToggle(missionId);
-        await loadQuests();
-        await loadMissions();
-      } catch (err) {
-        console.error('Error uncompleting mission:', err);
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: async () => {
+          await reconcileQuestStateAfterToggle(missionId);
+          await loadQuests();
+          await loadMissions();
+        },
+      });
       return;
     }
 

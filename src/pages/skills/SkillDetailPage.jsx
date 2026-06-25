@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserProfile, getSPProgressInLevel } from '../../services/userService';
 import MissionCard from '../../components/missions/MissionCard';
-import { uncompleteMission } from '../../services/missionService';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useMissions } from '../../contexts/MissionsContext';
 import LoadingTransition from '../../components/ui/LoadingTransition';
@@ -32,7 +31,10 @@ const SkillDetailPage = () => {
   const { skillName } = useParams();
   const decodedSkillName = decodeURIComponent(skillName);
   const { currentUser } = useAuth();
-  const { completeMission: completeMissionOptimistic } = useMissionCompletion();
+  const {
+    completeMission: completeMissionOptimistic,
+    uncompleteMission: uncompleteMissionOptimistic,
+  } = useMissionCompletion();
   const {
     missions: allMissions,
     isInitialLoading: missionsCacheLoading,
@@ -89,15 +91,15 @@ const SkillDetailPage = () => {
     setActionError(null);
 
     if (isCurrentlyCompleted) {
-      try {
-        await uncompleteMission(currentUser.uid, missionId);
-        await refreshMissionsCache();
-        // Also re-fetch the profile so the SP/level display reflects the undo.
-        await fetchData();
-      } catch (error) {
-        console.error('Error uncompleting mission:', error);
-        setActionError("That undo didn't go through. Try again.");
-      }
+      uncompleteMissionOptimistic(missionId, {
+        onResolved: () => {
+          // Refresh the profile so the SP/level display reflects the undo.
+          fetchData();
+        },
+        onError: () => {
+          setActionError("That undo didn't go through. Try again.");
+        },
+      });
       return;
     }
 
