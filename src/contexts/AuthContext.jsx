@@ -147,9 +147,14 @@ export function AuthProvider({ children }) {
     return () => { cancelled = true; };
   }, [currentUser]);
 
+  // Called by CharacterCreationPage after a successful setDoc so the route
+  // wrappers stop bouncing the user back to /character-creation.
+  const markCharacterCreated = () => setHasCharacter(true);
+
   const value = {
     currentUser,
     hasCharacter,
+    markCharacterCreated,
     signup,
     login,
     logout,

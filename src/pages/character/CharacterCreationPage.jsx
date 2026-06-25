@@ -25,7 +25,7 @@ const CharacterCreationPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { currentUser } = useAuth();
+  const { currentUser, markCharacterCreated } = useAuth();
   const { refreshQuests } = useQuests();
   const { refresh: refreshMissions } = useMissions();
   const { refreshDailyMissions } = useDailyMissions();
@@ -79,6 +79,8 @@ const CharacterCreationPage = () => {
         onboardingCompleted: false,
         updatedAt: new Date(),
       }, { merge: true });
+
+      markCharacterCreated();
 
       // Seed the onboarding tutorial quest. Don't block signup on failure —
       // HomePage retries on mount when tutorialSeedFailed is set.
