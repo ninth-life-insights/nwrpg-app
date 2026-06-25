@@ -16,6 +16,7 @@ import {
 } from '../../utils/dateHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsDailyMission } from '../../contexts/DailyMissionsContext';
+import { useRooms } from '../../contexts/RoomsContext';
 import { useRoutines } from '../../contexts/RoutineContext';
 import { useMissionCompletion } from '../../contexts/MissionCompletionContext';
 import { useTutorial } from '../../contexts/TutorialContext';
@@ -35,11 +36,13 @@ const MissionCardCondensed = ({
   actionSlot = null,
   hideRecurrenceBadge = false,
   hideRoutineBadge = false,
+  hideRoomBadge = false,
   hideEvergreenBadge = true,
   tintEvergreen = false,
   onRecentlyCompletedUpdated = null,
 }) => {
   const { currentUser } = useAuth();
+  const { roomsMap } = useRooms();
   const { routineRootSet, pausedRootSet } = useRoutines();
   const isDailyMission = useIsDailyMission(mission.id);
   const { isPending, isOptimisticallyComplete } = useMissionCompletion();
@@ -54,6 +57,7 @@ const MissionCardCondensed = ({
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
   const isVisuallyComplete = isCompleted || isOptimisticallyComplete(mission.id);
   const missionHasSkill = hasSkill(mission);
+  const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const isRecurring = isRecurringMission(mission);
   const isEvergreen = isEvergreenMission(mission);
   const recurrenceText = getRecurrenceDisplayText(mission);
@@ -202,6 +206,9 @@ const MissionCardCondensed = ({
                     <Badge variant="routine">Routine</Badge>
                   )
                 )}
+                {roomName && !hideRoomBadge && (
+                  <Badge variant="room" icon="home">{roomName}</Badge>
+                )}
                 <Badge variant="difficulty" difficulty={mission.difficulty}>{mission.difficulty}</Badge>
                 {missionHasSkill && (
                   <Badge variant="skill">{mission.skill}</Badge>
@@ -270,6 +277,7 @@ export default React.memo(MissionCardCondensed, (prev, next) => {
     prev.actionSlot === next.actionSlot &&
     prev.hideRecurrenceBadge === next.hideRecurrenceBadge &&
     prev.hideRoutineBadge === next.hideRoutineBadge &&
+    prev.hideRoomBadge === next.hideRoomBadge &&
     prev.hideEvergreenBadge === next.hideEvergreenBadge &&
     prev.tintEvergreen === next.tintEvergreen
   );
