@@ -25,8 +25,21 @@ const AchievementToast = ({ achievements, onDismiss }) => {
 
   useEffect(() => {
     if (!achievements || achievements.length === 0) return;
+    const shownAt = Date.now();
     const timer = setTimeout(() => onDismissRef.current(), AUTO_DISMISS_MS);
-    return () => clearTimeout(timer);
+    // iOS PWAs may suspend setTimeout when the document is hidden, leaving
+    // the toast pinned on resume. Belt-and-suspenders fallback: when the
+    // document becomes visible again, dismiss if the timer should already
+    // have fired.
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - shownAt >= AUTO_DISMISS_MS) onDismissRef.current();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [achievements]); // Only re-arm when achievements array itself changes
 
   if (!achievements || achievements.length === 0) return null;
