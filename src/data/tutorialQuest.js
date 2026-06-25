@@ -75,7 +75,7 @@ export const TUTORIAL_MISSIONS = [
   },
   {
     title: 'The Plot Thickens',
-    description: 'See how quests organize missions toward bigger goals.',
+    description: 'Learn about quests.',
     tutorialStep: TUTORIAL_STEPS.TOUR_QUESTS,
     difficulty: DIFFICULTY_LEVELS.EASY,
     dueType: DUE_TYPES.UNIQUE,

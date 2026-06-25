@@ -325,21 +325,37 @@ export const TUTORIAL_SCRIPT = {
     screens: [
       {
         variant: 'story',
-        title: 'About quests',
+        title: 'Group your missions',
         body: [
-          'Quests organize missions into larger projects or goals — a renovation, a habit cluster, a kid\'s project, a season of something.',
-          'Group the missions, watch the progress, finish the thing.',
+          'Quests let you organize missions into larger projects or goals, helping you stay organized and track progress.',
+          'Review quest progress during weekly reviews to stay on top of longer-term efforts.',
         ],
         ctaLabel: 'Continue',
+        navigateTo: '/quest-bank',
+      },
+      {
+        variant: 'spotlight',
+        target: 'tutorial-quest-card',
+        title: 'Quest cards',
+        body: [
+          'This tutorial is an example of a (special) quest. In the Quest Bank, see progress at a glance and check which mission is up next.',
+          'Tap the card to see more details.',
+        ],
+        // No CTA: tapping the card itself is the way forward — it navigates
+        // to the quest detail view, and the underlying click handler does
+        // the routing. expectsRouteChangeOnAdvance arms the route watcher
+        // so Screen 3 can render on the detail page without getting
+        // dismissed.
+        expectsRouteChangeOnAdvance: true,
       },
       {
         variant: 'story',
-        title: 'Make your own anytime',
+        title: 'Quest details',
         body: [
-          'Quests live in the Quest Bank. Open a quest to see and reorder its missions, edit its details, or archive when finished.',
-          'Hit Create Quest from the bank whenever you are ready to make your own.',
+          "Each quest contains a list of associated missions, as well as details like difficulty and description. Add a custom achievement to celebrate when you're done.",
+          'Quests can be marked complete at any time, even if some missions are left undone.',
         ],
-        ctaLabel: 'Got it',
+        ctaLabel: 'Done learning',
       },
     ],
   },

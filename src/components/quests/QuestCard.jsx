@@ -4,7 +4,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import MissionCard from '../missions/MissionCard';
 import Badge from '../ui/Badge';
-import { calculateQuestProgress } from '../../types/Quests';
+import { calculateQuestProgress, QUEST_TYPE } from '../../types/Quests';
 import './QuestCard.css';
 
 const QuestCard = ({
@@ -32,8 +32,14 @@ const QuestCard = ({
     }
   };
 
+  const isTutorialQuest = quest.type === QUEST_TYPE.TUTORIAL;
+
   return (
-    <div className={`quest-card ${isCompleted ? 'completed' : ''}`} onClick={handleViewFullQuest}>
+    <div
+      className={`quest-card ${isCompleted ? 'completed' : ''}`}
+      onClick={handleViewFullQuest}
+      data-tutorial-target={isTutorialQuest ? 'tutorial-quest-card' : undefined}
+    >
       {/* Quest Header */}
       <div className="quest-card-header">
         <div className="quest-card-title-row">
