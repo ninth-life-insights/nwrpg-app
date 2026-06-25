@@ -13,7 +13,11 @@ const TutorialPlayButton = ({ mission, size = 'md' }) => {
 
   const handleClick = (e) => {
     e.stopPropagation();
-    openStepForMission(mission);
+    // Explicit "show me the tutorial again" — always rewind to the first
+    // screen. Saved progress on the user doc is preserved, so if they bail
+    // partway through this re-watch, auto-fire on the next session still
+    // resumes at their old max.
+    openStepForMission(mission, { startFromBeginning: true });
   };
 
   return (

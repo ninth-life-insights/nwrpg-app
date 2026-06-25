@@ -153,7 +153,7 @@ const MissionCardCondensed = ({
           readOnly
             ? undefined
             : useTutorialRender && !isVisuallyComplete
-              ? () => openStepForMission(mission)
+              ? () => openStepForMission(mission, { startFromBeginning: true })
               : useTutorialRender
                 ? undefined
                 : () => setViewingDetails(true)

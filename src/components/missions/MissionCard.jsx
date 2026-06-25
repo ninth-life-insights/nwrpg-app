@@ -233,7 +233,7 @@ const MissionCard = ({
       if (selectionMode && onSelect) {
         onSelect(mission);
       } else if (useTutorialRender && !isVisuallyComplete) {
-        openStepForMission(mission);
+        openStepForMission(mission, { startFromBeginning: true });
       } else if (useTutorialRender) {
         // Completed tutorial mission — no body action (no overlay re-play, no
         // re-completion). User sees the greened checkmark.

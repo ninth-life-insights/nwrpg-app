@@ -90,11 +90,23 @@ export const TutorialProvider = ({ children }) => {
   const [welcomeSeen, setWelcomeSeen] = useState(null);
 
   // activeStep: { missionId, tutorialStep, screens, screenIndex,
-  //               completionTrigger, waitResult? }
+  //               completionTrigger, welcomePrepended, waitResult? }
   //             or null when no overlay is showing.
+  // welcomePrepended tracks whether screens[0] is the universal welcome —
+  // used by the progress-write effect to translate the live screenIndex
+  // back to a script-relative index for persistence.
   // waitResult carries forward data captured by a wait screen (e.g. the
   // id of a just-created mission) so a later spotlight screen can target it.
   const [activeStep, setActiveStep] = useState(null);
+
+  // Per-step max-seen-script-index, persisted to the user doc as
+  // `tutorialProgress: { [stepKey]: number }`. Drives the resume-or-tail
+  // behavior on auto-fire: opens at min(savedMax, lastScreenIndex), so a
+  // user who exited partway resumes where they left off, and a user who
+  // viewed all screens but didn't complete the action gets re-prompted
+  // with just the final screen on subsequent auto-fires. Explicit opens
+  // (play button, quest-detail tap) bypass this and start at 0.
+  const [tutorialProgress, setTutorialProgress] = useState({});
 
   // Counters for external signals that `wait` screens can listen on. Pages
   // bump a counter via the notify* methods below; the wait-state effect
@@ -121,12 +133,14 @@ export const TutorialProvider = ({ children }) => {
     [quests]
   );
 
-  // Read tutorialWelcomeSeen from user doc on currentUser change. Also
-  // clears any open overlay state on sign-out so the previous user's step
-  // doesn't bleed into the auth screens or the next user's session.
+  // Read tutorialWelcomeSeen + tutorialProgress from user doc on currentUser
+  // change. Also clears any open overlay state on sign-out so the previous
+  // user's step doesn't bleed into the auth screens or the next user's
+  // session.
   useEffect(() => {
     if (!currentUser) {
       setWelcomeSeen(null);
+      setTutorialProgress({});
       setActiveStep(null);
       autoTriggeredRef.current = new Set();
       return;
@@ -136,9 +150,14 @@ export const TutorialProvider = ({ children }) => {
       try {
         const snap = await getDoc(doc(db, 'users', currentUser.uid));
         if (cancelled) return;
-        setWelcomeSeen(snap.exists() && snap.data().tutorialWelcomeSeen === true);
+        const data = snap.exists() ? snap.data() : {};
+        setWelcomeSeen(data.tutorialWelcomeSeen === true);
+        setTutorialProgress(data.tutorialProgress ?? {});
       } catch {
-        if (!cancelled) setWelcomeSeen(true); // safe default — skip welcome
+        if (!cancelled) {
+          setWelcomeSeen(true); // safe default — skip welcome
+          setTutorialProgress({});
+        }
       }
     })();
     return () => { cancelled = true; };
@@ -165,16 +184,55 @@ export const TutorialProvider = ({ children }) => {
     []
   );
 
-  const openStepForMission = useCallback((mission) => {
+  // Persist tutorialProgress on each screen advance. We only write when the
+  // current script-relative index is a new high-water mark, so a user who
+  // resumes mid-flow doesn't reset their max if they happen to advance
+  // exactly back through the same screens. Fire-and-forget; the local state
+  // updates synchronously so subsequent reads from the same render see the
+  // new value.
+  useEffect(() => {
+    if (!activeStep || !currentUser) return;
+    const { tutorialStep, screenIndex, welcomePrepended } = activeStep;
+    const scriptIndex = welcomePrepended ? screenIndex - 1 : screenIndex;
+    if (scriptIndex < 0) return; // currently on the welcome screen
+    const prevMax = tutorialProgress[tutorialStep];
+    if (typeof prevMax === 'number' && scriptIndex <= prevMax) return;
+    setTutorialProgress(prev => ({ ...prev, [tutorialStep]: scriptIndex }));
+    setDoc(
+      doc(db, 'users', currentUser.uid),
+      { tutorialProgress: { [tutorialStep]: scriptIndex } },
+      { merge: true }
+    ).catch(e => console.error('Failed to persist tutorial progress:', e));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStep?.tutorialStep, activeStep?.screenIndex, activeStep?.welcomePrepended, currentUser]);
+
+  const openStepForMission = useCallback((mission, options = {}) => {
+    const { startFromBeginning = false } = options;
     if (!mission?.tutorialStep) return;
     const script = getScriptForStep(mission.tutorialStep);
     if (!script) return;
 
     // Prepend welcome screen only when we know it hasn't been seen.
     // welcomeSeen === false means "definitely not seen"; null and true skip.
-    const screens = welcomeSeen === false
+    const welcomePrepended = welcomeSeen === false;
+    const screens = welcomePrepended
       ? [WELCOME_SCREEN, ...script.screens]
       : script.screens;
+
+    // Compute starting screenIndex relative to `screens`.
+    // - Welcome (when prepended) is always shown first regardless of saved
+    //   progress; saved progress indexes into script.screens only.
+    // - Explicit opens (play button, quest-detail tap) start at the very
+    //   first screen.
+    // - Auto-fire uses min(savedMax, lastScreenIndex): mid-flow exit →
+    //   resume; finished-but-no-action → just the action prompt.
+    const lastScriptIndex = script.screens.length - 1;
+    const savedMax = tutorialProgress[mission.tutorialStep];
+    let startIndex = 0;
+    if (!startFromBeginning && typeof savedMax === 'number' && savedMax > 0) {
+      const resumeScript = Math.min(savedMax, lastScriptIndex);
+      startIndex = welcomePrepended ? resumeScript + 1 : resumeScript;
+    }
 
     // Mark this step as auto-triggered so the resolver useEffect doesn't
     // clobber screenIndex back to 0 when the user lands on a feature page
@@ -196,10 +254,11 @@ export const TutorialProvider = ({ children }) => {
       missionId: mission.id,
       tutorialStep: mission.tutorialStep,
       screens,
-      screenIndex: 0,
+      screenIndex: startIndex,
       completionTrigger: script.completionTrigger,
+      welcomePrepended,
     });
-  }, [welcomeSeen, currentUser]);
+  }, [welcomeSeen, currentUser, tutorialProgress]);
 
   // Mark the welcome screen as seen — fires the moment the user advances
   // past it. Idempotent: safe to call repeatedly.
