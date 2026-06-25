@@ -19,8 +19,6 @@ export const TUTORIAL_STEPS = {
   SETUP_BASE: 'setup_base',
   FIRST_ROUTINE: 'first_routine',
   TOUR_QUESTS: 'tour_quests',
-  TOUR_SKILLS: 'tour_skills',
-  TOUR_ACHIEVEMENTS: 'tour_achievements',
 };
 
 // Tutorial quest metadata. Difficulty=easy → 10 XP bonus on completion
@@ -77,20 +75,6 @@ export const TUTORIAL_MISSIONS = [
     title: 'The Plot Thickens',
     description: 'Learn about quests.',
     tutorialStep: TUTORIAL_STEPS.TOUR_QUESTS,
-    difficulty: DIFFICULTY_LEVELS.EASY,
-    dueType: DUE_TYPES.UNIQUE,
-  },
-  {
-    title: 'Sharpening the Blade',
-    description: 'Take a look at skills.',
-    tutorialStep: TUTORIAL_STEPS.TOUR_SKILLS,
-    difficulty: DIFFICULTY_LEVELS.EASY,
-    dueType: DUE_TYPES.UNIQUE,
-  },
-  {
-    title: 'Take a Bow',
-    description: 'Take a look at achievements.',
-    tutorialStep: TUTORIAL_STEPS.TOUR_ACHIEVEMENTS,
     difficulty: DIFFICULTY_LEVELS.EASY,
     dueType: DUE_TYPES.UNIQUE,
   },

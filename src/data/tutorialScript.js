@@ -94,7 +94,7 @@ export const TUTORIAL_SCRIPT = {
         target: 'add-mission-ghost-badges',
         title: 'Spice it up',
         body: [
-          "Add a skill to earn SP (Skill Points) from checking off the mission. Once you've set up your base or added quests, missions can be assigned to either.",
+          "Add a skill to earn SP (Skill Points) and level up your skills. Once you've set up your base or added quests, missions can be assigned to either.",
         ],
         ctaLabel: 'Fill out the details',
         revertOnTargetLoss: 2,
@@ -360,53 +360,6 @@ export const TUTORIAL_SCRIPT = {
     ],
   },
 
-  [TUTORIAL_STEPS.TOUR_SKILLS]: {
-    completionTrigger: 'manual',
-    screens: [
-      {
-        variant: 'story',
-        title: 'About skills',
-        body: [
-          'Tag a mission with a skill, complete it, and gain SP for that skill. Level up skills the same way you level your character.',
-          'Optional flavor — but a satisfying way to track what you are practicing and who you are becoming.',
-        ],
-        ctaLabel: 'Continue',
-      },
-      {
-        variant: 'story',
-        title: 'A handy filter',
-        body: [
-          'Tap into a skill to see the missions tied to it — upcoming and completed.',
-          'Filtering your mission bank by skill is a great way to find things, especially for projects like foraging or gardening that span a lot of missions.',
-        ],
-        ctaLabel: 'Got it',
-      },
-    ],
-  },
-
-  [TUTORIAL_STEPS.TOUR_ACHIEVEMENTS]: {
-    completionTrigger: 'manual',
-    screens: [
-      {
-        variant: 'story',
-        title: 'About achievements',
-        body: [
-          'Recognize your efforts with achievements, including built-in rewards for mission-related milestones.',
-          'You can also make your own. Whether you finally potty-trained your toddler or just built a gravity-defying block tower, commemorate the milestones worth remembering.',
-        ],
-        ctaLabel: 'Continue',
-      },
-      {
-        variant: 'story',
-        title: 'Tap + to add one',
-        body: [
-          'Built-in achievements are up top. Scroll down to see your custom ones — you start with none, but that is about to change.',
-          'No commitment required to look around in the builder.',
-        ],
-        ctaLabel: 'Got it',
-      },
-    ],
-  },
 };
 
 /**

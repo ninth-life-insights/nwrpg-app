@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTutorial } from '../contexts/TutorialContext';
 import { getMergedAchievementLibrary, deleteCustomAchievement } from '../services/achievementService';
 import AchievementCard from '../components/achievements/AchievementCard';
 import CreateCustomAchievementModal from '../components/achievements/CreateCustomAchievementModal';
@@ -15,11 +14,6 @@ import './AchievementsPage.css';
 
 const AchievementsPage = () => {
   const { currentUser } = useAuth();
-  const { triggerStep } = useTutorial();
-  useEffect(() => {
-    triggerStep('achievements');
-    return () => triggerStep(null);
-  }, [triggerStep]);
   const navigate = useNavigate();
   const [library, setLibrary] = useState(null);
   const [loading, setLoading] = useState(true);

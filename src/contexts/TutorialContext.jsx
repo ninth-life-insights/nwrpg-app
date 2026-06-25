@@ -42,8 +42,6 @@ const FEATURE_KEY_TO_STEP = {
   'base':         TUTORIAL_STEPS.SETUP_BASE,
   'routine':      TUTORIAL_STEPS.FIRST_ROUTINE,
   'quests':       TUTORIAL_STEPS.TOUR_QUESTS,
-  'skills':       TUTORIAL_STEPS.TOUR_SKILLS,
-  'achievements': TUTORIAL_STEPS.TOUR_ACHIEVEMENTS,
 };
 
 const TutorialContext = createContext(null);

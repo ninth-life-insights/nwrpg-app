@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTutorial } from '../../contexts/TutorialContext';
 import { getUserProfile, getSPProgressInLevel } from '../../services/userService';
 import { AVAILABLE_SKILLS } from '../../data/Skills';
 import ErrorMessage from '../../components/ui/ErrorMessage';
@@ -14,11 +13,6 @@ import './SkillsPage.css';
 
 const SkillsPage = () => {
   const { currentUser } = useAuth();
-  const { triggerStep } = useTutorial();
-  useEffect(() => {
-    triggerStep('skills');
-    return () => triggerStep(null);
-  }, [triggerStep]);
   const navigate = useNavigate();
   const [skillsData, setSkillsData] = useState([]);
   const [loading, setLoading] = useState(true);
