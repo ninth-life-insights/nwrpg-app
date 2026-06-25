@@ -98,30 +98,35 @@ const LandingPage = () => {
               </div>
             ))}
           </div>
+        </div>
 
+        <div className="slider-nav">
           <button
             onClick={prevSlide}
-            className="nav-button prev"
+            className="nav-button"
+            aria-label="Previous slide"
           >
             ‹
           </button>
 
+          <div className="dots-container">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`dot ${index === currentSlide ? 'active' : 'inactive'}`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+
           <button
             onClick={nextSlide}
-            className="nav-button next"
+            className="nav-button"
+            aria-label="Next slide"
           >
             ›
           </button>
-        </div>
-
-        <div className="dots-container">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`dot ${index === currentSlide ? 'active' : 'inactive'}`}
-            />
-          ))}
         </div>
       </div>
 
