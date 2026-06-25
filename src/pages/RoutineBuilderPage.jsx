@@ -132,6 +132,7 @@ const RoutineBuilderPage = () => {
               type="button"
               className="routine-builder-suggestions-btn"
               onClick={() => setShowSuggestionsPicker(true)}
+              data-tutorial-target="routine-builder-suggestions-btn"
             >
               <span className="material-icons">lightbulb</span>
               Browse suggested missions

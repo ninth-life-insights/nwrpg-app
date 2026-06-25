@@ -542,7 +542,7 @@ const RoutineBuilderSection = ({
 
   return (
     <section className="routine-builder">
-      <div className="routine-builder-filters">
+      <div className="routine-builder-filters" data-tutorial-target="routine-builder-filters">
         <label className="routine-builder-filter">
           <span className="routine-builder-filter-label">Skill</span>
           <select
@@ -580,6 +580,7 @@ const RoutineBuilderSection = ({
           type="button"
           className="routine-builder-cta"
           onClick={() => setShowAddExisting(true)}
+          data-tutorial-target="routine-builder-add-existing-btn"
         >
           <span className="material-icons">playlist_add</span>
           Add existing tasks
@@ -597,24 +598,26 @@ const RoutineBuilderSection = ({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        {BUCKETS.map((bucket) => (
-          <FrequencyGroup
-            key={bucket.key}
-            bucketKey={bucket.key}
-            label={bucket.label}
-            icon={bucket.icon}
-            missions={grouped[bucket.key]}
-            collapsed={collapsedBuckets.has(bucket.key)}
-            onToggleCollapsed={() => toggleCollapsed(bucket.key)}
-            onAdd={() => setAddBucketFrequency(bucket.frequency)}
-            onView={bucket.viewPath ? () => navigate(bucket.viewPath) : undefined}
-            viewLabel={bucket.viewLabel}
-            onRemove={handleRemove}
-            removingRootIds={removingRootIds}
-            isDragActive={isDragActive}
-            onMissionChanged={onSaved}
-          />
-        ))}
+        <div data-tutorial-target="routine-builder-buckets">
+          {BUCKETS.map((bucket) => (
+            <FrequencyGroup
+              key={bucket.key}
+              bucketKey={bucket.key}
+              label={bucket.label}
+              icon={bucket.icon}
+              missions={grouped[bucket.key]}
+              collapsed={collapsedBuckets.has(bucket.key)}
+              onToggleCollapsed={() => toggleCollapsed(bucket.key)}
+              onAdd={() => setAddBucketFrequency(bucket.frequency)}
+              onView={bucket.viewPath ? () => navigate(bucket.viewPath) : undefined}
+              viewLabel={bucket.viewLabel}
+              onRemove={handleRemove}
+              removingRootIds={removingRootIds}
+              isDragActive={isDragActive}
+              onMissionChanged={onSaved}
+            />
+          ))}
+        </div>
 
         <DragOverlay>
           {activeMission ? (

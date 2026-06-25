@@ -183,6 +183,18 @@ export const addMissionToRoutine = async (userId, routineId, chainRootId) => {
     updatedAt: serverTimestamp()
   });
 
+  // Tutorial watcher — first routine assignment completes the "Rinse and
+  // Repeat" FIRST_ROUTINE step. Tutorial missions all use dueType=UNIQUE
+  // and the builder only accepts recurring/evergreen, so there's no risk
+  // of the seed firing this on its own. No-op when no active tutorial.
+  (async () => {
+    try {
+      const { completeTutorialStepIfActive } = await import('./tutorialService');
+      const { TUTORIAL_STEPS } = await import('../data/tutorialQuest');
+      completeTutorialStepIfActive(userId, TUTORIAL_STEPS.FIRST_ROUTINE);
+    } catch { /* noop */ }
+  })();
+
   return { success: true };
 };
 

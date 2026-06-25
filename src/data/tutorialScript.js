@@ -273,25 +273,49 @@ export const TUTORIAL_SCRIPT = {
   },
 
   [TUTORIAL_STEPS.FIRST_ROUTINE]: {
-    completionTrigger: 'manual',
+    completionTrigger: 'auto',
     screens: [
       {
         variant: 'story',
-        title: 'The rhythm underneath',
+        title: 'Routines',
         body: [
-          "A lot of daily life isn't a 'priority' — it's the steady stuff underneath. Routines surface that — the morning, the bedtime, the Saturday reset — without it having to be Important every day.",
-          'Routines make your recurring rhythm visible and easy to adjust.',
+          'Your routine includes the missions you do on repeat, surfacing them as needed instead of getting lost in the shuffle.',
+          'Routines can include recurring or evergreen missions, but you choose which missions are part of the routine.',
         ],
-        ctaLabel: 'Continue',
+        ctaLabel: 'Get started',
+        navigateTo: '/routine-builder',
+      },
+      {
+        variant: 'spotlight',
+        target: 'routine-builder-buckets',
+        title: 'Customize your routine',
+        body: [
+          'Tap Add on any bucket to quick-add missions in bulk, then customize them further afterward. Missions can be dragged between buckets to change their frequency (including evergreen missions).',
+          'Tap on Week View or Month View to see where missions cluster and move them around to spread things out.',
+        ],
+        ctaLabel: 'Got it',
+      },
+      {
+        variant: 'spotlight',
+        target: [
+          'routine-builder-suggestions-btn',
+          'routine-builder-filters',
+          'routine-builder-add-existing-btn',
+        ],
+        title: 'Getting specific',
+        body: [
+          'Browse suggested missions if you need ideas. Filter to see routines for specific skills or parts of the house. Existing missions can be added to the routine as long as they are recurring or evergreen.',
+        ],
+        ctaLabel: 'Got it',
       },
       {
         variant: 'story',
-        title: 'Where they show up',
+        title: 'Set yours up',
         body: [
-          '"Up Next" on home shows the next mission in your routine.',
-          'Your full routine for the day is also visible on the routines page — useful when you want context, not just the next thing.',
+          'The home page always shows the next mission in your routine. View your full routine to see everything for the current day, or access the routine builder.',
+          'Try adding your first routine mission to finish this tutorial step.',
         ],
-        ctaLabel: 'Got it',
+        ctaLabel: 'Try it out',
       },
     ],
   },

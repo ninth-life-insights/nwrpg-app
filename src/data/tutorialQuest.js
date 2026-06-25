@@ -68,7 +68,7 @@ export const TUTORIAL_MISSIONS = [
   },
   {
     title: 'Rinse and Repeat',
-    description: 'Build your first routine.',
+    description: 'Start setting up your routine.',
     tutorialStep: TUTORIAL_STEPS.FIRST_ROUTINE,
     difficulty: DIFFICULTY_LEVELS.EASY,
     dueType: DUE_TYPES.UNIQUE,
