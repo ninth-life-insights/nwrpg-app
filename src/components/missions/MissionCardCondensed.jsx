@@ -46,7 +46,7 @@ const MissionCardCondensed = ({
   const { roomsMap } = useRooms();
   const { routineRootSet, pausedRootSet } = useRoutines();
   const isDailyMission = useIsDailyMission(mission.id);
-  const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const { isPending, getOptimisticStatus } = useMissionCompletion();
   const { isTutorialMission, openStepForMission } = useTutorial();
   // Tutorial missions get the purple-variant card, a play button instead
   // of the toggle, and body-click opens the overlay (not MissionCardFull).
@@ -56,7 +56,12 @@ const MissionCardCondensed = ({
   const useTutorialRender = isTutorial && !readOnly && !actionSlot;
   const isCompletionPending = isPending(mission.id);
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
-  const isVisuallyComplete = isCompleted || isOptimisticallyComplete(mission.id);
+  // Optimistic status (when present) wins over cache — see MissionCard for
+  // the rationale.
+  const optimisticStatus = getOptimisticStatus(mission.id);
+  const isVisuallyComplete = optimisticStatus
+    ? optimisticStatus === 'completed'
+    : isCompleted;
   const missionHasSkill = hasSkill(mission);
   const roomName = mission.baseLocation ? roomsMap[mission.baseLocation]?.name ?? null : null;
   const isRecurring = isRecurringMission(mission);

@@ -13,6 +13,10 @@ import { MISSION_STATUS } from '../types/Mission';
 //   - tap → checkbox flips instantly (in either direction)
 //   - second tap during the in-flight write is dropped (double-tap guard,
 //     and it covers both directions — no completing-during-uncomplete races)
+//   - optimistic state survives reload via sessionStorage. Without this, a
+//     tap → close-app → reopen-while-offline-replay-is-pending shows the
+//     pre-tap state for a beat before the queued Firestore write resolves
+//     and the card "magically" flips. Reads as buggy.
 //   - server resolves → level-up / achievement modals fire
 //   - server rejects → optimistic state rolls back, transient error chip shows
 const MissionCompletionContext = createContext(null);
@@ -26,11 +30,17 @@ export const useMissionCompletion = () => {
 };
 
 const ERROR_CHIP_MS = 4000;
+const OPTIMISTIC_STORAGE_KEY_PREFIX = 'nwrpg.optimistic-mission-status:';
+const getOptimisticStorageKey = (uid) => `${OPTIMISTIC_STORAGE_KEY_PREFIX}${uid}`;
 
 export const MissionCompletionProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const { notifyMissionCompletion } = useNotifications();
-  const { mutate: mutateMissions, refresh: refreshMissions } = useMissions();
+  const {
+    missions,
+    mutate: mutateMissions,
+    refresh: refreshMissions,
+  } = useMissions();
 
   // Ref for the double-tap guard — must be synchronous so a rapid second tap
   // sees the set before React commits a state update.
@@ -38,7 +48,11 @@ export const MissionCompletionProvider = ({ children }) => {
 
   // Mirror in state so consuming components re-render when pending changes.
   const [pendingIds, setPendingIds] = useState(() => new Set());
-  const [optimisticCompletedIds, setOptimisticCompletedIds] = useState(() => new Set());
+  // Map<missionId, 'completed' | 'active'>. The user's last commit-intent
+  // that the cache may not yet reflect. Persisted to sessionStorage so it
+  // survives reload (see header comment). Cleared per-id by the
+  // reconciliation effect once the cache catches up to match.
+  const [optimisticStatusById, setOptimisticStatusById] = useState(() => new Map());
   const [failedIds, setFailedIds] = useState(() => new Set());
 
   const errorClearTimersRef = useRef(new Map());
@@ -55,6 +69,60 @@ export const MissionCompletionProvider = ({ children }) => {
     };
   }, []);
 
+  // Hydrate optimistic state from sessionStorage on user load. Namespaced
+  // by uid so a sign-out → sign-in-as-someone-else doesn't inherit the
+  // previous user's pending intent.
+  useEffect(() => {
+    if (!currentUser?.uid) {
+      setOptimisticStatusById(new Map());
+      return;
+    }
+    try {
+      const raw = sessionStorage.getItem(getOptimisticStorageKey(currentUser.uid));
+      if (raw) {
+        const entries = JSON.parse(raw);
+        if (Array.isArray(entries)) {
+          setOptimisticStatusById(new Map(entries));
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to hydrate optimistic mission state:', err);
+    }
+  }, [currentUser]);
+
+  // Persist optimistic state on every change. Tiny payload (handful of
+  // ids); a write per change is fine.
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    try {
+      sessionStorage.setItem(
+        getOptimisticStorageKey(currentUser.uid),
+        JSON.stringify([...optimisticStatusById.entries()])
+      );
+    } catch (err) {
+      console.warn('Failed to persist optimistic mission state:', err);
+    }
+  }, [optimisticStatusById, currentUser]);
+
+  // Reconciliation: drop optimistic entries once the shared cache reports
+  // the same status. Without this, the Map grows unboundedly across a
+  // session — every completion stamps an entry that never gets cleared.
+  useEffect(() => {
+    if (!missions || optimisticStatusById.size === 0) return;
+    setOptimisticStatusById((prev) => {
+      let changed = false;
+      const next = new Map(prev);
+      for (const [id, expectedStatus] of prev) {
+        const cached = missions.find((m) => m.id === id);
+        if (cached && cached.status === expectedStatus) {
+          next.delete(id);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [missions, optimisticStatusById]);
+
   const addToSet = (setter, id) => setter((prev) => {
     if (prev.has(id)) return prev;
     const next = new Set(prev);
@@ -66,6 +134,13 @@ export const MissionCompletionProvider = ({ children }) => {
     if (!prev.has(id)) return prev;
     const next = new Set(prev);
     next.delete(id);
+    return next;
+  });
+
+  const setOptimisticStatus = (id, status) => setOptimisticStatusById((prev) => {
+    if (prev.get(id) === status) return prev;
+    const next = new Map(prev);
+    next.set(id, status);
     return next;
   });
 
@@ -81,7 +156,7 @@ export const MissionCompletionProvider = ({ children }) => {
 
     pendingIdsRef.current.add(missionId);
     addToSet(setPendingIds, missionId);
-    addToSet(setOptimisticCompletedIds, missionId);
+    setOptimisticStatus(missionId, 'completed');
 
     // Clear any prior error chip on this mission so the new attempt isn't
     // visually shadowed by a stale failure.
@@ -132,7 +207,7 @@ export const MissionCompletionProvider = ({ children }) => {
       return result;
     } catch (err) {
       console.error('Optimistic mission completion failed:', err);
-      removeFromSet(setOptimisticCompletedIds, missionId);
+      setOptimisticStatus(missionId, 'active');
       addToSet(setFailedIds, missionId);
       const timer = setTimeout(() => {
         removeFromSet(setFailedIds, missionId);
@@ -169,7 +244,7 @@ export const MissionCompletionProvider = ({ children }) => {
 
     pendingIdsRef.current.add(missionId);
     addToSet(setPendingIds, missionId);
-    removeFromSet(setOptimisticCompletedIds, missionId);
+    setOptimisticStatus(missionId, 'active');
 
     // Clear any prior error chip on this mission so the new attempt isn't
     // visually shadowed by a stale failure.
@@ -204,7 +279,7 @@ export const MissionCompletionProvider = ({ children }) => {
       return result;
     } catch (err) {
       console.error('Optimistic mission uncomplete failed:', err);
-      addToSet(setOptimisticCompletedIds, missionId);
+      setOptimisticStatus(missionId, 'completed');
       addToSet(setFailedIds, missionId);
       const timer = setTimeout(() => {
         removeFromSet(setFailedIds, missionId);
@@ -228,9 +303,13 @@ export const MissionCompletionProvider = ({ children }) => {
   }, [currentUser, mutateMissions]);
 
   const isPending = useCallback((id) => pendingIds.has(id), [pendingIds]);
-  const isOptimisticallyComplete = useCallback(
-    (id) => optimisticCompletedIds.has(id),
-    [optimisticCompletedIds]
+  // Returns 'completed' | 'active' | null. Cards prefer this over the
+  // cache-derived status when it's non-null — it represents the user's
+  // most recent commit-intent for this session, which may not yet be
+  // reflected in the shared cache.
+  const getOptimisticStatus = useCallback(
+    (id) => optimisticStatusById.get(id) ?? null,
+    [optimisticStatusById]
   );
   const hasError = useCallback((id) => failedIds.has(id), [failedIds]);
 
@@ -239,7 +318,7 @@ export const MissionCompletionProvider = ({ children }) => {
       completeMission,
       uncompleteMission,
       isPending,
-      isOptimisticallyComplete,
+      getOptimisticStatus,
       hasError,
     }}>
       {children}

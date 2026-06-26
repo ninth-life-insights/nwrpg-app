@@ -63,7 +63,7 @@ const MissionCard = ({
     isRoutineMember &&
     pausedRootSet &&
     pausedRootSet.has(mission.parentMissionId || mission.id);
-  const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const { isPending, getOptimisticStatus } = useMissionCompletion();
   const { isTutorialMission, openStepForMission } = useTutorial();
   const isCompletionPending = isPending(mission.id);
   // Tutorial detection — wins over daily/priority/quest tints, swaps the
@@ -71,7 +71,7 @@ const MissionCard = ({
   // Defers to selectionMode so selection surfaces still work normally.
   const isTutorial = isTutorialMission(mission);
   const useTutorialRender = isTutorial && !selectionMode;
-  const isOptimisticComplete = isOptimisticallyComplete(mission.id);
+  const optimisticStatus = getOptimisticStatus(mission.id);
   const [showXpBadge, setShowXpBadge] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(false);
   const [yesterdayLoading, setYesterdayLoading] = useState(false);
@@ -99,9 +99,14 @@ const MissionCard = ({
   
   // Use schema utility functions for consistency. `isVisuallyComplete` covers
   // both true completions and optimistic ones (tap in flight) so the checkmark
-  // flips instantly on tap.
+  // flips instantly on tap. Optimistic status, when present, wins over the
+  // cache — it represents the user's most recent commit-intent, which the
+  // cache may not yet reflect (e.g., a queued offline write replaying after
+  // a reload).
   const isCompleted = mission.status === MISSION_STATUS.COMPLETED;
-  const isVisuallyComplete = isCompleted || isOptimisticComplete;
+  const isVisuallyComplete = optimisticStatus
+    ? optimisticStatus === 'completed'
+    : isCompleted;
   const missionHasSkill = hasSkill(mission);
   const canComplete = canCompleteMission(mission);
   const isRecurring = isRecurringMission(mission);

@@ -144,10 +144,15 @@ const MissionCardFull = ({
   const isRecurring = isRecurringMission(displayMission);
   const isEvergreen = isEvergreenMission(displayMission);
   const recurrenceText = getRecurrenceDisplayText(displayMission, { verbose: true });
-  const { isPending, isOptimisticallyComplete } = useMissionCompletion();
+  const { isPending, getOptimisticStatus } = useMissionCompletion();
   const isCompletionPending = isPending(mission.id);
   const isCompleted = displayMission.status === MISSION_STATUS.COMPLETED;
-  const isVisuallyComplete = isCompleted || isOptimisticallyComplete(mission.id);
+  // Optimistic status (when present) wins over cache — see MissionCard for
+  // the rationale.
+  const optimisticStatus = getOptimisticStatus(mission.id);
+  const isVisuallyComplete = optimisticStatus
+    ? optimisticStatus === 'completed'
+    : isCompleted;
   const isActive = displayMission.status === MISSION_STATUS.ACTIVE;
   const isExpired = displayMission.status === MISSION_STATUS.EXPIRED;
   const completedDate = isCompleted && displayMission.completedAt
