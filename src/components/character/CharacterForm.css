@@ -52,6 +52,7 @@
   align-items: center;
   transition: var(--transition);
   margin-bottom: var(--space-md);
+  margin-right: var(--space-sm);
 }
 
 .title-shuffle-btn:hover {
