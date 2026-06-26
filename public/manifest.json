@@ -8,6 +8,11 @@
       "type": "image/png"
     },
     {
+      "src": "/assets/App-Icon/Nwrpg-icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
       "src": "/assets/App-Icon/Nwrpg-icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
@@ -30,7 +35,8 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "id": "/",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#fefce8",
   "background_color": "#fefce8",
