@@ -48,7 +48,7 @@ export const WELCOME_SCREEN = {
   title: 'Welcome to the Tutorial',
   body: [
     "Your first quest is already waiting. The Training Grounds walks you through each part of the app, one by one. Skip around or play in order.",
-    "You can opt out anytime by archiving or deleting the quest.",
+    "The first three steps are on your home page as today's daily missions."
   ],
   ctaLabel: 'Begin',
 };
@@ -67,7 +67,8 @@ export const INTRO_SCREENS = [
     target: 'home-quests-button',
     title: 'Find the tutorial later',
     body: [
-      'Your Training Grounds quest lives in the Quest Bank. Come back here anytime to pick it back up.',
+      'Your Training Grounds quest lives in the Quest Bank. Head there anytime to pick it back up.',
+      "You can opt out anytime by archiving or deleting the quest.",
     ],
     ctaLabel: 'Got it',
   },
@@ -81,7 +82,7 @@ export const TUTORIAL_SCRIPT = {
     screens: [
       {
         variant: 'story',
-        title: 'About missions',
+        title: 'Missions',
         body: [
           'Missions represent tasks or to-do items. Check them off to earn XP and level up: 5 XP for easy, 10 XP for medium, and 20 XP for hard.',
           'All your missions can be found in the Mission Bank, even if they were created elsewhere.',
@@ -134,8 +135,8 @@ export const TUTORIAL_SCRIPT = {
           : null,
         title: 'Check it off',
         body: [
-          'Your first mission is now in the Mission Bank. Check it off to earn XP and finish this tutorial step.',
-          'Tap the card to see more details, edit, archive, or delete.',
+          'Your first mission is now in the Mission Bank. Tap the card to see more details, edit, archive, or delete.',
+          'Check it off to earn some XP and finish this tutorial step.',
         ],
         // No CTA: the Phase 1 watcher completes the tutorial mission when the
         // user checks off their custom mission, and the activeStep auto-
@@ -151,7 +152,7 @@ export const TUTORIAL_SCRIPT = {
     screens: [
       {
         variant: 'story',
-        title: 'Top of mind',
+        title: 'Daily missions',
         body: [
           'Every day, assign your top three priorities to your daily missions to earn bonus XP upon completion.',
           'On hard days, setting fewer or easier priorities, or changing them partway through the day, gives you the flexibility real life demands.',
@@ -176,7 +177,8 @@ export const TUTORIAL_SCRIPT = {
         target: 'daily-plan-actions',
         title: 'Add your missions',
         body: [
-          'You can create new missions or select from the mission bank. Add at least one priority, then hit save to finish this tutorial step.',
+          'You can create new missions or select from the Mission Bank.',
+          'Add at least one priority, then hit save, to finish this tutorial step.',
         ],
       },
     ],
@@ -187,7 +189,7 @@ export const TUTORIAL_SCRIPT = {
     screens: [
       {
         variant: 'story',
-        title: 'Looking back',
+        title: 'Daily reviews',
         body: [
           "A bit of narrative flair can turn a bad day into an inspiring one, and a good day into a heroic one.",
           "The daily review gives you a place to check in, log what actually got done, and write the day into your story.",
@@ -201,7 +203,7 @@ export const TUTORIAL_SCRIPT = {
         body: [
           '1. Priorities: Check off the daily missions you got done, or edit them if your goals changed partway through.',
           "2. Other missions: Log anything else you completed that wasn't on your list. Missions added here are automatically marked complete.",
-          '3. Encounters: These notes on events or challenges of the day help flavor your daily story.',
+          '3. Encounters: These notes on events or challenges from the day help flavor your daily story.',
         ],
         ctaLabel: 'Try it out',
       },
@@ -244,10 +246,19 @@ export const TUTORIAL_SCRIPT = {
         target: 'base-look-btn',
         title: 'A little flair',
         body: [
-          'Start by choosing a nickname and icon for your base overall. Tasks can be assigned to the base directly, and you can see a summary of everything across rooms here.',
+          "Start by customizing your base's look with a nickname and icon. Tasks can be assigned to the entire base, which also shows a summary of everything across all rooms.",
         ],
         // Opens the base-look modal on top of the page; spotlight cutout
-        // remains underneath. Default advance on target click.
+        // remains underneath. Default advance on target click → next screen
+        // is the invisible wait, so the room-template spotlight doesn't fire
+        // behind the modal while the user is still customizing.
+      },
+      // Invisible wait — pauses the tutorial while the base-look modal is
+      // open. BasePage calls notifyBaseLookSet() when the user saves the
+      // base icon/nickname; the wait then advances to the room spotlight.
+      {
+        variant: 'wait',
+        waitFor: 'base-look-set',
       },
       {
         variant: 'spotlight',

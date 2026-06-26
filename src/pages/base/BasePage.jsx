@@ -51,7 +51,7 @@ import './BasePage.css';
 const BasePage = () => {
   const { currentUser } = useAuth();
   const { notifyHomeTemplateApplied } = useNotifications();
-  const { triggerStep } = useTutorial();
+  const { triggerStep, notifyBaseLookSet } = useTutorial();
   useEffect(() => {
     triggerStep('base');
     return () => triggerStep(null);
@@ -383,7 +383,11 @@ const BasePage = () => {
       {showBaseIconModal && entireBaseRoom && (
         <AddRoomModal
           onClose={() => setShowBaseIconModal(false)}
-          onRoomAdded={() => { setShowBaseIconModal(false); fetchRoomsAndStats(); }}
+          onRoomAdded={() => {
+            setShowBaseIconModal(false);
+            fetchRoomsAndStats();
+            notifyBaseLookSet();
+          }}
           editRoom={entireBaseRoom}
           isBaseRoom={true}
           baseName={baseName}

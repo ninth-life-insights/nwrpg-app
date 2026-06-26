@@ -62,6 +62,7 @@ export const useTutorial = () => {
       dismiss: () => {},
       revertScreens: () => {},
       notifyReviewSummaryReached: () => {},
+      notifyBaseLookSet: () => {},
       signalExpectedRouteChange: () => {},
     };
   }
@@ -417,6 +418,17 @@ export const TutorialProvider = ({ children }) => {
     }));
   }, []);
 
+  // Notify the tutorial that the user just saved their base look (nickname +
+  // icon). BasePage fires this from the base-icon modal's onRoomAdded
+  // handler. Drives the SETUP_BASE wait between the base-look spotlight and
+  // the room-template spotlight.
+  const notifyBaseLookSet = useCallback(() => {
+    setSignalCounts(prev => ({
+      ...prev,
+      'base-look-set': (prev['base-look-set'] ?? 0) + 1,
+    }));
+  }, []);
+
   // Arm the next pathname change to be treated as overlay-expected — i.e.
   // skip the dismiss-on-route-change behavior for one transition. Used by
   // the spotlight click handler when the screen declares
@@ -650,6 +662,7 @@ export const TutorialProvider = ({ children }) => {
     dismiss,
     revertScreens,
     notifyReviewSummaryReached,
+    notifyBaseLookSet,
     signalExpectedRouteChange,
   }), [
     activeTutorialQuest,
@@ -662,6 +675,7 @@ export const TutorialProvider = ({ children }) => {
     dismiss,
     revertScreens,
     notifyReviewSummaryReached,
+    notifyBaseLookSet,
     signalExpectedRouteChange,
   ]);
 
