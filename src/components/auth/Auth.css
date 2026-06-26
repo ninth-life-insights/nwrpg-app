@@ -53,10 +53,12 @@
   line-height: 1.4;
 }
 
-/* Spacing-only wrapper for the shared <ErrorMessage> on auth pages so it
-   leaves a gap above the form, matching the success-message rule below. */
+/* Inline form-field error: sits just below the password input, replacing
+   the prior top-of-card placement. text-align is forced so any centered
+   inherited rule (e.g. auth-header above) can't reach in. */
 .auth-error {
-  margin-bottom: var(--space-lg);
+  margin-top: var(--space-sm);
+  text-align: left;
 }
 
 .success-message {

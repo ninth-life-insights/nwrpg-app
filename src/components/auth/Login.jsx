@@ -59,8 +59,6 @@ export default function Login() {
     <div >
       <div className="auth-card">
 
-        <ErrorMessage message={error} className="auth-error" />
-
         {resetSent && (
           <div className="success-message">
             Check your email for a link to reset your password.
@@ -80,7 +78,7 @@ export default function Login() {
               placeholder="your.email@example.com"
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>
             <input
@@ -99,6 +97,7 @@ export default function Login() {
             >
               Forgot password?
             </button>
+            <ErrorMessage message={error} className="auth-error" />
           </div>
 
           <button

@@ -11,6 +11,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTos, setAcceptedTos] = useState(false);
   const [error, setError] = useState('');
+  const [tosError, setTosError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
 
@@ -22,6 +23,8 @@ export default function Signup() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError('');
+    setTosError('');
 
     if (password.length < 6) {
       return setError('Password must be at least 6 characters.');
@@ -32,11 +35,10 @@ export default function Signup() {
     }
 
     if (!acceptedTos) {
-      return setError('Please agree to the Terms and Privacy Policy to continue.');
+      return setTosError('Please agree to the Terms and Privacy Policy to continue.');
     }
 
     try {
-      setError('');
       setLoading(true);
       await signup(email, password);
       navigate('/character-creation');
@@ -50,9 +52,6 @@ export default function Signup() {
 
   return (
       <div className="auth-card">
- 
-        
-        <ErrorMessage message={error} className="auth-error" />
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -67,7 +66,7 @@ export default function Signup() {
               placeholder="your.email@example.com"
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>
             <input
@@ -79,6 +78,7 @@ export default function Signup() {
               className="form-input"
               placeholder="At least 6 characters"
             />
+            <ErrorMessage message={error} className="auth-error" />
           </div>
 
           <div className="form-group">
@@ -108,6 +108,7 @@ export default function Signup() {
               <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
             </span>
           </label>
+          <ErrorMessage message={tosError} className="auth-error auth-error--tos" />
 
           <button
             type="submit"
