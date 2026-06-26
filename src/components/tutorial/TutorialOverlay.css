@@ -64,7 +64,7 @@
 }
 
 .tutorial-title {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-text-dark);
   margin: 0;
@@ -143,11 +143,12 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 32px);
+  width: calc(100% - 48px);
   max-width: var(--max-width-card);
+  box-sizing: border-box;
   background: var(--color-bg-main);
   border-radius: var(--radius-xl);
-  padding: 12px 24px 20px;
+  padding: 12px 24px 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
