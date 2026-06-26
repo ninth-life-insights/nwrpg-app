@@ -13,6 +13,8 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [tosError, setTosError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signup } = useAuth();
 
   const navigate = useNavigate();
@@ -26,8 +28,8 @@ export default function Signup() {
     setError('');
     setTosError('');
 
-    if (password.length < 6) {
-      return setError('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      return setError('Password must be at least 8 characters.');
     }
 
     if (password !== confirmPassword) {
@@ -69,29 +71,53 @@ export default function Signup() {
 
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="form-input"
-              placeholder="At least 6 characters"
-            />
+            <div className="password-input-wrapper">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="form-input"
+                placeholder="At least 8 characters"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(s => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <span className="material-icons-outlined">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
             <ErrorMessage message={error} className="auth-error" />
           </div>
 
           <div className="form-group">
             <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="form-input"
-              placeholder="Confirm your password"
-            />
+            <div className="password-input-wrapper">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="form-input"
+                placeholder="Confirm your password"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowConfirmPassword(s => !s)}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                <span className="material-icons-outlined">
+                  {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
           </div>
 
           <label className="tos-checkbox-row">
