@@ -72,7 +72,7 @@ export const TutorialProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const { quests, refreshQuests } = useQuests();
   const { missions, refresh: refreshMissionsCache } = useMissions();
-  const { rooms } = useRooms();
+  const { rooms, roomsLoaded } = useRooms();
   const { notifyTutorialStepComplete } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
@@ -470,7 +470,12 @@ export const TutorialProvider = ({ children }) => {
     }
 
     if (currentScreen.waitFor === 'mission-created') {
-      const ids = new Set((missions ?? []).map(m => m.id));
+      // Don't baseline until missions has loaded. MissionsContext exposes
+      // null pre-load; collapsing that to [] here would baseline an empty
+      // set and then auto-advance the moment the user's existing missions
+      // arrive — which is what was breaking wait steps on slow devices.
+      if (missions === null) return;
+      const ids = new Set(missions.map(m => m.id));
       if (waitBaselineRef.current === null) {
         waitBaselineRef.current = ids;
         return;
@@ -479,7 +484,7 @@ export const TutorialProvider = ({ children }) => {
       // Find ids that exist now but didn't at baseline. Exclude tutorial
       // missions in case a seed write resolves after baseline capture —
       // the user-created mission is the one we care about.
-      const newId = (missions ?? []).find(
+      const newId = missions.find(
         m => !baseline.has(m.id) && !m.tutorialStep
       )?.id ?? null;
       if (newId) {
@@ -501,7 +506,11 @@ export const TutorialProvider = ({ children }) => {
       // and createRoomsBatch in roomService both write straight to
       // Firestore and RoomsContext picks up the new entries on its next
       // refresh, so we just watch the array length.
-      const count = (rooms ?? []).length;
+      // Gate on roomsLoaded — RoomsContext initializes rooms to [], so
+      // without this we'd baseline 0 and then auto-advance when the first
+      // fetch resolves with the user's existing rooms.
+      if (!roomsLoaded) return;
+      const count = rooms.length;
       if (waitBaselineRef.current === null) {
         waitBaselineRef.current = count;
         return;
@@ -532,7 +541,7 @@ export const TutorialProvider = ({ children }) => {
         }, 0);
       }
     }
-  }, [activeStep, missions, rooms, signalCounts]);
+  }, [activeStep, missions, rooms, roomsLoaded, signalCounts]);
 
   // Auto-clear activeStep when the underlying tutorial mission transitions
   // to completed. The server-side Phase 1 watcher completes the mission;

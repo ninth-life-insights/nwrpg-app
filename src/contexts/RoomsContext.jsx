@@ -15,6 +15,11 @@ export const RoomsProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const [rooms, setRooms] = useState([]);
   const [roomsMap, setRoomsMap] = useState({});
+  // Flips true after the first fetch settles (success or error). Lets
+  // consumers like the tutorial wait-state distinguish "no rooms yet" from
+  // "rooms haven't loaded yet" — without that, a slow first load looks like
+  // rooms appearing from nothing and trips growth-based watchers.
+  const [roomsLoaded, setRoomsLoaded] = useState(false);
 
   const fetchRooms = useCallback(async () => {
     if (!currentUser) return;
@@ -24,6 +29,8 @@ export const RoomsProvider = ({ children }) => {
       setRoomsMap(Object.fromEntries(data.map(r => [r.id, r])));
     } catch (err) {
       console.error('fetchRooms failed:', err);
+    } finally {
+      setRoomsLoaded(true);
     }
   }, [currentUser]);
 
@@ -31,13 +38,14 @@ export const RoomsProvider = ({ children }) => {
     if (!currentUser) {
       setRooms([]);
       setRoomsMap({});
+      setRoomsLoaded(false);
       return;
     }
     fetchRooms();
   }, [currentUser, fetchRooms]);
 
   return (
-    <RoomsContext.Provider value={{ rooms, roomsMap, refreshRooms: fetchRooms }}>
+    <RoomsContext.Provider value={{ rooms, roomsMap, roomsLoaded, refreshRooms: fetchRooms }}>
       {children}
     </RoomsContext.Provider>
   );
