@@ -108,11 +108,11 @@ export default function Signup() {
               <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
             </span>
           </label>
-          <ErrorMessage message={tosError} className="auth-error auth-error--tos" />
+          <ErrorMessage message={tosError} className="auth-error" />
 
           <button
             type="submit"
-            disabled={loading || !acceptedTos}
+            disabled={loading}
             className="auth-button primary"
           >
             {loading ? 'Creating Account...' : 'Sign Up'}
