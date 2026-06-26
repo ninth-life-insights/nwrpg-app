@@ -1,7 +1,8 @@
-/* src/pages/DailyReviewPage.css */
+﻿/* src/pages/DailyReviewPage.css */
 
 .daily-review-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   font-family: var(--font-family);
   padding: 0 0 40px;

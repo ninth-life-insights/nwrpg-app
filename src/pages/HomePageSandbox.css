@@ -1,4 +1,4 @@
-/* src/pages/HomePageSandbox.css */
+﻿/* src/pages/HomePageSandbox.css */
 /* Temporary sandbox styles. Verbatim duplicate of HomePage.css, with every
    selector scoped under .home-sandbox-page so that visual experiments here
    don't leak into the production HomePage (which shares many class names
@@ -6,6 +6,7 @@
 
 .home-sandbox-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   font-family: var(--font-family);
   padding: var(--space-md);

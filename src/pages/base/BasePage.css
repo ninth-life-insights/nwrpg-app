@@ -1,6 +1,7 @@
-/* src/pages/BasePage.css */
+﻿/* src/pages/BasePage.css */
 .base-page-container {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   padding-bottom: 40px;
 }
@@ -158,6 +159,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   font-size: var(--font-size-xl);
   color: #666;
 }

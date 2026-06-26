@@ -1,4 +1,4 @@
-/* src/pages/RoutinesPage.css
+﻿/* src/pages/RoutinesPage.css
    Shared by RoutinesPage (today view) and RoutineBuilderPage (builder view)
    via the .routines-page class. Page header is rendered by the shared
    PageHeader component; this file owns the page-wrapper, the page-header
@@ -11,6 +11,7 @@
   padding: var(--space-lg) var(--space-xl);
   padding-bottom: 120px;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-secondary);
   font-family: var(--font-family);
 }

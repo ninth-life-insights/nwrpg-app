@@ -1,0 +1,33 @@
+/* src/components/missions/MissionCompletionErrorChip.css */
+
+.mission-completion-error-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  /* Defend against parent .completed fades — the chip needs to read
+     immediately and isn't part of the muted "this is done" treatment. */
+  opacity: 1 !important;
+}
+
+.mission-completion-error-chip .material-icons,
+.mission-completion-error-chip .material-icons * {
+  font-size: 13px !important;
+  color: #b91c1c !important;
+  width: 13px;
+  height: 13px;
+}
+
+/* In MissionCardFull's action area, center the chip below the button and
+   give it a little breathing room rather than pinning it inline. */
+.mcf-completion-error-chip {
+  display: flex;
+  align-self: center;
+  margin-top: var(--space-sm);
+}

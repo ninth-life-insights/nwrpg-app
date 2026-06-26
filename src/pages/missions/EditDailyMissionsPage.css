@@ -1,7 +1,8 @@
-/* src/pages/EditDailyMissionsPage.css */
+﻿/* src/pages/EditDailyMissionsPage.css */
 
 .daily-missions-container {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   font-family: var(--font-family);
   padding: var(--space-xl);
@@ -579,6 +580,7 @@
   .mission-bank-modal {
     margin: var(--space-md);
     max-height: calc(100vh - 2 * var(--space-md));
+    max-height: calc(100dvh - 2 * var(--space-md));
   }
 }
 

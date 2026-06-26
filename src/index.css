@@ -21,6 +21,20 @@ textarea {
   font-size: 16px !important;
 }
 
+/* Kill the gray flash iOS paints on every tappable element. Set transparent
+   globally; components can override per-element if they want a custom flash. */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Disable iOS double-tap-to-zoom and the ~300ms tap delay on interactive
+   elements. `manipulation` keeps pinch-zoom working but blocks double-tap. */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
 /* Shown after 3s of loading to hint at a slow connection */
 .loading-slow-hint {
   margin: 8px 0 0;

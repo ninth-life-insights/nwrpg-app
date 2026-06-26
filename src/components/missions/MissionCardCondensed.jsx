@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import MissionCardFull from './MissionCardFull';
 import Badge from '../ui/Badge';
 import ErrorMessage from '../ui/ErrorMessage';
+import MissionCompletionErrorChip from './MissionCompletionErrorChip';
 import {
   MISSION_STATUS,
   hasSkill,
@@ -215,6 +216,11 @@ const MissionCardCondensed = ({
                 )}
               </>
             )}
+            {/* Outside the yesterday-vs-badges branch so it surfaces in
+                either state — a failed uncomplete is just as relevant
+                when the card is showing "did this yesterday?" as when
+                it's showing the normal badge set. */}
+            <MissionCompletionErrorChip missionId={mission.id} />
           </div>
         </div>
         {yesterdayError && (

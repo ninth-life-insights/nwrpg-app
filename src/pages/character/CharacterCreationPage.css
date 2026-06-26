@@ -1,5 +1,6 @@
-.character-creation-container {
+﻿.character-creation-container {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   font-family: var(--font-family);
   padding: var(--space-lg);

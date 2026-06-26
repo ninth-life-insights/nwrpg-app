@@ -1,7 +1,8 @@
-/* src/pages/SkillDetailPage.css */
+﻿/* src/pages/SkillDetailPage.css */
 
 .skill-detail-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   padding: 0 0 48px;
   font-family: var(--font-family);

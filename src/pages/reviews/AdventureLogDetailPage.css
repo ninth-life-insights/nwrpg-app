@@ -1,7 +1,8 @@
-/* src/pages/AdventureLogDetailPage.css */
+﻿/* src/pages/AdventureLogDetailPage.css */
 
 .adventure-log-detail-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   font-family: var(--font-family);
   max-width: var(--max-width-card);

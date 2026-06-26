@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import MissionCardFull from './MissionCardFull';
 import Badge from '../ui/Badge';
 import ErrorMessage from '../ui/ErrorMessage';
+import MissionCompletionErrorChip from './MissionCompletionErrorChip';
 import {
   MISSION_STATUS,
   COMPLETION_TYPES,
@@ -321,6 +322,8 @@ const MissionCard = ({
             {missionHasSkill && (
               <Badge variant="skill">{mission.skill}</Badge>
             )}
+
+            <MissionCompletionErrorChip missionId={mission.id} />
           </div>
         </div>
 

@@ -1,7 +1,8 @@
-/* EditCharacterPage.css — shares class/color picker styles with CharacterCreationPage.css */
+﻿/* EditCharacterPage.css — shares class/color picker styles with CharacterCreationPage.css */
 
 .edit-character-container {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-main);
   padding: var(--space-lg);
   padding-bottom: 120px;

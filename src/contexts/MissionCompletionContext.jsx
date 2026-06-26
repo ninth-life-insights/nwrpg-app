@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useNotifications } from './NotificationContext';
 import { useMissions } from './MissionsContext';
@@ -42,6 +42,18 @@ export const MissionCompletionProvider = ({ children }) => {
   const [failedIds, setFailedIds] = useState(() => new Set());
 
   const errorClearTimersRef = useRef(new Map());
+
+  // Cancel any pending error-chip auto-clear timers when the provider
+  // unmounts (logout, route change that drops the tree, hot-reload). Without
+  // this, a timer that fires after unmount calls setState on a dead
+  // component → React warning. Stable: errorClearTimersRef is a ref.
+  useEffect(() => {
+    const timers = errorClearTimersRef.current;
+    return () => {
+      timers.forEach((id) => clearTimeout(id));
+      timers.clear();
+    };
+  }, []);
 
   const addToSet = (setter, id) => setter((prev) => {
     if (prev.has(id)) return prev;

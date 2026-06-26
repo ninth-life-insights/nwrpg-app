@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Badge from '../ui/Badge';
 import AddMissionCard from './AddMissionCard';
 import ErrorMessage from '../ui/ErrorMessage';
+import MissionCompletionErrorChip from './MissionCompletionErrorChip';
 import {
   MISSION_STATUS,
 } from '../../types/Mission';
@@ -585,6 +586,10 @@ const MissionCardFull = ({
                   {isVisuallyComplete ? 'Mark as Incomplete' : 'Mark as Complete'}
                 </button>
               )}
+              <MissionCompletionErrorChip
+                missionId={mission.id}
+                className="mcf-completion-error-chip"
+              />
             </div>
           </div>
         </div>

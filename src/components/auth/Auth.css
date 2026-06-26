@@ -1,7 +1,8 @@
-/* src/components/auth/Auth.css - Shared styles for Login and Signup components */
+﻿/* src/components/auth/Auth.css - Shared styles for Login and Signup components */
 
 .auth-container {
    min-height: 100vh;
+   min-height: 100dvh;
   background: var(--color-bg-main);
   font-family: var(--font-family);
   display: flex;
