@@ -55,9 +55,12 @@
 
 /* Inline form-field error: sits just below the password input, replacing
    the prior top-of-card placement. text-align is forced so any centered
-   inherited rule (e.g. auth-header above) can't reach in. */
+   inherited rule (e.g. auth-header above) can't reach in. margin-bottom
+   gives the TOS error space before the Sign Up button (inside a form-group
+   the parent's own margin-bottom collapses with it, so no extra gap). */
 .auth-error {
   margin-top: var(--space-sm);
+  margin-bottom: var(--space-lg);
   text-align: left;
 }
 
