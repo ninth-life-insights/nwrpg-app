@@ -53,15 +53,10 @@
   line-height: 1.4;
 }
 
-.error-message {
-  background: #fef2f2;
-  color: var(--color-error);
-  padding: var(--space-md);
-  border: 1px solid #fecaca;
-  border-radius: var(--radius-md);
+/* Spacing-only wrapper for the shared <ErrorMessage> on auth pages so it
+   leaves a gap above the form, matching the success-message rule below. */
+.auth-error {
   margin-bottom: var(--space-lg);
-  font-size: var(--font-size-sm);
-  text-align: center;
 }
 
 .success-message {

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getAuthErrorMessage } from '../../utils/authErrors';
+import ErrorMessage from '../ui/ErrorMessage';
 import './Auth.css';
 
 export default function Login() {
@@ -58,11 +59,7 @@ export default function Login() {
     <div >
       <div className="auth-card">
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+        <ErrorMessage message={error} className="auth-error" />
 
         {resetSent && (
           <div className="success-message">
