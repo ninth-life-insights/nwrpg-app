@@ -294,9 +294,10 @@ export const TUTORIAL_SCRIPT = {
       },
       {
         variant: 'story',
-        title: 'Manage missions',
+        title: 'Manage room missions',
         body: [
-          "In each room, you can update cleanliness ratings; add, edit, or complete missions; and view your room's cleaning routine. Try adding a task to any room to finish this tutorial step.",
+          "In each room, you can update cleanliness ratings; add, edit, or complete missions; and view your room's cleaning routine.",
+          'Try adding a task to any room to finish this tutorial step.',
         ],
         ctaLabel: "Let's get cleaning",
       },
@@ -311,7 +312,7 @@ export const TUTORIAL_SCRIPT = {
         title: 'Routines',
         body: [
           'Your routine includes the missions you do on repeat, surfacing them as needed instead of getting lost in the shuffle.',
-          'Routines can include recurring or evergreen missions, but you choose which missions are part of the routine.',
+          "Routines can include recurring or evergreen missions, but you choose which missions are part of the routine. Standard missions can't be added.",
         ],
         ctaLabel: 'Get started',
         navigateTo: '/routine-builder',
