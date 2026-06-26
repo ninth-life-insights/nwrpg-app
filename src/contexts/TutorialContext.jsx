@@ -29,7 +29,7 @@ import { useNotifications } from './NotificationContext';
 import { QUEST_TYPE } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
 import { TUTORIAL_STEPS } from '../data/tutorialQuest';
-import { getScriptForStep, WELCOME_SCREEN } from '../data/tutorialScript';
+import { getScriptForStep, WELCOME_SCREEN, INTRO_SCREENS } from '../data/tutorialScript';
 import { completeMissionWithRecurrence } from '../services/missionService';
 
 // Maps feature page identifiers to tutorial step keys. Feature pages call
@@ -81,6 +81,12 @@ export const TutorialProvider = ({ children }) => {
   // Survives dismissal so bouncing back to a feature page doesn't re-open
   // the overlay every time. Cleared on full reload.
   const autoTriggeredRef = useRef(new Set());
+
+  // Tracks whether the standalone intro flow has fired this session. Prevents
+  // a HomePage re-mount (e.g. user backs out of a feature page) from re-
+  // opening the intro after dismissal. Persistence across sessions is handled
+  // by the user-doc `tutorialWelcomeSeen` flag.
+  const introFiredRef = useRef(false);
 
   // welcomeSeen: null = unknown (haven't read user doc), true = seen, false = not seen.
   // Defaulting null means we never accidentally show welcome twice during the
@@ -141,6 +147,7 @@ export const TutorialProvider = ({ children }) => {
       setTutorialProgress({});
       setActiveStep(null);
       autoTriggeredRef.current = new Set();
+      introFiredRef.current = false;
       return;
     }
     let cancelled = false;
@@ -191,6 +198,7 @@ export const TutorialProvider = ({ children }) => {
   useEffect(() => {
     if (!activeStep || !currentUser) return;
     const { tutorialStep, screenIndex, welcomePrepended } = activeStep;
+    if (!tutorialStep) return; // standalone intro flow — no per-step progress
     const scriptIndex = welcomePrepended ? screenIndex - 1 : screenIndex;
     if (scriptIndex < 0) return; // currently on the welcome screen
     const prevMax = tutorialProgress[tutorialStep];
@@ -257,6 +265,35 @@ export const TutorialProvider = ({ children }) => {
       welcomePrepended,
     });
   }, [welcomeSeen, currentUser, tutorialProgress]);
+
+  // Open the standalone intro flow — welcome story + Quests-button spotlight.
+  // No backing mission; advance() dismisses on the last screen because
+  // completionTrigger is 'auto'. The welcome screen at INTRO_SCREENS[0] is
+  // the same reference as WELCOME_SCREEN, so advance() still trips
+  // markWelcomeSeen() when the user moves to the spotlight.
+  const openIntroFlow = useCallback(() => {
+    setActiveStep({
+      missionId: null,
+      tutorialStep: null,
+      screens: INTRO_SCREENS,
+      screenIndex: 0,
+      completionTrigger: 'auto',
+      welcomePrepended: false,
+    });
+  }, []);
+
+  // Auto-fire the intro on the home page when the welcome flag is unset.
+  // Pathname-gated (not feature-key gated) because HomePage has no
+  // `triggerStep` call and we want the intro to land the moment a freshly
+  // character-created user arrives on /home.
+  useEffect(() => {
+    if (welcomeSeen !== false) return;
+    if (location.pathname !== '/home') return;
+    if (activeStep) return;
+    if (introFiredRef.current) return;
+    introFiredRef.current = true;
+    openIntroFlow();
+  }, [welcomeSeen, location.pathname, activeStep, openIntroFlow]);
 
   // Mark the welcome screen as seen — fires the moment the user advances
   // past it. Idempotent: safe to call repeatedly.
@@ -344,7 +381,7 @@ export const TutorialProvider = ({ children }) => {
 
   const dismiss = useCallback(() => {
     setActiveStep(prev => {
-      if (prev) {
+      if (prev && prev.tutorialStep) {
         const key = dismissedStorageKey(prev.tutorialStep);
         if (key) {
           try { sessionStorage.setItem(key, '1'); } catch { /* private mode etc. */ }

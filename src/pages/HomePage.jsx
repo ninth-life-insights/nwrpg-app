@@ -490,7 +490,11 @@ const HomePage = () => {
         />
 
         <div className="action-buttons">
-          <button className="action-button primary" onClick={QuestBankClick}>
+          <button
+            className="action-button primary"
+            onClick={QuestBankClick}
+            data-tutorial-target="home-quests-button"
+          >
             <span className="material-icons-light">explore</span>
             Quests
           </button>

@@ -53,6 +53,26 @@ export const WELCOME_SCREEN = {
   ctaLabel: 'Begin',
 };
 
+// Standalone intro flow shown on first arrival at /home after character
+// creation. Welcome story + a quick spotlight pointing at the Quests button
+// so the user knows where to find the Training Grounds quest later.
+// Auto-fire path: TutorialContext watches pathname === '/home' and opens
+// this when `welcomeSeen === false`. Sharing the welcome screen reference
+// means advancing off screen 0 still trips markWelcomeSeen() in the
+// overlay's advance handler.
+export const INTRO_SCREENS = [
+  WELCOME_SCREEN,
+  {
+    variant: 'spotlight',
+    target: 'home-quests-button',
+    title: 'Find the tutorial later',
+    body: [
+      'Your Training Grounds quest lives in the Quest Bank. Come back here anytime to pick it back up.',
+    ],
+    ctaLabel: 'Got it',
+  },
+];
+
 export const TUTORIAL_SCRIPT = {
   // ── Day-1 priority slots ──────────────────────────────────────────────
 
