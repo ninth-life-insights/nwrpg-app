@@ -446,50 +446,51 @@ export const deleteMission = async (userId, missionId) => {
   }
 };
 
-// Window during which an uncomplete is treated as "undo of a mistaken click" —
-// also cleans up the just-spawned child instance, so the user doesn't end up
-// with two active missions (today's restored + tomorrow's still spawned).
-// Best-effort cleanup of a child instance spawned by a completion of
-// `parentMission`. Runs whenever the parent is uncompleted — the time of
-// completion no longer matters. Gated only by:
-//   - the parent is recurring or evergreen (the only types that spawn)
-//   - a child exists with the expected parentMissionId + occurrenceNumber
-//   - the child shows no sign of user interaction (untouched safety net below)
+// Retract the child instance a completion spawned, when its parent is
+// uncompleted — so the user doesn't end up with two active missions (today's
+// restored + tomorrow's still spawned).
 //
-// The safety nets (status, currentCount, actualTimeSpentMinutes, scheduledDates,
-// updatedAt-after-createdAt) catch any case where the user has touched the
-// child since it was spawned. If the child is still pristine, uncompletion
-// semantically implies undoing the spawn — the previous time-window gate is
-// redundant with these checks and just produced "duplicate card in builder"
-// bugs when the undo happened later than 60s after the completion.
+// The child is identified by the `spawnedChildId` receipt the completion stamped
+// on the parent — NOT re-derived by querying siblings. The old query-and-match
+// approach matched on (parentMissionId + occurrenceNumber), which collided once
+// a prior cycle left a soft-deleted sibling with the same occurrenceNumber:
+// `.find` could return the deleted one, the status safety net bailed, and the
+// live child leaked. Tap complete/uncomplete a few times and duplicates piled
+// up. A recorded pointer removes the guesswork entirely.
+//
+// Safety nets (currentCount, actualTimeSpentMinutes, scheduledDates,
+// updatedAt-after-createdAt) still apply: if the user touched the child since it
+// spawned, we leave it alone AND keep the pointer, so a later re-completion stays
+// idempotent (the spawn guard sees the live child and won't make a second one).
+// Only when the child is pristine and we actually delete it do we clear the
+// pointer.
 //
 // Soft-deletes via deleteMission so the child still appears in the deleted bin
 // rather than vanishing — matches the global soft-delete convention.
-const cleanupRecentlySpawnedChild = async (userId, parentMission) => {
-  if (!parentMission.completedAt) return;
-  if (!isRecurringMission(parentMission) && !isEvergreenMission(parentMission)) return;
+const retractSpawnedChild = async (userId, parentMissionId, parentMission) => {
+  const childId = parentMission.spawnedChildId;
+  if (!childId) return;
 
-  const chainRoot = parentMission.parentMissionId || parentMission.id;
-  const expectedOccurrence = (parentMission.occurrenceNumber || 1) + 1;
+  const parentRef = doc(db, 'users', userId, 'missions', parentMissionId);
+  const childRef = doc(db, 'users', userId, 'missions', childId);
+  const childSnap = await getDoc(childRef);
 
-  const missionsRef = getUserMissionsRef(userId);
-  // orderBy + limit: a long-running recurrence chain may have thousands of
-  // occurrences, but the child we're cleaning up is always the most recent.
-  const q = query(
-    missionsRef,
-    where('parentMissionId', '==', chainRoot),
-    orderBy('occurrenceNumber', 'desc'),
-    limit(50)
-  );
-  const snap = await getDocs(q);
+  // Child already gone (deleted, or never persisted) — clear the stale receipt.
+  if (!childSnap.exists()) {
+    await updateDoc(parentRef, { spawnedChildId: null });
+    return;
+  }
 
-  const childDoc = snap.docs.find(d => (d.data().occurrenceNumber || 0) === expectedOccurrence);
-  if (!childDoc) return;
+  const child = childSnap.data();
 
-  const child = childDoc.data();
+  // Already soft-deleted — nothing to retract; clear the receipt.
+  if (child.status === MISSION_STATUS.DELETED) {
+    await updateDoc(parentRef, { spawnedChildId: null });
+    return;
+  }
 
-  // Safety net — leave the child alone if it shows any sign of user interaction
-  if (child.status !== MISSION_STATUS.ACTIVE) return;
+  // Safety net — leave the child alone (and keep the pointer) if it shows any
+  // sign of user interaction.
   if (child.currentCount) return;
   if (child.actualTimeSpentMinutes) return;
   if (Array.isArray(child.scheduledDates) && child.scheduledDates.length > 0) return;
@@ -501,7 +502,21 @@ const cleanupRecentlySpawnedChild = async (userId, parentMission) => {
     if (updatedMs - createdMs > 1000) return;
   }
 
-  await deleteMission(userId, childDoc.id);
+  await deleteMission(userId, childId);
+  await updateDoc(parentRef, { spawnedChildId: null });
+};
+
+// Read a previously-spawned child if it's still a live (active) doc, else null.
+// Used by the completion paths to stay idempotent: if a parent already points at
+// a living child, completing again must not spawn a second one.
+const getActiveSpawnedChild = async (userId, childId) => {
+  if (!childId) return null;
+  const childRef = doc(db, 'users', userId, 'missions', childId);
+  const childSnap = await getDoc(childRef);
+  if (!childSnap.exists()) return null;
+  const child = childSnap.data();
+  if (child.status !== MISSION_STATUS.ACTIVE) return null;
+  return { id: childSnap.id, ...child };
 };
 
 // Find the activity log entry that records a mission's completion. Returns the
@@ -598,9 +613,9 @@ export const uncompleteMission = async (userId, missionId) => {
     }
 
     try {
-      await cleanupRecentlySpawnedChild(userId, { id: missionId, ...missionData });
+      await retractSpawnedChild(userId, missionId, missionData);
     } catch (error) {
-      console.error('Error cleaning up recently-spawned child mission:', error);
+      console.error('Error retracting spawned child mission:', error);
       // Don't throw - the parent uncomplete already succeeded
     }
 
@@ -629,6 +644,20 @@ const completeRecurringMission = async (userId, missionId, prefetchedData = null
 
     // 3. Check if this is a recurring mission and should create next instance
     if (isRecurringMission(mission)) {
+      // Idempotency guard: if this mission already spawned a child that's still
+      // live (e.g. a retried completion, or a completion after an uncomplete
+      // that kept a user-touched child), reuse it instead of spawning a second.
+      const existingChild = await getActiveSpawnedChild(userId, mission.spawnedChildId);
+      if (existingChild) {
+        return {
+          xpAwarded, spAwarded, leveledUp, newLevel,
+          skillLeveledUp, skillName, newSkillLevel,
+          nextMissionCreated: true,
+          nextMissionId: existingChild.id,
+          nextDueDate: existingChild.dueDate
+        };
+      }
+
       const currentOccurrence = mission.occurrenceNumber || 1;
 
       // Resolve which anchor to use based on the user's setting + recurrence
@@ -658,6 +687,11 @@ const completeRecurringMission = async (userId, missionId, prefetchedData = null
             ...nextMissionData,
             createdAt: serverTimestamp()
           });
+
+          // Stamp the receipt on the parent so an uncomplete can retract THIS
+          // exact child deterministically (no sibling-query guesswork).
+          const parentRef = doc(db, 'users', userId, 'missions', missionId);
+          await updateDoc(parentRef, { spawnedChildId: newMissionRef.id });
 
           return {
             xpAwarded,
@@ -728,29 +762,45 @@ export const completeMissionWithRecurrence = async (userId, missionId) => {
     if (isEvergreenMission(mission)) {
       const { xpAwarded, spAwarded, leveledUp, newLevel, skillLeveledUp, skillName, newSkillLevel } = await completeMission(userId, missionId, missionWithDaily);
 
-      const nextMissionData = createNextMissionInstance(mission, null);
-      const missionsRef = getUserMissionsRef(userId);
-      const newMissionRef = await addDoc(missionsRef, {
-        ...nextMissionData,
-        dueDate: null,
-        createdAt: serverTimestamp(),
-        // Stamp the fresh instance with the chain's most recent completion
-        // timestamp so the routine rolling-window predicate
-        // (isEvergreenOwedOnDate) can answer "owed?" without walking the chain.
-        lastCompletedAt: serverTimestamp()
-      });
+      // Idempotency guard: reuse a still-live spawned child rather than making a
+      // second one (retried completion, or completion after an uncomplete that
+      // kept a user-touched child).
+      const existingChild = await getActiveSpawnedChild(userId, mission.spawnedChildId);
+      if (existingChild) {
+        completionResult = {
+          xpAwarded, spAwarded, leveledUp, newLevel,
+          skillLeveledUp, skillName, newSkillLevel,
+          nextMissionCreated: true,
+          nextMissionId: existingChild.id
+        };
+      } else {
+        const nextMissionData = createNextMissionInstance(mission, null);
+        const missionsRef = getUserMissionsRef(userId);
+        const newMissionRef = await addDoc(missionsRef, {
+          ...nextMissionData,
+          dueDate: null,
+          createdAt: serverTimestamp(),
+          // Stamp the fresh instance with the chain's most recent completion
+          // timestamp so the routine rolling-window predicate
+          // (isEvergreenOwedOnDate) can answer "owed?" without walking the chain.
+          lastCompletedAt: serverTimestamp()
+        });
 
-      completionResult = {
-        xpAwarded,
-        spAwarded,
-        leveledUp,
-        newLevel,
-        skillLeveledUp,
-        skillName,
-        newSkillLevel,
-        nextMissionCreated: true,
-        nextMissionId: newMissionRef.id
-      };
+        // Stamp the receipt so an uncomplete retracts THIS exact child.
+        await updateDoc(missionRef, { spawnedChildId: newMissionRef.id });
+
+        completionResult = {
+          xpAwarded,
+          spAwarded,
+          leveledUp,
+          newLevel,
+          skillLeveledUp,
+          skillName,
+          newSkillLevel,
+          nextMissionCreated: true,
+          nextMissionId: newMissionRef.id
+        };
+      }
     } else if (isRecurringMission(mission)) {
       // If it's a recurring mission, use the recurring logic
       completionResult = await completeRecurringMission(userId, missionId, missionWithDaily);

@@ -437,6 +437,8 @@ export const createNextMissionInstance = (originalMission, nextDueDate) => {
     scheduledDates, // Per-mission daily planning slots — don't carry to new doc
     customSortOrder, // Drag-and-drop position — doesn't apply to new instance
     questId, // Quests are finite — recurrence shouldn't auto-extend membership
+    spawnedChildId, // Receipt pointing at THIS mission's own spawned child — a
+                    // fresh instance has spawned nothing yet
     ...missionData
   } = originalMission;
 
