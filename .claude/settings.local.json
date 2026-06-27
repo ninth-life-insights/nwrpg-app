@@ -22,7 +22,9 @@
       "Bash(git -C /c/Users/Lenovo/nwrpg-app log --oneline -20)",
       "Bash(firebase deploy *)",
       "Bash(node --check src/services/missionService.js)",
-      "Bash(node --check src/utils/recurrenceHelpers.js)"
+      "Bash(node --check src/utils/recurrenceHelpers.js)",
+      "Bash(node --check src/contexts/NotificationContext.jsx)",
+      "Bash(npx --yes @babel/cli --version)"
     ]
   }
 }

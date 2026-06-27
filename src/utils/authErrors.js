@@ -23,7 +23,7 @@ export function getAuthErrorMessage(error, mode = 'login') {
     case 'auth/email-already-in-use':
       return 'An account with that email already exists.';
     case 'auth/weak-password':
-      return 'Password must be at least 6 characters.';
+      return 'Password must be at least 8 characters.';
     case 'auth/user-disabled':
       return 'This account has been disabled. Contact support.';
     case 'auth/requires-recent-login':
@@ -36,5 +36,24 @@ export function getAuthErrorMessage(error, mode = 'login') {
       if (mode === 'change-email') return "Your email didn't update. Try again.";
       if (mode === 'change-password') return "Your password didn't update. Try again.";
       return "Sign-in didn't go through. Try again.";
+  }
+}
+
+// Which form field a Firebase auth error code belongs to, so the inline
+// error renders next to its associated input. Returns null for codes that
+// aren't field-specific (network failure, too-many-requests, etc.) — the
+// caller decides where those land. Note: `auth/invalid-credential` is
+// intentionally null since Firebase v12 won't say whether the email or the
+// password is wrong; login forms typically render that one under password.
+export function getAuthErrorField(error) {
+  const code = error?.code;
+  switch (code) {
+    case 'auth/email-already-in-use':
+    case 'auth/invalid-email':
+      return 'email';
+    case 'auth/weak-password':
+      return 'password';
+    default:
+      return null;
   }
 }

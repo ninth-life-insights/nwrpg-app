@@ -192,9 +192,14 @@ export const NotificationProvider = ({ children }) => {
   // Dedupe by tutorialStep: a given step only ever produces one toast per
   // provider lifetime, so a stray re-fire can't resurrect a dismissed toast.
   const notifyTutorialStepComplete = useCallback(({ tutorialStep, missionTitle, questId }) => {
-    if (tutorialStep && shownTutorialStepsRef.current.has(tutorialStep)) return;
+    console.log('[NotificationContext] notifyTutorialStepComplete called', { tutorialStep, missionTitle, questId });
+    if (tutorialStep && shownTutorialStepsRef.current.has(tutorialStep)) {
+      console.log('[NotificationContext] dedupe HIT — ignoring re-fire for', tutorialStep);
+      return;
+    }
     if (tutorialStep) shownTutorialStepsRef.current.add(tutorialStep);
     tutorialStepToastIdRef.current += 1;
+    console.log('[NotificationContext] setting tutorialStepToast with id', tutorialStepToastIdRef.current);
     setTutorialStepToast({
       id: tutorialStepToastIdRef.current,
       missionTitle,
@@ -259,7 +264,7 @@ export const NotificationProvider = ({ children }) => {
 
       {actionToast && (
         <UndoActionToast
-          key={actionToast.id}
+          key={`action-${actionToast.id}`}
           label={actionToast.label}
           missionTitle={actionToast.missionTitle}
           onUndo={actionToast.onUndo}
@@ -269,7 +274,7 @@ export const NotificationProvider = ({ children }) => {
 
       {tutorialStepToast && (
         <TutorialStepToast
-          key={tutorialStepToast.id}
+          key={`tutorial-${tutorialStepToast.id}`}
           step={tutorialStepToast}
           onDismiss={() => setTutorialStepToast(null)}
         />
@@ -277,7 +282,7 @@ export const NotificationProvider = ({ children }) => {
 
       {currentAchievementToast && (
         <AchievementToast
-          key={currentAchievementToast.id}
+          key={`achievement-${currentAchievementToast.id}`}
           achievements={currentAchievementToast.achievements}
           onDismiss={() => setCurrentAchievementToast(null)}
         />

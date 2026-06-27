@@ -22,6 +22,10 @@
 
 .character-input {
   flex: 1;
+  /* Without min-width: 0, the input's intrinsic min (driven by its
+     placeholder/size attribute) overrides flex: 1 and pushes the trailing
+     shuffle button past the card's right edge. */
+  min-width: 0;
   padding: var(--space-md);
   margin: var(--space-sm) 0 var(--space-md);
   font-size: var(--font-size-base);
@@ -52,7 +56,7 @@
   align-items: center;
   transition: var(--transition);
   margin-bottom: var(--space-md);
-  margin-right: var(--space-sm);
+ 
 }
 
 .title-shuffle-btn:hover {

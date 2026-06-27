@@ -19,8 +19,12 @@ const TutorialStepToast = ({ step, onDismiss }) => {
 
   useEffect(() => {
     if (!step) return;
+    console.log('[TutorialStepToast] mount / step changed — arming timer', step);
     const shownAt = Date.now();
-    const timer = setTimeout(() => onDismissRef.current(), AUTO_DISMISS_MS);
+    const timer = setTimeout(() => {
+      console.log('[TutorialStepToast] setTimeout FIRED, calling onDismiss');
+      onDismissRef.current();
+    }, AUTO_DISMISS_MS);
     // iOS PWAs may suspend setTimeout when the document is hidden, leaving
     // the toast pinned on resume. Belt-and-suspenders fallback: when the
     // document becomes visible again, dismiss if the timer should already
@@ -31,6 +35,7 @@ const TutorialStepToast = ({ step, onDismiss }) => {
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
+      console.log('[TutorialStepToast] cleanup — clearing timer');
       clearTimeout(timer);
       document.removeEventListener('visibilitychange', onVisibility);
     };
@@ -39,6 +44,7 @@ const TutorialStepToast = ({ step, onDismiss }) => {
   if (!step) return null;
 
   const handleClick = () => {
+    console.log('[TutorialStepToast] pill clicked');
     onDismiss();
     if (step.questId) navigate(`/quests/${step.questId}`);
   };
@@ -60,7 +66,11 @@ const TutorialStepToast = ({ step, onDismiss }) => {
         </div>
         <button
           className="tutorial-step-toast__close"
-          onClick={(e) => { e.stopPropagation(); onDismiss(); }}
+          onClick={(e) => {
+            console.log('[TutorialStepToast] X button clicked');
+            e.stopPropagation();
+            onDismiss();
+          }}
           aria-label="Dismiss"
         >
           <span className="material-icons">close</span>

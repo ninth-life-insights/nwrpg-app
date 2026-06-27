@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getAuthErrorMessage } from '../../utils/authErrors';
+import { getAuthErrorMessage, getAuthErrorField } from '../../utils/authErrors';
 import ErrorMessage from '../ui/ErrorMessage';
 import './Auth.css';
 
@@ -10,6 +10,7 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTos, setAcceptedTos] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const [error, setError] = useState('');
   const [tosError, setTosError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,7 @@ export default function Signup() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setEmailError('');
     setError('');
     setTosError('');
 
@@ -44,9 +46,14 @@ export default function Signup() {
       setLoading(true);
       await signup(email, password);
       navigate('/character-creation');
-    } catch (error) {
-      setError(getAuthErrorMessage(error, 'signup'));
-      console.error('Signup error:', error);
+    } catch (err) {
+      const message = getAuthErrorMessage(err, 'signup');
+      if (getAuthErrorField(err) === 'email') {
+        setEmailError(message);
+      } else {
+        setError(message);
+      }
+      console.error('Signup error:', err);
     }
 
     setLoading(false);
@@ -67,6 +74,7 @@ export default function Signup() {
               className="form-input"
               placeholder="your.email@example.com"
             />
+            <ErrorMessage message={emailError} className="auth-error" />
           </div>
 
           <div className="form-group">

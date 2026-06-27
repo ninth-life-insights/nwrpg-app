@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getAuthErrorMessage } from '../../utils/authErrors';
+import { getAuthErrorMessage, getAuthErrorField } from '../../utils/authErrors';
 import ErrorMessage from '../ui/ErrorMessage';
 import './Auth.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [error, setError] = useState('');
   const [resetSent, setResetSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,24 +26,31 @@ export default function Login() {
     e.preventDefault();
 
     try {
+      setEmailError('');
       setError('');
       setResetSent(false);
       setLoading(true);
       await login(email, password);
       navigate('/home');
-    } catch (error) {
-      setError(getAuthErrorMessage(error, 'login'));
-      console.error('Login error:', error);
+    } catch (err) {
+      const message = getAuthErrorMessage(err, 'login');
+      if (getAuthErrorField(err) === 'email') {
+        setEmailError(message);
+      } else {
+        setError(message);
+      }
+      console.error('Login error:', err);
     }
 
     setLoading(false);
   }
 
   async function handleForgotPassword() {
+    setEmailError('');
     setError('');
     setResetSent(false);
     if (!email) {
-      setError('Enter your email above, then tap Forgot password.');
+      setEmailError('Enter your email above, then tap Forgot password.');
       return;
     }
     try {
@@ -50,9 +58,14 @@ export default function Login() {
       // Firebase v12 doesn't reveal whether the email is registered, so we
       // always show the same confirmation — by design.
       setResetSent(true);
-    } catch (error) {
-      setError(getAuthErrorMessage(error, 'reset'));
-      console.error('Password reset error:', error);
+    } catch (err) {
+      const message = getAuthErrorMessage(err, 'reset');
+      if (getAuthErrorField(err) === 'email') {
+        setEmailError(message);
+      } else {
+        setError(message);
+      }
+      console.error('Password reset error:', err);
     }
   }
 
@@ -78,6 +91,7 @@ export default function Login() {
               className="form-input"
               placeholder="your.email@example.com"
             />
+            <ErrorMessage message={emailError} className="auth-error" />
           </div>
 
           <div className="form-group">
