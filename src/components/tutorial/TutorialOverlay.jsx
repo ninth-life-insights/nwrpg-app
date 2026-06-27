@@ -38,6 +38,14 @@ import './TutorialOverlay.css';
 // to story rendering. Most pages mount well within this window.
 const SPOTLIGHT_TARGET_RETRY_MS = 1500;
 
+// Hard cap on the rect-stabilization poll. If the target's rect hasn't
+// settled within this window (e.g. a continuously animating element), accept
+// whatever rect we have rather than leaving the spotlight invisible forever.
+const SPOTLIGHT_STABILIZE_TIMEOUT_MS = 1000;
+
+// Per-side tolerance when comparing rects across frames for stabilization.
+const SPOTLIGHT_STABILIZE_TOLERANCE_PX = 1;
+
 // Padding around the spotlight cutout so the target doesn't touch the dim.
 const SPOTLIGHT_PADDING = 8;
 
@@ -156,17 +164,63 @@ const SpotlightRenderer = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetsKey]);
 
-  // Once we have the targets, observe size + scroll/resize for rect updates.
+  // Once we have the targets, stabilize the rect before exposing it. The
+  // first getBoundingClientRect() can land mid-animation (e.g., the bottom-
+  // sheet modal slide-up, mobile address bar collapsing, or webfonts still
+  // loading), which would render the cutout at the wrong position and then
+  // "hop" when a later resize/scroll/font event re-measured. We poll on
+  // rAF until two consecutive frames return the same rect within a small
+  // tolerance, then publish it and attach the long-term watchers.
   useEffect(() => {
     if (!targetEls.length) return;
+
+    let cancelled = false;
+    let settled = false;
+    let rafId = null;
+    let prevRect = null;
+    let ro = null;
+
     const measure = () => setTargetRect(unionRect(targetEls));
-    measure();
-    const ro = new ResizeObserver(measure);
-    targetEls.forEach(el => ro.observe(el));
-    window.addEventListener('scroll', measure, { capture: true, passive: true });
-    window.addEventListener('resize', measure);
+
+    const rectsMatch = (a, b) => {
+      if (!a || !b) return false;
+      const tol = SPOTLIGHT_STABILIZE_TOLERANCE_PX;
+      return Math.abs(a.top - b.top) <= tol
+        && Math.abs(a.left - b.left) <= tol
+        && Math.abs(a.right - b.right) <= tol
+        && Math.abs(a.bottom - b.bottom) <= tol;
+    };
+
+    const onSettled = () => {
+      if (cancelled || settled) return;
+      settled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      measure();
+      ro = new ResizeObserver(measure);
+      targetEls.forEach(el => ro.observe(el));
+      window.addEventListener('scroll', measure, { capture: true, passive: true });
+      window.addEventListener('resize', measure);
+    };
+
+    const stabilize = () => {
+      if (cancelled || settled) return;
+      const r = unionRect(targetEls);
+      if (prevRect && rectsMatch(prevRect, r)) {
+        onSettled();
+        return;
+      }
+      prevRect = r;
+      rafId = requestAnimationFrame(stabilize);
+    };
+    stabilize();
+
+    const fallbackTimer = setTimeout(onSettled, SPOTLIGHT_STABILIZE_TIMEOUT_MS);
+
     return () => {
-      ro.disconnect();
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      clearTimeout(fallbackTimer);
+      if (ro) ro.disconnect();
       window.removeEventListener('scroll', measure, { capture: true });
       window.removeEventListener('resize', measure);
     };
