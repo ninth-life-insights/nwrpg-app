@@ -1,4 +1,4 @@
-# the SAHM RPG Productivity App
+# the Family Keep: An RPG-Themed Productivity App for Moms
 
 Helping moms stay organized, motivated, and have more fun by managing tasks, projects, kids, and your home like you're an adventurer on a quest.
 
@@ -10,25 +10,27 @@ This is a rough, in-progress prototype for a mobile PWA. I come from a UX design
 
 [x] Mission (task) creation, display, and completion
 
-[ ] User profile creation - party leader
+[x] User profile creation - party leader
 
-[ ] Quests (projects) to manage multiple missions
+[x] Quests (projects) to manage multiple missions
 
 [ ] Add, edit, and manage missions/statuses for adventuring party (kids, pets, partners)
 
-[ ] Achievements
+[x] Achievements
 
-[ ] Skill tree
+[x] Skill tree
 
 [ ] Equipment (carry words of wisdom, advice, or encouragement with you)
 
-[ ] Base (home) tracking and management
+[x] Base (home) tracking and management
 
-[ ] Daily, weekly, and monthly planning & reviews
+[x] Routines to manage recurring missions
 
-[ ] LLM integration for storytelling 
+[x] Daily and weekly reviews
 
-[ ] Adventure log and record of encounters
+[x] LLM integration for storytelling 
+
+[x] Adventure log and record of encounters
 
 [ ] Enhanced security and login capabilities
 
