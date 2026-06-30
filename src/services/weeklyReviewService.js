@@ -338,7 +338,7 @@ export const updateWeeklySnapshotStory = async (userId, weekStart, storyText) =>
 // ─── AI Story Generation ──────────────────────────────────────────────────────
 
 /**
- * Calls the Anthropic API to generate a weekly chronicle entry.
+ * Calls the Anthropic API to generate a weekly story entry.
  * Uses a hero's-journey framing — looks for arc, common threads, and dramatic turns.
  *
  * @param {object} data - Aggregated week data
@@ -417,10 +417,10 @@ ${events.length > 0 ? `\nNotable events:\n${events.map(e => `- ${e}`).join('\n')
 ${topSkills.length > 0 ? `\nTop skill areas: ${topSkills.join(', ')}` : ''}
 ${topQuests.length > 0 ? `\nMost active quests: ${topQuests.join(', ')}` : ''}
 
-Write the weekly chronicle entry.`.trim();
+Write the weekly story entry.`.trim();
 
     const systemPromptByStyle = {
-      'balanced': `You write the weekly chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her week — not informing her of what happened, because she was there.
+      'balanced': `You write the weekly story for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her week — not informing her of what happened, because she was there.
 
 Your job is to find the arc of the week. Look for: recurring patterns across days, a quest that made real progress, a tough patch followed by a recovery, the contrast between a quiet day and a busy one. The week has a shape — find it.
 
@@ -437,7 +437,7 @@ Rules:
 - If there was a hard day followed by a strong comeback, that's the story
 - Under 200 words`,
 
-      'high-fantasy': `You write the weekly chronicle in the Grand Book of Deeds for a hero of the realm. Her tasks are missions; her projects are quests; her home is her base of operations. You are the keeper of her saga, recording the arc of the week for posterity.
+      'high-fantasy': `You write the weekly story in the Grand Book of Deeds for a hero of the realm. Her tasks are missions; her projects are quests; her home is her base of operations. You are the keeper of her saga, recording the arc of the week for posterity.
 
 Find the shape of the week — the campaign arc. Look for: a quest that advanced significantly, a day where the hero pushed through despite the odds, a pattern of effort that reveals character. Level-ups and skill advances are major story beats. Encounters are battles won.
 

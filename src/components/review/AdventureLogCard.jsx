@@ -53,7 +53,7 @@ const FullCard = ({ snapshot }) => {
       {story ? (
         <p className="alc-story">{story}</p>
       ) : (
-        <p className="alc-story alc-story--empty">No chronicle for this day.</p>
+        <p className="alc-story alc-story--empty">No story written yet — tap to add your own.</p>
       )}
     </button>
   );

@@ -394,10 +394,10 @@ const SettingsPage = () => {
       <section className="settings-section">
         <h2 className="settings-section-title">Review Stories</h2>
         <div className="settings-row-label-group">
-          <span className="settings-label">Chronicle style</span>
+          <span className="settings-label">Story style</span>
           <span className="settings-hint">Controls the tone of your daily and weekly summaries</span>
         </div>
-        <div className="settings-style-picker" role="group" aria-label="Chronicle style">
+        <div className="settings-style-picker" role="group" aria-label="Story style">
           {[
             { value: 'plain', label: 'Minimal', hint: 'Clear and simple' },
             { value: 'balanced', label: 'Balanced', hint: 'Light RPG flavor' },

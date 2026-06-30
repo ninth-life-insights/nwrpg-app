@@ -207,7 +207,7 @@ const ReviewSummary = ({
               </>
             ) : (
               <p className="daily-review-story-empty">
-                No chronicle generated. Add your own notes above.
+                No story for this day yet. Add your own notes above.
               </p>
             )}
           </div>

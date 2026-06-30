@@ -193,10 +193,10 @@ const WeeklyReviewSummary = ({
           </div>
         </div>
 
-        {/* Chronicle */}
+        {/* Story */}
         <div className="daily-review-story">
           <div className="daily-review-story-header">
-            <span className="daily-review-story-label">This Week's Chronicle</span>
+            <span className="daily-review-story-label">This Week's Story</span>
             {!isEditingStory && (
               <div className="daily-review-story-actions-row">
                 {onRegenerateStory !== undefined && (
@@ -204,7 +204,7 @@ const WeeklyReviewSummary = ({
                     className="daily-review-story-edit-btn"
                     onClick={() => setShowRegenerateConfirm(true)}
                     disabled={regenerating}
-                    title="Regenerate chronicle"
+                    title="Regenerate story"
                   >
                     <span className="material-icons">
                       {regenerating ? 'hourglass_empty' : 'refresh'}
@@ -220,7 +220,7 @@ const WeeklyReviewSummary = ({
 
           {showRegenerateConfirm && (
             <div className="daily-review-story-confirm">
-              <p>Rewrite the chronicle? This will overwrite your current entry.</p>
+              <p>Rewrite the story? This will overwrite your current entry.</p>
               <div className="daily-review-story-actions">
                 <button
                   className="story-action-btn story-action-btn--save"
@@ -284,7 +284,7 @@ const WeeklyReviewSummary = ({
             </>
           ) : (
             <p className="daily-review-story-empty">
-              No chronicle generated. Add your own notes above.
+              No story for this week yet. Add your own notes above.
             </p>
           )}
         </div>

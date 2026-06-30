@@ -575,7 +575,7 @@ export const markDailyReviewSubmitted = (userId) => {
 // ─── AI Story Generation ──────────────────────────────────────────────────────
 
 /**
- * Calls the Anthropic API to generate a daily chronicle entry.
+ * Calls the Anthropic API to generate a daily story entry.
  * Takes the aggregated snapshot data and returns a story string.
  *
  * @param {object} data - Aggregated day data
@@ -652,7 +652,7 @@ export const generateDailyStory = async (data) => {
   }
 
   const userPrompt = `
-Here is the raw data for today's chronicle entry:
+Here is the raw data for today's story entry:
 
 Missions completed (${completedMissions.length} total, ${hardCount} hard):
 ${missionLines.join('\n')}
@@ -665,17 +665,17 @@ ${baselineBlock ? `\n${baselineBlock}` : ''}
 Write the entry.`.trim();
 
   const systemPromptByStyle = {
-    'balanced': `You write the daily chronicle for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her day for posterity — not informing her of what happened, because she was there.
+    'balanced': `You write the daily story for a mom whose life is framed as an RPG. Her tasks are "missions," her projects are "quests," her home is her base. You are recording her day for posterity — not informing her of what happened, because she was there.
 
 Your job is to find what was actually interesting or meaningful about today and say something true about it. One or two things, not everything. Let the rest stay implied. Use language and metaphor to do the heavy lifting — but reach past the obvious image. Laundry is not Sisyphus. Cleaning is not a battle. Find the angle that is specific to this day, not the one that fits any day like it.
 
 Write in a voice inspired by Terry Pratchett: warm, a little wry, takes mundane things completely seriously, finds the human truth in small moments. Whimsy is welcome. Embellishment is welcome. If a line is clever but not true, cut it.
 
-When a day was genuinely productive, let that land — don't philosophize it into smallness. A person who got a lot done deserves a chronicle that knows it. On the other hand, if it was ordinary, find what the ordinary day was quietly building toward, not just what it cost.
+When a day was genuinely productive, let that land — don't philosophize it into smallness. A person who got a lot done deserves a story that knows it. On the other hand, if it was ordinary, find what the ordinary day was quietly building toward, not just what it cost.
 
 Vary how you open — sometimes lead with the task itself, sometimes the feeling around it, sometimes an observation about time or habit or what things cost. If there were unexpected encounters, weave them in naturally — they are the texture of the day, not a footnote.
 
-${previousStories ? `Here are the last several daily chronicles you have written for this player:
+${previousStories ? `Here are the last several daily stories you have written for this player:
 
 ${previousStories}
 
@@ -688,7 +688,7 @@ Rules:
 - Never use the word "adventurer"
 - Under 120 words`,
 
-    'high-fantasy': `You write the daily chronicle for a hero of the realm. Her tasks are missions; her projects are quests; her home is her base. You are the keeper of her saga — not a log-writer, but a narrator who understands that the small actions are where character is actually revealed.
+    'high-fantasy': `You write the daily story for a hero of the realm. Her tasks are missions; her projects are quests; her home is her base. You are the keeper of her saga — not a log-writer, but a narrator who understands that the small actions are where character is actually revealed.
 
 Write in a voice inspired by Patrick Rothfuss: lush but precise, self-aware, finds the legend in the lived moment. The hero knows she is the hero of this story. The narrator knows it too. There is earned swagger here — not boasting, but the quiet confidence of someone whose deeds are worth recording.
 

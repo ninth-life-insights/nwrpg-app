@@ -54,7 +54,7 @@ const WeeklyAdventureLogCard = ({ snapshot }) => {
       {story ? (
         <p className="alc-story walc-story">{story}</p>
       ) : (
-        <p className="alc-story alc-story--empty walc-story">No chronicle for this week.</p>
+        <p className="alc-story alc-story--empty walc-story">No story written yet — tap to add your own.</p>
       )}
     </button>
   );
