@@ -380,8 +380,9 @@ const TutorialOverlay = () => {
   // Notification opt-in for a story screen with ctaAction: 'enable-notifications'.
   // Runs the same path as Settings (request permission → save prefs → re-arm
   // the schedule), then advances regardless of the outcome so the tutorial is
-  // never blocked. We keep the gentle plan/review nudges on and leave the
-  // deadline-flavored due-today alert off to match the app's non-deadline feel.
+  // never blocked. Flips only the master switch and keeps every category at its
+  // default-on state — turning on a subset would be confusing when the user
+  // later opens Settings and finds some categories silently off.
   const handleEnableNotifications = useCallback(async () => {
     try {
       if (typeof Notification !== 'undefined' && currentUser) {
@@ -391,7 +392,6 @@ const TutorialOverlay = () => {
           await saveNotificationPrefs(currentUser.uid, {
             ...prefs,
             enabled: true,
-            dueTodayAlerts: { ...prefs.dueTodayAlerts, enabled: false },
           });
           await refreshSchedule();
         }
