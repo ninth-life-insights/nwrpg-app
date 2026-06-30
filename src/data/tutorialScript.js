@@ -74,6 +74,30 @@ export const INTRO_SCREENS = [
   },
 ];
 
+// Standalone notification opt-in flow, offered once after the FIRST_DAILY_REVIEW
+// step completes (see TutorialContext's completion watcher). Kept out of the
+// review script so the ask lands after the payoff — the user has just seen the
+// full plan → do → review rhythm — instead of interrupting the goal of saving
+// their first review. `ctaAction` runs the opt-in (handled in TutorialOverlay);
+// "Maybe later" just dismisses. The opener guards on the same condition this
+// screen's skipIf encodes, so the flow never opens when notifications are
+// unsupported (e.g. iOS Safari tab) or already decided.
+export const NOTIFICATION_OPTIN_SCREENS = [
+  {
+    variant: 'story',
+    title: 'Daily reminders',
+    body: [
+      'Want a nudge? Remember to check-in with daily planning, due today, and daily review notifications.',
+    ],
+    ctaLabel: 'Turn on reminders',
+    ctaAction: 'enable-notifications',
+    secondaryLabel: 'Maybe later',
+    skipIf: () =>
+      typeof Notification === 'undefined' ||
+      Notification.permission !== 'default',
+  },
+];
+
 export const TUTORIAL_SCRIPT = {
   // ── Day-1 priority slots ──────────────────────────────────────────────
 
@@ -224,25 +248,10 @@ export const TUTORIAL_SCRIPT = {
         ],
         ctaLabel: 'Got it',
       },
-      // Optional closing beat: offer the gentle daily reminders now that the
-      // user has seen the full plan → do → review rhythm. `ctaAction` runs the
-      // notification opt-in (handled in TutorialOverlay); "Maybe later" just
-      // advances. `skipIf` removes the screen entirely when notifications
-      // aren't supported (e.g. iOS Safari tab) or the user has already decided
-      // — so we never show a dead button or re-ask someone who chose in Settings.
-      {
-        variant: 'story',
-        title: 'Daily reminders',
-        body: [
-          'Want a gentle nudge to plan in the morning and to reflect at night? No streaks or guilt — just an optional reminder when it helps.',
-        ],
-        ctaLabel: 'Turn on reminders',
-        ctaAction: 'enable-notifications',
-        secondaryLabel: 'Maybe later',
-        skipIf: () =>
-          typeof Notification === 'undefined' ||
-          Notification.permission !== 'default',
-      },
+      // Note: the notification opt-in used to live here as a final screen, but
+      // it interrupted the goal (saving the review) before the payoff. It's now
+      // a standalone flow (NOTIFICATION_OPTIN_SCREENS) opened when this step
+      // completes — see TutorialContext's completion watcher.
     ],
   },
 

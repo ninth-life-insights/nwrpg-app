@@ -29,7 +29,7 @@ import { useNotifications } from './NotificationContext';
 import { QUEST_TYPE } from '../types/Quests';
 import { MISSION_STATUS } from '../types/Mission';
 import { TUTORIAL_STEPS } from '../data/tutorialQuest';
-import { getScriptForStep, WELCOME_SCREEN, INTRO_SCREENS } from '../data/tutorialScript';
+import { getScriptForStep, WELCOME_SCREEN, INTRO_SCREENS, NOTIFICATION_OPTIN_SCREENS } from '../data/tutorialScript';
 import { completeMissionWithRecurrence } from '../services/missionService';
 
 // Maps feature page identifiers to tutorial step keys. Feature pages call
@@ -289,6 +289,27 @@ export const TutorialProvider = ({ children }) => {
     });
   }, []);
 
+  // Open the standalone notification opt-in flow. Fired by the completion
+  // watcher when the FIRST_DAILY_REVIEW step finishes, so the ask lands after
+  // the payoff instead of interrupting the review. No backing mission, so the
+  // progress-write and auto-clear effects skip it; advance() dismisses on the
+  // last screen because completionTrigger is 'auto'. Guarded on the same
+  // condition the screen's skipIf encodes — no-op when notifications are
+  // unsupported or the user has already decided.
+  const openNotificationOptInFlow = useCallback(() => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'default') {
+      return;
+    }
+    setActiveStep({
+      missionId: null,
+      tutorialStep: null,
+      screens: NOTIFICATION_OPTIN_SCREENS,
+      screenIndex: 0,
+      completionTrigger: 'auto',
+      welcomePrepended: false,
+    });
+  }, []);
+
   // Auto-fire the intro on the home page when the welcome flag is unset.
   // Pathname-gated (not feature-key gated) because HomePage has no
   // `triggerStep` call and we want the intro to land the moment a freshly
@@ -491,10 +512,15 @@ export const TutorialProvider = ({ children }) => {
           missionTitle: m.title,
           questId: m.questId ?? null,
         });
+        // After the daily-review step, offer the notification opt-in as a
+        // standalone beat (no-op if unsupported/already decided).
+        if (m.tutorialStep === TUTORIAL_STEPS.FIRST_DAILY_REVIEW) {
+          openNotificationOptInFlow();
+        }
       }
       prevTutorialStatusesRef.current[m.id] = m.status;
     }
-  }, [missions, notifyTutorialStepComplete]);
+  }, [missions, notifyTutorialStepComplete, openNotificationOptInFlow]);
 
   // Cooldown window during which TOUR_QUESTS auto-fire is suppressed after a
   // tutorial step completes. Scoped only to TOUR_QUESTS because that's the
