@@ -36,6 +36,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { requestPermission } from '../../services/notificationService';
 import { getNotificationPrefs, saveNotificationPrefs } from '../../services/notificationPrefsService';
+import { enablePushForUser } from '../../services/pushService';
 import './TutorialOverlay.css';
 
 // How long to keep retrying to find a spotlight target before falling back
@@ -393,6 +394,9 @@ const TutorialOverlay = () => {
             ...prefs,
             enabled: true,
           });
+          // Register this device for web push so reminders can reach the user
+          // when the app is closed. Non-fatal if it can't subscribe.
+          await enablePushForUser(currentUser.uid);
           await refreshSchedule();
         }
       }

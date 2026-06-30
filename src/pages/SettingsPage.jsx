@@ -7,6 +7,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { db } from '../services/firebase/config';
 import { getNotificationPrefs, saveNotificationPrefs } from '../services/notificationPrefsService';
 import { requestPermission } from '../services/notificationService';
+import { enablePushForUser, disablePushForUser } from '../services/pushService';
 import { getUserProfile, updateUserProfile } from '../services/userService';
 import { getDeletedMissionsCount } from '../services/missionService';
 import { getDeletedQuestsCount } from '../services/questService';
@@ -126,6 +127,14 @@ const SettingsPage = () => {
       const result = await requestPermission();
       setPermissionState(result);
       if (result !== 'granted') return; // don't turn on if user denied
+    }
+
+    // Register/unregister this device for web push alongside the master flag.
+    // Both are best-effort — the prefs flag still persists on Save regardless.
+    if (turningOn) {
+      enablePushForUser(currentUser.uid);
+    } else {
+      disablePushForUser(currentUser.uid);
     }
 
     setPrefs((prev) => ({ ...prev, enabled: turningOn }));
