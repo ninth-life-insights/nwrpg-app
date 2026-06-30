@@ -24,7 +24,8 @@
       "Bash(node --check src/services/missionService.js)",
       "Bash(node --check src/utils/recurrenceHelpers.js)",
       "Bash(node --check src/contexts/NotificationContext.jsx)",
-      "Bash(npx --yes @babel/cli --version)"
+      "Bash(npx --yes @babel/cli --version)",
+      "PowerShell(npx eslint src/pages/reviews/DailyReviewPage.jsx src/pages/reviews/AdventureLogPage.jsx src/components/review/ReviewSummary.jsx)"
     ]
   }
 }

@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { generateDailySnapshot } from '../../services/reviewService';
 import { getUserProfile } from '../../services/userService';
+import { isDefinitelyOffline } from '../../utils/fetchWithTimeout';
+import ErrorMessage from '../ui/ErrorMessage';
 import AchievementBadge from '../achievements/AchievementBadge';
 
 const ReviewSummary = ({
@@ -22,6 +24,7 @@ const ReviewSummary = ({
   const [savingStory, setSavingStory] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState(null);
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -67,8 +70,13 @@ const ReviewSummary = ({
 
   const handleRegenerate = async () => {
     if (regenerating) return;
-    setRegenerating(true);
     setShowRegenerateConfirm(false);
+    if (isDefinitelyOffline()) {
+      setRegenerateError("You're offline. Reconnect to generate your daily story.");
+      return;
+    }
+    setRegenerateError(null);
+    setRegenerating(true);
     try {
       const profile = await getUserProfile(userId);
       const displayName = profile?.displayName || 'You';
@@ -147,6 +155,10 @@ const ReviewSummary = ({
                   </button>
                 </div>
               </div>
+            )}
+
+            {regenerateError && (
+              <ErrorMessage message={regenerateError} onRetry={handleRegenerate} />
             )}
 
             {isEditingStory ? (

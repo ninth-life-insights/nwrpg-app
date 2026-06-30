@@ -75,6 +75,7 @@ const AdventureLogPage = () => {
   const [loadError, setLoadError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [generatingDate, setGeneratingDate] = useState(null);
+  const [generateError, setGenerateError] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
@@ -114,6 +115,11 @@ const AdventureLogPage = () => {
 
   const handleGenerate = async (date) => {
     if (generatingDate) return;
+    if (isDefinitelyOffline()) {
+      setGenerateError("You're offline. Reconnect to generate your daily story.");
+      return;
+    }
+    setGenerateError(null);
     setGeneratingDate(date);
     try {
       const profile = await getUserProfile(currentUser.uid);
@@ -205,6 +211,8 @@ const AdventureLogPage = () => {
           onRetry={() => { setLoadError(null); setReloadTrigger(t => t + 1); }}
         />
       )}
+
+      {generateError && <ErrorMessage message={generateError} />}
 
       <div className="adventure-log-content">
         {loading ? (

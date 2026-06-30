@@ -155,6 +155,11 @@ const DailyReviewPage = () => {
     setStep(4);
     setSummaryLoading(true);
     setSubmitError(null);
+    if (isDefinitelyOffline()) {
+      setSubmitError("You're offline. Reconnect to generate your daily story.");
+      setSummaryLoading(false);
+      return;
+    }
     try {
       const [profile, earnedToday] = await withTimeout(
         Promise.all([
