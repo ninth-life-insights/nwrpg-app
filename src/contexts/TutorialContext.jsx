@@ -219,12 +219,18 @@ export const TutorialProvider = ({ children }) => {
     const script = getScriptForStep(mission.tutorialStep);
     if (!script) return;
 
+    // Drop any screen whose skipIf() returns true at open time (e.g. the
+    // notification opt-in screen when notifications are unsupported or already
+    // decided). Evaluated fresh on every open. Only tail screens use this, so
+    // earlier screens keep stable indices for saved-progress resume.
+    const scriptScreens = script.screens.filter(s => !s.skipIf || !s.skipIf());
+
     // Prepend welcome screen only when we know it hasn't been seen.
     // welcomeSeen === false means "definitely not seen"; null and true skip.
     const welcomePrepended = welcomeSeen === false;
     const screens = welcomePrepended
-      ? [WELCOME_SCREEN, ...script.screens]
-      : script.screens;
+      ? [WELCOME_SCREEN, ...scriptScreens]
+      : scriptScreens;
 
     // Compute starting screenIndex relative to `screens`.
     // - Welcome (when prepended) is always shown first regardless of saved
@@ -233,7 +239,7 @@ export const TutorialProvider = ({ children }) => {
     //   first screen.
     // - Auto-fire uses min(savedMax, lastScreenIndex): mid-flow exit →
     //   resume; finished-but-no-action → just the action prompt.
-    const lastScriptIndex = script.screens.length - 1;
+    const lastScriptIndex = scriptScreens.length - 1;
     const savedMax = tutorialProgress[mission.tutorialStep];
     let startIndex = 0;
     if (!startFromBeginning && typeof savedMax === 'number' && savedMax > 0) {

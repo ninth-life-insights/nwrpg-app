@@ -224,6 +224,25 @@ export const TUTORIAL_SCRIPT = {
         ],
         ctaLabel: 'Got it',
       },
+      // Optional closing beat: offer the gentle daily reminders now that the
+      // user has seen the full plan → do → review rhythm. `ctaAction` runs the
+      // notification opt-in (handled in TutorialOverlay); "Maybe later" just
+      // advances. `skipIf` removes the screen entirely when notifications
+      // aren't supported (e.g. iOS Safari tab) or the user has already decided
+      // — so we never show a dead button or re-ask someone who chose in Settings.
+      {
+        variant: 'story',
+        title: 'Daily reminders',
+        body: [
+          'Want a gentle nudge to plan in the morning and to reflect at night? No streaks or guilt — just an optional reminder when it helps.',
+        ],
+        ctaLabel: 'Turn on reminders',
+        ctaAction: 'enable-notifications',
+        secondaryLabel: 'Maybe later',
+        skipIf: () =>
+          typeof Notification === 'undefined' ||
+          Notification.permission !== 'default',
+      },
     ],
   },
 

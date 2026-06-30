@@ -29,9 +29,13 @@
 // tutorial to step back N screens via TutorialContext.revertScreens(n).
 // Without it, the renderer falls back to story rendering of the same screen.
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorial } from '../../contexts/TutorialContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { requestPermission } from '../../services/notificationService';
+import { getNotificationPrefs, saveNotificationPrefs } from '../../services/notificationPrefsService';
 import './TutorialOverlay.css';
 
 // How long to keep retrying to find a spotlight target before falling back
@@ -69,7 +73,7 @@ const unionRect = (els) => {
   return { top, left, right, bottom, width: right - left, height: bottom - top };
 };
 
-const StoryRenderer = ({ screen, ctaLabel, advance, dismiss }) => (
+const StoryRenderer = ({ screen, ctaLabel, onPrimary, onSecondary, dismiss }) => (
   <div className="tutorial-overlay" onClick={dismiss}>
     <div className="tutorial-panel" onClick={(e) => e.stopPropagation()}>
       <div className="tutorial-header-row">
@@ -91,9 +95,14 @@ const StoryRenderer = ({ screen, ctaLabel, advance, dismiss }) => (
           : screen.body && <p className="tutorial-body">{screen.body}</p>}
       </div>
       <div className="tutorial-actions">
-        <button type="button" className="tutorial-cta" onClick={advance}>
+        <button type="button" className="tutorial-cta" onClick={onPrimary}>
           {ctaLabel}
         </button>
+        {screen.secondaryLabel && (
+          <button type="button" className="tutorial-cta-secondary" onClick={onSecondary}>
+            {screen.secondaryLabel}
+          </button>
+        )}
       </div>
     </div>
   </div>
@@ -365,6 +374,33 @@ const TutorialOverlay = () => {
     revertScreens,
     signalExpectedRouteChange,
   } = useTutorial();
+  const { currentUser } = useAuth();
+  const { refreshSchedule } = useNotifications();
+
+  // Notification opt-in for a story screen with ctaAction: 'enable-notifications'.
+  // Runs the same path as Settings (request permission → save prefs → re-arm
+  // the schedule), then advances regardless of the outcome so the tutorial is
+  // never blocked. We keep the gentle plan/review nudges on and leave the
+  // deadline-flavored due-today alert off to match the app's non-deadline feel.
+  const handleEnableNotifications = useCallback(async () => {
+    try {
+      if (typeof Notification !== 'undefined' && currentUser) {
+        const result = await requestPermission();
+        if (result === 'granted') {
+          const prefs = await getNotificationPrefs(currentUser.uid);
+          await saveNotificationPrefs(currentUser.uid, {
+            ...prefs,
+            enabled: true,
+            dueTodayAlerts: { ...prefs.dueTodayAlerts, enabled: false },
+          });
+          await refreshSchedule();
+        }
+      }
+    } catch (e) {
+      console.error('Tutorial notification opt-in failed:', e);
+    }
+    advance();
+  }, [currentUser, refreshSchedule, advance]);
   // When a spotlight screen can't find its target, we flip this flag and
   // re-render the same screen as story instead. Resets when the screen
   // changes.
@@ -427,7 +463,8 @@ const TutorialOverlay = () => {
       <StoryRenderer
         screen={screen}
         ctaLabel={ctaLabel}
-        advance={advance}
+        onPrimary={screen.ctaAction === 'enable-notifications' ? handleEnableNotifications : advance}
+        onSecondary={advance}
         dismiss={dismiss}
       />
     ),

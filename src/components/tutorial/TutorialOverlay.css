@@ -104,6 +104,20 @@
   transform: translateY(1px);
 }
 
+.tutorial-cta-secondary {
+  background: none;
+  color: var(--color-text-light);
+  border: none;
+  padding: 8px 24px;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tutorial-cta-secondary:active {
+  transform: translateY(1px);
+}
+
 @keyframes tutorialFadeIn {
   from { background: rgba(0, 0, 0, 0); }
   to { background: var(--color-bg-overlay); }
