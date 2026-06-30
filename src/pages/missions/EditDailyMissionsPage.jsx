@@ -329,9 +329,6 @@ const handleAddNewMission = async (missionData) => {
       if (isModal && onComplete) {
         onComplete();
       } else {
-        // TEMP DIAGNOSTIC
-        console.log('[EditDailyMissions] handleSetDailyMissions success -> /home');
-        console.trace();
         navigate('/home');
       }
 

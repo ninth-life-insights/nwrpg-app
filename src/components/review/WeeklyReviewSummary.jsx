@@ -5,6 +5,7 @@ import { generateWeeklySnapshot } from '../../services/weeklyReviewService';
 import { getAllMissions } from '../../services/missionService';
 import { getRooms, ENTIRE_BASE_ROOM_ID } from '../../services/roomService';
 import { formatWeekLabel } from '../../utils/weeklyReviewHelpers';
+import ErrorMessage from '../ui/ErrorMessage';
 import dayjs from 'dayjs';
 import './WeeklyReviewSummary.css';
 
@@ -51,6 +52,7 @@ const WeeklyReviewSummary = ({
   const [isEditingStory, setIsEditingStory] = useState(false);
   const [storyDraft, setStoryDraft] = useState('');
   const [savingStory, setSavingStory] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [topRooms, setTopRooms] = useState([]);
@@ -133,6 +135,7 @@ const WeeklyReviewSummary = ({
 
   const handleEditStart = () => {
     setStoryDraft(displayStory || '');
+    setSaveError(null);
     setIsEditingStory(true);
     setStoryExpanded(true);
   };
@@ -140,11 +143,13 @@ const WeeklyReviewSummary = ({
   const handleSaveStory = async () => {
     if (savingStory) return;
     setSavingStory(true);
+    setSaveError(null);
     try {
       await onUpdateStory(storyDraft);
       setIsEditingStory(false);
     } catch (err) {
       console.error('Error saving story:', err);
+      setSaveError("Your story didn't save. Try again.");
     } finally {
       setSavingStory(false);
     }
@@ -249,6 +254,9 @@ const WeeklyReviewSummary = ({
                 placeholder="Write your own notes for the week..."
                 rows={7}
               />
+              {saveError && (
+                <ErrorMessage message={saveError} onRetry={handleSaveStory} />
+              )}
               <div className="daily-review-story-actions">
                 <button
                   className="story-action-btn story-action-btn--save"

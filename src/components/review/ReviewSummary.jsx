@@ -22,6 +22,7 @@ const ReviewSummary = ({
   const [isEditingStory, setIsEditingStory] = useState(false);
   const [storyDraft, setStoryDraft] = useState('');
   const [savingStory, setSavingStory] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [regenerateError, setRegenerateError] = useState(null);
@@ -51,6 +52,7 @@ const ReviewSummary = ({
 
   const handleEditStart = () => {
     setStoryDraft(displayStory || '');
+    setSaveError(null);
     setIsEditingStory(true);
     setStoryExpanded(true);
   };
@@ -58,11 +60,13 @@ const ReviewSummary = ({
   const handleSaveStory = async () => {
     if (savingStory) return;
     setSavingStory(true);
+    setSaveError(null);
     try {
       await onUpdateStory(storyDraft);
       setIsEditingStory(false);
     } catch (err) {
       console.error('Error saving story:', err);
+      setSaveError("Your story didn't save. Try again.");
     } finally {
       setSavingStory(false);
     }
@@ -172,6 +176,9 @@ const ReviewSummary = ({
                   placeholder="Write your own notes or memory for today..."
                   rows={6}
                 />
+                {saveError && (
+                  <ErrorMessage message={saveError} onRetry={handleSaveStory} />
+                )}
                 <div className="daily-review-story-actions">
                   <button
                     className="story-action-btn story-action-btn--save"
